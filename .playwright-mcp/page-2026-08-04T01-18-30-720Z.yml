@@ -1,0 +1,647 @@
+- main [ref=e2]:
+  - navigation "看板页面" [ref=e3]:
+    - link "测试结果" [ref=e4] [cursor=pointer]:
+      - /url: ./dashboard.html
+    - link "执行详情" [ref=e5] [cursor=pointer]:
+      - /url: ./executions.html
+    - link "测试用例" [ref=e6] [cursor=pointer]:
+      - /url: ./test-cases.html
+    - link "合约参数" [ref=e7] [cursor=pointer]:
+      - /url: ./parameters.html
+    - link "合约核心公式" [ref=e8] [cursor=pointer]:
+      - /url: ./formulas.html
+    - link "页面数据公式" [ref=e9] [cursor=pointer]:
+      - /url: ./page-formulas.html
+  - generic [ref=e11]:
+    - heading "FX100 执行详情" [level=1] [ref=e12]
+    - paragraph [ref=e13]: 核对快照、Expected、公式依据，以及交易员与 Keeper 的签名交易证据
+  - generic [ref=e14]:
+    - generic [ref=e15]:
+      - text: 执行场景
+      - combobox "执行场景" [ref=e16]:
+        - option "SCN-009 · 市价开多快速退出 · tx-fork"
+        - option "SCN-010 · 现价下方限价开多 · tx-fork" [selected]
+    - generic [ref=e17]:
+      - generic [ref=e18]: 数据状态
+      - strong [ref=e19]: READY
+    - generic [ref=e20]:
+      - generic [ref=e21]: Run ID
+      - strong [ref=e22]: 2026-08-03T224931-630Z
+  - generic [ref=e23]:
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - text: SCN-010 · tx-fork
+        - heading "现价下方限价开多" [level=2] [ref=e26]
+        - paragraph [ref=e27]: 链上 30 项核对通过；已记录用户/ Keeper 四笔真实签名业务交易，并恢复 Mock Oracle 配置；执行详情已展开 122 项 Before / After / Δ / Expected 对账。
+      - generic [ref=e28]:
+        - generic [ref=e29]:
+          - text: 执行结果
+          - generic [ref=e30]: PASS
+        - generic [ref=e31]:
+          - text: 自动化覆盖
+          - generic [ref=e32]: PARTIAL
+        - generic [ref=e33]:
+          - text: Project / 环境
+          - strong [ref=e34]: tx-fork / aladdindao/test
+        - generic [ref=e35]:
+          - text: 模式
+          - strong [ref=e36]: tx-fork-private-key-controlled-oracle
+        - generic [ref=e37]:
+          - text: 保留 Fork
+          - strong [ref=e38]: 是
+      - paragraph [ref=e39]:
+        - strong [ref=e40]: 覆盖说明：
+        - text: 同一 Fork 内的 MockBTC 限价挂单、精确触发、真实用户/Keeper 签名及全平已验证；浏览器钱包点击签名尚未自动化。
+    - generic [ref=e41]:
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - heading "测试用例概述" [level=2] [ref=e44]
+          - paragraph [ref=e45]: 执行证据对应的用户场景与核心期望。
+        - link "查看 / 编辑完整测试用例" [ref=e46] [cursor=pointer]:
+          - /url: ./test-cases.html?scenario=SCN-010
+      - generic [ref=e47]:
+        - strong [ref=e49]: SCN-010
+        - generic [ref=e50]: S02
+        - generic [ref=e51]: P0
+        - generic [ref=e52]: 期望状态 passed
+      - generic [ref=e53]:
+        - term [ref=e54]: 场景
+        - definition [ref=e55]: 现价下方限价开多
+        - term [ref=e56]: 角色与意图
+        - definition [ref=e57]: 反转交易员在现价下方低吸开多
+        - term [ref=e58]: 核心期望
+        - definition [ref=e59]: 前端自动判断为限价低吸；未触发时无仓位/OI；到价后建多仓；sizeInTokens 按触发时价格换算
+        - term [ref=e60]: 测试数据
+        - definition [ref=e61]: 触发价 P-10%
+    - generic [ref=e62]:
+      - generic [ref=e63]:
+        - generic [ref=e64]:
+          - heading "交易员与 Keeper 交易链接" [level=2] [ref=e65]
+          - paragraph [ref=e66]: 链接打开当前保留的 Fork 交易证据；未配置未经验证的外部 Explorer URL。
+        - generic [ref=e67]: 4 笔
+      - table [ref=e69]:
+        - rowgroup [ref=e70]:
+          - row [ref=e71]:
+            - columnheader "执行方" [ref=e72]
+            - columnheader "动作" [ref=e73]
+            - columnheader "交易链接" [ref=e74]
+            - columnheader "区块" [ref=e75]
+            - columnheader "回执" [ref=e76]
+            - columnheader "签名" [ref=e77]
+        - rowgroup [ref=e78]:
+          - row [ref=e79]:
+            - cell "交易员" [ref=e80]
+            - cell "创建 LimitIncrease 限价开多订单" [ref=e81]
+            - cell [ref=e82]:
+              - link "0xa79d48f9…dc48a4e3" [ref=e83] [cursor=pointer]:
+                - /url: "#tx-0xa79d48f998eb2fc0d7d5dd57c6fb65c25ce54183e2f7ab992cd04f6adc48a4e3"
+              - link "JSON 回执" [ref=e84] [cursor=pointer]:
+                - /url: ./api/transactions/0xa79d48f998eb2fc0d7d5dd57c6fb65c25ce54183e2f7ab992cd04f6adc48a4e3
+            - cell "45002571" [ref=e85]
+            - cell "SUCCESS" [ref=e86]
+            - cell "✓ 非零 r/s" [ref=e88]
+          - row [ref=e89]:
+            - cell "Keeper" [ref=e90]
+            - cell "到达触发价后执行限价开多订单" [ref=e91]
+            - cell [ref=e92]:
+              - link "0xf4cd0726…4d172274" [ref=e93] [cursor=pointer]:
+                - /url: "#tx-0xf4cd072616edae3329ea13c5411638d4fa5d57d555b4eaff0c459cc94d172274"
+              - link "JSON 回执" [ref=e94] [cursor=pointer]:
+                - /url: ./api/transactions/0xf4cd072616edae3329ea13c5411638d4fa5d57d555b4eaff0c459cc94d172274
+            - cell "45002573" [ref=e95]
+            - cell "SUCCESS" [ref=e96]
+            - cell "✓ 非零 r/s" [ref=e98]
+          - row [ref=e99]:
+            - cell "交易员" [ref=e100]
+            - cell "创建市价全平订单" [ref=e101]
+            - cell [ref=e102]:
+              - link "0x1ce87b2a…4bca0b10" [ref=e103] [cursor=pointer]:
+                - /url: "#tx-0x1ce87b2ad0b380b99588324287d5d8f4f47246494be94edaa8a161f44bca0b10"
+              - link "JSON 回执" [ref=e104] [cursor=pointer]:
+                - /url: ./api/transactions/0x1ce87b2ad0b380b99588324287d5d8f4f47246494be94edaa8a161f44bca0b10
+            - cell "45002574" [ref=e105]
+            - cell "SUCCESS" [ref=e106]
+            - cell "✓ 非零 r/s" [ref=e108]
+          - row [ref=e109]:
+            - cell "Keeper" [ref=e110]
+            - cell "执行市价全平订单" [ref=e111]
+            - cell [ref=e112]:
+              - link "0x4453ffc0…e79ed4b6" [ref=e113] [cursor=pointer]:
+                - /url: "#tx-0x4453ffc01635dc48a82e0c22cb926b1fde15d8ebb1a40a5680e58da5e79ed4b6"
+              - link "JSON 回执" [ref=e114] [cursor=pointer]:
+                - /url: ./api/transactions/0x4453ffc01635dc48a82e0c22cb926b1fde15d8ebb1a40a5680e58da5e79ed4b6
+            - cell "45002575" [ref=e115]
+            - cell "SUCCESS" [ref=e116]
+            - cell "✓ 非零 r/s" [ref=e118]
+    - generic [ref=e119]:
+      - article [ref=e120]:
+        - generic [ref=e121]:
+          - generic [ref=e122]:
+            - text: 交易员
+            - heading "创建 LimitIncrease 限价开多订单" [level=3] [ref=e123]
+          - generic [ref=e124]: SUCCESS
+        - generic [ref=e125]:
+          - term [ref=e126]: Tx Hash
+          - definition [ref=e127]:
+            - code [ref=e128]: "0xa79d48f998eb2fc0d7d5dd57c6fb65c25ce54183e2f7ab992cd04f6adc48a4e3"
+            - link "打开 JSON 回执" [ref=e129] [cursor=pointer]:
+              - /url: ./api/transactions/0xa79d48f998eb2fc0d7d5dd57c6fb65c25ce54183e2f7ab992cd04f6adc48a4e3
+          - term [ref=e130]: From
+          - definition [ref=e131]:
+            - code [ref=e132]: "0xeeea43701a49f3d41ef694ddafe2ac74c7c8b119"
+          - term [ref=e133]: To
+          - definition [ref=e134]:
+            - code [ref=e135]: "0x5f9215dff5c01671e6e77469389d694ac4af2e97"
+          - term [ref=e136]: Block
+          - definition [ref=e137]: "45002571"
+          - term [ref=e138]: Type / Nonce
+          - definition [ref=e139]: 0x2 / 0x5b
+          - term [ref=e140]: Gas Used
+          - definition [ref=e141]: "0xc8396"
+          - term [ref=e142]: Order Key
+          - definition [ref=e143]:
+            - code [ref=e144]: "0x5c55c71a15928d5ed29aa3edad479cf497e179117a2183420874f814dc49c53a"
+          - term [ref=e145]: 签名核对
+          - definition [ref=e146]: PASS：r/s 均为非零，from 与预期角色一致
+      - article [ref=e147]:
+        - generic [ref=e148]:
+          - generic [ref=e149]:
+            - text: Keeper
+            - heading "到达触发价后执行限价开多订单" [level=3] [ref=e150]
+          - generic [ref=e151]: SUCCESS
+        - generic [ref=e152]:
+          - term [ref=e153]: Tx Hash
+          - definition [ref=e154]:
+            - code [ref=e155]: "0xf4cd072616edae3329ea13c5411638d4fa5d57d555b4eaff0c459cc94d172274"
+            - link "打开 JSON 回执" [ref=e156] [cursor=pointer]:
+              - /url: ./api/transactions/0xf4cd072616edae3329ea13c5411638d4fa5d57d555b4eaff0c459cc94d172274
+          - term [ref=e157]: From
+          - definition [ref=e158]:
+            - code [ref=e159]: "0x542fe841228416f6a3d65eb534a90ebc5cc36354"
+          - term [ref=e160]: To
+          - definition [ref=e161]:
+            - code [ref=e162]: "0x84162e52063504a701cda5e931d2fd174c10648d"
+          - term [ref=e163]: Block
+          - definition [ref=e164]: "45002573"
+          - term [ref=e165]: Type / Nonce
+          - definition [ref=e166]: 0x2 / 0x5
+          - term [ref=e167]: Gas Used
+          - definition [ref=e168]: "0x1d5d9e"
+          - term [ref=e169]: Order Key
+          - definition [ref=e170]:
+            - code [ref=e171]: "0x5c55c71a15928d5ed29aa3edad479cf497e179117a2183420874f814dc49c53a"
+          - term [ref=e172]: 签名核对
+          - definition [ref=e173]: PASS：r/s 均为非零，from 与预期角色一致
+      - article [ref=e174]:
+        - generic [ref=e175]:
+          - generic [ref=e176]:
+            - text: 交易员
+            - heading "创建市价全平订单" [level=3] [ref=e177]
+          - generic [ref=e178]: SUCCESS
+        - generic [ref=e179]:
+          - term [ref=e180]: Tx Hash
+          - definition [ref=e181]:
+            - code [ref=e182]: "0x1ce87b2ad0b380b99588324287d5d8f4f47246494be94edaa8a161f44bca0b10"
+            - link "打开 JSON 回执" [ref=e183] [cursor=pointer]:
+              - /url: ./api/transactions/0x1ce87b2ad0b380b99588324287d5d8f4f47246494be94edaa8a161f44bca0b10
+          - term [ref=e184]: From
+          - definition [ref=e185]:
+            - code [ref=e186]: "0xeeea43701a49f3d41ef694ddafe2ac74c7c8b119"
+          - term [ref=e187]: To
+          - definition [ref=e188]:
+            - code [ref=e189]: "0x5f9215dff5c01671e6e77469389d694ac4af2e97"
+          - term [ref=e190]: Block
+          - definition [ref=e191]: "45002574"
+          - term [ref=e192]: Type / Nonce
+          - definition [ref=e193]: 0x2 / 0x5c
+          - term [ref=e194]: Gas Used
+          - definition [ref=e195]: "0xb038c"
+          - term [ref=e196]: Order Key
+          - definition [ref=e197]:
+            - code [ref=e198]: "0xb7192fedca4d9388690ba7fe42e4229d27475c089ded93b27bbdd0904c3dc2ea"
+          - term [ref=e199]: 签名核对
+          - definition [ref=e200]: PASS：r/s 均为非零，from 与预期角色一致
+      - article [ref=e201]:
+        - generic [ref=e202]:
+          - generic [ref=e203]:
+            - text: Keeper
+            - heading "执行市价全平订单" [level=3] [ref=e204]
+          - generic [ref=e205]: SUCCESS
+        - generic [ref=e206]:
+          - term [ref=e207]: Tx Hash
+          - definition [ref=e208]:
+            - code [ref=e209]: "0x4453ffc01635dc48a82e0c22cb926b1fde15d8ebb1a40a5680e58da5e79ed4b6"
+            - link "打开 JSON 回执" [ref=e210] [cursor=pointer]:
+              - /url: ./api/transactions/0x4453ffc01635dc48a82e0c22cb926b1fde15d8ebb1a40a5680e58da5e79ed4b6
+          - term [ref=e211]: From
+          - definition [ref=e212]:
+            - code [ref=e213]: "0x542fe841228416f6a3d65eb534a90ebc5cc36354"
+          - term [ref=e214]: To
+          - definition [ref=e215]:
+            - code [ref=e216]: "0x84162e52063504a701cda5e931d2fd174c10648d"
+          - term [ref=e217]: Block
+          - definition [ref=e218]: "45002575"
+          - term [ref=e219]: Type / Nonce
+          - definition [ref=e220]: 0x2 / 0x6
+          - term [ref=e221]: Gas Used
+          - definition [ref=e222]: "0x183771"
+          - term [ref=e223]: Order Key
+          - definition [ref=e224]:
+            - code [ref=e225]: "0xb7192fedca4d9388690ba7fe42e4229d27475c089ded93b27bbdd0904c3dc2ea"
+          - term [ref=e226]: 签名核对
+          - definition [ref=e227]: PASS：r/s 均为非零，from 与预期角色一致
+    - generic [ref=e228]:
+      - generic [ref=e229]:
+        - generic [ref=e230]:
+          - heading "核对数据明细" [level=2] [ref=e231]
+          - paragraph [ref=e232]: 按交易阶段列出资金账户、仓位、Fee、Funding、Grace、OI、Skew 与 Spread；Before/After 来自链上区块快照，Δ 显示变化量，Expected 按合约事件、部署参数及公式复算。
+        - strong [ref=e233]: 15 / 15 PASS（全部 122 项）
+      - generic [ref=e234]:
+        - generic [ref=e235]: 快速筛选
+        - generic [ref=e236]:
+          - button [ref=e237] [cursor=pointer]:
+            - text: 全部
+            - strong [ref=e238]: "122"
+          - button [ref=e239] [cursor=pointer]:
+            - text: 资金 / Vault
+            - strong [ref=e240]: "15"
+          - button [ref=e241] [cursor=pointer]:
+            - text: 仓位
+            - strong [ref=e242]: "13"
+          - button [ref=e243] [cursor=pointer]:
+            - text: Fee
+            - strong [ref=e244]: "21"
+          - button [ref=e245] [cursor=pointer]:
+            - text: Funding
+            - strong [ref=e246]: "19"
+          - button [active] [ref=e247] [cursor=pointer]:
+            - text: Grace
+            - strong [ref=e248]: "15"
+          - button [ref=e249] [cursor=pointer]:
+            - text: OI / Skew / Spread
+            - strong [ref=e250]: "29"
+          - button [ref=e251] [cursor=pointer]:
+            - text: PnL
+            - strong [ref=e252]: "2"
+          - button [ref=e253] [cursor=pointer]:
+            - text: 状态 / 成交
+            - strong [ref=e254]: "8"
+      - generic [ref=e255]:
+        - generic [ref=e256]: 交易阶段 / 明细分组
+        - generic [ref=e257]:
+          - button [ref=e258] [cursor=pointer]:
+            - text: 订单参数
+            - strong [ref=e259]: "2"
+          - button [ref=e260] [cursor=pointer]:
+            - text: 触发前状态
+            - strong [ref=e261]: "2"
+          - button [ref=e262] [cursor=pointer]:
+            - text: 触发执行
+            - strong [ref=e263]: "3"
+          - button [ref=e264] [cursor=pointer]:
+            - text: 成交价格
+            - strong [ref=e265]: "2"
+          - button [ref=e266] [cursor=pointer]:
+            - text: 平仓状态
+            - strong [ref=e267]: "3"
+          - button [ref=e268] [cursor=pointer]:
+            - text: 限价单创建 · 资金账户
+            - strong [ref=e269]: "8"
+          - button [ref=e270] [cursor=pointer]:
+            - text: 限价单创建 · 市场 / OI
+            - strong [ref=e271]: "5"
+          - button [ref=e272] [cursor=pointer]:
+            - text: 限价单创建 · 仓位原始字段
+            - strong [ref=e273]: "5"
+          - button [ref=e274] [cursor=pointer]:
+            - text: 限价单创建 · Grace
+            - strong [ref=e275]: "5"
+          - button [ref=e276] [cursor=pointer]:
+            - text: 限价触发开仓 · 资金账户
+            - strong [ref=e277]: "8"
+          - button [ref=e278] [cursor=pointer]:
+            - text: 限价触发开仓 · 市场 / OI
+            - strong [ref=e279]: "5"
+          - button [ref=e280] [cursor=pointer]:
+            - text: 限价触发开仓 · 仓位原始字段
+            - strong [ref=e281]: "5"
+          - button [ref=e282] [cursor=pointer]:
+            - text: 限价触发开仓 · Grace
+            - strong [ref=e283]: "5"
+          - button [ref=e284] [cursor=pointer]:
+            - text: 限价触发开仓 · OI / Skew / Spread
+            - strong [ref=e285]: "7"
+          - button [ref=e286] [cursor=pointer]:
+            - text: 限价触发开仓 · Fee
+            - strong [ref=e287]: "6"
+          - button [ref=e288] [cursor=pointer]:
+            - text: 限价触发开仓 · Funding
+            - strong [ref=e289]: "3"
+          - button [ref=e290] [cursor=pointer]:
+            - text: 全平执行 · 资金账户
+            - strong [ref=e291]: "8"
+          - button [ref=e292] [cursor=pointer]:
+            - text: 全平执行 · 市场 / OI
+            - strong [ref=e293]: "5"
+          - button [ref=e294] [cursor=pointer]:
+            - text: 全平执行 · 仓位原始字段
+            - strong [ref=e295]: "5"
+          - button [ref=e296] [cursor=pointer]:
+            - text: 全平执行 · Grace
+            - strong [ref=e297]: "5"
+          - button [ref=e298] [cursor=pointer]:
+            - text: 全平执行 · OI / Skew / Spread
+            - strong [ref=e299]: "7"
+          - button [ref=e300] [cursor=pointer]:
+            - text: 全平执行 · PnL
+            - strong [ref=e301]: "2"
+          - button [ref=e302] [cursor=pointer]:
+            - text: 全平执行 · Fee
+            - strong [ref=e303]: "6"
+          - button [ref=e304] [cursor=pointer]:
+            - text: 全平执行 · Funding
+            - strong [ref=e305]: "3"
+          - button [ref=e306] [cursor=pointer]:
+            - text: 全流程 · Funding 市场状态
+            - strong [ref=e307]: "4"
+          - button [ref=e308] [cursor=pointer]:
+            - text: 资金账本
+            - strong [ref=e309]: "3"
+      - table [ref=e311]:
+        - rowgroup [ref=e312]:
+          - row [ref=e313]:
+            - columnheader "分组" [ref=e314]
+            - columnheader "核对字段" [ref=e315]
+            - columnheader "结果" [ref=e316]
+            - columnheader "Before" [ref=e317]
+            - columnheader "After" [ref=e318]
+            - columnheader "Δ (After − Before)" [ref=e319]
+            - columnheader "Expected" [ref=e320]
+            - columnheader "公式与依据" [ref=e321]
+        - rowgroup [ref=e322]:
+          - row [ref=e786]:
+            - cell "限价单创建 · Grace" [ref=e787]
+            - cell [ref=e788]:
+              - strong [ref=e789]: Grace Start（保护期起点）
+            - cell "PASS" [ref=e790]
+            - cell "0（未设置）" [ref=e792]
+            - cell "0（未设置）" [ref=e793]
+            - cell "0 raw (0 seconds)" [ref=e794]
+            - cell "0（未设置）" [ref=e795]
+            - cell "仓位不存在 / 已删除：graceStart = 0 四、清算保护卡片 / 4.1 保护期推导 · Position 首次创建时写入 Grace 起点 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv；链上阶段快照：src/scenarios/scn-010-runner.ts" [ref=e796]:
+              - generic [ref=e797]: 仓位不存在 / 已删除：graceStart = 0
+              - generic [ref=e798]:
+                - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e799] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · Position 首次创建时写入 Grace 起点
+                - code [ref=e800]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e801]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv；链上阶段快照：src/scenarios/scn-010-runner.ts
+          - row [ref=e802]:
+            - cell "限价单创建 · Grace" [ref=e803]
+            - cell [ref=e804]:
+              - strong [ref=e805]: Grace End（保护期终点）
+            - cell "PASS" [ref=e806]
+            - cell "0（未设置）" [ref=e808]
+            - cell "0（未设置）" [ref=e809]
+            - cell "0 raw (0 seconds)" [ref=e810]
+            - cell "0（未设置）" [ref=e811]
+            - cell "仓位不存在 / 已删除：graceEnd = 0 四、清算保护卡片 / 4.1 保护期推导 · Grace 终点按市场基础时长与推荐层级乘数复算 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv" [ref=e812]:
+              - generic [ref=e813]: 仓位不存在 / 已删除：graceEnd = 0
+              - generic [ref=e814]:
+                - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e815] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · Grace 终点按市场基础时长与推荐层级乘数复算
+                - code [ref=e816]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e817]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv
+          - row [ref=e818]:
+            - cell "限价单创建 · Grace" [ref=e819]
+            - cell [ref=e820]:
+              - strong [ref=e821]: Grace Duration（有效保护时长）
+            - cell "PASS" [ref=e822]
+            - cell "0 seconds" [ref=e824]
+            - cell "0 seconds" [ref=e825]
+            - cell "0 seconds" [ref=e826]
+            - cell "0 seconds" [ref=e827]
+            - cell "graceDuration = max(graceEnd − graceStart, 0) = gracePeriodBase × tierMultiplier / 1e18 四、清算保护卡片 / 4.1 保护期推导 · 保护窗口长度 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv" [ref=e828]:
+              - generic [ref=e829]: graceDuration = max(graceEnd − graceStart, 0) = gracePeriodBase × tierMultiplier / 1e18
+              - generic [ref=e830]:
+                - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e831] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · 保护窗口长度
+                - code [ref=e832]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e833]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv
+          - row [ref=e834]:
+            - cell "限价单创建 · Grace" [ref=e835]
+            - cell [ref=e836]:
+              - strong [ref=e837]: Grace Active（执行时是否受保护）
+            - cell "PASS" [ref=e838]
+            - cell "false" [ref=e840]
+            - cell "false" [ref=e841]
+            - cell "false → false" [ref=e842]
+            - cell "false" [ref=e843]
+            - cell "graceActive = position.exists && graceStart > 0 && graceEnd > evaluationTimestamp 四、清算保护卡片 / 4.2 5 状态机 · 依据仓位与区块时间实时推导保护状态 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md evaluationTimestamp=1785796814 (2026-08-03T22:40:14.000Z)；Keeper 清算条件使用 graceEnd > block.timestamp。" [ref=e844]:
+              - generic [ref=e845]: graceActive = position.exists && graceStart > 0 && graceEnd > evaluationTimestamp
+              - generic [ref=e846]:
+                - link "四、清算保护卡片 / 4.2 5 状态机" [ref=e847] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · 依据仓位与区块时间实时推导保护状态
+                - code [ref=e848]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e849]: evaluationTimestamp=1785796814 (2026-08-03T22:40:14.000Z)；Keeper 清算条件使用 graceEnd > block.timestamp。
+          - row [ref=e850]:
+            - cell "限价单创建 · Grace" [ref=e851]
+            - cell [ref=e852]:
+              - strong [ref=e853]: Grace Remaining（执行时剩余保护秒数）
+            - cell "PASS" [ref=e854]
+            - cell "0 seconds" [ref=e856]
+            - cell "0 seconds" [ref=e857]
+            - cell "0 seconds" [ref=e858]
+            - cell "0 seconds" [ref=e859]
+            - 'cell "graceRemaining = position.exists ? max(graceEnd − evaluationTimestamp, 0) : 0 四、清算保护卡片 / 4.1 保护期推导 · 页面倒计时与合约保护窗口 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md evaluationTimestamp=1785796814 (2026-08-03T22:40:14.000Z)；交易员主动平仓不受 Grace 限制，仓位删除后 Grace 字段清零。" [ref=e860]':
+              - generic [ref=e861]: "graceRemaining = position.exists ? max(graceEnd − evaluationTimestamp, 0) : 0"
+              - generic [ref=e862]:
+                - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e863] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · 页面倒计时与合约保护窗口
+                - code [ref=e864]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e865]: evaluationTimestamp=1785796814 (2026-08-03T22:40:14.000Z)；交易员主动平仓不受 Grace 限制，仓位删除后 Grace 字段清零。
+          - row [ref=e1149]:
+            - cell "限价触发开仓 · Grace" [ref=e1150]
+            - cell [ref=e1151]:
+              - strong [ref=e1152]: Grace Start（保护期起点）
+            - cell "PASS" [ref=e1153]
+            - cell "0（未设置）" [ref=e1155]
+            - cell "1785796826 (2026-08-03T22:40:26.000Z)" [ref=e1156]
+            - cell "+1785796826 raw (1785796826 seconds)" [ref=e1157]
+            - cell "1785796826 (2026-08-03T22:40:26.000Z)" [ref=e1158]
+            - cell "首次建立仓位：graceStart = PositionIncrease.increasedAtTime = block.timestamp 四、清算保护卡片 / 4.1 保护期推导 · Position 首次创建时写入 Grace 起点 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv；链上阶段快照：src/scenarios/scn-010-runner.ts" [ref=e1159]:
+              - generic [ref=e1160]: 首次建立仓位：graceStart = PositionIncrease.increasedAtTime = block.timestamp
+              - generic [ref=e1161]:
+                - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e1162] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · Position 首次创建时写入 Grace 起点
+                - code [ref=e1163]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e1164]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv；链上阶段快照：src/scenarios/scn-010-runner.ts
+          - row [ref=e1165]:
+            - cell "限价触发开仓 · Grace" [ref=e1166]
+            - cell [ref=e1167]:
+              - strong [ref=e1168]: Grace End（保护期终点）
+            - cell "PASS" [ref=e1169]
+            - cell "0（未设置）" [ref=e1171]
+            - cell "1785797726 (2026-08-03T22:55:26.000Z)" [ref=e1172]
+            - cell "+1785797726 raw (1785797726 seconds)" [ref=e1173]
+            - cell "1785797726 (2026-08-03T22:55:26.000Z)" [ref=e1174]
+            - cell "graceEnd = graceStart + gracePeriodBase × tierMultiplier / 1e18 四、清算保护卡片 / 4.1 保护期推导 · Grace 终点按市场基础时长与推荐层级乘数复算 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv" [ref=e1175]:
+              - generic [ref=e1176]: graceEnd = graceStart + gracePeriodBase × tierMultiplier / 1e18
+              - generic [ref=e1177]:
+                - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e1178] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · Grace 终点按市场基础时长与推荐层级乘数复算
+                - code [ref=e1179]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e1180]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv
+          - row [ref=e1181]:
+            - cell "限价触发开仓 · Grace" [ref=e1182]
+            - cell [ref=e1183]:
+              - strong [ref=e1184]: Grace Duration（有效保护时长）
+            - cell "PASS" [ref=e1185]
+            - cell "0 seconds" [ref=e1187]
+            - cell "900 seconds" [ref=e1188]
+            - cell "900 seconds" [ref=e1189]
+            - cell "900 seconds" [ref=e1190]
+            - cell "graceDuration = max(graceEnd − graceStart, 0) = gracePeriodBase × tierMultiplier / 1e18 四、清算保护卡片 / 4.1 保护期推导 · 保护窗口长度 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv" [ref=e1191]:
+              - generic [ref=e1192]: graceDuration = max(graceEnd − graceStart, 0) = gracePeriodBase × tierMultiplier / 1e18
+              - generic [ref=e1193]:
+                - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e1194] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · 保护窗口长度
+                - code [ref=e1195]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e1196]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv
+          - row [ref=e1197]:
+            - cell "限价触发开仓 · Grace" [ref=e1198]
+            - cell [ref=e1199]:
+              - strong [ref=e1200]: Grace Active（执行时是否受保护）
+            - cell "PASS" [ref=e1201]
+            - cell "false" [ref=e1203]
+            - cell "true" [ref=e1204]
+            - cell "false → true" [ref=e1205]
+            - cell "true" [ref=e1206]
+            - cell "graceActive = position.exists && graceStart > 0 && graceEnd > evaluationTimestamp 四、清算保护卡片 / 4.2 5 状态机 · 依据仓位与区块时间实时推导保护状态 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md evaluationTimestamp=1785796826 (2026-08-03T22:40:26.000Z)；Keeper 清算条件使用 graceEnd > block.timestamp。" [ref=e1207]:
+              - generic [ref=e1208]: graceActive = position.exists && graceStart > 0 && graceEnd > evaluationTimestamp
+              - generic [ref=e1209]:
+                - link "四、清算保护卡片 / 4.2 5 状态机" [ref=e1210] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · 依据仓位与区块时间实时推导保护状态
+                - code [ref=e1211]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e1212]: evaluationTimestamp=1785796826 (2026-08-03T22:40:26.000Z)；Keeper 清算条件使用 graceEnd > block.timestamp。
+          - row [ref=e1213]:
+            - cell "限价触发开仓 · Grace" [ref=e1214]
+            - cell [ref=e1215]:
+              - strong [ref=e1216]: Grace Remaining（执行时剩余保护秒数）
+            - cell "PASS" [ref=e1217]
+            - cell "0 seconds" [ref=e1219]
+            - cell "900 seconds" [ref=e1220]
+            - cell "900 seconds" [ref=e1221]
+            - cell "900 seconds" [ref=e1222]
+            - 'cell "graceRemaining = position.exists ? max(graceEnd − evaluationTimestamp, 0) : 0 四、清算保护卡片 / 4.1 保护期推导 · 页面倒计时与合约保护窗口 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md evaluationTimestamp=1785796826 (2026-08-03T22:40:26.000Z)；交易员主动平仓不受 Grace 限制，仓位删除后 Grace 字段清零。" [ref=e1223]':
+              - generic [ref=e1224]: "graceRemaining = position.exists ? max(graceEnd − evaluationTimestamp, 0) : 0"
+              - generic [ref=e1225]:
+                - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e1226] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · 页面倒计时与合约保护窗口
+                - code [ref=e1227]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e1228]: evaluationTimestamp=1785796826 (2026-08-03T22:40:26.000Z)；交易员主动平仓不受 Grace 限制，仓位删除后 Grace 字段清零。
+          - row [ref=e1758]:
+            - cell "全平执行 · Grace" [ref=e1759]
+            - cell [ref=e1760]:
+              - strong [ref=e1761]: Grace Start（保护期起点）
+            - cell "PASS" [ref=e1762]
+            - cell "1785796826 (2026-08-03T22:40:26.000Z)" [ref=e1764]
+            - cell "0（未设置）" [ref=e1765]
+            - cell "-1785796826 raw (-1785796826 seconds)" [ref=e1766]
+            - cell "0（未设置）" [ref=e1767]
+            - cell "仓位不存在 / 已删除：graceStart = 0 四、清算保护卡片 / 4.1 保护期推导 · Position 首次创建时写入 Grace 起点 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv；链上阶段快照：src/scenarios/scn-010-runner.ts" [ref=e1768]:
+              - generic [ref=e1769]: 仓位不存在 / 已删除：graceStart = 0
+              - generic [ref=e1770]:
+                - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e1771] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · Position 首次创建时写入 Grace 起点
+                - code [ref=e1772]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e1773]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv；链上阶段快照：src/scenarios/scn-010-runner.ts
+          - row [ref=e1774]:
+            - cell "全平执行 · Grace" [ref=e1775]
+            - cell [ref=e1776]:
+              - strong [ref=e1777]: Grace End（保护期终点）
+            - cell "PASS" [ref=e1778]
+            - cell "1785797726 (2026-08-03T22:55:26.000Z)" [ref=e1780]
+            - cell "0（未设置）" [ref=e1781]
+            - cell "-1785797726 raw (-1785797726 seconds)" [ref=e1782]
+            - cell "0（未设置）" [ref=e1783]
+            - cell "仓位不存在 / 已删除：graceEnd = 0 四、清算保护卡片 / 4.1 保护期推导 · Grace 终点按市场基础时长与推荐层级乘数复算 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv" [ref=e1784]:
+              - generic [ref=e1785]: 仓位不存在 / 已删除：graceEnd = 0
+              - generic [ref=e1786]:
+                - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e1787] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · Grace 终点按市场基础时长与推荐层级乘数复算
+                - code [ref=e1788]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e1789]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv
+          - row [ref=e1790]:
+            - cell "全平执行 · Grace" [ref=e1791]
+            - cell [ref=e1792]:
+              - strong [ref=e1793]: Grace Duration（有效保护时长）
+            - cell "PASS" [ref=e1794]
+            - cell "900 seconds" [ref=e1796]
+            - cell "0 seconds" [ref=e1797]
+            - cell "-900 seconds" [ref=e1798]
+            - cell "0 seconds" [ref=e1799]
+            - cell "graceDuration = max(graceEnd − graceStart, 0) = gracePeriodBase × tierMultiplier / 1e18 四、清算保护卡片 / 4.1 保护期推导 · 保护窗口长度 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv" [ref=e1800]:
+              - generic [ref=e1801]: graceDuration = max(graceEnd − graceStart, 0) = gracePeriodBase × tierMultiplier / 1e18
+              - generic [ref=e1802]:
+                - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e1803] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · 保护窗口长度
+                - code [ref=e1804]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e1805]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv
+          - row [ref=e1806]:
+            - cell "全平执行 · Grace" [ref=e1807]
+            - cell [ref=e1808]:
+              - strong [ref=e1809]: Grace Active（执行时是否受保护）
+            - cell "PASS" [ref=e1810]
+            - cell "true" [ref=e1812]
+            - cell "false" [ref=e1813]
+            - cell "true → false" [ref=e1814]
+            - cell "false" [ref=e1815]
+            - cell "graceActive = position.exists && graceStart > 0 && graceEnd > evaluationTimestamp 四、清算保护卡片 / 4.2 5 状态机 · 依据仓位与区块时间实时推导保护状态 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md evaluationTimestamp=1785796846 (2026-08-03T22:40:46.000Z)；Keeper 清算条件使用 graceEnd > block.timestamp。" [ref=e1816]:
+              - generic [ref=e1817]: graceActive = position.exists && graceStart > 0 && graceEnd > evaluationTimestamp
+              - generic [ref=e1818]:
+                - link "四、清算保护卡片 / 4.2 5 状态机" [ref=e1819] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · 依据仓位与区块时间实时推导保护状态
+                - code [ref=e1820]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e1821]: evaluationTimestamp=1785796846 (2026-08-03T22:40:46.000Z)；Keeper 清算条件使用 graceEnd > block.timestamp。
+          - row [ref=e1822]:
+            - cell "全平执行 · Grace" [ref=e1823]
+            - cell [ref=e1824]:
+              - strong [ref=e1825]: Grace Remaining（执行时剩余保护秒数）
+            - cell "PASS" [ref=e1826]
+            - cell "880 seconds" [ref=e1828]
+            - cell "0 seconds" [ref=e1829]
+            - cell "-880 seconds" [ref=e1830]
+            - cell "0 seconds" [ref=e1831]
+            - 'cell "graceRemaining = position.exists ? max(graceEnd − evaluationTimestamp, 0) : 0 四、清算保护卡片 / 4.1 保护期推导 · 页面倒计时与合约保护窗口 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md evaluationTimestamp=1785796846 (2026-08-03T22:40:46.000Z)；交易员主动平仓不受 Grace 限制，仓位删除后 Grace 字段清零。" [ref=e1832]':
+              - generic [ref=e1833]: "graceRemaining = position.exists ? max(graceEnd − evaluationTimestamp, 0) : 0"
+              - generic [ref=e1834]:
+                - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e1835] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · 页面倒计时与合约保护窗口
+                - code [ref=e1836]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e1837]: evaluationTimestamp=1785796846 (2026-08-03T22:40:46.000Z)；交易员主动平仓不受 Grace 限制，仓位删除后 Grace 字段清零。
+    - generic [ref=e2221]:
+      - heading "证据来源" [level=2] [ref=e2222]
+      - generic [ref=e2223]:
+        - term [ref=e2224]: 执行证据
+        - definition [ref=e2225]:
+          - code [ref=e2226]: artifacts/latest/attachments/SCN-010-tx-fork-r0-1-scn-010-evidence.json
+        - term [ref=e2227]: 公式总表
+        - definition [ref=e2228]:
+          - link "合约核心公式页面" [ref=e2229] [cursor=pointer]:
+            - /url: ./formulas.html
+          - code [ref=e2230]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md

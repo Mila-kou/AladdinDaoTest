@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "name": "tx-fork-260729",
+  "chainId": 84532,
+  "deploymentManifest": "./config/deployments/base-sepolia-v0.3.1-260729.json",
+  "accounts": {
+    "trader": "0xEEeA43701a49F3d41EF694DdAFe2Ac74c7c8B119",
+    "keeper": "0x542fe841228416F6a3D65eb534a90Ebc5cc36354",
+    "admin": "0xf82cf35c5c0019861c2cdc65041c8ac32970d403"
+  },
+  "signing": {
+    "mode": "impersonation",
+    "privateKeysRequired": false,
+    "reason": "Tenderly 私有 fork 支持 eth_sendTransaction 地址模拟；私钥不落盘、不进报告"
+  },
+  "stateIsolation": {
+    "serial": true,
+    "resetMode": "evm_snapshot",
+    "snapshotScope": "per test run",
+    "runtimeStateSync": false,
+    "keeperResetRule": "evm_revert 后必须清理本 chainId 的 keeper Redis 游标并重启 producer/worker"
+  },
+  "funding": {
+    "nativeToken": "ETH",
+    "tradingToken": "MockUSDC",
+    "tradingTokenAddress": "0xbf4D9B318689AB928DB9eE4Cdc840c065575Eb89",
+    "tradingTokenDecimals": 6,
+    "targets": {
+      "traderEth": "10",
+      "keeperEth": "10",
+      "adminEth": "10",
+      "traderUsdc": "1000000",
+      "minimumLpUsdc": "500000"
+    }
+  },
+  "keepers": {
+    "transactionKeeper": {
+      "address": "0x542fe841228416F6a3D65eb534a90Ebc5cc36354",
+      "requiredRole": "ORDER_KEEPER",
+      "requiredFor": ["SCN-009", "SCN-010"]
+    },
+    "liquidationKeeper": {
+      "address": "0x542fe841228416F6a3D65eb534a90Ebc5cc36354",
+      "requiredRole": "LIQUIDATION_KEEPER",
+      "requiredFor": ["liquidation scenarios"]
+    },
+    "runtime": {
+      "source": "../Test/project/fx100/tool/keeper-runner/.env",
+      "requiredExternalServices": ["Chainlink Data Streams testnet", "Redis"]
+    }
+  },
+  "mockDecision": {
+    "SCN-009": {
+      "mockToken": false,
+      "mockOracle": false,
+      "basis": "首轮验证真实市场的市价开仓/全平和证据链；涨/平/跌三组需后续转 oracle-fork"
+    },
+    "SCN-010": {
+      "mockToken": true,
+      "mockOracle": true,
+      "basis": "在同一 tx-fork 复用独立 MockBTC 市场 #1 与 MockUSDC，仅临时改指两者的 MockPriceFeed，证明触发前无仓位、到价后执行；结束后恢复原 Oracle 配置"
+    }
+  }
+}

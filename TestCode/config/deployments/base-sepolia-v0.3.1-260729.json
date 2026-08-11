@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "name": "base-sepolia-v0.3.1-260729",
+  "release": "release-v0.3.1@d9a7fd2f23705c0bcfe44eaa2f40d9d5c170aaa0",
+  "chainId": 84532,
+  "forkBlockNumber": "45002553",
+  "contracts": {
+    "exchangeRouter": "0x5f9215DFF5C01671E6E77469389D694Ac4AF2E97",
+    "reader": "0xB81D25f85ee2fE7D1950153dd5D1aAd47B78a761",
+    "dataStore": "0x606D72Ab0C0fDcce607d04B1645CE2D528B88014",
+    "roleStore": "0x606D72Ab0C0fDcce607d04B1645CE2D528B88014",
+    "config": "0xa82A9b2b57A3F3767715F8C1736C4177305CDEd7",
+    "oracle": "0x83719dDb9d810B87cC9cB17A29d937dF0761497d",
+    "orderHandler": "0x84162e52063504a701cDA5E931D2Fd174c10648d",
+    "liquidationHandler": "0x40a99db1bA2F9c73c2beeB11e3e4E1635C8C4139",
+    "adlHandler": "0xB4dc22119Da96D6e0794A499282cFC0C23DFAb18",
+    "eventEmitter": "0x8f00eBF8f571557685eEeAA2807Ecac396c3b380",
+    "positionVault": "0xffdFc6611901f98cD45f9F1191dE58b21AEc188A"
+  },
+  "roles": {
+    "controller": "0xf82cf35c5c0019861c2cdc65041c8ac32970d403",
+    "configKeeper": "0xf82cf35c5c0019861c2cdc65041c8ac32970d403",
+    "orderKeeper": "0x542fe841228416F6a3D65eb534a90Ebc5cc36354",
+    "liquidationKeeper": "0x542fe841228416F6a3D65eb534a90Ebc5cc36354",
+    "adlKeeper": "0x542fe841228416F6a3D65eb534a90Ebc5cc36354"
+  },
+  "markets": [
+    {
+      "name": "MockBTC",
+      "symbol": "MOCK-BTC-USD",
+      "marketIndex": "1",
+      "indexToken": "0x0555e30da8f98308edb960aa94c0db47230d2b9c",
+      "collateralToken": "0xbf4D9B318689AB928DB9eE4Cdc840c065575Eb89",
+      "vault": "0xD584270bbC25E0948103da1e1865AA523a1BAe6c",
+      "indexTokenDecimals": 8,
+      "collateralTokenDecimals": 6,
+      "synthetic": true
+    },
+    {
+      "name": "ETH",
+      "symbol": "ETH-USD",
+      "marketIndex": "2",
+      "indexToken": "0x4200000000000000000000000000000000000006",
+      "collateralToken": "0xbf4D9B318689AB928DB9eE4Cdc840c065575Eb89",
+      "vault": "0xD584270bbC25E0948103da1e1865AA523a1BAe6c",
+      "indexTokenDecimals": 18,
+      "collateralTokenDecimals": 6,
+      "synthetic": false
+    }
+  ],
+  "additionalContracts": {
+    "router": "0xc91b60eEBD520Ade021B47b9A75b3e0D843A48C0",
+    "orderVault": "0xA2c327927b0e447969C67c2840B23cB8038e4b05",
+    "lpVault": "0xD584270bbC25E0948103da1e1865AA523a1BAe6c",
+    "referralStorage": "0xe86d51a8840EC52cd78BC9d8F93B3734c8099005",
+    "mockUsdc": "0xbf4D9B318689AB928DB9eE4Cdc840c065575Eb89",
+    "mockUsdcOracle": "0x68B0658bEBD06f2e0f46b55C44eFFB3ef797EEa2",
+    "keeperReader": "0x50387c13554fa20C8D31E4395CCA1BA1Edf10efF",
+    "marketFactory": "0xA6B8C3a1d74EF60E48b77624A409e35d1De898e5",
+    "chainlinkPriceFeedProvider": "0x38b98179F18344Ec41696315F6FDf9cA9b0d9D16",
+    "chainlinkDataStreamProvider": "0x8A25A62ff0aF9122Dbd579dec181426Ef8cb17b8",
+    "wnt": "0x4200000000000000000000000000000000000006"
+  },
+  "source": {
+    "deploymentDirectory": "../Github/fx100-contracts@release-v0.3.1/base_sepolia_v0.3.1_260729",
+    "addressesFile": "../Github/fx100-contracts@release-v0.3.1/base_sepolia_v0.3.1_260729/deployed_addresses.json",
+    "abiDirectory": "../Github/fx100-contracts@release-v0.3.1/base_sepolia_v0.3.1_260729/abi",
+    "parametersFile": "../TestCase/project/fx100/config/base_sepolia_v0.3.1_260729.params.json",
+    "rolesFile": "../TestCase/project/fx100/config/base_sepolia_v0.3.1_260729.roles.json",
+    "tokensFile": "../TestCase/project/fx100/config/base_sepolia_v0.3.1_260729.tokens.json"
+  },
+  "abiFiles": {
+    "ExchangeRouter": "ExchangeRouter.json",
+    "Reader": "Reader.json",
+    "DataStore": "DataStore.json",
+    "ERC20": "ERC20.json",
+    "LPVault": "LPVault.json",
+    "EventEmitter": "EventEmitter.json",
+    "Oracle": "Oracle.json",
+    "OrderHandler": "OrderHandler.json"
+  },
+  "initialization": {
+    "nativeEth": {
+      "trader": "10",
+      "keeper": "10",
+      "admin": "10"
+    },
+    "traderUsdc": "1000000",
+    "minimumLpUsdc": "500000",
+    "routerApproval": "max",
+    "keeperRoles": ["ORDER_KEEPER", "ADL_KEEPER", "LIQUIDATION_KEEPER"]
+  }
+}

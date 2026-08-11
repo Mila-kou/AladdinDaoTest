@@ -1,0 +1,2412 @@
+- main [ref=e2]:
+  - navigation "看板页面" [ref=e3]:
+    - link "测试结果" [ref=e4] [cursor=pointer]:
+      - /url: ./dashboard.html
+    - link "执行详情" [ref=e5] [cursor=pointer]:
+      - /url: ./executions.html
+    - link "测试用例" [ref=e6] [cursor=pointer]:
+      - /url: ./test-cases.html
+    - link "合约参数" [ref=e7] [cursor=pointer]:
+      - /url: ./parameters.html
+    - link "合约核心公式" [ref=e8] [cursor=pointer]:
+      - /url: ./formulas.html
+    - link "页面数据公式" [ref=e9] [cursor=pointer]:
+      - /url: ./page-formulas.html
+  - generic [ref=e11]:
+    - heading "FX100 执行详情" [level=1] [ref=e12]
+    - paragraph [ref=e13]: 核对快照、Expected、公式依据，以及交易员与 Keeper 的签名交易证据
+  - generic [ref=e14]:
+    - generic [ref=e15]:
+      - text: 执行场景
+      - combobox "执行场景" [ref=e16]:
+        - option "SCN-009 · 市价开多快速退出 · tx-fork"
+        - option "SCN-010 · 现价下方限价开多 · tx-fork" [selected]
+    - generic [ref=e17]:
+      - generic [ref=e18]: 数据状态
+      - strong [ref=e19]: READY
+    - generic [ref=e20]:
+      - generic [ref=e21]: Run ID
+      - strong [ref=e22]: 2026-08-03T224931-630Z
+  - generic [ref=e23]:
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - text: SCN-010 · tx-fork
+        - heading "现价下方限价开多" [level=2] [ref=e26]
+        - paragraph [ref=e27]: 链上 30 项核对通过；已记录用户/ Keeper 四笔真实签名业务交易，并恢复 Mock Oracle 配置；执行详情已展开 122 项 Before / After / Δ / Expected 对账。
+      - generic [ref=e28]:
+        - generic [ref=e29]:
+          - text: 执行结果
+          - generic [ref=e30]: PASS
+        - generic [ref=e31]:
+          - text: 自动化覆盖
+          - generic [ref=e32]: PARTIAL
+        - generic [ref=e33]:
+          - text: Project / 环境
+          - strong [ref=e34]: tx-fork / aladdindao/test
+        - generic [ref=e35]:
+          - text: 模式
+          - strong [ref=e36]: tx-fork-private-key-controlled-oracle
+        - generic [ref=e37]:
+          - text: 保留 Fork
+          - strong [ref=e38]: 是
+      - paragraph [ref=e39]:
+        - strong [ref=e40]: 覆盖说明：
+        - text: 同一 Fork 内的 MockBTC 限价挂单、精确触发、真实用户/Keeper 签名及全平已验证；浏览器钱包点击签名尚未自动化。
+    - generic [ref=e41]:
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - heading "测试用例概述" [level=2] [ref=e44]
+          - paragraph [ref=e45]: 执行证据对应的用户场景与核心期望。
+        - link "查看 / 编辑完整测试用例" [ref=e46] [cursor=pointer]:
+          - /url: ./test-cases.html?scenario=SCN-010
+      - generic [ref=e47]:
+        - strong [ref=e49]: SCN-010
+        - generic [ref=e50]: S02
+        - generic [ref=e51]: P0
+        - generic [ref=e52]: 期望状态 passed
+      - generic [ref=e53]:
+        - term [ref=e54]: 场景
+        - definition [ref=e55]: 现价下方限价开多
+        - term [ref=e56]: 角色与意图
+        - definition [ref=e57]: 反转交易员在现价下方低吸开多
+        - term [ref=e58]: 核心期望
+        - definition [ref=e59]: 前端自动判断为限价低吸；未触发时无仓位/OI；到价后建多仓；sizeInTokens 按触发时价格换算
+        - term [ref=e60]: 测试数据
+        - definition [ref=e61]: 触发价 P-10%
+    - generic [ref=e62]:
+      - generic [ref=e63]:
+        - generic [ref=e64]:
+          - heading "交易员与 Keeper 交易链接" [level=2] [ref=e65]
+          - paragraph [ref=e66]: 链接打开当前保留的 Fork 交易证据；未配置未经验证的外部 Explorer URL。
+        - generic [ref=e67]: 4 笔
+      - table [ref=e69]:
+        - rowgroup [ref=e70]:
+          - row [ref=e71]:
+            - columnheader "执行方" [ref=e72]
+            - columnheader "动作" [ref=e73]
+            - columnheader "交易链接" [ref=e74]
+            - columnheader "区块" [ref=e75]
+            - columnheader "回执" [ref=e76]
+            - columnheader "签名" [ref=e77]
+        - rowgroup [ref=e78]:
+          - row [ref=e79]:
+            - cell "交易员" [ref=e80]
+            - cell "创建 LimitIncrease 限价开多订单" [ref=e81]
+            - cell [ref=e82]:
+              - link "0xa79d48f9…dc48a4e3" [ref=e83] [cursor=pointer]:
+                - /url: "#tx-0xa79d48f998eb2fc0d7d5dd57c6fb65c25ce54183e2f7ab992cd04f6adc48a4e3"
+              - link "JSON 回执" [ref=e84] [cursor=pointer]:
+                - /url: ./api/transactions/0xa79d48f998eb2fc0d7d5dd57c6fb65c25ce54183e2f7ab992cd04f6adc48a4e3
+            - cell "45002571" [ref=e85]
+            - cell "SUCCESS" [ref=e86]
+            - cell "✓ 非零 r/s" [ref=e88]
+          - row [ref=e89]:
+            - cell "Keeper" [ref=e90]
+            - cell "到达触发价后执行限价开多订单" [ref=e91]
+            - cell [ref=e92]:
+              - link "0xf4cd0726…4d172274" [ref=e93] [cursor=pointer]:
+                - /url: "#tx-0xf4cd072616edae3329ea13c5411638d4fa5d57d555b4eaff0c459cc94d172274"
+              - link "JSON 回执" [ref=e94] [cursor=pointer]:
+                - /url: ./api/transactions/0xf4cd072616edae3329ea13c5411638d4fa5d57d555b4eaff0c459cc94d172274
+            - cell "45002573" [ref=e95]
+            - cell "SUCCESS" [ref=e96]
+            - cell "✓ 非零 r/s" [ref=e98]
+          - row [ref=e99]:
+            - cell "交易员" [ref=e100]
+            - cell "创建市价全平订单" [ref=e101]
+            - cell [ref=e102]:
+              - link "0x1ce87b2a…4bca0b10" [ref=e103] [cursor=pointer]:
+                - /url: "#tx-0x1ce87b2ad0b380b99588324287d5d8f4f47246494be94edaa8a161f44bca0b10"
+              - link "JSON 回执" [ref=e104] [cursor=pointer]:
+                - /url: ./api/transactions/0x1ce87b2ad0b380b99588324287d5d8f4f47246494be94edaa8a161f44bca0b10
+            - cell "45002574" [ref=e105]
+            - cell "SUCCESS" [ref=e106]
+            - cell "✓ 非零 r/s" [ref=e108]
+          - row [ref=e109]:
+            - cell "Keeper" [ref=e110]
+            - cell "执行市价全平订单" [ref=e111]
+            - cell [ref=e112]:
+              - link "0x4453ffc0…e79ed4b6" [ref=e113] [cursor=pointer]:
+                - /url: "#tx-0x4453ffc01635dc48a82e0c22cb926b1fde15d8ebb1a40a5680e58da5e79ed4b6"
+              - link "JSON 回执" [ref=e114] [cursor=pointer]:
+                - /url: ./api/transactions/0x4453ffc01635dc48a82e0c22cb926b1fde15d8ebb1a40a5680e58da5e79ed4b6
+            - cell "45002575" [ref=e115]
+            - cell "SUCCESS" [ref=e116]
+            - cell "✓ 非零 r/s" [ref=e118]
+    - generic [ref=e119]:
+      - article [ref=e120]:
+        - generic [ref=e121]:
+          - generic [ref=e122]:
+            - text: 交易员
+            - heading "创建 LimitIncrease 限价开多订单" [level=3] [ref=e123]
+          - generic [ref=e124]: SUCCESS
+        - generic [ref=e125]:
+          - term [ref=e126]: Tx Hash
+          - definition [ref=e127]:
+            - code [ref=e128]: "0xa79d48f998eb2fc0d7d5dd57c6fb65c25ce54183e2f7ab992cd04f6adc48a4e3"
+            - link "打开 JSON 回执" [ref=e129] [cursor=pointer]:
+              - /url: ./api/transactions/0xa79d48f998eb2fc0d7d5dd57c6fb65c25ce54183e2f7ab992cd04f6adc48a4e3
+          - term [ref=e130]: From
+          - definition [ref=e131]:
+            - code [ref=e132]: "0xeeea43701a49f3d41ef694ddafe2ac74c7c8b119"
+          - term [ref=e133]: To
+          - definition [ref=e134]:
+            - code [ref=e135]: "0x5f9215dff5c01671e6e77469389d694ac4af2e97"
+          - term [ref=e136]: Block
+          - definition [ref=e137]: "45002571"
+          - term [ref=e138]: Type / Nonce
+          - definition [ref=e139]: 0x2 / 0x5b
+          - term [ref=e140]: Gas Used
+          - definition [ref=e141]: "0xc8396"
+          - term [ref=e142]: Order Key
+          - definition [ref=e143]:
+            - code [ref=e144]: "0x5c55c71a15928d5ed29aa3edad479cf497e179117a2183420874f814dc49c53a"
+          - term [ref=e145]: 签名核对
+          - definition [ref=e146]: PASS：r/s 均为非零，from 与预期角色一致
+      - article [ref=e147]:
+        - generic [ref=e148]:
+          - generic [ref=e149]:
+            - text: Keeper
+            - heading "到达触发价后执行限价开多订单" [level=3] [ref=e150]
+          - generic [ref=e151]: SUCCESS
+        - generic [ref=e152]:
+          - term [ref=e153]: Tx Hash
+          - definition [ref=e154]:
+            - code [ref=e155]: "0xf4cd072616edae3329ea13c5411638d4fa5d57d555b4eaff0c459cc94d172274"
+            - link "打开 JSON 回执" [ref=e156] [cursor=pointer]:
+              - /url: ./api/transactions/0xf4cd072616edae3329ea13c5411638d4fa5d57d555b4eaff0c459cc94d172274
+          - term [ref=e157]: From
+          - definition [ref=e158]:
+            - code [ref=e159]: "0x542fe841228416f6a3d65eb534a90ebc5cc36354"
+          - term [ref=e160]: To
+          - definition [ref=e161]:
+            - code [ref=e162]: "0x84162e52063504a701cda5e931d2fd174c10648d"
+          - term [ref=e163]: Block
+          - definition [ref=e164]: "45002573"
+          - term [ref=e165]: Type / Nonce
+          - definition [ref=e166]: 0x2 / 0x5
+          - term [ref=e167]: Gas Used
+          - definition [ref=e168]: "0x1d5d9e"
+          - term [ref=e169]: Order Key
+          - definition [ref=e170]:
+            - code [ref=e171]: "0x5c55c71a15928d5ed29aa3edad479cf497e179117a2183420874f814dc49c53a"
+          - term [ref=e172]: 签名核对
+          - definition [ref=e173]: PASS：r/s 均为非零，from 与预期角色一致
+      - article [ref=e174]:
+        - generic [ref=e175]:
+          - generic [ref=e176]:
+            - text: 交易员
+            - heading "创建市价全平订单" [level=3] [ref=e177]
+          - generic [ref=e178]: SUCCESS
+        - generic [ref=e179]:
+          - term [ref=e180]: Tx Hash
+          - definition [ref=e181]:
+            - code [ref=e182]: "0x1ce87b2ad0b380b99588324287d5d8f4f47246494be94edaa8a161f44bca0b10"
+            - link "打开 JSON 回执" [ref=e183] [cursor=pointer]:
+              - /url: ./api/transactions/0x1ce87b2ad0b380b99588324287d5d8f4f47246494be94edaa8a161f44bca0b10
+          - term [ref=e184]: From
+          - definition [ref=e185]:
+            - code [ref=e186]: "0xeeea43701a49f3d41ef694ddafe2ac74c7c8b119"
+          - term [ref=e187]: To
+          - definition [ref=e188]:
+            - code [ref=e189]: "0x5f9215dff5c01671e6e77469389d694ac4af2e97"
+          - term [ref=e190]: Block
+          - definition [ref=e191]: "45002574"
+          - term [ref=e192]: Type / Nonce
+          - definition [ref=e193]: 0x2 / 0x5c
+          - term [ref=e194]: Gas Used
+          - definition [ref=e195]: "0xb038c"
+          - term [ref=e196]: Order Key
+          - definition [ref=e197]:
+            - code [ref=e198]: "0xb7192fedca4d9388690ba7fe42e4229d27475c089ded93b27bbdd0904c3dc2ea"
+          - term [ref=e199]: 签名核对
+          - definition [ref=e200]: PASS：r/s 均为非零，from 与预期角色一致
+      - article [ref=e201]:
+        - generic [ref=e202]:
+          - generic [ref=e203]:
+            - text: Keeper
+            - heading "执行市价全平订单" [level=3] [ref=e204]
+          - generic [ref=e205]: SUCCESS
+        - generic [ref=e206]:
+          - term [ref=e207]: Tx Hash
+          - definition [ref=e208]:
+            - code [ref=e209]: "0x4453ffc01635dc48a82e0c22cb926b1fde15d8ebb1a40a5680e58da5e79ed4b6"
+            - link "打开 JSON 回执" [ref=e210] [cursor=pointer]:
+              - /url: ./api/transactions/0x4453ffc01635dc48a82e0c22cb926b1fde15d8ebb1a40a5680e58da5e79ed4b6
+          - term [ref=e211]: From
+          - definition [ref=e212]:
+            - code [ref=e213]: "0x542fe841228416f6a3d65eb534a90ebc5cc36354"
+          - term [ref=e214]: To
+          - definition [ref=e215]:
+            - code [ref=e216]: "0x84162e52063504a701cda5e931d2fd174c10648d"
+          - term [ref=e217]: Block
+          - definition [ref=e218]: "45002575"
+          - term [ref=e219]: Type / Nonce
+          - definition [ref=e220]: 0x2 / 0x6
+          - term [ref=e221]: Gas Used
+          - definition [ref=e222]: "0x183771"
+          - term [ref=e223]: Order Key
+          - definition [ref=e224]:
+            - code [ref=e225]: "0xb7192fedca4d9388690ba7fe42e4229d27475c089ded93b27bbdd0904c3dc2ea"
+          - term [ref=e226]: 签名核对
+          - definition [ref=e227]: PASS：r/s 均为非零，from 与预期角色一致
+    - generic [ref=e228]:
+      - generic [ref=e229]:
+        - generic [ref=e230]:
+          - heading "核对数据明细" [level=2] [ref=e231]
+          - paragraph [ref=e232]: 按交易阶段列出资金账户、仓位、Fee、Funding、Grace、OI、Skew 与 Spread；Before/After 来自链上区块快照，Δ 显示变化量，Expected 按合约事件、部署参数及公式复算。
+        - strong [ref=e233]: 122 / 122 PASS
+      - generic [ref=e234]:
+        - generic [ref=e235]: 快速筛选
+        - generic [ref=e236]:
+          - button [ref=e237] [cursor=pointer]:
+            - text: 全部
+            - strong [ref=e238]: "122"
+          - button [ref=e239] [cursor=pointer]:
+            - text: 资金 / Vault
+            - strong [ref=e240]: "15"
+          - button [ref=e241] [cursor=pointer]:
+            - text: 仓位
+            - strong [ref=e242]: "13"
+          - button [ref=e243] [cursor=pointer]:
+            - text: Fee
+            - strong [ref=e244]: "21"
+          - button [ref=e245] [cursor=pointer]:
+            - text: Funding
+            - strong [ref=e246]: "19"
+          - button [ref=e247] [cursor=pointer]:
+            - text: Grace
+            - strong [ref=e248]: "15"
+          - button [ref=e249] [cursor=pointer]:
+            - text: OI / Skew / Spread
+            - strong [ref=e250]: "29"
+          - button [ref=e251] [cursor=pointer]:
+            - text: PnL
+            - strong [ref=e252]: "2"
+          - button [ref=e253] [cursor=pointer]:
+            - text: 状态 / 成交
+            - strong [ref=e254]: "8"
+      - generic [ref=e255]:
+        - generic [ref=e256]: 交易阶段 / 明细分组
+        - generic [ref=e257]:
+          - button [ref=e258] [cursor=pointer]:
+            - text: 订单参数
+            - strong [ref=e259]: "2"
+          - button [ref=e260] [cursor=pointer]:
+            - text: 触发前状态
+            - strong [ref=e261]: "2"
+          - button [ref=e262] [cursor=pointer]:
+            - text: 触发执行
+            - strong [ref=e263]: "3"
+          - button [ref=e264] [cursor=pointer]:
+            - text: 成交价格
+            - strong [ref=e265]: "2"
+          - button [ref=e266] [cursor=pointer]:
+            - text: 平仓状态
+            - strong [ref=e267]: "3"
+          - button [ref=e268] [cursor=pointer]:
+            - text: 限价单创建 · 资金账户
+            - strong [ref=e269]: "8"
+          - button [ref=e270] [cursor=pointer]:
+            - text: 限价单创建 · 市场 / OI
+            - strong [ref=e271]: "5"
+          - button [ref=e272] [cursor=pointer]:
+            - text: 限价单创建 · 仓位原始字段
+            - strong [ref=e273]: "5"
+          - button [ref=e274] [cursor=pointer]:
+            - text: 限价单创建 · Grace
+            - strong [ref=e275]: "5"
+          - button [ref=e276] [cursor=pointer]:
+            - text: 限价触发开仓 · 资金账户
+            - strong [ref=e277]: "8"
+          - button [ref=e278] [cursor=pointer]:
+            - text: 限价触发开仓 · 市场 / OI
+            - strong [ref=e279]: "5"
+          - button [ref=e280] [cursor=pointer]:
+            - text: 限价触发开仓 · 仓位原始字段
+            - strong [ref=e281]: "5"
+          - button [ref=e282] [cursor=pointer]:
+            - text: 限价触发开仓 · Grace
+            - strong [ref=e283]: "5"
+          - button [ref=e284] [cursor=pointer]:
+            - text: 限价触发开仓 · OI / Skew / Spread
+            - strong [ref=e285]: "7"
+          - button [ref=e286] [cursor=pointer]:
+            - text: 限价触发开仓 · Fee
+            - strong [ref=e287]: "6"
+          - button [ref=e288] [cursor=pointer]:
+            - text: 限价触发开仓 · Funding
+            - strong [ref=e289]: "3"
+          - button [ref=e290] [cursor=pointer]:
+            - text: 全平执行 · 资金账户
+            - strong [ref=e291]: "8"
+          - button [ref=e292] [cursor=pointer]:
+            - text: 全平执行 · 市场 / OI
+            - strong [ref=e293]: "5"
+          - button [ref=e294] [cursor=pointer]:
+            - text: 全平执行 · 仓位原始字段
+            - strong [ref=e295]: "5"
+          - button [ref=e296] [cursor=pointer]:
+            - text: 全平执行 · Grace
+            - strong [ref=e297]: "5"
+          - button [ref=e298] [cursor=pointer]:
+            - text: 全平执行 · OI / Skew / Spread
+            - strong [ref=e299]: "7"
+          - button [ref=e300] [cursor=pointer]:
+            - text: 全平执行 · PnL
+            - strong [ref=e301]: "2"
+          - button [ref=e302] [cursor=pointer]:
+            - text: 全平执行 · Fee
+            - strong [ref=e303]: "6"
+          - button [ref=e304] [cursor=pointer]:
+            - text: 全平执行 · Funding
+            - strong [ref=e305]: "3"
+          - button [ref=e306] [cursor=pointer]:
+            - text: 全流程 · Funding 市场状态
+            - strong [ref=e307]: "4"
+          - button [ref=e308] [cursor=pointer]:
+            - text: 资金账本
+            - strong [ref=e309]: "3"
+      - table [ref=e311]:
+        - rowgroup [ref=e312]:
+          - row [ref=e313]:
+            - columnheader "分组" [ref=e314]
+            - columnheader "核对字段" [ref=e315]
+            - columnheader "结果" [ref=e316]
+            - columnheader "Before" [ref=e317]
+            - columnheader "After" [ref=e318]
+            - columnheader "Δ (After − Before)" [ref=e319]
+            - columnheader "Expected" [ref=e320]
+            - columnheader "公式与依据" [ref=e321]
+        - rowgroup [ref=e322]:
+          - row [ref=e323]:
+            - cell "订单参数" [ref=e324]
+            - cell [ref=e325]:
+              - strong [ref=e326]: 订单类型 LimitIncrease
+            - cell "PASS" [ref=e327]
+            - cell "用户输入：现价下方 10% 开多" [ref=e329]
+            - cell "1" [ref=e330]
+            - cell "—" [ref=e331]
+            - cell "1" [ref=e332]
+            - cell "Order.OrderType.LimitIncrease = 1 §3 订单类型与触发方向 · LimitIncrease 枚举与方向 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e333]:
+              - generic [ref=e334]: Order.OrderType.LimitIncrease = 1
+              - generic [ref=e335]:
+                - link "§3 订单类型与触发方向" [ref=e336] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · LimitIncrease 枚举与方向
+                - code [ref=e337]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e338]:
+            - cell "订单参数" [ref=e339]
+            - cell [ref=e340]:
+              - strong [ref=e341]: 触发价为 P - 10%
+            - cell "PASS" [ref=e342]
+            - cell "600000000000000000000000000" [ref=e344]
+            - cell "540000000000000000000000000" [ref=e345]
+            - cell "—" [ref=e346]
+            - cell "540000000000000000000000000" [ref=e347]
+            - cell "triggerPrice = P × (1 − 10%) = P × 90 / 100 §3 订单类型与触发方向 · 限价低吸触发价 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e348]:
+              - generic [ref=e349]: triggerPrice = P × (1 − 10%) = P × 90 / 100
+              - generic [ref=e350]:
+                - link "§3 订单类型与触发方向" [ref=e351] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 限价低吸触发价
+                - code [ref=e352]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e353]:
+            - cell "触发前状态" [ref=e354]
+            - cell [ref=e355]:
+              - strong [ref=e356]: 未触发时无仓位
+            - cell "PASS" [ref=e357]
+            - cell "false" [ref=e359]
+            - cell "false" [ref=e360]
+            - cell "—" [ref=e361]
+            - cell "false" [ref=e362]
+            - cell "oraclePrice > triggerPrice 时 LimitIncrease long 不执行，position.exists 保持 false §3 订单类型与触发方向 · LimitIncrease Long 触发条件 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e363]:
+              - generic [ref=e364]: oraclePrice > triggerPrice 时 LimitIncrease long 不执行，position.exists 保持 false
+              - generic [ref=e365]:
+                - link "§3 订单类型与触发方向" [ref=e366] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · LimitIncrease Long 触发条件
+                - code [ref=e367]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e368]:
+            - cell "触发前状态" [ref=e369]
+            - cell [ref=e370]:
+              - strong [ref=e371]: 未触发时累计开仓成本不变
+            - cell "PASS" [ref=e372]
+            - cell "0 raw (0 USD)" [ref=e374]
+            - cell "0 raw (0 USD)" [ref=e375]
+            - cell "—" [ref=e376]
+            - cell "0 raw (0 USD)" [ref=e377]
+            - cell "订单仅创建未执行：ΔcumulativeOpenCostsLong = 0 afterCreate · 挂单阶段 Reader 账本 src/scenarios/scn-010-runner.ts" [ref=e378]:
+              - generic [ref=e379]: 订单仅创建未执行：ΔcumulativeOpenCostsLong = 0
+              - generic [ref=e380]:
+                - link "afterCreate" [ref=e381] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 挂单阶段 Reader 账本
+                - code [ref=e382]: src/scenarios/scn-010-runner.ts
+          - row [ref=e383]:
+            - cell "触发执行" [ref=e384]
+            - cell [ref=e385]:
+              - strong [ref=e386]: Oracle 到达触发价
+            - cell "PASS" [ref=e387]
+            - cell "600000000000000000000000000" [ref=e389]
+            - cell "540000000000000000000000000" [ref=e390]
+            - cell "—" [ref=e391]
+            - cell "540000000000000000000000000" [ref=e392]
+            - cell "LimitIncrease Long：primaryPrice.max ≤ triggerPrice；边界用例取等号 §3 订单类型与触发方向 · LimitIncrease Long 边界条件 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e393]:
+              - generic [ref=e394]: LimitIncrease Long：primaryPrice.max ≤ triggerPrice；边界用例取等号
+              - generic [ref=e395]:
+                - link "§3 订单类型与触发方向" [ref=e396] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · LimitIncrease Long 边界条件
+                - code [ref=e397]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e398]:
+            - cell "触发执行" [ref=e399]
+            - cell [ref=e400]:
+              - strong [ref=e401]: 到价后建立多头仓位
+            - cell "PASS" [ref=e402]
+            - cell "false" [ref=e404]
+            - cell "true" [ref=e405]
+            - cell "—" [ref=e406]
+            - cell "true / isLong=true" [ref=e407]
+            - cell "触发成功且订单执行后 position.exists = true, isLong = true §5 仓位字段更新 · 仓位建立后的结构状态 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e408]:
+              - generic [ref=e409]: 触发成功且订单执行后 position.exists = true, isLong = true
+              - generic [ref=e410]:
+                - link "§5 仓位字段更新" [ref=e411] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 仓位建立后的结构状态
+                - code [ref=e412]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e413]:
+            - cell "触发执行" [ref=e414]
+            - cell [ref=e415]:
+              - strong [ref=e416]: 仓位规模 sizeInUsd
+            - cell "PASS" [ref=e417]
+            - cell "0 raw (0 USD)" [ref=e419]
+            - cell "50000000000000000000000000000000 raw (50 USD)" [ref=e420]
+            - cell "—" [ref=e421]
+            - cell "50000000000000000000000000000000 raw (50 USD)" [ref=e422]
+            - cell "nextSizeInUsd = oldSizeInUsd + sizeDeltaUsd §5.1 加仓后规模 · 加仓后的 USD 规模 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e423]:
+              - generic [ref=e424]: nextSizeInUsd = oldSizeInUsd + sizeDeltaUsd
+              - generic [ref=e425]:
+                - link "§5.1 加仓后规模" [ref=e426] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 加仓后的 USD 规模
+                - code [ref=e427]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e428]:
+            - cell "成交价格" [ref=e429]
+            - cell [ref=e430]:
+              - strong [ref=e431]: 开多使用不利侧成交价
+            - cell "PASS" [ref=e432]
+            - cell "540000000000000000000000000" [ref=e434]
+            - cell "542754017315149154040000000" [ref=e435]
+            - cell "—" [ref=e436]
+            - cell ">= 540000000000000000000000000" [ref=e437]
+            - cell "executionPrice = ceil(indexPrice.max × (1e18 + dynamicSpread) / 1e18) §4.5 加仓成交价 · Long executionPrice ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e438]:
+              - generic [ref=e439]: executionPrice = ceil(indexPrice.max × (1e18 + dynamicSpread) / 1e18)
+              - generic [ref=e440]:
+                - link "§4.5 加仓成交价" [ref=e441] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · Long executionPrice
+                - code [ref=e442]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e443]:
+            - cell "成交价格" [ref=e444]
+            - cell [ref=e445]:
+              - strong [ref=e446]: sizeInTokens 按成交价换算
+            - cell "PASS" [ref=e447]
+            - cell "0" [ref=e449]
+            - cell "92122" [ref=e450]
+            - cell "—" [ref=e451]
+            - cell "92122" [ref=e452]
+            - cell "sizeDeltaInTokens = sizeDeltaUsd / executionPrice（整数向下取整） §4.5 加仓成交价 · USD 计价开多的 token 数量 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e453]:
+              - generic [ref=e454]: sizeDeltaInTokens = sizeDeltaUsd / executionPrice（整数向下取整）
+              - generic [ref=e455]:
+                - link "§4.5 加仓成交价" [ref=e456] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · USD 计价开多的 token 数量
+                - code [ref=e457]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e458]:
+            - cell "平仓状态" [ref=e459]
+            - cell [ref=e460]:
+              - strong [ref=e461]: 全平后仓位移除
+            - cell "PASS" [ref=e462]
+            - cell "true" [ref=e464]
+            - cell "false" [ref=e465]
+            - cell "—" [ref=e466]
+            - cell "false" [ref=e467]
+            - cell "nextSizeInUsd = oldSizeInUsd − fullSizeInUsd = 0，随后删除仓位 §5.2 减仓后规模 · 全量减仓 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e468]:
+              - generic [ref=e469]: nextSizeInUsd = oldSizeInUsd − fullSizeInUsd = 0，随后删除仓位
+              - generic [ref=e470]:
+                - link "§5.2 减仓后规模" [ref=e471] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 全量减仓
+                - code [ref=e472]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e473]:
+            - cell "平仓状态" [ref=e474]
+            - cell [ref=e475]:
+              - strong [ref=e476]: 平多使用不利侧成交价
+            - cell "PASS" [ref=e477]
+            - cell "540000000000000000000000000" [ref=e479]
+            - cell "540000000000000000000000000" [ref=e480]
+            - cell "—" [ref=e481]
+            - cell "<= 540000000000000000000000000" [ref=e482]
+            - cell "executionPrice = indexPrice.min × (1e18 − dynamicSpread) / 1e18 §4.6 减仓成交价 · Long decrease executionPrice ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e483]:
+              - generic [ref=e484]: executionPrice = indexPrice.min × (1e18 − dynamicSpread) / 1e18
+              - generic [ref=e485]:
+                - link "§4.6 减仓成交价" [ref=e486] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · Long decrease executionPrice
+                - code [ref=e487]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e488]:
+            - cell "平仓状态" [ref=e489]
+            - cell [ref=e490]:
+              - strong [ref=e491]: 累计多头开仓成本恢复
+            - cell "PASS" [ref=e492]
+            - cell "50000000000000000000000000000000 raw (50 USD)" [ref=e494]
+            - cell "0 raw (0 USD)" [ref=e495]
+            - cell "—" [ref=e496]
+            - cell "0 raw (0 USD)" [ref=e497]
+            - cell "finalCumulativeOpenCostsLong = opened − fullCloseSizeUsd = initial §12.2 市场多空 PnL · 累计开仓成本全平回退 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e498]:
+              - generic [ref=e499]: finalCumulativeOpenCostsLong = opened − fullCloseSizeUsd = initial
+              - generic [ref=e500]:
+                - link "§12.2 市场多空 PnL" [ref=e501] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 累计开仓成本全平回退
+                - code [ref=e502]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e503]:
+            - cell "限价单创建 · 资金账户" [ref=e504]
+            - cell [ref=e505]:
+              - strong [ref=e506]: 交易员 USDC 余额
+            - cell "PASS" [ref=e507]
+            - cell "100099813318 raw (100099.813318 USDC)" [ref=e509]
+            - cell "100089813318 raw (100089.813318 USDC)" [ref=e510]
+            - cell "-10000000 raw (-10 USDC)" [ref=e511]
+            - cell "100089813318 raw (100089.813318 USDC)" [ref=e512]
+            - cell "expectedAfter = before.traderUsdc + ΔtraderUsdc before → afterCreate · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=-10000000 raw。" [ref=e513]:
+              - generic [ref=e514]: expectedAfter = before.traderUsdc + ΔtraderUsdc
+              - generic [ref=e515]:
+                - link "before → afterCreate" [ref=e516] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e517]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e518]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=-10000000 raw。
+          - row [ref=e519]:
+            - cell "限价单创建 · 资金账户" [ref=e520]
+            - cell [ref=e521]:
+              - strong [ref=e522]: OrderVault USDC 余额
+            - cell "PASS" [ref=e523]
+            - cell "59648288 raw (59.648288 USDC)" [ref=e525]
+            - cell "69648288 raw (69.648288 USDC)" [ref=e526]
+            - cell "+10000000 raw (10 USDC)" [ref=e527]
+            - cell "69648288 raw (69.648288 USDC)" [ref=e528]
+            - cell "expectedAfter = before.orderVaultUsdc + ΔorderVaultUsdc before → afterCreate · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=10000000 raw。" [ref=e529]:
+              - generic [ref=e530]: expectedAfter = before.orderVaultUsdc + ΔorderVaultUsdc
+              - generic [ref=e531]:
+                - link "before → afterCreate" [ref=e532] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e533]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e534]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=10000000 raw。
+          - row [ref=e535]:
+            - cell "限价单创建 · 资金账户" [ref=e536]
+            - cell [ref=e537]:
+              - strong [ref=e538]: PositionVault USDC 余额
+            - cell "PASS" [ref=e539]
+            - cell "693453887 raw (693.453887 USDC)" [ref=e541]
+            - cell "693453887 raw (693.453887 USDC)" [ref=e542]
+            - cell "0 raw (0 USDC)" [ref=e543]
+            - cell "693453887 raw (693.453887 USDC)" [ref=e544]
+            - cell "expectedAfter = before.posVaultUsdc + ΔposVaultUsdc before → afterCreate · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。" [ref=e545]:
+              - generic [ref=e546]: expectedAfter = before.posVaultUsdc + ΔposVaultUsdc
+              - generic [ref=e547]:
+                - link "before → afterCreate" [ref=e548] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e549]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e550]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。
+          - row [ref=e551]:
+            - cell "限价单创建 · 资金账户" [ref=e552]
+            - cell [ref=e553]:
+              - strong [ref=e554]: LPVault totalAssets
+            - cell "PASS" [ref=e555]
+            - cell "50001041253337 raw (50001041.253337 USDC)" [ref=e557]
+            - cell "50001041253337 raw (50001041.253337 USDC)" [ref=e558]
+            - cell "0 raw (0 USDC)" [ref=e559]
+            - cell "50001041253337 raw (50001041.253337 USDC)" [ref=e560]
+            - cell "expectedAfter = before.lpVaultAssets + ΔlpVaultAssets before → afterCreate · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。" [ref=e561]:
+              - generic [ref=e562]: expectedAfter = before.lpVaultAssets + ΔlpVaultAssets
+              - generic [ref=e563]:
+                - link "before → afterCreate" [ref=e564] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e565]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e566]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。
+          - row [ref=e567]:
+            - cell "限价单创建 · 资金账户" [ref=e568]
+            - cell [ref=e569]:
+              - strong [ref=e570]: FeeReceiver USDC 余额
+            - cell "PASS" [ref=e571]
+            - cell "0 raw (0 USDC)" [ref=e573]
+            - cell "0 raw (0 USDC)" [ref=e574]
+            - cell "0 raw (0 USDC)" [ref=e575]
+            - cell "0 raw (0 USDC)" [ref=e576]
+            - cell "expectedAfter = before.feeReceiverUsdc + ΔfeeReceiverUsdc before → afterCreate · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。" [ref=e577]:
+              - generic [ref=e578]: expectedAfter = before.feeReceiverUsdc + ΔfeeReceiverUsdc
+              - generic [ref=e579]:
+                - link "before → afterCreate" [ref=e580] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e581]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e582]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。
+          - row [ref=e583]:
+            - cell "限价单创建 · 资金账户" [ref=e584]
+            - cell [ref=e585]:
+              - strong [ref=e586]: 待领取仓位费
+            - cell "PASS" [ref=e587]
+            - cell "47881279 raw (47.881279 USDC)" [ref=e589]
+            - cell "47881279 raw (47.881279 USDC)" [ref=e590]
+            - cell "0 raw (0 USDC)" [ref=e591]
+            - cell "47881279 raw (47.881279 USDC)" [ref=e592]
+            - cell "expectedAfter = before.claimableFeeAmountPosition + ΔclaimableFeeAmountPosition before → afterCreate · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。" [ref=e593]:
+              - generic [ref=e594]: expectedAfter = before.claimableFeeAmountPosition + ΔclaimableFeeAmountPosition
+              - generic [ref=e595]:
+                - link "before → afterCreate" [ref=e596] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e597]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e598]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。
+          - row [ref=e599]:
+            - cell "限价单创建 · 资金账户" [ref=e600]
+            - cell [ref=e601]:
+              - strong [ref=e602]: 待领取 Funding
+            - cell "PASS" [ref=e603]
+            - cell "1747053 raw (1.747053 USDC)" [ref=e605]
+            - cell "1747053 raw (1.747053 USDC)" [ref=e606]
+            - cell "0 raw (0 USDC)" [ref=e607]
+            - cell "1747053 raw (1.747053 USDC)" [ref=e608]
+            - cell "expectedAfter = before.claimableFeeAmountFunding + ΔclaimableFeeAmountFunding before → afterCreate · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。" [ref=e609]:
+              - generic [ref=e610]: expectedAfter = before.claimableFeeAmountFunding + ΔclaimableFeeAmountFunding
+              - generic [ref=e611]:
+                - link "before → afterCreate" [ref=e612] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e613]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e614]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。
+          - row [ref=e615]:
+            - cell "限价单创建 · 资金账户" [ref=e616]
+            - cell [ref=e617]:
+              - strong [ref=e618]: 待领取清算费
+            - cell "PASS" [ref=e619]
+            - cell "96002058 raw (96.002058 USDC)" [ref=e621]
+            - cell "96002058 raw (96.002058 USDC)" [ref=e622]
+            - cell "0 raw (0 USDC)" [ref=e623]
+            - cell "96002058 raw (96.002058 USDC)" [ref=e624]
+            - cell "expectedAfter = before.claimableFeeAmountLiquidation + ΔclaimableFeeAmountLiquidation before → afterCreate · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。" [ref=e625]:
+              - generic [ref=e626]: expectedAfter = before.claimableFeeAmountLiquidation + ΔclaimableFeeAmountLiquidation
+              - generic [ref=e627]:
+                - link "before → afterCreate" [ref=e628] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e629]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e630]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。
+          - row [ref=e631]:
+            - cell "限价单创建 · 市场 / OI" [ref=e632]
+            - cell [ref=e633]:
+              - strong [ref=e634]: Long 累计开仓成本
+            - cell "PASS" [ref=e635]
+            - cell "0 raw (0 USD)" [ref=e637]
+            - cell "0 raw (0 USD)" [ref=e638]
+            - cell "0 raw (0 USD)" [ref=e639]
+            - cell "0 raw (0 USD)" [ref=e640]
+            - cell "expectedAfter = before.cumulativeOpenCostsLong + ΔcumulativeOpenCostsLong before → afterCreate · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。" [ref=e641]:
+              - generic [ref=e642]: expectedAfter = before.cumulativeOpenCostsLong + ΔcumulativeOpenCostsLong
+              - generic [ref=e643]:
+                - link "before → afterCreate" [ref=e644] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e645]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e646]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。
+          - row [ref=e647]:
+            - cell "限价单创建 · 市场 / OI" [ref=e648]
+            - cell [ref=e649]:
+              - strong [ref=e650]: Short 累计开仓成本
+            - cell "PASS" [ref=e651]
+            - cell "0 raw (0 USD)" [ref=e653]
+            - cell "0 raw (0 USD)" [ref=e654]
+            - cell "0 raw (0 USD)" [ref=e655]
+            - cell "0 raw (0 USD)" [ref=e656]
+            - cell "expectedAfter = before.cumulativeOpenCostsShort + ΔcumulativeOpenCostsShort before → afterCreate · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。" [ref=e657]:
+              - generic [ref=e658]: expectedAfter = before.cumulativeOpenCostsShort + ΔcumulativeOpenCostsShort
+              - generic [ref=e659]:
+                - link "before → afterCreate" [ref=e660] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e661]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e662]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。
+          - row [ref=e663]:
+            - cell "限价单创建 · 市场 / OI" [ref=e664]
+            - cell [ref=e665]:
+              - strong [ref=e666]: Long Open Interest
+            - cell "PASS" [ref=e667]
+            - cell "0 raw (0 MockBTC)" [ref=e669]
+            - cell "0 raw (0 MockBTC)" [ref=e670]
+            - cell "0 raw (0 MockBTC)" [ref=e671]
+            - cell "0 raw (0 MockBTC)" [ref=e672]
+            - cell "expectedAfter = before.openInterestInTokensLong + ΔopenInterestInTokensLong before → afterCreate · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。" [ref=e673]:
+              - generic [ref=e674]: expectedAfter = before.openInterestInTokensLong + ΔopenInterestInTokensLong
+              - generic [ref=e675]:
+                - link "before → afterCreate" [ref=e676] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e677]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e678]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。
+          - row [ref=e679]:
+            - cell "限价单创建 · 市场 / OI" [ref=e680]
+            - cell [ref=e681]:
+              - strong [ref=e682]: Short Open Interest
+            - cell "PASS" [ref=e683]
+            - cell "0 raw (0 MockBTC)" [ref=e685]
+            - cell "0 raw (0 MockBTC)" [ref=e686]
+            - cell "0 raw (0 MockBTC)" [ref=e687]
+            - cell "0 raw (0 MockBTC)" [ref=e688]
+            - cell "expectedAfter = before.openInterestInTokensShort + ΔopenInterestInTokensShort before → afterCreate · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。" [ref=e689]:
+              - generic [ref=e690]: expectedAfter = before.openInterestInTokensShort + ΔopenInterestInTokensShort
+              - generic [ref=e691]:
+                - link "before → afterCreate" [ref=e692] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e693]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e694]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。
+          - row [ref=e695]:
+            - cell "限价单创建 · 市场 / OI" [ref=e696]
+            - cell [ref=e697]:
+              - strong [ref=e698]: Position Impact Pool
+            - cell "PASS" [ref=e699]
+            - cell "0 raw (0 MockBTC)" [ref=e701]
+            - cell "0 raw (0 MockBTC)" [ref=e702]
+            - cell "0 raw (0 MockBTC)" [ref=e703]
+            - cell "0 raw (0 MockBTC)" [ref=e704]
+            - cell "expectedAfter = before.positionImpactPoolAmount + ΔpositionImpactPoolAmount before → afterCreate · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。" [ref=e705]:
+              - generic [ref=e706]: expectedAfter = before.positionImpactPoolAmount + ΔpositionImpactPoolAmount
+              - generic [ref=e707]:
+                - link "before → afterCreate" [ref=e708] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e709]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e710]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。
+          - row [ref=e711]:
+            - cell "限价单创建 · 仓位原始字段" [ref=e712]
+            - cell [ref=e713]:
+              - strong [ref=e714]: 仓位 sizeInUsd
+            - cell "PASS" [ref=e715]
+            - cell "0 raw (0 USD)" [ref=e717]
+            - cell "0 raw (0 USD)" [ref=e718]
+            - cell "0 raw (0 USD)" [ref=e719]
+            - cell "0 raw (0 USD)" [ref=e720]
+            - cell "仅创建挂单，未触发前 Position 原始字段保持不变 限价单创建 position · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对 src/scenarios/scn-010-runner.ts" [ref=e721]:
+              - generic [ref=e722]: 仅创建挂单，未触发前 Position 原始字段保持不变
+              - generic [ref=e723]:
+                - link "限价单创建 position" [ref=e724] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对
+                - code [ref=e725]: src/scenarios/scn-010-runner.ts
+          - row [ref=e726]:
+            - cell "限价单创建 · 仓位原始字段" [ref=e727]
+            - cell [ref=e728]:
+              - strong [ref=e729]: 仓位 sizeInTokens
+            - cell "PASS" [ref=e730]
+            - cell "0 raw (0 MockBTC)" [ref=e732]
+            - cell "0 raw (0 MockBTC)" [ref=e733]
+            - cell "0 raw (0 MockBTC)" [ref=e734]
+            - cell "0 raw (0 MockBTC)" [ref=e735]
+            - cell "仅创建挂单，未触发前 Position 原始字段保持不变 限价单创建 position · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对 src/scenarios/scn-010-runner.ts" [ref=e736]:
+              - generic [ref=e737]: 仅创建挂单，未触发前 Position 原始字段保持不变
+              - generic [ref=e738]:
+                - link "限价单创建 position" [ref=e739] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对
+                - code [ref=e740]: src/scenarios/scn-010-runner.ts
+          - row [ref=e741]:
+            - cell "限价单创建 · 仓位原始字段" [ref=e742]
+            - cell [ref=e743]:
+              - strong [ref=e744]: 仓位 collateralAmount
+            - cell "PASS" [ref=e745]
+            - cell "0 raw (0 USDC)" [ref=e747]
+            - cell "0 raw (0 USDC)" [ref=e748]
+            - cell "0 raw (0 USDC)" [ref=e749]
+            - cell "0 raw (0 USDC)" [ref=e750]
+            - cell "仅创建挂单，未触发前 Position 原始字段保持不变 限价单创建 position · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对 src/scenarios/scn-010-runner.ts" [ref=e751]:
+              - generic [ref=e752]: 仅创建挂单，未触发前 Position 原始字段保持不变
+              - generic [ref=e753]:
+                - link "限价单创建 position" [ref=e754] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对
+                - code [ref=e755]: src/scenarios/scn-010-runner.ts
+          - row [ref=e756]:
+            - cell "限价单创建 · 仓位原始字段" [ref=e757]
+            - cell [ref=e758]:
+              - strong [ref=e759]: 仓位负 Funding 结算基准 / size
+            - cell "PASS" [ref=e760]
+            - cell "0 raw (0 raw)" [ref=e762]
+            - cell "0 raw (0 raw)" [ref=e763]
+            - cell "0 raw (0 raw)" [ref=e764]
+            - cell "0 raw (0 raw)" [ref=e765]
+            - cell "仅创建挂单，未触发前 Position 原始字段保持不变 限价单创建 position · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对 src/scenarios/scn-010-runner.ts" [ref=e766]:
+              - generic [ref=e767]: 仅创建挂单，未触发前 Position 原始字段保持不变
+              - generic [ref=e768]:
+                - link "限价单创建 position" [ref=e769] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对
+                - code [ref=e770]: src/scenarios/scn-010-runner.ts
+          - row [ref=e771]:
+            - cell "限价单创建 · 仓位原始字段" [ref=e772]
+            - cell [ref=e773]:
+              - strong [ref=e774]: 仓位正 Funding 结算基准 / size
+            - cell "PASS" [ref=e775]
+            - cell "0 raw (0 raw)" [ref=e777]
+            - cell "0 raw (0 raw)" [ref=e778]
+            - cell "0 raw (0 raw)" [ref=e779]
+            - cell "0 raw (0 raw)" [ref=e780]
+            - cell "仅创建挂单，未触发前 Position 原始字段保持不变 限价单创建 position · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对 src/scenarios/scn-010-runner.ts" [ref=e781]:
+              - generic [ref=e782]: 仅创建挂单，未触发前 Position 原始字段保持不变
+              - generic [ref=e783]:
+                - link "限价单创建 position" [ref=e784] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对
+                - code [ref=e785]: src/scenarios/scn-010-runner.ts
+          - row [ref=e786]:
+            - cell "限价单创建 · Grace" [ref=e787]
+            - cell [ref=e788]:
+              - strong [ref=e789]: Grace Start（保护期起点）
+            - cell "PASS" [ref=e790]
+            - cell "0（未设置）" [ref=e792]
+            - cell "0（未设置）" [ref=e793]
+            - cell "0 raw (0 seconds)" [ref=e794]
+            - cell "0（未设置）" [ref=e795]
+            - cell "仓位不存在 / 已删除：graceStart = 0 四、清算保护卡片 / 4.1 保护期推导 · Position 首次创建时写入 Grace 起点 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv；链上阶段快照：src/scenarios/scn-010-runner.ts" [ref=e796]:
+              - generic [ref=e797]: 仓位不存在 / 已删除：graceStart = 0
+              - generic [ref=e798]:
+                - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e799] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · Position 首次创建时写入 Grace 起点
+                - code [ref=e800]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e801]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv；链上阶段快照：src/scenarios/scn-010-runner.ts
+          - row [ref=e802]:
+            - cell "限价单创建 · Grace" [ref=e803]
+            - cell [ref=e804]:
+              - strong [ref=e805]: Grace End（保护期终点）
+            - cell "PASS" [ref=e806]
+            - cell "0（未设置）" [ref=e808]
+            - cell "0（未设置）" [ref=e809]
+            - cell "0 raw (0 seconds)" [ref=e810]
+            - cell "0（未设置）" [ref=e811]
+            - cell "仓位不存在 / 已删除：graceEnd = 0 四、清算保护卡片 / 4.1 保护期推导 · Grace 终点按市场基础时长与推荐层级乘数复算 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv" [ref=e812]:
+              - generic [ref=e813]: 仓位不存在 / 已删除：graceEnd = 0
+              - generic [ref=e814]:
+                - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e815] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · Grace 终点按市场基础时长与推荐层级乘数复算
+                - code [ref=e816]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e817]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv
+          - row [ref=e818]:
+            - cell "限价单创建 · Grace" [ref=e819]
+            - cell [ref=e820]:
+              - strong [ref=e821]: Grace Duration（有效保护时长）
+            - cell "PASS" [ref=e822]
+            - cell "0 seconds" [ref=e824]
+            - cell "0 seconds" [ref=e825]
+            - cell "0 seconds" [ref=e826]
+            - cell "0 seconds" [ref=e827]
+            - cell "graceDuration = max(graceEnd − graceStart, 0) = gracePeriodBase × tierMultiplier / 1e18 四、清算保护卡片 / 4.1 保护期推导 · 保护窗口长度 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv" [ref=e828]:
+              - generic [ref=e829]: graceDuration = max(graceEnd − graceStart, 0) = gracePeriodBase × tierMultiplier / 1e18
+              - generic [ref=e830]:
+                - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e831] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · 保护窗口长度
+                - code [ref=e832]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e833]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv
+          - row [ref=e834]:
+            - cell "限价单创建 · Grace" [ref=e835]
+            - cell [ref=e836]:
+              - strong [ref=e837]: Grace Active（执行时是否受保护）
+            - cell "PASS" [ref=e838]
+            - cell "false" [ref=e840]
+            - cell "false" [ref=e841]
+            - cell "false → false" [ref=e842]
+            - cell "false" [ref=e843]
+            - cell "graceActive = position.exists && graceStart > 0 && graceEnd > evaluationTimestamp 四、清算保护卡片 / 4.2 5 状态机 · 依据仓位与区块时间实时推导保护状态 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md evaluationTimestamp=1785796814 (2026-08-03T22:40:14.000Z)；Keeper 清算条件使用 graceEnd > block.timestamp。" [ref=e844]:
+              - generic [ref=e845]: graceActive = position.exists && graceStart > 0 && graceEnd > evaluationTimestamp
+              - generic [ref=e846]:
+                - link "四、清算保护卡片 / 4.2 5 状态机" [ref=e847] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · 依据仓位与区块时间实时推导保护状态
+                - code [ref=e848]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e849]: evaluationTimestamp=1785796814 (2026-08-03T22:40:14.000Z)；Keeper 清算条件使用 graceEnd > block.timestamp。
+          - row [ref=e850]:
+            - cell "限价单创建 · Grace" [ref=e851]
+            - cell [ref=e852]:
+              - strong [ref=e853]: Grace Remaining（执行时剩余保护秒数）
+            - cell "PASS" [ref=e854]
+            - cell "0 seconds" [ref=e856]
+            - cell "0 seconds" [ref=e857]
+            - cell "0 seconds" [ref=e858]
+            - cell "0 seconds" [ref=e859]
+            - 'cell "graceRemaining = position.exists ? max(graceEnd − evaluationTimestamp, 0) : 0 四、清算保护卡片 / 4.1 保护期推导 · 页面倒计时与合约保护窗口 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md evaluationTimestamp=1785796814 (2026-08-03T22:40:14.000Z)；交易员主动平仓不受 Grace 限制，仓位删除后 Grace 字段清零。" [ref=e860]':
+              - generic [ref=e861]: "graceRemaining = position.exists ? max(graceEnd − evaluationTimestamp, 0) : 0"
+              - generic [ref=e862]:
+                - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e863] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · 页面倒计时与合约保护窗口
+                - code [ref=e864]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e865]: evaluationTimestamp=1785796814 (2026-08-03T22:40:14.000Z)；交易员主动平仓不受 Grace 限制，仓位删除后 Grace 字段清零。
+          - row [ref=e866]:
+            - cell "限价触发开仓 · 资金账户" [ref=e867]
+            - cell [ref=e868]:
+              - strong [ref=e869]: 交易员 USDC 余额
+            - cell "PASS" [ref=e870]
+            - cell "100089813318 raw (100089.813318 USDC)" [ref=e872]
+            - cell "100089813318 raw (100089.813318 USDC)" [ref=e873]
+            - cell "0 raw (0 USDC)" [ref=e874]
+            - cell "100089813318 raw (100089.813318 USDC)" [ref=e875]
+            - cell "expectedAfter = afterCreate.traderUsdc + ΔtraderUsdc afterCreate → afterOpen · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。" [ref=e876]:
+              - generic [ref=e877]: expectedAfter = afterCreate.traderUsdc + ΔtraderUsdc
+              - generic [ref=e878]:
+                - link "afterCreate → afterOpen" [ref=e879] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e880]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e881]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。
+          - row [ref=e882]:
+            - cell "限价触发开仓 · 资金账户" [ref=e883]
+            - cell [ref=e884]:
+              - strong [ref=e885]: OrderVault USDC 余额
+            - cell "PASS" [ref=e886]
+            - cell "69648288 raw (69.648288 USDC)" [ref=e888]
+            - cell "59648288 raw (59.648288 USDC)" [ref=e889]
+            - cell "-10000000 raw (-10 USDC)" [ref=e890]
+            - cell "59648288 raw (59.648288 USDC)" [ref=e891]
+            - cell "expectedAfter = afterCreate.orderVaultUsdc + ΔorderVaultUsdc afterCreate → afterOpen · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=-10000000 raw。" [ref=e892]:
+              - generic [ref=e893]: expectedAfter = afterCreate.orderVaultUsdc + ΔorderVaultUsdc
+              - generic [ref=e894]:
+                - link "afterCreate → afterOpen" [ref=e895] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e896]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e897]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=-10000000 raw。
+          - row [ref=e898]:
+            - cell "限价触发开仓 · 资金账户" [ref=e899]
+            - cell [ref=e900]:
+              - strong [ref=e901]: PositionVault USDC 余额
+            - cell "PASS" [ref=e902]
+            - cell "693453887 raw (693.453887 USDC)" [ref=e904]
+            - cell "703441387 raw (703.441387 USDC)" [ref=e905]
+            - cell "+9987500 raw (9.9875 USDC)" [ref=e906]
+            - cell "703441387 raw (703.441387 USDC)" [ref=e907]
+            - cell "expectedAfter = afterCreate.posVaultUsdc + ΔposVaultUsdc afterCreate → afterOpen · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=9987500 raw。" [ref=e908]:
+              - generic [ref=e909]: expectedAfter = afterCreate.posVaultUsdc + ΔposVaultUsdc
+              - generic [ref=e910]:
+                - link "afterCreate → afterOpen" [ref=e911] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e912]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e913]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=9987500 raw。
+          - row [ref=e914]:
+            - cell "限价触发开仓 · 资金账户" [ref=e915]
+            - cell [ref=e916]:
+              - strong [ref=e917]: LPVault totalAssets
+            - cell "PASS" [ref=e918]
+            - cell "50001041253337 raw (50001041.253337 USDC)" [ref=e920]
+            - cell "50001041265837 raw (50001041.265837 USDC)" [ref=e921]
+            - cell "+12500 raw (0.0125 USDC)" [ref=e922]
+            - cell "50001041265837 raw (50001041.265837 USDC)" [ref=e923]
+            - cell "expectedAfter = afterCreate.lpVaultAssets + ΔlpVaultAssets afterCreate → afterOpen · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=12500 raw。" [ref=e924]:
+              - generic [ref=e925]: expectedAfter = afterCreate.lpVaultAssets + ΔlpVaultAssets
+              - generic [ref=e926]:
+                - link "afterCreate → afterOpen" [ref=e927] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e928]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e929]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=12500 raw。
+          - row [ref=e930]:
+            - cell "限价触发开仓 · 资金账户" [ref=e931]
+            - cell [ref=e932]:
+              - strong [ref=e933]: FeeReceiver USDC 余额
+            - cell "PASS" [ref=e934]
+            - cell "0 raw (0 USDC)" [ref=e936]
+            - cell "0 raw (0 USDC)" [ref=e937]
+            - cell "0 raw (0 USDC)" [ref=e938]
+            - cell "0 raw (0 USDC)" [ref=e939]
+            - cell "expectedAfter = afterCreate.feeReceiverUsdc + ΔfeeReceiverUsdc afterCreate → afterOpen · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。" [ref=e940]:
+              - generic [ref=e941]: expectedAfter = afterCreate.feeReceiverUsdc + ΔfeeReceiverUsdc
+              - generic [ref=e942]:
+                - link "afterCreate → afterOpen" [ref=e943] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e944]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e945]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。
+          - row [ref=e946]:
+            - cell "限价触发开仓 · 资金账户" [ref=e947]
+            - cell [ref=e948]:
+              - strong [ref=e949]: 待领取仓位费
+            - cell "PASS" [ref=e950]
+            - cell "47881279 raw (47.881279 USDC)" [ref=e952]
+            - cell "47893779 raw (47.893779 USDC)" [ref=e953]
+            - cell "+12500 raw (0.0125 USDC)" [ref=e954]
+            - cell "47893779 raw (47.893779 USDC)" [ref=e955]
+            - cell "expectedAfter = afterCreate.claimableFeeAmountPosition + ΔclaimableFeeAmountPosition afterCreate → afterOpen · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=12500 raw。" [ref=e956]:
+              - generic [ref=e957]: expectedAfter = afterCreate.claimableFeeAmountPosition + ΔclaimableFeeAmountPosition
+              - generic [ref=e958]:
+                - link "afterCreate → afterOpen" [ref=e959] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e960]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e961]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=12500 raw。
+          - row [ref=e962]:
+            - cell "限价触发开仓 · 资金账户" [ref=e963]
+            - cell [ref=e964]:
+              - strong [ref=e965]: 待领取 Funding
+            - cell "PASS" [ref=e966]
+            - cell "1747053 raw (1.747053 USDC)" [ref=e968]
+            - cell "1747053 raw (1.747053 USDC)" [ref=e969]
+            - cell "0 raw (0 USDC)" [ref=e970]
+            - cell "1747053 raw (1.747053 USDC)" [ref=e971]
+            - cell "expectedAfter = afterCreate.claimableFeeAmountFunding + ΔclaimableFeeAmountFunding afterCreate → afterOpen · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。" [ref=e972]:
+              - generic [ref=e973]: expectedAfter = afterCreate.claimableFeeAmountFunding + ΔclaimableFeeAmountFunding
+              - generic [ref=e974]:
+                - link "afterCreate → afterOpen" [ref=e975] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e976]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e977]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。
+          - row [ref=e978]:
+            - cell "限价触发开仓 · 资金账户" [ref=e979]
+            - cell [ref=e980]:
+              - strong [ref=e981]: 待领取清算费
+            - cell "PASS" [ref=e982]
+            - cell "96002058 raw (96.002058 USDC)" [ref=e984]
+            - cell "96002058 raw (96.002058 USDC)" [ref=e985]
+            - cell "0 raw (0 USDC)" [ref=e986]
+            - cell "96002058 raw (96.002058 USDC)" [ref=e987]
+            - cell "expectedAfter = afterCreate.claimableFeeAmountLiquidation + ΔclaimableFeeAmountLiquidation afterCreate → afterOpen · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。" [ref=e988]:
+              - generic [ref=e989]: expectedAfter = afterCreate.claimableFeeAmountLiquidation + ΔclaimableFeeAmountLiquidation
+              - generic [ref=e990]:
+                - link "afterCreate → afterOpen" [ref=e991] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e992]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e993]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。
+          - row [ref=e994]:
+            - cell "限价触发开仓 · 市场 / OI" [ref=e995]
+            - cell [ref=e996]:
+              - strong [ref=e997]: Long 累计开仓成本
+            - cell "PASS" [ref=e998]
+            - cell "0 raw (0 USD)" [ref=e1000]
+            - cell "50000000000000000000000000000000 raw (50 USD)" [ref=e1001]
+            - cell "+50000000000000000000000000000000 raw (50 USD)" [ref=e1002]
+            - cell "50000000000000000000000000000000 raw (50 USD)" [ref=e1003]
+            - cell "expectedAfter = afterCreate.cumulativeOpenCostsLong + ΔcumulativeOpenCostsLong afterCreate → afterOpen · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=50000000000000000000000000000000 raw。" [ref=e1004]:
+              - generic [ref=e1005]: expectedAfter = afterCreate.cumulativeOpenCostsLong + ΔcumulativeOpenCostsLong
+              - generic [ref=e1006]:
+                - link "afterCreate → afterOpen" [ref=e1007] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e1008]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e1009]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=50000000000000000000000000000000 raw。
+          - row [ref=e1010]:
+            - cell "限价触发开仓 · 市场 / OI" [ref=e1011]
+            - cell [ref=e1012]:
+              - strong [ref=e1013]: Short 累计开仓成本
+            - cell "PASS" [ref=e1014]
+            - cell "0 raw (0 USD)" [ref=e1016]
+            - cell "0 raw (0 USD)" [ref=e1017]
+            - cell "0 raw (0 USD)" [ref=e1018]
+            - cell "0 raw (0 USD)" [ref=e1019]
+            - cell "expectedAfter = afterCreate.cumulativeOpenCostsShort + ΔcumulativeOpenCostsShort afterCreate → afterOpen · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。" [ref=e1020]:
+              - generic [ref=e1021]: expectedAfter = afterCreate.cumulativeOpenCostsShort + ΔcumulativeOpenCostsShort
+              - generic [ref=e1022]:
+                - link "afterCreate → afterOpen" [ref=e1023] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e1024]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e1025]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。
+          - row [ref=e1026]:
+            - cell "限价触发开仓 · 市场 / OI" [ref=e1027]
+            - cell [ref=e1028]:
+              - strong [ref=e1029]: Long Open Interest
+            - cell "PASS" [ref=e1030]
+            - cell "0 raw (0 MockBTC)" [ref=e1032]
+            - cell "92122 raw (0.00092122 MockBTC)" [ref=e1033]
+            - cell "+92122 raw (0.00092122 MockBTC)" [ref=e1034]
+            - cell "92122 raw (0.00092122 MockBTC)" [ref=e1035]
+            - cell "expectedAfter = afterCreate.openInterestInTokensLong + ΔopenInterestInTokensLong afterCreate → afterOpen · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=92122 raw。" [ref=e1036]:
+              - generic [ref=e1037]: expectedAfter = afterCreate.openInterestInTokensLong + ΔopenInterestInTokensLong
+              - generic [ref=e1038]:
+                - link "afterCreate → afterOpen" [ref=e1039] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e1040]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e1041]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=92122 raw。
+          - row [ref=e1042]:
+            - cell "限价触发开仓 · 市场 / OI" [ref=e1043]
+            - cell [ref=e1044]:
+              - strong [ref=e1045]: Short Open Interest
+            - cell "PASS" [ref=e1046]
+            - cell "0 raw (0 MockBTC)" [ref=e1048]
+            - cell "0 raw (0 MockBTC)" [ref=e1049]
+            - cell "0 raw (0 MockBTC)" [ref=e1050]
+            - cell "0 raw (0 MockBTC)" [ref=e1051]
+            - cell "expectedAfter = afterCreate.openInterestInTokensShort + ΔopenInterestInTokensShort afterCreate → afterOpen · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。" [ref=e1052]:
+              - generic [ref=e1053]: expectedAfter = afterCreate.openInterestInTokensShort + ΔopenInterestInTokensShort
+              - generic [ref=e1054]:
+                - link "afterCreate → afterOpen" [ref=e1055] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e1056]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e1057]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。
+          - row [ref=e1058]:
+            - cell "限价触发开仓 · 市场 / OI" [ref=e1059]
+            - cell [ref=e1060]:
+              - strong [ref=e1061]: Position Impact Pool
+            - cell "PASS" [ref=e1062]
+            - cell "0 raw (0 MockBTC)" [ref=e1064]
+            - cell "0 raw (0 MockBTC)" [ref=e1065]
+            - cell "0 raw (0 MockBTC)" [ref=e1066]
+            - cell "0 raw (0 MockBTC)" [ref=e1067]
+            - cell "expectedAfter = afterCreate.positionImpactPoolAmount + ΔpositionImpactPoolAmount afterCreate → afterOpen · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。" [ref=e1068]:
+              - generic [ref=e1069]: expectedAfter = afterCreate.positionImpactPoolAmount + ΔpositionImpactPoolAmount
+              - generic [ref=e1070]:
+                - link "afterCreate → afterOpen" [ref=e1071] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e1072]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e1073]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。
+          - row [ref=e1074]:
+            - cell "限价触发开仓 · 仓位原始字段" [ref=e1075]
+            - cell [ref=e1076]:
+              - strong [ref=e1077]: 仓位 sizeInUsd
+            - cell "PASS" [ref=e1078]
+            - cell "0 raw (0 USD)" [ref=e1080]
+            - cell "50000000000000000000000000000000 raw (50 USD)" [ref=e1081]
+            - cell "+50000000000000000000000000000000 raw (50 USD)" [ref=e1082]
+            - cell "50000000000000000000000000000000 raw (50 USD)" [ref=e1083]
+            - cell "After Position 原始字段 = PositionIncrease 事件的同名字段 限价触发开仓 position · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对 src/scenarios/scn-010-runner.ts" [ref=e1084]:
+              - generic [ref=e1085]: After Position 原始字段 = PositionIncrease 事件的同名字段
+              - generic [ref=e1086]:
+                - link "限价触发开仓 position" [ref=e1087] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对
+                - code [ref=e1088]: src/scenarios/scn-010-runner.ts
+          - row [ref=e1089]:
+            - cell "限价触发开仓 · 仓位原始字段" [ref=e1090]
+            - cell [ref=e1091]:
+              - strong [ref=e1092]: 仓位 sizeInTokens
+            - cell "PASS" [ref=e1093]
+            - cell "0 raw (0 MockBTC)" [ref=e1095]
+            - cell "92122 raw (0.00092122 MockBTC)" [ref=e1096]
+            - cell "+92122 raw (0.00092122 MockBTC)" [ref=e1097]
+            - cell "92122 raw (0.00092122 MockBTC)" [ref=e1098]
+            - cell "After Position 原始字段 = PositionIncrease 事件的同名字段 限价触发开仓 position · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对 src/scenarios/scn-010-runner.ts" [ref=e1099]:
+              - generic [ref=e1100]: After Position 原始字段 = PositionIncrease 事件的同名字段
+              - generic [ref=e1101]:
+                - link "限价触发开仓 position" [ref=e1102] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对
+                - code [ref=e1103]: src/scenarios/scn-010-runner.ts
+          - row [ref=e1104]:
+            - cell "限价触发开仓 · 仓位原始字段" [ref=e1105]
+            - cell [ref=e1106]:
+              - strong [ref=e1107]: 仓位 collateralAmount
+            - cell "PASS" [ref=e1108]
+            - cell "0 raw (0 USDC)" [ref=e1110]
+            - cell "9975000 raw (9.975 USDC)" [ref=e1111]
+            - cell "+9975000 raw (9.975 USDC)" [ref=e1112]
+            - cell "9975000 raw (9.975 USDC)" [ref=e1113]
+            - cell "After Position 原始字段 = PositionIncrease 事件的同名字段 限价触发开仓 position · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对 src/scenarios/scn-010-runner.ts" [ref=e1114]:
+              - generic [ref=e1115]: After Position 原始字段 = PositionIncrease 事件的同名字段
+              - generic [ref=e1116]:
+                - link "限价触发开仓 position" [ref=e1117] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对
+                - code [ref=e1118]: src/scenarios/scn-010-runner.ts
+          - row [ref=e1119]:
+            - cell "限价触发开仓 · 仓位原始字段" [ref=e1120]
+            - cell [ref=e1121]:
+              - strong [ref=e1122]: 仓位负 Funding 结算基准 / size
+            - cell "PASS" [ref=e1123]
+            - cell "0 raw (0 raw)" [ref=e1125]
+            - cell "3478236223354027409558220653708000000000000 raw (3478236223354027409558220653708000000000000 raw)" [ref=e1126]
+            - cell "+3478236223354027409558220653708000000000000 raw (3478236223354027409558220653708000000000000 raw)" [ref=e1127]
+            - cell "3478236223354027409558220653708000000000000 raw (3478236223354027409558220653708000000000000 raw)" [ref=e1128]
+            - cell "After Position 原始字段 = PositionIncrease 事件的同名字段 限价触发开仓 position · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对 src/scenarios/scn-010-runner.ts" [ref=e1129]:
+              - generic [ref=e1130]: After Position 原始字段 = PositionIncrease 事件的同名字段
+              - generic [ref=e1131]:
+                - link "限价触发开仓 position" [ref=e1132] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对
+                - code [ref=e1133]: src/scenarios/scn-010-runner.ts
+          - row [ref=e1134]:
+            - cell "限价触发开仓 · 仓位原始字段" [ref=e1135]
+            - cell [ref=e1136]:
+              - strong [ref=e1137]: 仓位正 Funding 结算基准 / size
+            - cell "PASS" [ref=e1138]
+            - cell "0 raw (0 raw)" [ref=e1140]
+            - cell "3185940116755906288864736223506000000000000 raw (3185940116755906288864736223506000000000000 raw)" [ref=e1141]
+            - cell "+3185940116755906288864736223506000000000000 raw (3185940116755906288864736223506000000000000 raw)" [ref=e1142]
+            - cell "3185940116755906288864736223506000000000000 raw (3185940116755906288864736223506000000000000 raw)" [ref=e1143]
+            - cell "After Position 原始字段 = PositionIncrease 事件的同名字段 限价触发开仓 position · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对 src/scenarios/scn-010-runner.ts" [ref=e1144]:
+              - generic [ref=e1145]: After Position 原始字段 = PositionIncrease 事件的同名字段
+              - generic [ref=e1146]:
+                - link "限价触发开仓 position" [ref=e1147] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对
+                - code [ref=e1148]: src/scenarios/scn-010-runner.ts
+          - row [ref=e1149]:
+            - cell "限价触发开仓 · Grace" [ref=e1150]
+            - cell [ref=e1151]:
+              - strong [ref=e1152]: Grace Start（保护期起点）
+            - cell "PASS" [ref=e1153]
+            - cell "0（未设置）" [ref=e1155]
+            - cell "1785796826 (2026-08-03T22:40:26.000Z)" [ref=e1156]
+            - cell "+1785796826 raw (1785796826 seconds)" [ref=e1157]
+            - cell "1785796826 (2026-08-03T22:40:26.000Z)" [ref=e1158]
+            - cell "首次建立仓位：graceStart = PositionIncrease.increasedAtTime = block.timestamp 四、清算保护卡片 / 4.1 保护期推导 · Position 首次创建时写入 Grace 起点 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv；链上阶段快照：src/scenarios/scn-010-runner.ts" [ref=e1159]:
+              - generic [ref=e1160]: 首次建立仓位：graceStart = PositionIncrease.increasedAtTime = block.timestamp
+              - generic [ref=e1161]:
+                - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e1162] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · Position 首次创建时写入 Grace 起点
+                - code [ref=e1163]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e1164]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv；链上阶段快照：src/scenarios/scn-010-runner.ts
+          - row [ref=e1165]:
+            - cell "限价触发开仓 · Grace" [ref=e1166]
+            - cell [ref=e1167]:
+              - strong [ref=e1168]: Grace End（保护期终点）
+            - cell "PASS" [ref=e1169]
+            - cell "0（未设置）" [ref=e1171]
+            - cell "1785797726 (2026-08-03T22:55:26.000Z)" [ref=e1172]
+            - cell "+1785797726 raw (1785797726 seconds)" [ref=e1173]
+            - cell "1785797726 (2026-08-03T22:55:26.000Z)" [ref=e1174]
+            - cell "graceEnd = graceStart + gracePeriodBase × tierMultiplier / 1e18 四、清算保护卡片 / 4.1 保护期推导 · Grace 终点按市场基础时长与推荐层级乘数复算 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv" [ref=e1175]:
+              - generic [ref=e1176]: graceEnd = graceStart + gracePeriodBase × tierMultiplier / 1e18
+              - generic [ref=e1177]:
+                - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e1178] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · Grace 终点按市场基础时长与推荐层级乘数复算
+                - code [ref=e1179]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e1180]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv
+          - row [ref=e1181]:
+            - cell "限价触发开仓 · Grace" [ref=e1182]
+            - cell [ref=e1183]:
+              - strong [ref=e1184]: Grace Duration（有效保护时长）
+            - cell "PASS" [ref=e1185]
+            - cell "0 seconds" [ref=e1187]
+            - cell "900 seconds" [ref=e1188]
+            - cell "900 seconds" [ref=e1189]
+            - cell "900 seconds" [ref=e1190]
+            - cell "graceDuration = max(graceEnd − graceStart, 0) = gracePeriodBase × tierMultiplier / 1e18 四、清算保护卡片 / 4.1 保护期推导 · 保护窗口长度 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv" [ref=e1191]:
+              - generic [ref=e1192]: graceDuration = max(graceEnd − graceStart, 0) = gracePeriodBase × tierMultiplier / 1e18
+              - generic [ref=e1193]:
+                - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e1194] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · 保护窗口长度
+                - code [ref=e1195]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e1196]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv
+          - row [ref=e1197]:
+            - cell "限价触发开仓 · Grace" [ref=e1198]
+            - cell [ref=e1199]:
+              - strong [ref=e1200]: Grace Active（执行时是否受保护）
+            - cell "PASS" [ref=e1201]
+            - cell "false" [ref=e1203]
+            - cell "true" [ref=e1204]
+            - cell "false → true" [ref=e1205]
+            - cell "true" [ref=e1206]
+            - cell "graceActive = position.exists && graceStart > 0 && graceEnd > evaluationTimestamp 四、清算保护卡片 / 4.2 5 状态机 · 依据仓位与区块时间实时推导保护状态 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md evaluationTimestamp=1785796826 (2026-08-03T22:40:26.000Z)；Keeper 清算条件使用 graceEnd > block.timestamp。" [ref=e1207]:
+              - generic [ref=e1208]: graceActive = position.exists && graceStart > 0 && graceEnd > evaluationTimestamp
+              - generic [ref=e1209]:
+                - link "四、清算保护卡片 / 4.2 5 状态机" [ref=e1210] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · 依据仓位与区块时间实时推导保护状态
+                - code [ref=e1211]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e1212]: evaluationTimestamp=1785796826 (2026-08-03T22:40:26.000Z)；Keeper 清算条件使用 graceEnd > block.timestamp。
+          - row [ref=e1213]:
+            - cell "限价触发开仓 · Grace" [ref=e1214]
+            - cell [ref=e1215]:
+              - strong [ref=e1216]: Grace Remaining（执行时剩余保护秒数）
+            - cell "PASS" [ref=e1217]
+            - cell "0 seconds" [ref=e1219]
+            - cell "900 seconds" [ref=e1220]
+            - cell "900 seconds" [ref=e1221]
+            - cell "900 seconds" [ref=e1222]
+            - 'cell "graceRemaining = position.exists ? max(graceEnd − evaluationTimestamp, 0) : 0 四、清算保护卡片 / 4.1 保护期推导 · 页面倒计时与合约保护窗口 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md evaluationTimestamp=1785796826 (2026-08-03T22:40:26.000Z)；交易员主动平仓不受 Grace 限制，仓位删除后 Grace 字段清零。" [ref=e1223]':
+              - generic [ref=e1224]: "graceRemaining = position.exists ? max(graceEnd − evaluationTimestamp, 0) : 0"
+              - generic [ref=e1225]:
+                - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e1226] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · 页面倒计时与合约保护窗口
+                - code [ref=e1227]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e1228]: evaluationTimestamp=1785796826 (2026-08-03T22:40:26.000Z)；交易员主动平仓不受 Grace 限制，仓位删除后 Grace 字段清零。
+          - row [ref=e1229]:
+            - cell "限价触发开仓 · OI / Skew / Spread" [ref=e1230]
+            - cell [ref=e1231]:
+              - strong [ref=e1232]: Long OI（USD 口径）
+            - cell "PASS" [ref=e1233]
+            - cell "0 raw (0 USD)" [ref=e1235]
+            - cell "49745880000000000000000000000000 raw (49.74588 USD)" [ref=e1236]
+            - cell "+49745880000000000000000000000000 raw (49.74588 USD)" [ref=e1237]
+            - cell "49745880000000000000000000000000 raw (49.74588 USD)" [ref=e1238]
+            - cell "longOIUsd = longOpenInterestInTokens × indexMidPrice §10.1 市场 Open Interest USD · 市场 Open Interest USD ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md indexMidPrice=(540000000000000000000000000+540000000000000000000000000)/2=540000000000000000000000000" [ref=e1239]:
+              - generic [ref=e1240]: longOIUsd = longOpenInterestInTokens × indexMidPrice
+              - generic [ref=e1241]:
+                - link "§10.1 市场 Open Interest USD" [ref=e1242] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 市场 Open Interest USD
+                - code [ref=e1243]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+              - generic [ref=e1244]: indexMidPrice=(540000000000000000000000000+540000000000000000000000000)/2=540000000000000000000000000
+          - row [ref=e1245]:
+            - cell "限价触发开仓 · OI / Skew / Spread" [ref=e1246]
+            - cell [ref=e1247]:
+              - strong [ref=e1248]: Short OI（USD 口径）
+            - cell "PASS" [ref=e1249]
+            - cell "0 raw (0 USD)" [ref=e1251]
+            - cell "0 raw (0 USD)" [ref=e1252]
+            - cell "0 raw (0 USD)" [ref=e1253]
+            - cell "0 raw (0 USD)" [ref=e1254]
+            - cell "shortOIUsd = shortOpenInterestInTokens × indexMidPrice §10.1 市场 Open Interest USD · 市场 Open Interest USD ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e1255]:
+              - generic [ref=e1256]: shortOIUsd = shortOpenInterestInTokens × indexMidPrice
+              - generic [ref=e1257]:
+                - link "§10.1 市场 Open Interest USD" [ref=e1258] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 市场 Open Interest USD
+                - code [ref=e1259]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e1260]:
+            - cell "限价触发开仓 · OI / Skew / Spread" [ref=e1261]
+            - cell [ref=e1262]:
+              - strong [ref=e1263]: 实时 Raw Skew（进入 EMA 前）
+            - cell "PASS" [ref=e1264]
+            - cell "0 raw (0 ratio)" [ref=e1266]
+            - cell "1000000000000000000 raw (1 ratio)" [ref=e1267]
+            - cell "+1000000000000000000 raw (1 ratio)" [ref=e1268]
+            - cell "1000000000000000000 raw (1 ratio)" [ref=e1269]
+            - cell "skew = (longOIUsd − shortOIUsd) × 1e18 / (longOIUsd + shortOIUsd) §10.2 Skew · Funding 原始 Skew；实际费率继续使用 1h EMA ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e1270]:
+              - generic [ref=e1271]: skew = (longOIUsd − shortOIUsd) × 1e18 / (longOIUsd + shortOIUsd)
+              - generic [ref=e1272]:
+                - link "§10.2 Skew" [ref=e1273] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · Funding 原始 Skew；实际费率继续使用 1h EMA
+                - code [ref=e1274]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e1275]:
+            - cell "限价触发开仓 · OI / Skew / Spread" [ref=e1276]
+            - cell [ref=e1277]:
+              - strong [ref=e1278]: Spread Skew Reference
+            - cell "PASS" [ref=e1279]
+            - cell "0 raw (0 ratio)" [ref=e1281]
+            - cell "1000000000000000000 raw (1 ratio)" [ref=e1282]
+            - cell "+1000000000000000000 raw (1 ratio)" [ref=e1283]
+            - cell "500000000000000000 raw (0.5 ratio)" [ref=e1284]
+            - cell "skewRef = (abs(skewBefore) + abs(skewAfter)) / 2 §4.3 Skew Reference · 动态点差的 Skew Reference ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md Expected 列为本次成交用于 Skew Impact 的前后平均值，不是 After 单点值。" [ref=e1285]:
+              - generic [ref=e1286]: skewRef = (abs(skewBefore) + abs(skewAfter)) / 2
+              - generic [ref=e1287]:
+                - link "§4.3 Skew Reference" [ref=e1288] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 动态点差的 Skew Reference
+                - code [ref=e1289]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+              - generic [ref=e1290]: Expected 列为本次成交用于 Skew Impact 的前后平均值，不是 After 单点值。
+          - row [ref=e1291]:
+            - cell "限价触发开仓 · OI / Skew / Spread" [ref=e1292]
+            - cell [ref=e1293]:
+              - strong [ref=e1294]: 是否改善多空平衡
+            - cell "PASS" [ref=e1295]
+            - cell "0 raw (0 USD)" [ref=e1297]
+            - cell "49745880000000000000000000000000 raw (49.74588 USD)" [ref=e1298]
+            - cell "+49745880000000000000000000000000 raw (49.74588 USD)" [ref=e1299]
+            - cell "false" [ref=e1300]
+            - cell "balanceWasImproved = abs(nextLongOI − nextShortOI) < abs(currentLongOI − currentShortOI) §4.4 Skew Impact · Skew Impact 正负方向 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e1301]:
+              - generic [ref=e1302]: balanceWasImproved = abs(nextLongOI − nextShortOI) < abs(currentLongOI − currentShortOI)
+              - generic [ref=e1303]:
+                - link "§4.4 Skew Impact" [ref=e1304] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · Skew Impact 正负方向
+                - code [ref=e1305]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e1306]:
+            - cell "限价触发开仓 · OI / Skew / Spread" [ref=e1307]
+            - cell [ref=e1308]:
+              - strong [ref=e1309]: Dynamic Spread 总值
+            - cell "PASS" [ref=e1310]
+            - cell "0 raw (0 ratio)" [ref=e1312]
+            - cell "5100032065091026 raw (0.005100032065091026 ratio)" [ref=e1313]
+            - cell "+5100032065091026 raw (0.005100032065091026 ratio)" [ref=e1314]
+            - cell "max(0, constantPriceSpread + priceImpactSpread + skewImpact)" [ref=e1315]
+            - cell "dynamicSpread = max(0, constantPriceSpread + priceImpactSpread + skewImpact) §4.1 动态点差 · 动态点差总公式 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md 事件保存合约最终 Spread；成交价行再以 Oracle 价格独立反算核对该值。" [ref=e1316]:
+              - generic [ref=e1317]: dynamicSpread = max(0, constantPriceSpread + priceImpactSpread + skewImpact)
+              - generic [ref=e1318]:
+                - link "§4.1 动态点差" [ref=e1319] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 动态点差总公式
+                - code [ref=e1320]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+              - generic [ref=e1321]: 事件保存合约最终 Spread；成交价行再以 Oracle 价格独立反算核对该值。
+          - row [ref=e1322]:
+            - cell "限价触发开仓 · OI / Skew / Spread" [ref=e1323]
+            - cell [ref=e1324]:
+              - strong [ref=e1325]: Spread 调整后执行价
+            - cell "PASS" [ref=e1326]
+            - cell "540000000000000000000000000" [ref=e1328]
+            - cell "542754017315149154040000000" [ref=e1329]
+            - cell "+2754017315149154040000000 raw (2754017315149154040000000 price raw)" [ref=e1330]
+            - cell "542754017315149154040000000" [ref=e1331]
+            - cell "ceil(indexPrice.max × (1e18 + dynamicSpread) / 1e18) §4.5 加仓成交价 · 方向与开/平仓共同决定价格不利侧 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e1332]:
+              - generic [ref=e1333]: ceil(indexPrice.max × (1e18 + dynamicSpread) / 1e18)
+              - generic [ref=e1334]:
+                - link "§4.5 加仓成交价" [ref=e1335] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 方向与开/平仓共同决定价格不利侧
+                - code [ref=e1336]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e1337]:
+            - cell "限价触发开仓 · Fee" [ref=e1338]
+            - cell [ref=e1339]:
+              - strong [ref=e1340]: Position Fee
+            - cell "PASS" [ref=e1341]
+            - cell "0 raw (0 USDC)" [ref=e1343]
+            - cell "25000 raw (0.025 USDC)" [ref=e1344]
+            - cell "+25000 raw (0.025 USDC)" [ref=e1345]
+            - cell "25000 raw (0.025 USDC)" [ref=e1346]
+            - cell "positionFeeAmount = tradeSizeUsd × positionFeeFactor / 1e30 / collateralTokenPrice.min §7.1 基础仓位费 · 基础仓位费 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md tradeSizeUsd=50000000000000000000000000000000; factor=500000000000000000000000000; collateral.min=1000000000000000000000000" [ref=e1347]:
+              - generic [ref=e1348]: positionFeeAmount = tradeSizeUsd × positionFeeFactor / 1e30 / collateralTokenPrice.min
+              - generic [ref=e1349]:
+                - link "§7.1 基础仓位费" [ref=e1350] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 基础仓位费
+                - code [ref=e1351]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+              - generic [ref=e1352]: tradeSizeUsd=50000000000000000000000000000000; factor=500000000000000000000000000; collateral.min=1000000000000000000000000
+          - row [ref=e1353]:
+            - cell "限价触发开仓 · Fee" [ref=e1354]
+            - cell [ref=e1355]:
+              - strong [ref=e1356]: Protocol Fee 及分账守恒
+            - cell "PASS" [ref=e1357]
+            - cell "0 raw (0 USDC)" [ref=e1359]
+            - cell "25000 raw (0.025 USDC)" [ref=e1360]
+            - cell "+25000 raw (0.025 USDC)" [ref=e1361]
+            - cell "25000 raw (0.025 USDC)" [ref=e1362]
+            - cell "protocolFeeAmount = feeReceiverAmount + positionFeeAmountForPool §7.5 协议与 LP 分成 · 协议与 LP 分成 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e1363]:
+              - generic [ref=e1364]: protocolFeeAmount = feeReceiverAmount + positionFeeAmountForPool
+              - generic [ref=e1365]:
+                - link "§7.5 协议与 LP 分成" [ref=e1366] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 协议与 LP 分成
+                - code [ref=e1367]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e1368]:
+            - cell "限价触发开仓 · Fee" [ref=e1369]
+            - cell [ref=e1370]:
+              - strong [ref=e1371]: Fee Receiver 分成
+            - cell "PASS" [ref=e1372]
+            - cell "0 raw (0 USDC)" [ref=e1374]
+            - cell "12500 raw (0.0125 USDC)" [ref=e1375]
+            - cell "+12500 raw (0.0125 USDC)" [ref=e1376]
+            - cell "12500 raw (0.0125 USDC)" [ref=e1377]
+            - cell "feeReceiverAmount = protocolFeeAmount × positionFeeReceiverFactor / 1e30 §7.5 协议与 LP 分成 · 协议与 LP 分成 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e1378]:
+              - generic [ref=e1379]: feeReceiverAmount = protocolFeeAmount × positionFeeReceiverFactor / 1e30
+              - generic [ref=e1380]:
+                - link "§7.5 协议与 LP 分成" [ref=e1381] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 协议与 LP 分成
+                - code [ref=e1382]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e1383]:
+            - cell "限价触发开仓 · Fee" [ref=e1384]
+            - cell [ref=e1385]:
+              - strong [ref=e1386]: LP Pool 分成
+            - cell "PASS" [ref=e1387]
+            - cell "0 raw (0 USDC)" [ref=e1389]
+            - cell "12500 raw (0.0125 USDC)" [ref=e1390]
+            - cell "+12500 raw (0.0125 USDC)" [ref=e1391]
+            - cell "12500 raw (0.0125 USDC)" [ref=e1392]
+            - cell "positionFeeAmountForPool = protocolFeeAmount − feeReceiverAmount §7.5 协议与 LP 分成 · 协议与 LP 分成 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e1393]:
+              - generic [ref=e1394]: positionFeeAmountForPool = protocolFeeAmount − feeReceiverAmount
+              - generic [ref=e1395]:
+                - link "§7.5 协议与 LP 分成" [ref=e1396] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 协议与 LP 分成
+                - code [ref=e1397]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e1398]:
+            - cell "限价触发开仓 · Funding" [ref=e1399]
+            - cell [ref=e1400]:
+              - strong [ref=e1401]: 本仓位应付 Funding
+            - cell "PASS" [ref=e1402]
+            - cell "0 raw (0 per-size)" [ref=e1404]
+            - cell "3478236223354027409558220653708000000000000 raw (3478236223354027409558220653708000000000000 per-size)" [ref=e1405]
+            - cell "+3478236223354027409558220653708000000000000 raw (3478236223354027409558220653708000000000000 per-size)" [ref=e1406]
+            - cell "0 raw (0 USDC)" [ref=e1407]
+            - cell "ceil((latestNegativePerSize − positionNegativePerSize) × sizeInTokens / (1e30 × collateralPrice.min)) §10.5 单仓 Funding · 单仓负 Funding（支付端向上取整） ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md PositionFeesCollected.negativeFundingFeeAmount=0 raw" [ref=e1408]:
+              - generic [ref=e1409]: ceil((latestNegativePerSize − positionNegativePerSize) × sizeInTokens / (1e30 × collateralPrice.min))
+              - generic [ref=e1410]:
+                - link "§10.5 单仓 Funding" [ref=e1411] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 单仓负 Funding（支付端向上取整）
+                - code [ref=e1412]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+              - generic [ref=e1413]: PositionFeesCollected.negativeFundingFeeAmount=0 raw
+          - row [ref=e1414]:
+            - cell "限价触发开仓 · Funding" [ref=e1415]
+            - cell [ref=e1416]:
+              - strong [ref=e1417]: 本仓位应收 Funding
+            - cell "PASS" [ref=e1418]
+            - cell "0 raw (0 per-size)" [ref=e1420]
+            - cell "3185940116755906288864736223506000000000000 raw (3185940116755906288864736223506000000000000 per-size)" [ref=e1421]
+            - cell "+3185940116755906288864736223506000000000000 raw (3185940116755906288864736223506000000000000 per-size)" [ref=e1422]
+            - cell "0 raw (0 USDC)" [ref=e1423]
+            - cell "(latestPositivePerSize − positionPositivePerSize) × sizeInTokens / (1e30 × collateralPrice.max) §10.5 单仓 Funding · 单仓正 Funding（收取端向下取整） ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md PositionFeesCollected.positiveFundingFeeAmount=0 raw" [ref=e1424]:
+              - generic [ref=e1425]: (latestPositivePerSize − positionPositivePerSize) × sizeInTokens / (1e30 × collateralPrice.max)
+              - generic [ref=e1426]:
+                - link "§10.5 单仓 Funding" [ref=e1427] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 单仓正 Funding（收取端向下取整）
+                - code [ref=e1428]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+              - generic [ref=e1429]: PositionFeesCollected.positiveFundingFeeAmount=0 raw
+          - row [ref=e1430]:
+            - cell "限价触发开仓 · Fee" [ref=e1431]
+            - cell [ref=e1432]:
+              - strong [ref=e1433]: Total Cost
+            - cell "PASS" [ref=e1434]
+            - cell "0 raw (0 USDC)" [ref=e1436]
+            - cell "25000 raw (0.025 USDC)" [ref=e1437]
+            - cell "+25000 raw (0.025 USDC)" [ref=e1438]
+            - cell "25000 raw (0.025 USDC)" [ref=e1439]
+            - cell "totalCostAmount = positionFeeAmount + uiFeeAmount + negativeFundingFeeAmount（本用例无清算费/折扣） §9 费用总额 · 费用总额；正 Funding 单独增加抵押品 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e1440]:
+              - generic [ref=e1441]: totalCostAmount = positionFeeAmount + uiFeeAmount + negativeFundingFeeAmount（本用例无清算费/折扣）
+              - generic [ref=e1442]:
+                - link "§9 费用总额" [ref=e1443] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 费用总额；正 Funding 单独增加抵押品
+                - code [ref=e1444]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e1445]:
+            - cell "限价触发开仓 · Fee" [ref=e1446]
+            - cell [ref=e1447]:
+              - strong [ref=e1448]: Claimable Position Fee 入账
+            - cell "PASS" [ref=e1449]
+            - cell "47881279 raw (47.881279 USDC)" [ref=e1451]
+            - cell "47893779 raw (47.893779 USDC)" [ref=e1452]
+            - cell "+12500 raw (0.0125 USDC)" [ref=e1453]
+            - cell "47893779 raw (47.893779 USDC)" [ref=e1454]
+            - cell "claimablePositionFeeAfter = before + feeReceiverAmount §7.5 协议与 LP 分成 · 协议费用入账与快照交叉核对 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e1455]:
+              - generic [ref=e1456]: claimablePositionFeeAfter = before + feeReceiverAmount
+              - generic [ref=e1457]:
+                - link "§7.5 协议与 LP 分成" [ref=e1458] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 协议费用入账与快照交叉核对
+                - code [ref=e1459]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e1460]:
+            - cell "限价触发开仓 · Funding" [ref=e1461]
+            - cell [ref=e1462]:
+              - strong [ref=e1463]: LP Claimable Funding 入账
+            - cell "PASS" [ref=e1464]
+            - cell "1747053 raw (1.747053 USDC)" [ref=e1466]
+            - cell "1747053 raw (1.747053 USDC)" [ref=e1467]
+            - cell "0 raw (0 USDC)" [ref=e1468]
+            - cell "1747053 raw (1.747053 USDC)" [ref=e1469]
+            - cell "positionPaysLp > 0：claimableFundingAfter = before + positionPaysLp；< 0 时由 LPVault 支付 PositionVault §10.6 LP Funding 净额 · LP Funding 净额 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e1470]:
+              - generic [ref=e1471]: positionPaysLp > 0：claimableFundingAfter = before + positionPaysLp；< 0 时由 LPVault 支付 PositionVault
+              - generic [ref=e1472]:
+                - link "§10.6 LP Funding 净额" [ref=e1473] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · LP Funding 净额
+                - code [ref=e1474]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e1475]:
+            - cell "全平执行 · 资金账户" [ref=e1476]
+            - cell [ref=e1477]:
+              - strong [ref=e1478]: 交易员 USDC 余额
+            - cell "PASS" [ref=e1479]
+            - cell "100089813318 raw (100089.813318 USDC)" [ref=e1481]
+            - cell "100099509167 raw (100099.509167 USDC)" [ref=e1482]
+            - cell "+9695849 raw (9.695849 USDC)" [ref=e1483]
+            - cell "100099509167 raw (100099.509167 USDC)" [ref=e1484]
+            - cell "expectedAfter = afterOpen.traderUsdc + ΔtraderUsdc afterOpen → afterClose · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=9695849 raw。" [ref=e1485]:
+              - generic [ref=e1486]: expectedAfter = afterOpen.traderUsdc + ΔtraderUsdc
+              - generic [ref=e1487]:
+                - link "afterOpen → afterClose" [ref=e1488] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e1489]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e1490]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=9695849 raw。
+          - row [ref=e1491]:
+            - cell "全平执行 · 资金账户" [ref=e1492]
+            - cell [ref=e1493]:
+              - strong [ref=e1494]: OrderVault USDC 余额
+            - cell "PASS" [ref=e1495]
+            - cell "59648288 raw (59.648288 USDC)" [ref=e1497]
+            - cell "59648288 raw (59.648288 USDC)" [ref=e1498]
+            - cell "0 raw (0 USDC)" [ref=e1499]
+            - cell "59648288 raw (59.648288 USDC)" [ref=e1500]
+            - cell "expectedAfter = afterOpen.orderVaultUsdc + ΔorderVaultUsdc afterOpen → afterClose · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。" [ref=e1501]:
+              - generic [ref=e1502]: expectedAfter = afterOpen.orderVaultUsdc + ΔorderVaultUsdc
+              - generic [ref=e1503]:
+                - link "afterOpen → afterClose" [ref=e1504] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e1505]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e1506]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。
+          - row [ref=e1507]:
+            - cell "全平执行 · 资金账户" [ref=e1508]
+            - cell [ref=e1509]:
+              - strong [ref=e1510]: PositionVault USDC 余额
+            - cell "PASS" [ref=e1511]
+            - cell "703441387 raw (703.441387 USDC)" [ref=e1513]
+            - cell "693478918 raw (693.478918 USDC)" [ref=e1514]
+            - cell "-9962469 raw (-9.962469 USDC)" [ref=e1515]
+            - cell "693478918 raw (693.478918 USDC)" [ref=e1516]
+            - cell "expectedAfter = afterOpen.posVaultUsdc + ΔposVaultUsdc afterOpen → afterClose · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=-9962469 raw。" [ref=e1517]:
+              - generic [ref=e1518]: expectedAfter = afterOpen.posVaultUsdc + ΔposVaultUsdc
+              - generic [ref=e1519]:
+                - link "afterOpen → afterClose" [ref=e1520] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e1521]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e1522]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=-9962469 raw。
+          - row [ref=e1523]:
+            - cell "全平执行 · 资金账户" [ref=e1524]
+            - cell [ref=e1525]:
+              - strong [ref=e1526]: LPVault totalAssets
+            - cell "PASS" [ref=e1527]
+            - cell "50001041265837 raw (50001041.265837 USDC)" [ref=e1529]
+            - cell "50001041532457 raw (50001041.532457 USDC)" [ref=e1530]
+            - cell "+266620 raw (0.26662 USDC)" [ref=e1531]
+            - cell "50001041532457 raw (50001041.532457 USDC)" [ref=e1532]
+            - cell "expectedAfter = afterOpen.lpVaultAssets + ΔlpVaultAssets afterOpen → afterClose · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=266620 raw。" [ref=e1533]:
+              - generic [ref=e1534]: expectedAfter = afterOpen.lpVaultAssets + ΔlpVaultAssets
+              - generic [ref=e1535]:
+                - link "afterOpen → afterClose" [ref=e1536] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e1537]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e1538]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=266620 raw。
+          - row [ref=e1539]:
+            - cell "全平执行 · 资金账户" [ref=e1540]
+            - cell [ref=e1541]:
+              - strong [ref=e1542]: FeeReceiver USDC 余额
+            - cell "PASS" [ref=e1543]
+            - cell "0 raw (0 USDC)" [ref=e1545]
+            - cell "0 raw (0 USDC)" [ref=e1546]
+            - cell "0 raw (0 USDC)" [ref=e1547]
+            - cell "0 raw (0 USDC)" [ref=e1548]
+            - cell "expectedAfter = afterOpen.feeReceiverUsdc + ΔfeeReceiverUsdc afterOpen → afterClose · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。" [ref=e1549]:
+              - generic [ref=e1550]: expectedAfter = afterOpen.feeReceiverUsdc + ΔfeeReceiverUsdc
+              - generic [ref=e1551]:
+                - link "afterOpen → afterClose" [ref=e1552] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e1553]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e1554]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。
+          - row [ref=e1555]:
+            - cell "全平执行 · 资金账户" [ref=e1556]
+            - cell [ref=e1557]:
+              - strong [ref=e1558]: 待领取仓位费
+            - cell "PASS" [ref=e1559]
+            - cell "47893779 raw (47.893779 USDC)" [ref=e1561]
+            - cell "47906279 raw (47.906279 USDC)" [ref=e1562]
+            - cell "+12500 raw (0.0125 USDC)" [ref=e1563]
+            - cell "47906279 raw (47.906279 USDC)" [ref=e1564]
+            - cell "expectedAfter = afterOpen.claimableFeeAmountPosition + ΔclaimableFeeAmountPosition afterOpen → afterClose · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=12500 raw。" [ref=e1565]:
+              - generic [ref=e1566]: expectedAfter = afterOpen.claimableFeeAmountPosition + ΔclaimableFeeAmountPosition
+              - generic [ref=e1567]:
+                - link "afterOpen → afterClose" [ref=e1568] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e1569]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e1570]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=12500 raw。
+          - row [ref=e1571]:
+            - cell "全平执行 · 资金账户" [ref=e1572]
+            - cell [ref=e1573]:
+              - strong [ref=e1574]: 待领取 Funding
+            - cell "PASS" [ref=e1575]
+            - cell "1747053 raw (1.747053 USDC)" [ref=e1577]
+            - cell "1747083 raw (1.747083 USDC)" [ref=e1578]
+            - cell "+30 raw (0.00003 USDC)" [ref=e1579]
+            - cell "1747083 raw (1.747083 USDC)" [ref=e1580]
+            - cell "expectedAfter = afterOpen.claimableFeeAmountFunding + ΔclaimableFeeAmountFunding afterOpen → afterClose · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=30 raw。" [ref=e1581]:
+              - generic [ref=e1582]: expectedAfter = afterOpen.claimableFeeAmountFunding + ΔclaimableFeeAmountFunding
+              - generic [ref=e1583]:
+                - link "afterOpen → afterClose" [ref=e1584] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e1585]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e1586]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=30 raw。
+          - row [ref=e1587]:
+            - cell "全平执行 · 资金账户" [ref=e1588]
+            - cell [ref=e1589]:
+              - strong [ref=e1590]: 待领取清算费
+            - cell "PASS" [ref=e1591]
+            - cell "96002058 raw (96.002058 USDC)" [ref=e1593]
+            - cell "96002058 raw (96.002058 USDC)" [ref=e1594]
+            - cell "0 raw (0 USDC)" [ref=e1595]
+            - cell "96002058 raw (96.002058 USDC)" [ref=e1596]
+            - cell "expectedAfter = afterOpen.claimableFeeAmountLiquidation + ΔclaimableFeeAmountLiquidation afterOpen → afterClose · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。" [ref=e1597]:
+              - generic [ref=e1598]: expectedAfter = afterOpen.claimableFeeAmountLiquidation + ΔclaimableFeeAmountLiquidation
+              - generic [ref=e1599]:
+                - link "afterOpen → afterClose" [ref=e1600] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e1601]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e1602]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。
+          - row [ref=e1603]:
+            - cell "全平执行 · 市场 / OI" [ref=e1604]
+            - cell [ref=e1605]:
+              - strong [ref=e1606]: Long 累计开仓成本
+            - cell "PASS" [ref=e1607]
+            - cell "50000000000000000000000000000000 raw (50 USD)" [ref=e1609]
+            - cell "0 raw (0 USD)" [ref=e1610]
+            - cell "-50000000000000000000000000000000 raw (-50 USD)" [ref=e1611]
+            - cell "0 raw (0 USD)" [ref=e1612]
+            - cell "expectedAfter = afterOpen.cumulativeOpenCostsLong + ΔcumulativeOpenCostsLong afterOpen → afterClose · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=-50000000000000000000000000000000 raw。" [ref=e1613]:
+              - generic [ref=e1614]: expectedAfter = afterOpen.cumulativeOpenCostsLong + ΔcumulativeOpenCostsLong
+              - generic [ref=e1615]:
+                - link "afterOpen → afterClose" [ref=e1616] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e1617]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e1618]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=-50000000000000000000000000000000 raw。
+          - row [ref=e1619]:
+            - cell "全平执行 · 市场 / OI" [ref=e1620]
+            - cell [ref=e1621]:
+              - strong [ref=e1622]: Short 累计开仓成本
+            - cell "PASS" [ref=e1623]
+            - cell "0 raw (0 USD)" [ref=e1625]
+            - cell "0 raw (0 USD)" [ref=e1626]
+            - cell "0 raw (0 USD)" [ref=e1627]
+            - cell "0 raw (0 USD)" [ref=e1628]
+            - cell "expectedAfter = afterOpen.cumulativeOpenCostsShort + ΔcumulativeOpenCostsShort afterOpen → afterClose · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。" [ref=e1629]:
+              - generic [ref=e1630]: expectedAfter = afterOpen.cumulativeOpenCostsShort + ΔcumulativeOpenCostsShort
+              - generic [ref=e1631]:
+                - link "afterOpen → afterClose" [ref=e1632] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e1633]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e1634]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。
+          - row [ref=e1635]:
+            - cell "全平执行 · 市场 / OI" [ref=e1636]
+            - cell [ref=e1637]:
+              - strong [ref=e1638]: Long Open Interest
+            - cell "PASS" [ref=e1639]
+            - cell "92122 raw (0.00092122 MockBTC)" [ref=e1641]
+            - cell "0 raw (0 MockBTC)" [ref=e1642]
+            - cell "-92122 raw (-0.00092122 MockBTC)" [ref=e1643]
+            - cell "0 raw (0 MockBTC)" [ref=e1644]
+            - cell "expectedAfter = afterOpen.openInterestInTokensLong + ΔopenInterestInTokensLong afterOpen → afterClose · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=-92122 raw。" [ref=e1645]:
+              - generic [ref=e1646]: expectedAfter = afterOpen.openInterestInTokensLong + ΔopenInterestInTokensLong
+              - generic [ref=e1647]:
+                - link "afterOpen → afterClose" [ref=e1648] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e1649]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e1650]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=-92122 raw。
+          - row [ref=e1651]:
+            - cell "全平执行 · 市场 / OI" [ref=e1652]
+            - cell [ref=e1653]:
+              - strong [ref=e1654]: Short Open Interest
+            - cell "PASS" [ref=e1655]
+            - cell "0 raw (0 MockBTC)" [ref=e1657]
+            - cell "0 raw (0 MockBTC)" [ref=e1658]
+            - cell "0 raw (0 MockBTC)" [ref=e1659]
+            - cell "0 raw (0 MockBTC)" [ref=e1660]
+            - cell "expectedAfter = afterOpen.openInterestInTokensShort + ΔopenInterestInTokensShort afterOpen → afterClose · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。" [ref=e1661]:
+              - generic [ref=e1662]: expectedAfter = afterOpen.openInterestInTokensShort + ΔopenInterestInTokensShort
+              - generic [ref=e1663]:
+                - link "afterOpen → afterClose" [ref=e1664] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e1665]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e1666]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。
+          - row [ref=e1667]:
+            - cell "全平执行 · 市场 / OI" [ref=e1668]
+            - cell [ref=e1669]:
+              - strong [ref=e1670]: Position Impact Pool
+            - cell "PASS" [ref=e1671]
+            - cell "0 raw (0 MockBTC)" [ref=e1673]
+            - cell "0 raw (0 MockBTC)" [ref=e1674]
+            - cell "0 raw (0 MockBTC)" [ref=e1675]
+            - cell "0 raw (0 MockBTC)" [ref=e1676]
+            - cell "expectedAfter = afterOpen.positionImpactPoolAmount + ΔpositionImpactPoolAmount afterOpen → afterClose · 链上阶段快照与账户增量账本 src/scenarios/scn-010-runner.ts Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。" [ref=e1677]:
+              - generic [ref=e1678]: expectedAfter = afterOpen.positionImpactPoolAmount + ΔpositionImpactPoolAmount
+              - generic [ref=e1679]:
+                - link "afterOpen → afterClose" [ref=e1680] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 链上阶段快照与账户增量账本
+                - code [ref=e1681]: src/scenarios/scn-010-runner.ts
+              - generic [ref=e1682]: Before/After 均为指定区块 Reader 或 ERC20 实际读数；Δ=0 raw。
+          - row [ref=e1683]:
+            - cell "全平执行 · 仓位原始字段" [ref=e1684]
+            - cell [ref=e1685]:
+              - strong [ref=e1686]: 仓位 sizeInUsd
+            - cell "PASS" [ref=e1687]
+            - cell "50000000000000000000000000000000 raw (50 USD)" [ref=e1689]
+            - cell "0 raw (0 USD)" [ref=e1690]
+            - cell "-50000000000000000000000000000000 raw (-50 USD)" [ref=e1691]
+            - cell "0 raw (0 USD)" [ref=e1692]
+            - cell "全平后 sizeInUsd = 0，仓位删除并将原始字段清零 全平执行 position · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对 src/scenarios/scn-010-runner.ts" [ref=e1693]:
+              - generic [ref=e1694]: 全平后 sizeInUsd = 0，仓位删除并将原始字段清零
+              - generic [ref=e1695]:
+                - link "全平执行 position" [ref=e1696] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对
+                - code [ref=e1697]: src/scenarios/scn-010-runner.ts
+          - row [ref=e1698]:
+            - cell "全平执行 · 仓位原始字段" [ref=e1699]
+            - cell [ref=e1700]:
+              - strong [ref=e1701]: 仓位 sizeInTokens
+            - cell "PASS" [ref=e1702]
+            - cell "92122 raw (0.00092122 MockBTC)" [ref=e1704]
+            - cell "0 raw (0 MockBTC)" [ref=e1705]
+            - cell "-92122 raw (-0.00092122 MockBTC)" [ref=e1706]
+            - cell "0 raw (0 MockBTC)" [ref=e1707]
+            - cell "全平后 sizeInUsd = 0，仓位删除并将原始字段清零 全平执行 position · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对 src/scenarios/scn-010-runner.ts" [ref=e1708]:
+              - generic [ref=e1709]: 全平后 sizeInUsd = 0，仓位删除并将原始字段清零
+              - generic [ref=e1710]:
+                - link "全平执行 position" [ref=e1711] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对
+                - code [ref=e1712]: src/scenarios/scn-010-runner.ts
+          - row [ref=e1713]:
+            - cell "全平执行 · 仓位原始字段" [ref=e1714]
+            - cell [ref=e1715]:
+              - strong [ref=e1716]: 仓位 collateralAmount
+            - cell "PASS" [ref=e1717]
+            - cell "9975000 raw (9.975 USDC)" [ref=e1719]
+            - cell "0 raw (0 USDC)" [ref=e1720]
+            - cell "-9975000 raw (-9.975 USDC)" [ref=e1721]
+            - cell "0 raw (0 USDC)" [ref=e1722]
+            - cell "全平后 sizeInUsd = 0，仓位删除并将原始字段清零 全平执行 position · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对 src/scenarios/scn-010-runner.ts" [ref=e1723]:
+              - generic [ref=e1724]: 全平后 sizeInUsd = 0，仓位删除并将原始字段清零
+              - generic [ref=e1725]:
+                - link "全平执行 position" [ref=e1726] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对
+                - code [ref=e1727]: src/scenarios/scn-010-runner.ts
+          - row [ref=e1728]:
+            - cell "全平执行 · 仓位原始字段" [ref=e1729]
+            - cell [ref=e1730]:
+              - strong [ref=e1731]: 仓位负 Funding 结算基准 / size
+            - cell "PASS" [ref=e1732]
+            - cell "3478236223354027409558220653708000000000000 raw (3478236223354027409558220653708000000000000 raw)" [ref=e1734]
+            - cell "0 raw (0 raw)" [ref=e1735]
+            - cell "-3478236223354027409558220653708000000000000 raw (-3478236223354027409558220653708000000000000 raw)" [ref=e1736]
+            - cell "0 raw (0 raw)" [ref=e1737]
+            - cell "全平后 sizeInUsd = 0，仓位删除并将原始字段清零 全平执行 position · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对 src/scenarios/scn-010-runner.ts" [ref=e1738]:
+              - generic [ref=e1739]: 全平后 sizeInUsd = 0，仓位删除并将原始字段清零
+              - generic [ref=e1740]:
+                - link "全平执行 position" [ref=e1741] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对
+                - code [ref=e1742]: src/scenarios/scn-010-runner.ts
+          - row [ref=e1743]:
+            - cell "全平执行 · 仓位原始字段" [ref=e1744]
+            - cell [ref=e1745]:
+              - strong [ref=e1746]: 仓位正 Funding 结算基准 / size
+            - cell "PASS" [ref=e1747]
+            - cell "3185940116755906288864736223506000000000000 raw (3185940116755906288864736223506000000000000 raw)" [ref=e1749]
+            - cell "0 raw (0 raw)" [ref=e1750]
+            - cell "-3185940116755906288864736223506000000000000 raw (-3185940116755906288864736223506000000000000 raw)" [ref=e1751]
+            - cell "0 raw (0 raw)" [ref=e1752]
+            - cell "全平后 sizeInUsd = 0，仓位删除并将原始字段清零 全平执行 position · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对 src/scenarios/scn-010-runner.ts" [ref=e1753]:
+              - generic [ref=e1754]: 全平后 sizeInUsd = 0，仓位删除并将原始字段清零
+              - generic [ref=e1755]:
+                - link "全平执行 position" [ref=e1756] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对
+                - code [ref=e1757]: src/scenarios/scn-010-runner.ts
+          - row [ref=e1758]:
+            - cell "全平执行 · Grace" [ref=e1759]
+            - cell [ref=e1760]:
+              - strong [ref=e1761]: Grace Start（保护期起点）
+            - cell "PASS" [ref=e1762]
+            - cell "1785796826 (2026-08-03T22:40:26.000Z)" [ref=e1764]
+            - cell "0（未设置）" [ref=e1765]
+            - cell "-1785796826 raw (-1785796826 seconds)" [ref=e1766]
+            - cell "0（未设置）" [ref=e1767]
+            - cell "仓位不存在 / 已删除：graceStart = 0 四、清算保护卡片 / 4.1 保护期推导 · Position 首次创建时写入 Grace 起点 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv；链上阶段快照：src/scenarios/scn-010-runner.ts" [ref=e1768]:
+              - generic [ref=e1769]: 仓位不存在 / 已删除：graceStart = 0
+              - generic [ref=e1770]:
+                - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e1771] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · Position 首次创建时写入 Grace 起点
+                - code [ref=e1772]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e1773]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv；链上阶段快照：src/scenarios/scn-010-runner.ts
+          - row [ref=e1774]:
+            - cell "全平执行 · Grace" [ref=e1775]
+            - cell [ref=e1776]:
+              - strong [ref=e1777]: Grace End（保护期终点）
+            - cell "PASS" [ref=e1778]
+            - cell "1785797726 (2026-08-03T22:55:26.000Z)" [ref=e1780]
+            - cell "0（未设置）" [ref=e1781]
+            - cell "-1785797726 raw (-1785797726 seconds)" [ref=e1782]
+            - cell "0（未设置）" [ref=e1783]
+            - cell "仓位不存在 / 已删除：graceEnd = 0 四、清算保护卡片 / 4.1 保护期推导 · Grace 终点按市场基础时长与推荐层级乘数复算 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv" [ref=e1784]:
+              - generic [ref=e1785]: 仓位不存在 / 已删除：graceEnd = 0
+              - generic [ref=e1786]:
+                - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e1787] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · Grace 终点按市场基础时长与推荐层级乘数复算
+                - code [ref=e1788]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e1789]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv
+          - row [ref=e1790]:
+            - cell "全平执行 · Grace" [ref=e1791]
+            - cell [ref=e1792]:
+              - strong [ref=e1793]: Grace Duration（有效保护时长）
+            - cell "PASS" [ref=e1794]
+            - cell "900 seconds" [ref=e1796]
+            - cell "0 seconds" [ref=e1797]
+            - cell "-900 seconds" [ref=e1798]
+            - cell "0 seconds" [ref=e1799]
+            - cell "graceDuration = max(graceEnd − graceStart, 0) = gracePeriodBase × tierMultiplier / 1e18 四、清算保护卡片 / 4.1 保护期推导 · 保护窗口长度 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv" [ref=e1800]:
+              - generic [ref=e1801]: graceDuration = max(graceEnd − graceStart, 0) = gracePeriodBase × tierMultiplier / 1e18
+              - generic [ref=e1802]:
+                - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e1803] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · 保护窗口长度
+                - code [ref=e1804]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e1805]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv
+          - row [ref=e1806]:
+            - cell "全平执行 · Grace" [ref=e1807]
+            - cell [ref=e1808]:
+              - strong [ref=e1809]: Grace Active（执行时是否受保护）
+            - cell "PASS" [ref=e1810]
+            - cell "true" [ref=e1812]
+            - cell "false" [ref=e1813]
+            - cell "true → false" [ref=e1814]
+            - cell "false" [ref=e1815]
+            - cell "graceActive = position.exists && graceStart > 0 && graceEnd > evaluationTimestamp 四、清算保护卡片 / 4.2 5 状态机 · 依据仓位与区块时间实时推导保护状态 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md evaluationTimestamp=1785796846 (2026-08-03T22:40:46.000Z)；Keeper 清算条件使用 graceEnd > block.timestamp。" [ref=e1816]:
+              - generic [ref=e1817]: graceActive = position.exists && graceStart > 0 && graceEnd > evaluationTimestamp
+              - generic [ref=e1818]:
+                - link "四、清算保护卡片 / 4.2 5 状态机" [ref=e1819] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · 依据仓位与区块时间实时推导保护状态
+                - code [ref=e1820]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e1821]: evaluationTimestamp=1785796846 (2026-08-03T22:40:46.000Z)；Keeper 清算条件使用 graceEnd > block.timestamp。
+          - row [ref=e1822]:
+            - cell "全平执行 · Grace" [ref=e1823]
+            - cell [ref=e1824]:
+              - strong [ref=e1825]: Grace Remaining（执行时剩余保护秒数）
+            - cell "PASS" [ref=e1826]
+            - cell "880 seconds" [ref=e1828]
+            - cell "0 seconds" [ref=e1829]
+            - cell "-880 seconds" [ref=e1830]
+            - cell "0 seconds" [ref=e1831]
+            - 'cell "graceRemaining = position.exists ? max(graceEnd − evaluationTimestamp, 0) : 0 四、清算保护卡片 / 4.1 保护期推导 · 页面倒计时与合约保护窗口 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md evaluationTimestamp=1785796846 (2026-08-03T22:40:46.000Z)；交易员主动平仓不受 Grace 限制，仓位删除后 Grace 字段清零。" [ref=e1832]':
+              - generic [ref=e1833]: "graceRemaining = position.exists ? max(graceEnd − evaluationTimestamp, 0) : 0"
+              - generic [ref=e1834]:
+                - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e1835] [cursor=pointer]:
+                  - /url: ./page-formulas.html
+                - text: · 页面倒计时与合约保护窗口
+                - code [ref=e1836]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+              - generic [ref=e1837]: evaluationTimestamp=1785796846 (2026-08-03T22:40:46.000Z)；交易员主动平仓不受 Grace 限制，仓位删除后 Grace 字段清零。
+          - row [ref=e1838]:
+            - cell "全平执行 · OI / Skew / Spread" [ref=e1839]
+            - cell [ref=e1840]:
+              - strong [ref=e1841]: Long OI（USD 口径）
+            - cell "PASS" [ref=e1842]
+            - cell "49745880000000000000000000000000 raw (49.74588 USD)" [ref=e1844]
+            - cell "0 raw (0 USD)" [ref=e1845]
+            - cell "-49745880000000000000000000000000 raw (-49.74588 USD)" [ref=e1846]
+            - cell "0 raw (0 USD)" [ref=e1847]
+            - cell "longOIUsd = longOpenInterestInTokens × indexMidPrice §10.1 市场 Open Interest USD · 市场 Open Interest USD ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md indexMidPrice=(540000000000000000000000000+540000000000000000000000000)/2=540000000000000000000000000" [ref=e1848]:
+              - generic [ref=e1849]: longOIUsd = longOpenInterestInTokens × indexMidPrice
+              - generic [ref=e1850]:
+                - link "§10.1 市场 Open Interest USD" [ref=e1851] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 市场 Open Interest USD
+                - code [ref=e1852]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+              - generic [ref=e1853]: indexMidPrice=(540000000000000000000000000+540000000000000000000000000)/2=540000000000000000000000000
+          - row [ref=e1854]:
+            - cell "全平执行 · OI / Skew / Spread" [ref=e1855]
+            - cell [ref=e1856]:
+              - strong [ref=e1857]: Short OI（USD 口径）
+            - cell "PASS" [ref=e1858]
+            - cell "0 raw (0 USD)" [ref=e1860]
+            - cell "0 raw (0 USD)" [ref=e1861]
+            - cell "0 raw (0 USD)" [ref=e1862]
+            - cell "0 raw (0 USD)" [ref=e1863]
+            - cell "shortOIUsd = shortOpenInterestInTokens × indexMidPrice §10.1 市场 Open Interest USD · 市场 Open Interest USD ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e1864]:
+              - generic [ref=e1865]: shortOIUsd = shortOpenInterestInTokens × indexMidPrice
+              - generic [ref=e1866]:
+                - link "§10.1 市场 Open Interest USD" [ref=e1867] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 市场 Open Interest USD
+                - code [ref=e1868]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e1869]:
+            - cell "全平执行 · OI / Skew / Spread" [ref=e1870]
+            - cell [ref=e1871]:
+              - strong [ref=e1872]: 实时 Raw Skew（进入 EMA 前）
+            - cell "PASS" [ref=e1873]
+            - cell "1000000000000000000 raw (1 ratio)" [ref=e1875]
+            - cell "0 raw (0 ratio)" [ref=e1876]
+            - cell "-1000000000000000000 raw (-1 ratio)" [ref=e1877]
+            - cell "0 raw (0 ratio)" [ref=e1878]
+            - cell "skew = (longOIUsd − shortOIUsd) × 1e18 / (longOIUsd + shortOIUsd) §10.2 Skew · Funding 原始 Skew；实际费率继续使用 1h EMA ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e1879]:
+              - generic [ref=e1880]: skew = (longOIUsd − shortOIUsd) × 1e18 / (longOIUsd + shortOIUsd)
+              - generic [ref=e1881]:
+                - link "§10.2 Skew" [ref=e1882] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · Funding 原始 Skew；实际费率继续使用 1h EMA
+                - code [ref=e1883]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e1884]:
+            - cell "全平执行 · OI / Skew / Spread" [ref=e1885]
+            - cell [ref=e1886]:
+              - strong [ref=e1887]: Spread Skew Reference
+            - cell "PASS" [ref=e1888]
+            - cell "1000000000000000000 raw (1 ratio)" [ref=e1890]
+            - cell "0 raw (0 ratio)" [ref=e1891]
+            - cell "-1000000000000000000 raw (-1 ratio)" [ref=e1892]
+            - cell "500000000000000000 raw (0.5 ratio)" [ref=e1893]
+            - cell "skewRef = (abs(skewBefore) + abs(skewAfter)) / 2 §4.3 Skew Reference · 动态点差的 Skew Reference ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md Expected 列为本次成交用于 Skew Impact 的前后平均值，不是 After 单点值。" [ref=e1894]:
+              - generic [ref=e1895]: skewRef = (abs(skewBefore) + abs(skewAfter)) / 2
+              - generic [ref=e1896]:
+                - link "§4.3 Skew Reference" [ref=e1897] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 动态点差的 Skew Reference
+                - code [ref=e1898]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+              - generic [ref=e1899]: Expected 列为本次成交用于 Skew Impact 的前后平均值，不是 After 单点值。
+          - row [ref=e1900]:
+            - cell "全平执行 · OI / Skew / Spread" [ref=e1901]
+            - cell [ref=e1902]:
+              - strong [ref=e1903]: 是否改善多空平衡
+            - cell "PASS" [ref=e1904]
+            - cell "49745880000000000000000000000000 raw (49.74588 USD)" [ref=e1906]
+            - cell "0 raw (0 USD)" [ref=e1907]
+            - cell "-49745880000000000000000000000000 raw (-49.74588 USD)" [ref=e1908]
+            - cell "true" [ref=e1909]
+            - cell "balanceWasImproved = abs(nextLongOI − nextShortOI) < abs(currentLongOI − currentShortOI) §4.4 Skew Impact · Skew Impact 正负方向 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e1910]:
+              - generic [ref=e1911]: balanceWasImproved = abs(nextLongOI − nextShortOI) < abs(currentLongOI − currentShortOI)
+              - generic [ref=e1912]:
+                - link "§4.4 Skew Impact" [ref=e1913] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · Skew Impact 正负方向
+                - code [ref=e1914]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e1915]:
+            - cell "全平执行 · OI / Skew / Spread" [ref=e1916]
+            - cell [ref=e1917]:
+              - strong [ref=e1918]: Dynamic Spread 总值
+            - cell "PASS" [ref=e1919]
+            - cell "0 raw (0 ratio)" [ref=e1921]
+            - cell "0 raw (0 ratio)" [ref=e1922]
+            - cell "0 raw (0 ratio)" [ref=e1923]
+            - cell "max(0, constantPriceSpread + priceImpactSpread + skewImpact)" [ref=e1924]
+            - cell "dynamicSpread = max(0, constantPriceSpread + priceImpactSpread + skewImpact) §4.1 动态点差 · 动态点差总公式 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md 事件保存合约最终 Spread；成交价行再以 Oracle 价格独立反算核对该值。" [ref=e1925]:
+              - generic [ref=e1926]: dynamicSpread = max(0, constantPriceSpread + priceImpactSpread + skewImpact)
+              - generic [ref=e1927]:
+                - link "§4.1 动态点差" [ref=e1928] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 动态点差总公式
+                - code [ref=e1929]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+              - generic [ref=e1930]: 事件保存合约最终 Spread；成交价行再以 Oracle 价格独立反算核对该值。
+          - row [ref=e1931]:
+            - cell "全平执行 · OI / Skew / Spread" [ref=e1932]
+            - cell [ref=e1933]:
+              - strong [ref=e1934]: Spread 调整后执行价
+            - cell "PASS" [ref=e1935]
+            - cell "540000000000000000000000000" [ref=e1937]
+            - cell "540000000000000000000000000" [ref=e1938]
+            - cell "0 raw (0 price raw)" [ref=e1939]
+            - cell "540000000000000000000000000" [ref=e1940]
+            - cell "indexPrice.min × (1e18 − dynamicSpread) / 1e18 §4.6 减仓成交价 · 方向与开/平仓共同决定价格不利侧 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e1941]:
+              - generic [ref=e1942]: indexPrice.min × (1e18 − dynamicSpread) / 1e18
+              - generic [ref=e1943]:
+                - link "§4.6 减仓成交价" [ref=e1944] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 方向与开/平仓共同决定价格不利侧
+                - code [ref=e1945]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e1946]:
+            - cell "全平执行 · PnL" [ref=e1947]
+            - cell [ref=e1948]:
+              - strong [ref=e1949]: Uncapped Base PnL
+            - cell "PASS" [ref=e1950]
+            - cell "0 raw (0 USD)" [ref=e1952]
+            - cell "-254120000000000000000000000000 raw (-0.25412 USD)" [ref=e1953]
+            - cell "-254120000000000000000000000000 raw (-0.25412 USD)" [ref=e1954]
+            - cell "-254120000000000000000000000000 raw (-0.25412 USD)" [ref=e1955]
+            - cell "sizeDeltaInTokens × executionPrice − sizeDeltaUsd §6 仓位 PnL 与池子 PnL 裁剪 · 未裁剪的价格盈亏 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e1956]:
+              - generic [ref=e1957]: sizeDeltaInTokens × executionPrice − sizeDeltaUsd
+              - generic [ref=e1958]:
+                - link "§6 仓位 PnL 与池子 PnL 裁剪" [ref=e1959] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 未裁剪的价格盈亏
+                - code [ref=e1960]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e1961]:
+            - cell "全平执行 · PnL" [ref=e1962]
+            - cell [ref=e1963]:
+              - strong [ref=e1964]: Base PnL（PnL Cap 后）
+            - cell "PASS" [ref=e1965]
+            - cell "-254120000000000000000000000000 raw (-0.25412 USD)" [ref=e1967]
+            - cell "-254120000000000000000000000000 raw (-0.25412 USD)" [ref=e1968]
+            - cell "0 raw (0 USD)" [ref=e1969]
+            - cell "与 uncappedPnl 同方向，且绝对值不超过 uncappedPnl" [ref=e1970]
+            - cell "basePnlUsd = applyPnlCap(uncappedBasePnlUsd, poolPnl, maxPnlFactor) §6 仓位 PnL 与池子 PnL 裁剪 · 池子 PnL Cap 后的仓位基础盈亏 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e1971]:
+              - generic [ref=e1972]: basePnlUsd = applyPnlCap(uncappedBasePnlUsd, poolPnl, maxPnlFactor)
+              - generic [ref=e1973]:
+                - link "§6 仓位 PnL 与池子 PnL 裁剪" [ref=e1974] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 池子 PnL Cap 后的仓位基础盈亏
+                - code [ref=e1975]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e1976]:
+            - cell "全平执行 · Fee" [ref=e1977]
+            - cell [ref=e1978]:
+              - strong [ref=e1979]: Position Fee
+            - cell "PASS" [ref=e1980]
+            - cell "0 raw (0 USDC)" [ref=e1982]
+            - cell "25000 raw (0.025 USDC)" [ref=e1983]
+            - cell "+25000 raw (0.025 USDC)" [ref=e1984]
+            - cell "25000 raw (0.025 USDC)" [ref=e1985]
+            - cell "positionFeeAmount = tradeSizeUsd × positionFeeFactor / 1e30 / collateralTokenPrice.min §7.1 基础仓位费 · 基础仓位费 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md tradeSizeUsd=50000000000000000000000000000000; factor=500000000000000000000000000; collateral.min=1000000000000000000000000" [ref=e1986]:
+              - generic [ref=e1987]: positionFeeAmount = tradeSizeUsd × positionFeeFactor / 1e30 / collateralTokenPrice.min
+              - generic [ref=e1988]:
+                - link "§7.1 基础仓位费" [ref=e1989] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 基础仓位费
+                - code [ref=e1990]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+              - generic [ref=e1991]: tradeSizeUsd=50000000000000000000000000000000; factor=500000000000000000000000000; collateral.min=1000000000000000000000000
+          - row [ref=e1992]:
+            - cell "全平执行 · Fee" [ref=e1993]
+            - cell [ref=e1994]:
+              - strong [ref=e1995]: Protocol Fee 及分账守恒
+            - cell "PASS" [ref=e1996]
+            - cell "0 raw (0 USDC)" [ref=e1998]
+            - cell "25000 raw (0.025 USDC)" [ref=e1999]
+            - cell "+25000 raw (0.025 USDC)" [ref=e2000]
+            - cell "25000 raw (0.025 USDC)" [ref=e2001]
+            - cell "protocolFeeAmount = feeReceiverAmount + positionFeeAmountForPool §7.5 协议与 LP 分成 · 协议与 LP 分成 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e2002]:
+              - generic [ref=e2003]: protocolFeeAmount = feeReceiverAmount + positionFeeAmountForPool
+              - generic [ref=e2004]:
+                - link "§7.5 协议与 LP 分成" [ref=e2005] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 协议与 LP 分成
+                - code [ref=e2006]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e2007]:
+            - cell "全平执行 · Fee" [ref=e2008]
+            - cell [ref=e2009]:
+              - strong [ref=e2010]: Fee Receiver 分成
+            - cell "PASS" [ref=e2011]
+            - cell "0 raw (0 USDC)" [ref=e2013]
+            - cell "12500 raw (0.0125 USDC)" [ref=e2014]
+            - cell "+12500 raw (0.0125 USDC)" [ref=e2015]
+            - cell "12500 raw (0.0125 USDC)" [ref=e2016]
+            - cell "feeReceiverAmount = protocolFeeAmount × positionFeeReceiverFactor / 1e30 §7.5 协议与 LP 分成 · 协议与 LP 分成 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e2017]:
+              - generic [ref=e2018]: feeReceiverAmount = protocolFeeAmount × positionFeeReceiverFactor / 1e30
+              - generic [ref=e2019]:
+                - link "§7.5 协议与 LP 分成" [ref=e2020] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 协议与 LP 分成
+                - code [ref=e2021]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e2022]:
+            - cell "全平执行 · Fee" [ref=e2023]
+            - cell [ref=e2024]:
+              - strong [ref=e2025]: LP Pool 分成
+            - cell "PASS" [ref=e2026]
+            - cell "0 raw (0 USDC)" [ref=e2028]
+            - cell "12500 raw (0.0125 USDC)" [ref=e2029]
+            - cell "+12500 raw (0.0125 USDC)" [ref=e2030]
+            - cell "12500 raw (0.0125 USDC)" [ref=e2031]
+            - cell "positionFeeAmountForPool = protocolFeeAmount − feeReceiverAmount §7.5 协议与 LP 分成 · 协议与 LP 分成 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e2032]:
+              - generic [ref=e2033]: positionFeeAmountForPool = protocolFeeAmount − feeReceiverAmount
+              - generic [ref=e2034]:
+                - link "§7.5 协议与 LP 分成" [ref=e2035] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 协议与 LP 分成
+                - code [ref=e2036]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e2037]:
+            - cell "全平执行 · Funding" [ref=e2038]
+            - cell [ref=e2039]:
+              - strong [ref=e2040]: 本仓位应付 Funding
+            - cell "PASS" [ref=e2041]
+            - cell "3478236223354027409558220653708000000000000 raw (3478236223354027409558220653708000000000000 per-size)" [ref=e2043]
+            - cell "330555140464537593217040609445326882404728251666268 raw (330555140464537593217040609445326882404728251666268 per-size)" [ref=e2044]
+            - cell "+330555136986301369863013199887106228696728251666268 raw (330555136986301369863013199887106228696728251666268 per-size)" [ref=e2045]
+            - cell "31 raw (0.000031 USDC)" [ref=e2046]
+            - cell "ceil((latestNegativePerSize − positionNegativePerSize) × sizeInTokens / (1e30 × collateralPrice.min)) §10.5 单仓 Funding · 单仓负 Funding（支付端向上取整） ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md PositionFeesCollected.negativeFundingFeeAmount=31 raw" [ref=e2047]:
+              - generic [ref=e2048]: ceil((latestNegativePerSize − positionNegativePerSize) × sizeInTokens / (1e30 × collateralPrice.min))
+              - generic [ref=e2049]:
+                - link "§10.5 单仓 Funding" [ref=e2050] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 单仓负 Funding（支付端向上取整）
+                - code [ref=e2051]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+              - generic [ref=e2052]: PositionFeesCollected.negativeFundingFeeAmount=31 raw
+          - row [ref=e2053]:
+            - cell "全平执行 · Funding" [ref=e2054]
+            - cell [ref=e2055]:
+              - strong [ref=e2056]: 本仓位应收 Funding
+            - cell "PASS" [ref=e2057]
+            - cell "3185940116755906288864736223506000000000000 raw (3185940116755906288864736223506000000000000 per-size)" [ref=e2059]
+            - cell "3185940116755906288864736223506000000000000 raw (3185940116755906288864736223506000000000000 per-size)" [ref=e2060]
+            - cell "0 raw (0 per-size)" [ref=e2061]
+            - cell "0 raw (0 USDC)" [ref=e2062]
+            - cell "(latestPositivePerSize − positionPositivePerSize) × sizeInTokens / (1e30 × collateralPrice.max) §10.5 单仓 Funding · 单仓正 Funding（收取端向下取整） ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md PositionFeesCollected.positiveFundingFeeAmount=0 raw" [ref=e2063]:
+              - generic [ref=e2064]: (latestPositivePerSize − positionPositivePerSize) × sizeInTokens / (1e30 × collateralPrice.max)
+              - generic [ref=e2065]:
+                - link "§10.5 单仓 Funding" [ref=e2066] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 单仓正 Funding（收取端向下取整）
+                - code [ref=e2067]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+              - generic [ref=e2068]: PositionFeesCollected.positiveFundingFeeAmount=0 raw
+          - row [ref=e2069]:
+            - cell "全平执行 · Fee" [ref=e2070]
+            - cell [ref=e2071]:
+              - strong [ref=e2072]: Total Cost
+            - cell "PASS" [ref=e2073]
+            - cell "0 raw (0 USDC)" [ref=e2075]
+            - cell "25031 raw (0.025031 USDC)" [ref=e2076]
+            - cell "+25031 raw (0.025031 USDC)" [ref=e2077]
+            - cell "25031 raw (0.025031 USDC)" [ref=e2078]
+            - cell "totalCostAmount = positionFeeAmount + uiFeeAmount + negativeFundingFeeAmount（本用例无清算费/折扣） §9 费用总额 · 费用总额；正 Funding 单独增加抵押品 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e2079]:
+              - generic [ref=e2080]: totalCostAmount = positionFeeAmount + uiFeeAmount + negativeFundingFeeAmount（本用例无清算费/折扣）
+              - generic [ref=e2081]:
+                - link "§9 费用总额" [ref=e2082] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 费用总额；正 Funding 单独增加抵押品
+                - code [ref=e2083]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e2084]:
+            - cell "全平执行 · Fee" [ref=e2085]
+            - cell [ref=e2086]:
+              - strong [ref=e2087]: Claimable Position Fee 入账
+            - cell "PASS" [ref=e2088]
+            - cell "47893779 raw (47.893779 USDC)" [ref=e2090]
+            - cell "47906279 raw (47.906279 USDC)" [ref=e2091]
+            - cell "+12500 raw (0.0125 USDC)" [ref=e2092]
+            - cell "47906279 raw (47.906279 USDC)" [ref=e2093]
+            - cell "claimablePositionFeeAfter = before + feeReceiverAmount §7.5 协议与 LP 分成 · 协议费用入账与快照交叉核对 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e2094]:
+              - generic [ref=e2095]: claimablePositionFeeAfter = before + feeReceiverAmount
+              - generic [ref=e2096]:
+                - link "§7.5 协议与 LP 分成" [ref=e2097] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 协议费用入账与快照交叉核对
+                - code [ref=e2098]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e2099]:
+            - cell "全平执行 · Funding" [ref=e2100]
+            - cell [ref=e2101]:
+              - strong [ref=e2102]: LP Claimable Funding 入账
+            - cell "PASS" [ref=e2103]
+            - cell "1747053 raw (1.747053 USDC)" [ref=e2105]
+            - cell "1747083 raw (1.747083 USDC)" [ref=e2106]
+            - cell "+30 raw (0.00003 USDC)" [ref=e2107]
+            - cell "1747083 raw (1.747083 USDC)" [ref=e2108]
+            - cell "positionPaysLp > 0：claimableFundingAfter = before + positionPaysLp；< 0 时由 LPVault 支付 PositionVault §10.6 LP Funding 净额 · LP Funding 净额 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e2109]:
+              - generic [ref=e2110]: positionPaysLp > 0：claimableFundingAfter = before + positionPaysLp；< 0 时由 LPVault 支付 PositionVault
+              - generic [ref=e2111]:
+                - link "§10.6 LP Funding 净额" [ref=e2112] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · LP Funding 净额
+                - code [ref=e2113]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e2114]:
+            - cell "全流程 · Funding 市场状态" [ref=e2115]
+            - cell [ref=e2116]:
+              - strong [ref=e2117]: Long Funding Factor / second
+            - cell "PASS" [ref=e2118]
+            - cell "0 raw (0 factor/s)" [ref=e2120]
+            - cell "30606957128361237950279 raw (0.000000030606957128361237950279 factor/s)" [ref=e2121]
+            - cell "+30606957128361237950279 raw (0.000000030606957128361237950279 factor/s)" [ref=e2122]
+            - cell "longFactor = clamp(fundingFloor + fundingBase × emaSkew / 1e18, minFunding, maxFunding)" [ref=e2123]
+            - cell "longFactor = clamp(fundingFloor + fundingBase × emaSkew / 1e18, minFunding, maxFunding) §10.2–10.3 Skew EMA 与每秒费率 · 开仓与平仓 Funding 事件输出对比 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md Before=开仓结算事件；After=平仓结算事件。本行 PASS 表示两个事件值采集完整；历史证据未保存 EMA storage/参数快照，暂不声明 factor 已独立复算。Funding floor 进入 Long 侧公式。" [ref=e2124]:
+              - generic [ref=e2125]: longFactor = clamp(fundingFloor + fundingBase × emaSkew / 1e18, minFunding, maxFunding)
+              - generic [ref=e2126]:
+                - link "§10.2–10.3 Skew EMA 与每秒费率" [ref=e2127] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 开仓与平仓 Funding 事件输出对比
+                - code [ref=e2128]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+              - generic [ref=e2129]: Before=开仓结算事件；After=平仓结算事件。本行 PASS 表示两个事件值采集完整；历史证据未保存 EMA storage/参数快照，暂不声明 factor 已独立复算。Funding floor 进入 Long 侧公式。
+          - row [ref=e2130]:
+            - cell "全流程 · Funding 市场状态" [ref=e2131]
+            - cell [ref=e2132]:
+              - strong [ref=e2133]: Short Funding Factor / second
+            - cell "PASS" [ref=e2134]
+            - cell "0 raw (0 factor/s)" [ref=e2136]
+            - cell "-4247209538305428716387 raw (-0.000000004247209538305428716387 factor/s)" [ref=e2137]
+            - cell "-4247209538305428716387 raw (-0.000000004247209538305428716387 factor/s)" [ref=e2138]
+            - cell "shortFactor = clamp(−fundingBase × emaSkew / 1e18, minFunding, maxFunding)" [ref=e2139]
+            - cell "shortFactor = clamp(−fundingBase × emaSkew / 1e18, minFunding, maxFunding) §10.2–10.3 Skew EMA 与每秒费率 · 开仓与平仓 Funding 事件输出对比 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md Before=开仓结算事件；After=平仓结算事件。本行 PASS 表示两个事件值采集完整；历史证据未保存 EMA storage/参数快照，暂不声明 factor 已独立复算。Short 侧不叠加 fundingFloor。" [ref=e2140]:
+              - generic [ref=e2141]: shortFactor = clamp(−fundingBase × emaSkew / 1e18, minFunding, maxFunding)
+              - generic [ref=e2142]:
+                - link "§10.2–10.3 Skew EMA 与每秒费率" [ref=e2143] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 开仓与平仓 Funding 事件输出对比
+                - code [ref=e2144]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+              - generic [ref=e2145]: Before=开仓结算事件；After=平仓结算事件。本行 PASS 表示两个事件值采集完整；历史证据未保存 EMA storage/参数快照，暂不声明 factor 已独立复算。Short 侧不叠加 fundingFloor。
+          - row [ref=e2146]:
+            - cell "全流程 · Funding 市场状态" [ref=e2147]
+            - cell [ref=e2148]:
+              - strong [ref=e2149]: 市场累计负 Funding / size
+            - cell "PASS" [ref=e2150]
+            - cell "3478236223354027409558220653708000000000000 raw (3478236223354027409558220653708000000000000 per-size)" [ref=e2152]
+            - cell "330555140464537593217040609445326882404728251666268 raw (330555140464537593217040609445326882404728251666268 per-size)" [ref=e2153]
+            - cell "+330555136986301369863013199887106228696728251666268 raw (330555136986301369863013199887106228696728251666268 per-size)" [ref=e2154]
+            - cell "After ≥ Before（累计值只增不减）" [ref=e2155]
+            - cell "fundingFeePerSizeDelta = sideFundingUsd × 1e30 / sideOpenInterestInTokens §10.4 市场累计 Funding · 应付侧累计值 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e2156]:
+              - generic [ref=e2157]: fundingFeePerSizeDelta = sideFundingUsd × 1e30 / sideOpenInterestInTokens
+              - generic [ref=e2158]:
+                - link "§10.4 市场累计 Funding" [ref=e2159] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 应付侧累计值
+                - code [ref=e2160]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e2161]:
+            - cell "全流程 · Funding 市场状态" [ref=e2162]
+            - cell [ref=e2163]:
+              - strong [ref=e2164]: 市场累计正 Funding / size
+            - cell "PASS" [ref=e2165]
+            - cell "3185940116755906288864736223506000000000000 raw (3185940116755906288864736223506000000000000 per-size)" [ref=e2167]
+            - cell "3185940116755906288864736223506000000000000 raw (3185940116755906288864736223506000000000000 per-size)" [ref=e2168]
+            - cell "0 raw (0 per-size)" [ref=e2169]
+            - cell "After ≥ Before（累计值只增不减）" [ref=e2170]
+            - cell "fundingFeePerSizeDelta = sideFundingUsd × 1e30 / sideOpenInterestInTokens §10.4 市场累计 Funding · 应收侧累计值 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md" [ref=e2171]:
+              - generic [ref=e2172]: fundingFeePerSizeDelta = sideFundingUsd × 1e30 / sideOpenInterestInTokens
+              - generic [ref=e2173]:
+                - link "§10.4 市场累计 Funding" [ref=e2174] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · 应收侧累计值
+                - code [ref=e2175]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - row [ref=e2176]:
+            - cell "资金账本" [ref=e2177]
+            - cell [ref=e2178]:
+              - strong [ref=e2179]: 触发开仓资金守恒
+            - cell "PASS" [ref=e2180]
+            - cell "各账户 / Vault 的阶段前余额" [ref=e2182]
+            - cell "ΣΔ = 0" [ref=e2183]
+            - cell "—" [ref=e2184]
+            - cell "ΣΔ = 0" [ref=e2185]
+            - cell "ΔTrader + ΔOrderVault + ΔPositionVault + ΔLPVaultAssets + ΔFeeReceiver = 0 checkConservation(openConservation) · USDC 封闭账本守恒 src/scenarios/scn-010-runner.ts" [ref=e2186]:
+              - generic [ref=e2187]: ΔTrader + ΔOrderVault + ΔPositionVault + ΔLPVaultAssets + ΔFeeReceiver = 0
+              - generic [ref=e2188]:
+                - link "checkConservation(openConservation)" [ref=e2189] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · USDC 封闭账本守恒
+                - code [ref=e2190]: src/scenarios/scn-010-runner.ts
+          - row [ref=e2191]:
+            - cell "资金账本" [ref=e2192]
+            - cell [ref=e2193]:
+              - strong [ref=e2194]: 全平资金守恒
+            - cell "PASS" [ref=e2195]
+            - cell "各账户 / Vault 的阶段前余额" [ref=e2197]
+            - cell "ΣΔ = 0" [ref=e2198]
+            - cell "—" [ref=e2199]
+            - cell "ΣΔ = 0" [ref=e2200]
+            - cell "ΔTrader + ΔOrderVault + ΔPositionVault + ΔLPVaultAssets + ΔFeeReceiver = 0 checkConservation(closeConservation) · USDC 封闭账本守恒 src/scenarios/scn-010-runner.ts" [ref=e2201]:
+              - generic [ref=e2202]: ΔTrader + ΔOrderVault + ΔPositionVault + ΔLPVaultAssets + ΔFeeReceiver = 0
+              - generic [ref=e2203]:
+                - link "checkConservation(closeConservation)" [ref=e2204] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · USDC 封闭账本守恒
+                - code [ref=e2205]: src/scenarios/scn-010-runner.ts
+          - row [ref=e2206]:
+            - cell "资金账本" [ref=e2207]
+            - cell [ref=e2208]:
+              - strong [ref=e2209]: 全流程资金守恒
+            - cell "PASS" [ref=e2210]
+            - cell "各账户 / Vault 的阶段前余额" [ref=e2212]
+            - cell "ΣΔ = 0" [ref=e2213]
+            - cell "—" [ref=e2214]
+            - cell "ΣΔ = 0" [ref=e2215]
+            - cell "ΔTrader + ΔOrderVault + ΔPositionVault + ΔLPVaultAssets + ΔFeeReceiver = 0 checkConservation(wholeFlowConservation) · USDC 封闭账本守恒 src/scenarios/scn-010-runner.ts" [ref=e2216]:
+              - generic [ref=e2217]: ΔTrader + ΔOrderVault + ΔPositionVault + ΔLPVaultAssets + ΔFeeReceiver = 0
+              - generic [ref=e2218]:
+                - link "checkConservation(wholeFlowConservation)" [ref=e2219] [cursor=pointer]:
+                  - /url: ./formulas.html
+                - text: · USDC 封闭账本守恒
+                - code [ref=e2220]: src/scenarios/scn-010-runner.ts
+    - generic [ref=e2221]:
+      - heading "证据来源" [level=2] [ref=e2222]
+      - generic [ref=e2223]:
+        - term [ref=e2224]: 执行证据
+        - definition [ref=e2225]:
+          - code [ref=e2226]: artifacts/latest/attachments/SCN-010-tx-fork-r0-1-scn-010-evidence.json
+        - term [ref=e2227]: 公式总表
+        - definition [ref=e2228]:
+          - link "合约核心公式页面" [ref=e2229] [cursor=pointer]:
+            - /url: ./formulas.html
+          - code [ref=e2230]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md

@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+
+# 被测源码克隆（Github/<仓库名>@<分支名>），可随时重新克隆，不入库
+Github/*@*/
+
+# 私钥与真实环境配置，严禁提交（CLAUDE.md 第 5 条）
+pk.txt
+**/pk.txt
+*.env.zip
+.env
+**/.env

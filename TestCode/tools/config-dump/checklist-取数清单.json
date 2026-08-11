@@ -1,0 +1,42 @@
+{
+  "source": {
+    "name": "FX100 合约 / Reader 一次性取数清单",
+    "url": "https://docs.google.com/spreadsheets/d/1GXh6UQExZ4gEe3tXJGbBamr41LnulfHNavf9ULEwgjU/edit?gid=1217305916#gid=1217305916",
+    "tab": "合约取数清单（gid=1217305916）",
+    "syncedAt": "2026-07-30",
+    "note": "只录入「来源 = DataStore key」的行；来自 RPC（chainId/blockNumber）、Reader 返回值（ExecutionPriceResult、getMarketInfo）、订单/仓位上下文的行不属于 DataStore 参数，不参与本比对，单列在 nonDataStore 里备查。"
+  },
+  "dataStoreKeys": [
+    { "field": "longOpenInterestInTokens", "base": "OPEN_INTEREST_IN_TOKENS", "sheetKey": "openInterestInTokensKey(market,true)" },
+    { "field": "shortOpenInterestInTokens", "base": "OPEN_INTEREST_IN_TOKENS", "sheetKey": "openInterestInTokensKey(market,false)" },
+    { "field": "constantPriceSpread", "base": "CONSTANT_PRICE_SPREAD", "sheetKey": "constantPriceSpreadKey(market)" },
+    { "field": "askOrderBookDepth", "base": "ASK_ORDER_BOOK_DEPTH", "sheetKey": "askOrderBookDepthKey(market)" },
+    { "field": "bidOrderBookDepth", "base": "BID_ORDER_BOOK_DEPTH", "sheetKey": "bidOrderBookDepthKey(market)" },
+    { "field": "priceImpactParameter", "base": "PRICE_IMPACT_PARAMETER", "sheetKey": "priceImpactParameterKey(market)" },
+    { "field": "maxPriceImpactSpread", "base": "MAX_PRICE_IMPACT_SPREAD", "sheetKey": "MAX_PRICE_IMPACT_SPREAD" },
+    { "field": "skewImpactFactor", "base": "SKEW_IMPACT_FACTOR", "sheetKey": "skewImpactFactorKey(market)" },
+    { "field": "minSkewImpact", "base": "MIN_SKEW_IMPACT", "sheetKey": "minSkewImpactKey(market)" },
+    { "field": "maxSkewImpact", "base": "MAX_SKEW_IMPACT", "sheetKey": "maxSkewImpactKey(market)" },
+    { "field": "fundingSkewEma", "base": "FUNDING_SKEW_EMA", "sheetKey": "fundingSkewEmaKey(market)" },
+    { "field": "fundingFloorFactor", "base": "FUNDING_FLOOR_FACTOR", "sheetKey": "fundingFloorFactorKey(market)" },
+    { "field": "fundingBaseFactor", "base": "FUNDING_BASE_FACTOR", "sheetKey": "fundingBaseFactorKey(market)" },
+    { "field": "minFundingFactorPerSecond", "base": "MIN_FUNDING_FACTOR_PER_SECOND", "sheetKey": "minFundingFactorPerSecondKey(market)" },
+    { "field": "maxFundingFactorPerSecond", "base": "MAX_FUNDING_FACTOR_PER_SECOND", "sheetKey": "maxFundingFactorPerSecondKey(market)" },
+    { "field": "fundingUpdatedAt", "base": "FUNDING_UPDATED_AT", "sheetKey": "fundingUpdatedAtKey(market)" },
+    { "field": "negativeFundingFeePerSize.long/short", "base": "NEGATIVE_FUNDING_FEE_PER_SIZE", "sheetKey": "negativeFundingFeePerSizeKey(market,side)" },
+    { "field": "positiveFundingFeePerSize.long/short", "base": "POSITIVE_FUNDING_FEE_PER_SIZE", "sheetKey": "positiveFundingFeePerSizeKey(market,side)" }
+  ],
+  "nonDataStore": [
+    { "field": "chainId", "source": "RPC eth_chainId" },
+    { "field": "blockNumber", "source": "RPC block tag" },
+    { "field": "blockTimestamp", "source": "RPC block.timestamp" },
+    { "field": "marketIndex", "source": "Market.Props" },
+    { "field": "isIncrease / isLong / sizeDelta / isSizeDeltaUsd", "source": "订单上下文" },
+    { "field": "indexTokenPrice.min/max", "source": "MarketPrices（Oracle 报价，非 DataStore）" },
+    { "field": "collateralTokenPrice.min/max", "source": "MarketPrices（Oracle 报价，非 DataStore）" },
+    { "field": "position.sizeInUsd / sizeInTokens / negative|positiveFundingFeePerSize", "source": "Position Reader" },
+    { "field": "sizeDeltaUsd / sizeDeltaInTokens / dynamicSpread / executionPrice / balanceWasImproved", "source": "Reader.ExecutionPriceResult" },
+    { "field": "constantSpreadComponent / priceImpactSpreadComponent / skewImpactComponent", "source": "PositionPricingUtils 内部值（清单标注「当前未公开」）" },
+    { "field": "nextFunding.*", "source": "ReaderUtils.getMarketInfo" }
+  ]
+}

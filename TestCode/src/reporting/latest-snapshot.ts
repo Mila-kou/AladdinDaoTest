@@ -1,0 +1,50 @@
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
+import { validateTestRunArtifact, type ScenarioResult, type TestRunArtifact } from './schema.js';
+
+function resultKey(result: ScenarioResult): string {
+  return `${result.id}:${result.project}`;
+}
+
+function preferResult(previous: ScenarioResult | undefined, candidate: ScenarioResult): ScenarioResult {
+  if (!previous) return candidate;
+  // “只列用例”或项目条件跳过不应抹掉已经执行过的最近证据。
+  if (candidate.status === 'SKIP' && previous.status !== 'SKIP') return previous;
+  return Date.parse(candidate.executedAt) >= Date.parse(previous.executedAt) ? candidate : previous;
+}
+
+export function mergeLatestSnapshot(
+  previous: TestRunArtifact | undefined,
+  current: TestRunArtifact,
+): TestRunArtifact {
+  if (!previous) return current;
+  const catalogIds = new Set(current.catalog.map((item) => item.id));
+  const merged = new Map<string, ScenarioResult>();
+  for (const result of [...previous.results, ...current.results]) {
+    if (!catalogIds.has(result.id)) continue;
+    const key = resultKey(result);
+    merged.set(key, preferResult(merged.get(key), result));
+  }
+  const results = [...merged.values()].sort((left, right) =>
+    left.id.localeCompare(right.id) || left.project.localeCompare(right.project));
+  return {
+    ...current,
+    run: {
+      ...current.run,
+      environments: [...new Set(results.map((item) => item.environment))].sort(),
+      projectNames: [...new Set(results.map((item) => item.project))].sort(),
+      discoveredTests: results.length,
+    },
+    results,
+  };
+}
+
+export async function readLatestSnapshot(outputDirectory: string): Promise<TestRunArtifact | undefined> {
+  try {
+    const parsed = JSON.parse(await readFile(join(outputDirectory, 'results.json'), 'utf8')) as unknown;
+    return validateTestRunArtifact(parsed);
+  } catch {
+    return undefined;
+  }
+}

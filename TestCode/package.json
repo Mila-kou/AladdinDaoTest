@@ -1,0 +1,51 @@
+{
+  "name": "fx100-e2e-testcode",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "FX100 user-level E2E automation scaffold for Tenderly private forks.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "doctor": "tsx scripts/doctor.ts",
+    "config:print": "tsx scripts/print-config.ts",
+    "config:validate": "tsx scripts/validate-deployment.ts",
+    "env:init:mock": "tsx scripts/init-mock-resources.ts",
+    "env:bind:mock-market": "tsx scripts/bind-default-mock-market.ts",
+    "env:show:mock": "tsx scripts/show-mock-resources.ts",
+    "env:verify:mock": "tsx scripts/verify-default-mock-environment.ts",
+    "dashboard:build": "tsx scripts/build-dashboard.ts",
+    "dashboard:rebuild-latest": "tsx scripts/rebuild-latest.ts",
+    "dashboard:rebuild-parameters": "tsx scripts/rebuild-parameters-page.ts",
+    "dashboard:recover-scn009": "tsx scripts/recover-scn009.ts",
+    "dashboard:fixture": "tsx scripts/generate-dashboard-fixture.ts",
+    "dashboard:serve": "tsx scripts/serve-dashboard.ts",
+    "dashboard:verify": "tsx scripts/verify-dashboard.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "playwright test",
+    "test:list": "playwright test --list",
+    "test:headed": "playwright test --headed",
+    "test:scn009": "E2E_ENV=tx-fork playwright test tests/S02/scn-009.spec.ts --project=tx-fork",
+    "test:scn009:signed": "E2E_ENV=tx-fork E2E_SIGNING_MODE=private-key E2E_PERSIST_FORK_STATE=true playwright test tests/S02/scn-009.spec.ts --project=tx-fork",
+    "test:scn010": "E2E_ENV=oracle-fork E2E_SIGNING_MODE=private-key playwright test tests/S02/scn-010.spec.ts --project=oracle-fork",
+    "test:scn010:signed": "E2E_ENV=oracle-fork E2E_SIGNING_MODE=private-key E2E_PERSIST_FORK_STATE=true playwright test tests/S02/scn-010.spec.ts --project=oracle-fork",
+    "test:scn070": "E2E_ENV=oracle-fork E2E_SIGNING_MODE=private-key playwright test tests/S07/scn-070.spec.ts --project=oracle-fork",
+    "test:scn070:model": "tsx scripts/verify-scn070-model.ts",
+    "test:reconciliation:model": "tsx scripts/verify-reconciliation-formulas.ts",
+    "report": "playwright show-report artifacts/html-report",
+    "playwright:install": "playwright install chromium"
+  },
+  "dependencies": {
+    "dotenv": "17.4.2",
+    "marked": "^18.0.7",
+    "viem": "2.55.10",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1",
+    "@types/node": "24.13.3",
+    "tsx": "4.23.5",
+    "typescript": "5.9.3"
+  }
+}

@@ -1,0 +1,243 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-08-06T09:55:00.249Z",
+  "environments": {
+    "oracle-fork": {
+      "token": {
+        "name": "FX100 Default Mock Token",
+        "symbol": "FXMOCK",
+        "decimals": 18
+      },
+      "oracle": {
+        "description": "FXMOCK / USD",
+        "decimals": 8,
+        "minPrice": "60000",
+        "maxPrice": "60060",
+        "heartbeatDuration": "86400"
+      },
+      "collateralOracle": {
+        "description": "Mock USDC / USD",
+        "decimals": 8,
+        "minPrice": "0.999",
+        "maxPrice": "1.001",
+        "heartbeatDuration": "86400"
+      },
+      "referenceMarketIndex": 1,
+      "parameterOverrides": {
+        "POSITION_FEE_FACTOR(true)": "500000000000000000000000000",
+        "POSITION_FEE_FACTOR(false)": "100000000000000000000000000"
+      },
+      "funding": {
+        "nativeBalanceEth": "10",
+        "traderCollateral": "1000000",
+        "minimumLpCollateral": "500000",
+        "routerAllowance": "max"
+      },
+      "operations": {
+        "configureMarketParameters": true,
+        "configureFundingParameters": true,
+        "configureFeeRatio": true,
+        "fundNativeAccounts": true,
+        "fundTraderCollateral": true,
+        "seedLpLiquidity": true,
+        "grantRoles": true,
+        "configureRouterAllowance": true,
+        "validateAfterInitialization": true
+      }
+    },
+    "tx-fork": {
+      "token": {
+        "name": "FX100 Default Mock Token",
+        "symbol": "FXMOCK",
+        "decimals": 18
+      },
+      "oracle": {
+        "description": "FXMOCK / USD",
+        "decimals": 8,
+        "minPrice": "60000",
+        "maxPrice": "60060",
+        "heartbeatDuration": "86400"
+      },
+      "collateralOracle": {
+        "description": "Mock USDC / USD",
+        "decimals": 8,
+        "minPrice": "0.999",
+        "maxPrice": "1.001",
+        "heartbeatDuration": "86400"
+      },
+      "referenceMarketIndex": 1,
+      "parameterOverrides": {
+        "MAX_PNL_FACTOR(MAX_PNL_FACTOR_FOR_TRADERS,true)": "1000000000000000000000000000000",
+        "MAX_PNL_FACTOR(MAX_PNL_FACTOR_FOR_TRADERS,false)": "1000000000000000000000000000000",
+        "POSITION_IMPACT_FACTOR(true)": "0",
+        "POSITION_IMPACT_FACTOR(false)": "0",
+        "POSITION_IMPACT_EXPONENT_FACTOR(true)": "1000000000000000000000000000000",
+        "POSITION_IMPACT_EXPONENT_FACTOR(false)": "1000000000000000000000000000000",
+        "MAX_POSITION_IMPACT_FACTOR(true)": "1000000000000000000000000000000",
+        "MAX_POSITION_IMPACT_FACTOR(false)": "1000000000000000000000000000000",
+        "LIQUIDATION_FEE_FACTOR": "3000000000000000000000000000",
+        "EXECUTION_FEE_SUBSIDIZE": "20000000000000000000000000000000",
+        "EXECUTION_FEE_SUBSIDIZE_SIZE": "333333333333333",
+        "MAX_POSITION_SIZE_USD": "8000000000000000000000000000000000000",
+        "MIN_COLLATERAL_FACTOR": "4000000000000000000000000000",
+        "MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION": "4000000000000000000000000000",
+        "MAX_OPEN_INTEREST(true)": "40000000000000000000000000000000000000",
+        "MAX_OPEN_INTEREST(false)": "40000000000000000000000000000000000000",
+        "MAX_OPEN_INTEREST_FACTOR(true)": "400000000000000000000000000000",
+        "MAX_OPEN_INTEREST_FACTOR(false)": "400000000000000000000000000000",
+        "RESERVE_FACTOR": "400000000000000000000000000000",
+        "CONSTANT_PRICE_SPREAD": "100000000000000",
+        "BID_ORDER_BOOK_DEPTH": "15217320430000000000000000000000000000",
+        "ASK_ORDER_BOOK_DEPTH": "15593281790000000000000000000000000000",
+        "PRICE_IMPACT_PARAMETER": "500000000000000000",
+        "POSITION_FEE_FACTOR(true)": "100000000000000000000000000",
+        "POSITION_FEE_FACTOR(false)": "200000000000000000000000000",
+        "SKEW_IMPACT_FACTOR": "10000000000000000",
+        "MIN_SKEW_IMPACT": "-5000000000000000",
+        "MAX_SKEW_IMPACT": "5000000000000000",
+        "LIQUIDATION_GRACE_PERIOD_BASE": "0",
+        "FUNDING_FLOOR_FACTOR": "3472222222222222222222",
+        "FUNDING_BASE_FACTOR": "42672606957128361237950",
+        "MIN_FUNDING_FACTOR_PER_SECOND": "-4247209538305428716387",
+        "MAX_FUNDING_FACTOR_PER_SECOND": "30606957128361237950279"
+      },
+      "funding": {
+        "nativeBalanceEth": "10",
+        "traderCollateral": "10000",
+        "minimumLpCollateral": "500000",
+        "routerAllowance": "max"
+      },
+      "operations": {
+        "configureMarketParameters": true,
+        "configureFundingParameters": true,
+        "configureFeeRatio": true,
+        "fundNativeAccounts": true,
+        "fundTraderCollateral": true,
+        "seedLpLiquidity": true,
+        "grantRoles": true,
+        "configureRouterAllowance": true,
+        "validateAfterInitialization": true
+      }
+    },
+    "time-fork": {
+      "token": {
+        "name": "FX100 Default Mock Token",
+        "symbol": "FXMOCK",
+        "decimals": 18
+      },
+      "oracle": {
+        "description": "FXMOCK / USD",
+        "decimals": 8,
+        "minPrice": "60000",
+        "maxPrice": "60060",
+        "heartbeatDuration": "86400"
+      },
+      "collateralOracle": {
+        "description": "Mock USDC / USD",
+        "decimals": 8,
+        "minPrice": "0.999",
+        "maxPrice": "1.001",
+        "heartbeatDuration": "86400"
+      },
+      "referenceMarketIndex": 1,
+      "parameterOverrides": {},
+      "funding": {
+        "nativeBalanceEth": "10",
+        "traderCollateral": "1000000",
+        "minimumLpCollateral": "500000",
+        "routerAllowance": "max"
+      },
+      "operations": {
+        "configureMarketParameters": true,
+        "configureFundingParameters": true,
+        "configureFeeRatio": true,
+        "fundNativeAccounts": true,
+        "fundTraderCollateral": true,
+        "seedLpLiquidity": true,
+        "grantRoles": true,
+        "configureRouterAllowance": true,
+        "validateAfterInitialization": true
+      }
+    },
+    "base-sepolia": {
+      "token": {
+        "name": "FX100 Default Mock Token",
+        "symbol": "FXMOCK",
+        "decimals": 18
+      },
+      "oracle": {
+        "description": "FXMOCK / USD",
+        "decimals": 8,
+        "minPrice": "60000",
+        "maxPrice": "60060",
+        "heartbeatDuration": "86400"
+      },
+      "collateralOracle": {
+        "description": "Mock USDC / USD",
+        "decimals": 8,
+        "minPrice": "0.999",
+        "maxPrice": "1.001",
+        "heartbeatDuration": "86400"
+      },
+      "referenceMarketIndex": 1,
+      "parameterOverrides": {},
+      "funding": {
+        "nativeBalanceEth": "10",
+        "traderCollateral": "1000000",
+        "minimumLpCollateral": "500000",
+        "routerAllowance": "max"
+      },
+      "operations": {
+        "configureMarketParameters": true,
+        "configureFundingParameters": true,
+        "configureFeeRatio": true,
+        "fundNativeAccounts": true,
+        "fundTraderCollateral": true,
+        "seedLpLiquidity": true,
+        "grantRoles": true,
+        "configureRouterAllowance": true,
+        "validateAfterInitialization": true
+      }
+    },
+    "dev-readonly": {
+      "token": {
+        "name": "FX100 Default Mock Token",
+        "symbol": "FXMOCK",
+        "decimals": 18
+      },
+      "oracle": {
+        "description": "FXMOCK / USD",
+        "decimals": 8,
+        "minPrice": "60000",
+        "maxPrice": "60060",
+        "heartbeatDuration": "86400"
+      },
+      "collateralOracle": {
+        "description": "Mock USDC / USD",
+        "decimals": 8,
+        "minPrice": "0.999",
+        "maxPrice": "1.001",
+        "heartbeatDuration": "86400"
+      },
+      "referenceMarketIndex": 1,
+      "parameterOverrides": {},
+      "funding": {
+        "nativeBalanceEth": "10",
+        "traderCollateral": "1000000",
+        "minimumLpCollateral": "500000",
+        "routerAllowance": "max"
+      },
+      "operations": {
+        "configureMarketParameters": true,
+        "configureFundingParameters": true,
+        "configureFeeRatio": true,
+        "fundNativeAccounts": true,
+        "fundTraderCollateral": true,
+        "seedLpLiquidity": true,
+        "grantRoles": true,
+        "configureRouterAllowance": true,
+        "validateAfterInitialization": true
+      }
+    }
+  }
+}

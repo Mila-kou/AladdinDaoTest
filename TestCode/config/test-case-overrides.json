@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "cases": {
+    "SCN-008": {
+      "suite": "S01",
+      "title": "切账户的数据与授权隔离",
+      "priority": "P0",
+      "targetProject": "base-sepolia",
+      "marketMode": "deployed-market",
+      "oracleMode": "deployed-oracle",
+      "marketCompatibility": "deployed-only",
+      "timeMode": "normal-block-time",
+      "signingMode": "browser-wallet-keeper",
+      "mockResourceAlias": "none",
+      "executionMode": "manual",
+      "environmentSetup": "用例开始前：不新建 Fork、不建快照，直接在已部署环境上人工执行；\n用例结束时：手工用例不需要操作；\n环境初始化：准备浏览器钱包测试账户；涉及订单执行时同时准备 Keeper。",
+      "roleIntent": "共享设备切账户时防止数据和授权串用",
+      "preconditions": "钱包 A 有仓位/历史，钱包 B 为空；A 可有 Flash",
+      "testData": "A→B→A",
+      "steps": "1. 切换账户；2. 查看余额、仓位、订单、历史和 Flash 状态；3. 切回",
+      "expected": "B 不短暂显示 A 的余额/仓位/订单/交易密钥；B 需独立 consent/approval；切回 A 后数据恢复且无重复请求",
+      "cleanup": "待执行；清理 A 持仓和测试授权",
+      "updatedAt": "2026-08-04T11:55:10.058Z"
+    },
+    "SCN-001": {
+      "suite": "S01",
+      "title": "首次进入并判断数据可信",
+      "priority": "P0",
+      "targetProject": "base-sepolia",
+      "marketMode": "deployed-market",
+      "oracleMode": "deployed-oracle",
+      "marketCompatibility": "deployed-only",
+      "timeMode": "normal-block-time",
+      "signingMode": "readonly",
+      "mockResourceAlias": "none",
+      "executionMode": "manual",
+      "environmentSetup": "用例开始前：不新建 Fork、不建快照，直接在已部署环境上人工执行；\n用例结束时：手工核对用例不需要回滚或重建 Fork；只按用例自带的清理项处理残留仓位、挂单与授权；\n环境初始化：1、使用 base_sepolia_v0.3.1_260729 已部署市场、Token、Oracle 和 ABI；\n2、仅使用已部署 Market 与 Oracle，不做 Mock 替换；\n3、只读页面核对，不需要签名账户。",
+      "roleIntent": "资深交易员首次进入，先判断页面数据是否可信",
+      "preconditions": "新浏览器会话；未连接钱包；行情服务正常",
+      "testData": "ETH 市场；正常行情、过期行情、N/A 三态",
+      "steps": "1. 打开交易页；2. 等待行情/K 线稳定；3. 比较 Oracle、K 线最新价、时间和市场名；4. 查看 OI、Funding、流动性",
+      "expected": "页面无白屏；默认市场一致；K 线用于趋势、Oracle 用于成交，两者用途可区分；行情过期或 N/A 时不允许生成可提交订单",
+      "cleanup": "待执行；无需清理",
+      "updatedAt": "2026-08-04T11:15:24.114Z"
+    }
+  }
+}

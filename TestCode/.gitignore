@@ -1,0 +1,26 @@
+node_modules/
+.env
+.env.local
+.env.*.local
+config/faucet-auto-funding.json
+
+artifacts/*
+!artifacts/.gitkeep
+
+# 遗留 .mjs 账本工具的运行时输出（tool/onchain-tx/lib/ledger.mjs 自动创建）
+tools/fx100-legacy/reports/
+
+# keeper 本地配置（含私钥）与运行日志/pid，永不进仓
+tools/keeper-runner/.env
+tools/keeper-runner/.env.*
+!tools/keeper-runner/.env.example
+tools/keeper-runner/logs/
+
+playwright-report/
+test-results/
+
+config/deployments/*.local.json
+!config/deployments/*.example.json
+
+*.log
+.DS_Store

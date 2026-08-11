@@ -10,3 +10,5 @@ pk.txt
 *.env.zip
 .env
 **/.env
+
+Devconfig/*

@@ -180,6 +180,8 @@ export async function startDashboardServer(options: DashboardServerOptions) {
         '/runs.html': 'runs.html',
         '/environments': 'environments.html',
         '/environments.html': 'environments.html',
+        '/faucet': 'faucet.html',
+        '/faucet.html': 'faucet.html',
         '/parameters': 'parameters.html',
         '/parameters.html': 'parameters.html',
         '/formulas': 'formulas.html',
@@ -624,7 +626,7 @@ export async function startDashboardServer(options: DashboardServerOptions) {
             generatedAt: artifact.source.generatedAt,
             catalogSize: artifact.catalog.length,
             resultCount: artifact.results.length,
-            pages: ['/', '/executions', '/test-cases', '/runs', '/environments', '/parameters', '/formulas', '/page-formulas'],
+            pages: ['/', '/executions', '/test-cases', '/runs', '/environments', '/faucet', '/parameters', '/formulas', '/page-formulas'],
             parameterApis: ['/api/parameter-environments', '/api/parameters?environment=tx-fork'],
             runApis: [
               '/api/environments',

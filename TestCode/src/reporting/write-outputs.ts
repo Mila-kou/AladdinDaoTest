@@ -5,6 +5,7 @@ import { renderDashboardHtml } from './render-dashboard.js';
 import { attachExecutionEvidence } from './execution-evidence.js';
 import { renderExecutionsHtml } from './render-executions.js';
 import { renderEnvironmentsHtml } from './render-environments.js';
+import { renderFaucetHtml } from './render-faucet.js';
 import { renderContractFormulasHtml, renderPageFormulasHtml } from './render-formulas.js';
 import { renderMarkdownSummary } from './render-markdown.js';
 import { metricDefinitions } from './metric-definitions.js';
@@ -29,6 +30,7 @@ export interface OutputReceipt {
   readonly testCasesHtml: string;
   readonly runsHtml: string;
   readonly environmentsHtml: string;
+  readonly faucetHtml: string;
 }
 
 function safeFilePart(value: string): string {
@@ -100,6 +102,7 @@ export async function writeRunOutputs(
   const testCasesHtml = join(outputDirectory, 'test-cases.html');
   const runsHtml = join(outputDirectory, 'runs.html');
   const environmentsHtml = join(outputDirectory, 'environments.html');
+  const faucetHtml = join(outputDirectory, 'faucet.html');
 
   await Promise.all([
     writeFile(resultsJson, `${JSON.stringify(artifact, null, 2)}\n`, 'utf8'),
@@ -120,6 +123,7 @@ export async function writeRunOutputs(
       'utf8',
     ),
     writeFile(environmentsHtml, renderEnvironmentsHtml(artifact.source.generatedAt), 'utf8'),
+    writeFile(faucetHtml, renderFaucetHtml(), 'utf8'),
   ]);
 
   return {
@@ -134,5 +138,6 @@ export async function writeRunOutputs(
     testCasesHtml,
     runsHtml,
     environmentsHtml,
+    faucetHtml,
   };
 }

@@ -186,11 +186,12 @@ npm run dashboard:serve
 
 页面入口：
 
-- `http://localhost:4173/`：测试看板与场景明细；Fund USDC 默认选择 `base-sepolia`，也可切换三个私有 Fork，并展示 Before / Fund / After、执行方式及真实交易哈希；
+- `http://localhost:4173/`：测试结果与场景明细；
 - `http://localhost:4173/executions`：执行详情，按阶段展示 `before / after / Δ / expected`，覆盖资金账户、仓位、Fee、Funding、OI、Skew、Spread、PnL；支持按业务类别或交易阶段点击筛选，并可直达对应测试用例查看/编辑；
 - `http://localhost:4173/test-cases`：80 条测试用例查看、按计划 Project / 市场兼容性筛选与编辑；每条用例显示默认市场资源、标准 Market 兼容性、时间能力、签名方式和 Mock 资源别名；
 - `http://localhost:4173/runs`：创建版本化测试运行；支持单条、部分、全部用例，默认使用用例的 Mock 资源，也可对兼容用例切换标准 Market；同时支持默认/覆盖环境和新 RPC；
 - `http://localhost:4173/environments`：维护环境配置与执行只读检查；选择 `base-sepolia` 时只显示已有部署需要的 Trade、RPC、账户/Admin 和数据源配置，不加载或显示 Mock Token/Oracle、Market Bundle、Keeper 初始化及 Tenderly Fork 操作；
+- `http://localhost:4173/faucet`：Faucet 运维工具页（从主看板拆出）：Base Sepolia Faucet 余额监控、低余额告警与自动补款、Fund USDC（默认 `base-sepolia`，也可切换三个私有 Fork，展示 Before / Fund / After、执行方式及真实交易哈希）。测试期专用，与测试结果数据无耦合，上线后如不再需要可整页下线；
 - `http://localhost:4173/parameters`：合约参数清单与筛选；
 - `http://localhost:4173/formulas`：合约核心公式和精度口径；
 - `http://localhost:4173/page-formulas`：需求总结中的页面数据计算公式。

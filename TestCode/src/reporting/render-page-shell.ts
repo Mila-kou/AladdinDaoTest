@@ -17,7 +17,7 @@ export function serializeForHtml(value: unknown): string {
 interface PageOptions {
   readonly title: string;
   readonly subtitle: string;
-  readonly active: 'dashboard' | 'executions' | 'test-cases' | 'runs' | 'environments' | 'parameters' | 'formulas' | 'page-formulas';
+  readonly active: 'dashboard' | 'executions' | 'test-cases' | 'runs' | 'environments' | 'faucet' | 'parameters' | 'formulas' | 'page-formulas';
   readonly readyId: string;
   readonly content: string;
   readonly extraStyles?: string;
@@ -31,6 +31,7 @@ export function renderPageShell(options: PageOptions): string {
     ['test-cases', './test-cases.html', '测试用例'],
     ['runs', './runs.html', '测试运行'],
     ['environments', './environments.html', '测试环境'],
+    ['faucet', './faucet.html', 'Faucet'],
     ['parameters', './parameters.html', '合约参数'],
     ['formulas', './formulas.html', '合约核心公式'],
     ['page-formulas', './page-formulas.html', '页面数据公式'],

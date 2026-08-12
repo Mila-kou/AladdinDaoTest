@@ -8,6 +8,7 @@ interface VerificationResult {
   readonly title: string | null;
   readonly dashboardNavLabel: string;
   readonly testRunNavHref: string | null;
+  readonly faucetTitle: string | null;
   readonly fundingPanelExists: boolean;
   readonly fundingButtonEnabled: boolean;
   readonly fundingDefaultEnvironment: string;
@@ -87,22 +88,6 @@ async function verifyDashboard(page: Page, url: string) {
   const title = await page.locator('h1').textContent();
   const dashboardNavLabel = (await page.locator('.top-nav a[href="./dashboard.html"]').textContent()) ?? '';
   const testRunNavHref = await page.locator('.top-nav a[href="./runs.html"]').getAttribute('href');
-  const fundingPanelExists = await page.locator('.funding-panel #fund-usdc').count() === 1;
-  const fundingButtonEnabled = fundingPanelExists && await page.locator('#fund-usdc').isEnabled();
-  const fundingDefaultEnvironment = fundingPanelExists
-    ? await page.locator('#fund-environment').inputValue()
-    : '';
-  const faucetMonitorExists = await page.locator('.faucet-panel #refresh-faucet-balance').count() === 1;
-  const faucetMonitorAccount = faucetMonitorExists
-    ? (await page.locator('#faucet-monitor-account').textContent()) ?? ''
-    : '';
-  const faucetMonitorToken = faucetMonitorExists
-    ? (await page.locator('#faucet-monitor-token').textContent()) ?? ''
-    : '';
-  const faucetAutoFundingControlsExist = await page.locator('#start-faucet-service').count() === 1
-    && await page.locator('#stop-faucet-service').count() === 1;
-  const faucetAutoFundingThresholdType = await page.locator('#faucet-threshold').getAttribute('type');
-  const faucetAutoFundingTargetType = await page.locator('#faucet-target-balance').getAttribute('type');
   const metricCards = await page.locator('.metric').count();
   const detailRowsBefore = await page.locator('#detail-table tr').count();
   const suiteLabel = await page.locator('#filter-suite option[value="S01"]').textContent();
@@ -130,15 +115,6 @@ async function verifyDashboard(page: Page, url: string) {
     title,
     dashboardNavLabel,
     testRunNavHref,
-    fundingPanelExists,
-    fundingButtonEnabled,
-    fundingDefaultEnvironment,
-    faucetMonitorExists,
-    faucetMonitorAccount,
-    faucetMonitorToken,
-    faucetAutoFundingControlsExist,
-    faucetAutoFundingThresholdType,
-    faucetAutoFundingTargetType,
     metricCards,
     detailRowsBefore,
     suiteLabel,
@@ -148,6 +124,41 @@ async function verifyDashboard(page: Page, url: string) {
     scenarioExecutionHref,
     evidenceRowText,
     detailRowsAfter,
+  };
+}
+
+// Faucet 运维页（从主看板拆出）：余额监控 + 低余额告警与自动补款 + Fund USDC。
+async function verifyFaucet(page: Page, url: string) {
+  await page.goto(url);
+  await page.waitForSelector('#faucet-page[data-page-ready="true"]');
+  const faucetTitle = await page.locator('h1').textContent();
+  const fundingPanelExists = await page.locator('.funding-panel #fund-usdc').count() === 1;
+  const fundingButtonEnabled = fundingPanelExists && await page.locator('#fund-usdc').isEnabled();
+  const fundingDefaultEnvironment = fundingPanelExists
+    ? await page.locator('#fund-environment').inputValue()
+    : '';
+  const faucetMonitorExists = await page.locator('.faucet-panel #refresh-faucet-balance').count() === 1;
+  const faucetMonitorAccount = faucetMonitorExists
+    ? (await page.locator('#faucet-monitor-account').textContent()) ?? ''
+    : '';
+  const faucetMonitorToken = faucetMonitorExists
+    ? (await page.locator('#faucet-monitor-token').textContent()) ?? ''
+    : '';
+  const faucetAutoFundingControlsExist = await page.locator('#start-faucet-service').count() === 1
+    && await page.locator('#stop-faucet-service').count() === 1;
+  const faucetAutoFundingThresholdType = await page.locator('#faucet-threshold').getAttribute('type');
+  const faucetAutoFundingTargetType = await page.locator('#faucet-target-balance').getAttribute('type');
+  return {
+    faucetTitle,
+    fundingPanelExists,
+    fundingButtonEnabled,
+    fundingDefaultEnvironment,
+    faucetMonitorExists,
+    faucetMonitorAccount,
+    faucetMonitorToken,
+    faucetAutoFundingControlsExist,
+    faucetAutoFundingThresholdType,
+    faucetAutoFundingTargetType,
   };
 }
 
@@ -351,6 +362,7 @@ if (!input) {
       access(join(dirname(dashboardPath), 'page-formulas.html')),
       access(join(dirname(dashboardPath), 'test-cases.html')),
       access(join(dirname(dashboardPath), 'runs.html')),
+      access(join(dirname(dashboardPath), 'faucet.html')),
     ]);
   }
 
@@ -373,6 +385,9 @@ if (!input) {
   const runsUrl = isHttp
     ? new URL('./runs.html', dashboardUrl).href
     : pathToFileURL(join(dirname(dashboardPath!), 'runs.html')).href;
+  const faucetUrl = isHttp
+    ? new URL('./faucet.html', dashboardUrl).href
+    : pathToFileURL(join(dirname(dashboardPath!), 'faucet.html')).href;
   const allowedOrigin = new URL(dashboardUrl).origin;
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
@@ -390,6 +405,7 @@ if (!input) {
   });
 
   const dashboard = await verifyDashboard(page, dashboardUrl);
+  const faucet = await verifyFaucet(page, faucetUrl);
   const executions = await verifyExecutions(page, executionsUrl);
   const testCases = await verifyTestCases(page, testCasesUrl);
   const runs = await verifyRuns(page, runsUrl);
@@ -411,6 +427,7 @@ if (!input) {
 
   const result: VerificationResult = {
     ...dashboard,
+    ...faucet,
     ...executions,
     testCaseRows: testCases.testCaseRows,
     testCaseEditorEnabled: testCases.testCaseEditorEnabled,
@@ -457,16 +474,17 @@ if (!input) {
   const failed = dashboard.title !== 'FX100 E2E 测试看板'
     || dashboard.dashboardNavLabel !== '测试看板'
     || dashboard.testRunNavHref !== './runs.html'
-    || !dashboard.fundingPanelExists
-    || !dashboard.faucetMonitorExists
-    || dashboard.faucetMonitorAccount !== '0x6E2Df1a8d0366ac1e55fF1dC23523299613902e5'
-    || dashboard.faucetMonitorToken !== '0xbf4D9B318689AB928DB9eE4Cdc840c065575Eb89'
-    || !dashboard.faucetAutoFundingControlsExist
-    || dashboard.faucetAutoFundingThresholdType !== 'text'
-    || dashboard.faucetAutoFundingTargetType !== 'text'
-    || (isHttp && !dashboard.fundingButtonEnabled)
-    || (isHttp && dashboard.fundingDefaultEnvironment !== 'base-sepolia')
-    || (!isHttp && dashboard.fundingButtonEnabled)
+    || faucet.faucetTitle !== 'FX100 Faucet'
+    || !faucet.fundingPanelExists
+    || !faucet.faucetMonitorExists
+    || faucet.faucetMonitorAccount !== '0x6E2Df1a8d0366ac1e55fF1dC23523299613902e5'
+    || faucet.faucetMonitorToken !== '0xbf4D9B318689AB928DB9eE4Cdc840c065575Eb89'
+    || !faucet.faucetAutoFundingControlsExist
+    || faucet.faucetAutoFundingThresholdType !== 'text'
+    || faucet.faucetAutoFundingTargetType !== 'text'
+    || (isHttp && !faucet.fundingButtonEnabled)
+    || (isHttp && faucet.fundingDefaultEnvironment !== 'base-sepolia')
+    || (!isHttp && faucet.fundingButtonEnabled)
     || result.executionTitle !== 'FX100 执行详情'
     || testCases.title !== 'FX100 测试用例库'
     || result.runsTitle !== 'FX100 测试运行'

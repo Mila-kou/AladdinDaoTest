@@ -13,6 +13,7 @@ import { DefaultMarketSourceManager } from './default-market-source.js';
 import { UsdcFundingManager } from './usdc-funding.js';
 import { FaucetBalanceMonitor } from './faucet-monitor.js';
 import { MockOraclePriceManager } from './mock-oracle-prices.js';
+import { ParameterWriteManager } from './parameter-write.js';
 import { FaucetAutoFundingManager } from './faucet-auto-funding.js';
 import {
   checkEnvironmentConfiguration,
@@ -153,6 +154,7 @@ export async function startDashboardServer(options: DashboardServerOptions) {
   const usdcFundingManager = new UsdcFundingManager(projectRoot);
   const faucetBalanceMonitor = new FaucetBalanceMonitor(projectRoot);
   const mockOraclePriceManager = new MockOraclePriceManager(projectRoot);
+  const parameterWriteManager = new ParameterWriteManager(projectRoot);
   const faucetAutoFundingManager = await FaucetAutoFundingManager.create(
     projectRoot,
     faucetBalanceMonitor,
@@ -223,6 +225,22 @@ export async function startDashboardServer(options: DashboardServerOptions) {
         } catch (error) {
           sendJson(response, 400, {
             error: 'USDC Funding 失败',
+            detail: error instanceof Error ? error.message : String(error),
+          });
+        }
+        return;
+      }
+
+      if (url.pathname === '/api/parameters/set' && method === 'POST') {
+        if (!isSameOriginRequest(request)) {
+          sendJson(response, 403, { error: '仅允许同源测试看板写入参数。' });
+          return;
+        }
+        try {
+          sendJson(response, 200, { write: await parameterWriteManager.write(await readJsonBody(request)) });
+        } catch (error) {
+          sendJson(response, 400, {
+            error: '参数写入失败',
             detail: error instanceof Error ? error.message : String(error),
           });
         }
@@ -676,6 +694,7 @@ export async function startDashboardServer(options: DashboardServerOptions) {
               '/api/faucet-auto-funding',
               '/api/faucet-auto-funding/run-now',
               '/api/mock-oracle-prices',
+              '/api/parameters/set',
               '/api/manual-check-target',
             ],
             capabilities: {
@@ -689,6 +708,7 @@ export async function startDashboardServer(options: DashboardServerOptions) {
               baseSepoliaFaucetMonitor: true,
               faucetAutoFunding: true,
               mockOraclePrices: true,
+              parameterWrite: true,
               telegramNotifications: true,
             },
           },

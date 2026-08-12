@@ -56,6 +56,8 @@ export function renderDashboardHtml(artifact: TestRunArtifact): string {
       display: inline-flex; align-items: center; border: 1px solid var(--line);
       border-radius: 999px; padding: 5px 9px; background: #0c1424; white-space: nowrap;
     }
+    /* run-id 徽标可能长达 60+ 字符（时间戳+release+环境），窄屏必须允许折行，否则撑破 body */
+    .badge { white-space: normal; overflow-wrap: anywhere; max-width: 100%; }
     .fixture-banner, .quality-banner {
       border: 1px solid #785d13; background: #2d240e; color: #fde68a;
       border-radius: 12px; padding: 11px 14px; margin-bottom: 14px;

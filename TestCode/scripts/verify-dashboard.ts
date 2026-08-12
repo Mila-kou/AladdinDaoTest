@@ -105,8 +105,9 @@ async function verifyDashboard(page: Page, url: string) {
   const scenarioExecutionHref = await scenarioExecutionLink.count() > 0
     ? await scenarioExecutionLink.getAttribute('href')
     : null;
+  // 同一场景可能在多个 project（如 oracle-fork/tx-fork）各有一行，取第一行即可，避免 strict mode violation。
   const evidenceRow = evidenceScenarioId
-    ? page.locator(`#detail-table tr[data-scenario-id="${evidenceScenarioId}"]`)
+    ? page.locator(`#detail-table tr[data-scenario-id="${evidenceScenarioId}"]`).first()
     : page.locator('#detail-table tr').first();
   const evidenceRowText = await evidenceRow.count() > 0 ? (await evidenceRow.textContent()) ?? '' : '';
   await page.locator('#filter-status').selectOption('PASS');
@@ -499,14 +500,16 @@ if (!input) {
     || result.executionLinks < 1
     || (requiresExecutionEvidence && (!result.evidenceScenarioId
       || !result.scenarioExecutionHref?.includes(`scenario=${result.evidenceScenarioId}`)))
-    || (requiresExecutionEvidence && !result.evidenceRowText.includes('tx-fork / aladdindao/test'))
+    // 断言 forkDisplayName 已归一化展示（项目名而非技术 Fork ID）；不锁定环境——最新证据可能来自任一 fork。
+    || (requiresExecutionEvidence && !result.evidenceRowText.includes(' / aladdindao/test'))
     || (requiresExecutionEvidence && result.evidenceRowText.includes('9f3df3-7d0923'))
     || (requiresExecutionEvidence && result.reconciliationRows < 1)
     || (requiresExecutionEvidence && !expectedReconciliationHeaders.every((header) => result.reconciliationHeaders.includes(header)))
     || (requiresExecutionEvidence && result.traderTransactions < 2)
     || (requiresExecutionEvidence && result.keeperTransactions < 2)
     || (requiresExecutionEvidence && result.transactionEvidenceLinks < 4)
-    || (requiresExecutionEvidence && !result.testCaseOverviewHref?.includes('test-cases.html?scenario=SCN-009'))
+    // 概述链接必须指向证据对应的场景（最新证据场景随数据变化，不硬编码具体 SCN）。
+    || (requiresExecutionEvidence && !result.testCaseOverviewHref?.includes(`test-cases.html?scenario=${result.evidenceScenarioId}`))
     || (requiresExecutionEvidence && !result.testCaseOverviewText.includes('角色与意图'))
     || (requiresExecutionEvidence && result.graceFilteredRows < 1)
     || (requiresExecutionEvidence && !['Grace 公式核对', 'graceStart', 'graceEnd']
@@ -516,7 +519,7 @@ if (!input) {
     || (requiresExecutionEvidence && result.allFilteredRows !== result.reconciliationRows)
     || (requiresExecutionEvidence && !result.executionHeroText.includes('执行结果 PASS'))
     || (requiresExecutionEvidence && !result.executionHeroText.includes('自动化覆盖 PARTIAL'))
-    || (requiresExecutionEvidence && !result.executionHeroText.includes('tx-fork / aladdindao/test'))
+    || (requiresExecutionEvidence && !result.executionHeroText.includes(' / aladdindao/test'))
     || (requiresExecutionEvidence && result.executionHeroText.includes('9f3df3-7d0923'))
     // 用例目录会持续增长；验证看板行为，不把当前目录条数误当成页面契约。
     || result.testCaseRows < 80

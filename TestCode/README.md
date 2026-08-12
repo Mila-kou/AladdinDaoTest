@@ -202,7 +202,7 @@ npm run dashboard:serve
 - `GET /api/results`：当前 `results.json`；
 - `POST /api/fund-usdc`：同源测试看板专用；按链上 LPVault `asset()` 解析 USDC。`base-sepolia` 使用匹配 token `owner()` 的 `E2E_TOKEN_OWNER_PRIVATE_KEY` 发送真实 `MockToken.mint` 交易，三个私有 Fork 使用 `tenderly_setErc20Balance`，两种方式都会回读核对；
 - `GET /api/environments`：环境能力、RPC 是否已配置及脱敏地址；
-- `GET/POST /api/mock-oracle-prices`：读取 default-mock 两个 Mock Oracle 的链上价格/时间戳/新鲜度；同源 POST 刷新时间戳（价格不变）或设置新价格（admin RPC 免签名交易，`setMockPrice` 无权限控制）；仅三个私有 Fork 可用；
+- `GET/POST /api/mock-oracle-prices`：读取 default-mock 两个 Mock Oracle 的链上 feed 价、有效 Min/Max 区间与时间戳新鲜度；同源 POST 刷新时间戳（价格不变）或设置 Min/Max（Min 写 MockOracle answer，Max 写 DataStore `STABLE_PRICE`，provider 取两者排序为价格区间）；仅三个私有 Fork 可用；
 - `POST /api/parameters/set`：单参数直写（同源）：按 DataStore key + 类型写入新值（模拟持有 CONTROLLER 的 Config 合约），写入后回读核对并返回 before/after/txHash；仅三个私有 Fork 可用；
 - `GET/POST /api/environment-initializations`：查询或创建环境初始化任务；保存 RPC、验证 chainId/快照能力，并按 `bundleAlias` 部署独立 Market Bundle；`forceSharedCollateral` 仅用于明确重建环境共享 USDC Oracle；
 - `GET /api/environment-initializations/<id>`：查询初始化状态和脱敏日志；

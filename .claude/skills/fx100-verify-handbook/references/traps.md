@@ -65,6 +65,7 @@ OrderHandler try/catch 静默取消不 revert："订单离开 pending 队列"无
 
 ## 11. 环境纪律
 
+- **fork 时钟冻结陷阱**：Tenderly fork 只在有交易时出块，链上"最新区块时间"停在最后一次活动；而新交易挖出的区块用真实时钟。Mock Oracle 时间戳停在上次设价时刻 → 隔天执行订单必因价格过期（heartbeat/早于订单创建时间）被取消，且回滚后现场消失、只见 `eth_call reverted`。对策：跑批次前刷新 Oracle 时间戳（环境页 ④ Mock Oracle 价格 → "刷新时间戳"，或 `POST /api/mock-oracle-prices`）；SCN-009 runner 已内置执行前自愈（2026-08-12）。`setMockPrice` 无权限控制，admin RPC 免签名即可调。
 - 压价只用 mock feed 市场；**测完每格立即复位 mock 价**（keeper 会用 stale 价秒吃后续新单）。
 - 时间敏感用例用短 grace 真等，慎用 evm_increaseTime（时钟漂移 → MaxPriceAgeExceeded 等三连 revert）；`MAX_ORACLE_PRICE_AGE` 对 fork 偏紧可临时调大。
 - Chainlink DataStream 必须 testnet 端点（mainnet 报文 → DigestNotSet）。

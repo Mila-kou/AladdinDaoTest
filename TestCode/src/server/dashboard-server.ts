@@ -12,6 +12,7 @@ import { TenderlyForkManager } from './tenderly-forks.js';
 import { DefaultMarketSourceManager } from './default-market-source.js';
 import { UsdcFundingManager } from './usdc-funding.js';
 import { FaucetBalanceMonitor } from './faucet-monitor.js';
+import { MockOraclePriceManager } from './mock-oracle-prices.js';
 import { FaucetAutoFundingManager } from './faucet-auto-funding.js';
 import {
   checkEnvironmentConfiguration,
@@ -151,6 +152,7 @@ export async function startDashboardServer(options: DashboardServerOptions) {
   const defaultMarketSourceManager = new DefaultMarketSourceManager(projectRoot);
   const usdcFundingManager = new UsdcFundingManager(projectRoot);
   const faucetBalanceMonitor = new FaucetBalanceMonitor(projectRoot);
+  const mockOraclePriceManager = new MockOraclePriceManager(projectRoot);
   const faucetAutoFundingManager = await FaucetAutoFundingManager.create(
     projectRoot,
     faucetBalanceMonitor,
@@ -224,6 +226,40 @@ export async function startDashboardServer(options: DashboardServerOptions) {
             detail: error instanceof Error ? error.message : String(error),
           });
         }
+        return;
+      }
+
+      if (url.pathname === '/api/mock-oracle-prices') {
+        if (method === 'GET' || method === 'HEAD') {
+          try {
+            sendJson(response, 200, await mockOraclePriceManager.read({
+              environment: url.searchParams.get('environment') ?? '',
+              bundleAlias: url.searchParams.get('bundleAlias') ?? undefined,
+            }), headOnly);
+          } catch (error) {
+            sendJson(response, 400, {
+              error: 'Mock Oracle 价格读取失败',
+              detail: error instanceof Error ? error.message : String(error),
+            }, headOnly);
+          }
+          return;
+        }
+        if (method === 'POST') {
+          if (!isSameOriginRequest(request)) {
+            sendJson(response, 403, { error: '仅允许同源测试看板修改 Mock Oracle 价格。' });
+            return;
+          }
+          try {
+            sendJson(response, 200, await mockOraclePriceManager.update(await readJsonBody(request)));
+          } catch (error) {
+            sendJson(response, 400, {
+              error: 'Mock Oracle 价格更新失败',
+              detail: error instanceof Error ? error.message : String(error),
+            });
+          }
+          return;
+        }
+        sendJson(response, 405, { error: 'Method Not Allowed' }, headOnly);
         return;
       }
 
@@ -639,6 +675,7 @@ export async function startDashboardServer(options: DashboardServerOptions) {
               '/api/faucet-balance',
               '/api/faucet-auto-funding',
               '/api/faucet-auto-funding/run-now',
+              '/api/mock-oracle-prices',
               '/api/manual-check-target',
             ],
             capabilities: {
@@ -651,6 +688,7 @@ export async function startDashboardServer(options: DashboardServerOptions) {
               usdcFunding: true,
               baseSepoliaFaucetMonitor: true,
               faucetAutoFunding: true,
+              mockOraclePrices: true,
               telegramNotifications: true,
             },
           },

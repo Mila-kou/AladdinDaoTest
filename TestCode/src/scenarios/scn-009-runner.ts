@@ -6,6 +6,7 @@ import { privateKeyToAccount } from 'viem/accounts';
 
 import type { RuntimeConfig } from '../config/runtime.js';
 import { resolveMockMarketBundle } from '../config/mock-resources.js';
+import { freshOracleTimestamp, readMockOracleState, sendSetMockPrice } from '../drivers/mock-oracle.js';
 import { readTradeParameterSnapshot } from '../reconciliation/chain-parameter-snapshot.js';
 import { calculateGrace } from '../reconciliation/formulas.js';
 
@@ -436,6 +437,41 @@ async function locateOrderExecution(
   return requireValue(match, `订单 ${orderKey} 已离开挂单队列但找不到 OrderExecuted 事件（可能被静默取消）`);
 }
 
+// Mock Oracle 时间戳自愈：fork 新区块使用真实时钟，而 Oracle 时间戳停在上次设价时刻，
+// 隔天执行订单必因价格过期 revert（heartbeat 86400s / 价格早于订单创建时间）。
+// 执行前按"价格数值不变、时间戳刷新"重设，属环境管理交易，与业务交易分开记录。
+async function refreshMockOracleTimestamps(
+  runtime: RuntimeConfig,
+  oracles: ReadonlyArray<{ role: 'index' | 'collateral'; address: string }>,
+): Promise<Array<Record<string, unknown>>> {
+  const adminRpcUrl = runtime.adminRpcUrl ?? runtime.rpcUrl;
+  const from = runtime.adminAccount ?? runtime.testAccount;
+  if (!from) throw new Error('刷新 Mock Oracle 时间戳需要 E2E_ADMIN_ACCOUNT 或 E2E_TEST_ACCOUNT');
+  const results: Array<Record<string, unknown>> = [];
+  for (const oracle of oracles) {
+    const state = await readMockOracleState(runtime.rpcUrl, oracle.address, runtime.requestTimeoutMs);
+    const timestamp = freshOracleTimestamp(state.latestBlockTimestamp);
+    const receipt = await sendSetMockPrice({
+      adminRpcUrl,
+      from,
+      oracle: oracle.address,
+      priceRaw: state.answer,
+      timestamp,
+    });
+    results.push({
+      role: oracle.role,
+      oracle: oracle.address,
+      priceRaw: state.answer.toString(),
+      previousUpdatedAt: Number(state.updatedAt),
+      refreshedTimestamp: Number(timestamp),
+      txHash: receipt.txHash,
+      blockNumber: receipt.blockNumber,
+      status: receipt.status,
+    });
+  }
+  return results;
+}
+
 // 窗口纯净度：diff 里的 bigint 槽位全部为 0 才算无第三方账本变动。
 // 非 bigint 项（如 position 结构体）不参与判定；缺失读数由各快照的 errors 断言单独把关。
 function ledgerDriftIsZero(drift: Record<string, bigint | null>): boolean {
@@ -493,6 +529,25 @@ export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence>
   const inlineKeeper = runtime.keeperMode === 'inline';
   if (inlineKeeper && !mockResource?.token?.address) {
     throw new Error('Inline Keeper 当前需要完整 Mock Market Bundle；切换标准 Market 时请选择 Service Keeper 专项模式。');
+  }
+
+  // 先刷新 Oracle 时间戳、再取 before 快照：刷新交易挖出的新区块不会污染账本核对窗口。
+  const oracleRefresh = mockResource?.oracle?.address
+    ? await refreshMockOracleTimestamps(runtime, [
+      { role: 'index', address: mockResource.oracle.address },
+      ...(mockResource.collateralOracle
+        ? [{ role: 'collateral' as const, address: mockResource.collateralOracle.address }]
+        : []),
+    ])
+    : [];
+  if (oracleRefresh.length > 0) {
+    check(
+      assertions,
+      '执行前 Mock Oracle 时间戳已刷新（价格不变）',
+      oracleRefresh.every((item) => item.status === 'success'),
+      oracleRefresh.map((item) => `${String(item.role)}:${String(item.status)}@${String(item.refreshedTimestamp)}`).join('，'),
+      '全部 setMockPrice 回执成功',
+    );
   }
 
   const before = await takeSnapshot(deps, rpc, deployment, ledgerContext);
@@ -857,6 +912,8 @@ export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence>
       wholeFlow: wholeFlowDelta,
     },
     transactions: {
+      // 环境管理交易：执行前的 Oracle 时间戳刷新，与四笔业务交易分开记录。
+      oracleRefresh,
       createOpen: { ...open, transaction: openCreateTx, receipt: openCreateReceipt },
       executeOpen: { event: openExecutionEvent, transaction: openExecuteTx, receipt: openExecuteReceipt },
       createClose: { ...close, transaction: closeCreateTx, receipt: closeCreateReceipt },

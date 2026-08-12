@@ -6,6 +6,8 @@ import { normalizeForkDisplayName } from '../domain/fork-display.js';
 export interface ParameterSnapshotMetadata {
   readonly environment: string;
   readonly displayName: string;
+  /** 参数读取的合约地址（DataStore；本部署 RoleStore 与其同址） */
+  readonly dataStore?: string;
   readonly deploymentName: string;
   readonly chainId: number;
   readonly blockNumber: number;
@@ -100,6 +102,7 @@ interface ConfigDumpSnapshot {
     readonly blockNumber: number;
     readonly blockTimestamp: number;
     readonly deploymentName: string;
+    readonly dataStore?: string;
   };
   readonly dimensions?: Record<string, Array<{
     readonly value: string | number | boolean;
@@ -294,6 +297,7 @@ function mapConfigDumpRows(
     metadata: {
       environment,
       displayName,
+      ...(snapshot.meta.dataStore ? { dataStore: snapshot.meta.dataStore } : {}),
       deploymentName: snapshot.meta.deploymentName,
       chainId: snapshot.meta.chainId,
       blockNumber: snapshot.meta.blockNumber,

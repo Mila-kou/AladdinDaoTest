@@ -49,13 +49,14 @@ OrderHandler try/catch 静默取消不 revert："订单离开 pending 队列"无
 
 零和五账户圈 Trader/OrderVault/PositionVault/LPVault(totalAssets)/FeeHandler（v031-facts.md §2）；LP 槽必须 totalAssets() 非 balanceOf；claimable（DataStore 应收）与 ERC20 余额两套账各自守恒禁止相加；"OI==0"式清算断言假设单仓位——多仓并存用"减少量==被清算仓 sizeInUsd + tokens 侧 + 对侧不变"三件套。
 
-## 10. TestCode 已知问题（2026-08-07 评审快照，修复后此节过期）
+## 10. TestCode 已知问题（2026-08-07 评审；同日核对推导层已修一批，标 ✅）
 
-- `ΔFeeReceiver` 槽实际读 FeeHandler 余额（ledger.mjs:56），命名错位；manifest 未登记 feeHandler/revenuePool/treasury 地址。
-- after-execute 快照取 latest 非执行块（scn-009-runner.ts:502/575）；参数快照钉 afterOpen 块却标"执行区块参数"。
-- SCN-009/010 无 OrderCancelled/reasonBytes 解码（仅 SCN-070 有，宜下沉公共模块）。
-- executionFee/WNT 零覆盖；`pass()` 为字符串比较无 raw bigint；NOT_VERIFIED 不阻断整体 PASS；runner check() fail-fast 断证据流；CALCULATED 行 expected==actual 自身（宜改 INFO）。
-- 事件自证 4 处：Protocol Fee 分账行、Total Cost 行、执行价行（输入取自被核对事件）、仓位字段==事件同名字段。
+- ✅ `ΔFeeReceiver` 命名错位 → 已改名 ΔFeeHandler（槽位 key 仍为 feeReceiverUsdc 兼容存量证据 JSON）；manifest 仍未登记 feeHandler/revenuePool/treasury 地址（待补）。
+- ✅ 守恒行已统一归入独立分类"守恒"（含 Protocol Fee 分账守恒、trader-usdc-final 守恒推论行）。
+- ✅ 事件自证 4 处已显式标注【恒等式】（Protocol Fee 分账、Total Cost、执行价 ×3——判定保留，但不再冒充独立重算）；trader-usdc-final 已标注【守恒推论】。
+- ✅ CALCULATED 展示行的 expected 列不再回显 actual 自身（改"—（派生展示行，无独立期望值）"）。
+- ✅ Grace 缺执行区块参数时不再整行省略，改输出 NOT_VERIFIED 行。
+- ⬜ 仍待修（runner 侧/结构性）：after-execute 快照取 latest 非执行块、参数快照标注不实；SCN-009/010 无 OrderCancelled/reasonBytes 解码（SCN-070 的实现宜下沉公共模块）；executionFee/WNT 零覆盖；`pass()` 字符串比较无 raw bigint/difference 字段；NOT_VERIFIED 不阻断整体 PASS（质量闸门）；runner check() fail-fast 断证据流。
 
 ## 11. 环境纪律
 

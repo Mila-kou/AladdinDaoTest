@@ -62,7 +62,10 @@ const CONSERVATION_TERM_FIELDS = [
   ['orderVaultUsdc', 'ΔOrderVault'],
   ['posVaultUsdc', 'ΔPositionVault'],
   ['lpVaultAssets', 'ΔLPVaultAssets'],
-  ['feeReceiverUsdc', 'ΔFeeReceiver'],
+  // 槽位 key 保持 feeReceiverUsdc 以兼容存量证据 JSON；显示名改为 ΔFeeHandler——
+  // 该槽读取的是 FeeHandler 合约（claimFees 第一跳收款方）的 USDC 余额，
+  // 而 DataStore.FEE_RECEIVER 指向的 RevenuePool 不在本账本槽位中，叫 ΔFeeReceiver 会误导。
+  ['feeReceiverUsdc', 'ΔFeeHandler'],
 ] as const;
 
 function buildConservationRow(input: {
@@ -84,7 +87,7 @@ function buildConservationRow(input: {
 
   return {
     id: input.id,
-    group: '资金账本',
+    group: '守恒',
     label: input.label,
     status: stringValue(input.observation.status) === 'PASS' && sum === 0n && hasAllTerms
       ? 'PASS'
@@ -93,7 +96,7 @@ function buildConservationRow(input: {
     after: `ΣΔ = ${expandedResult}`,
     delta: `ΣΔ = ${expandedResult}`,
     expected: 'ΣΔ = 0 raw (0 USDC)',
-    formula: `ΣΔ = ΔTrader + ΔOrderVault + ΔPositionVault + ΔLPVaultAssets + ΔFeeReceiver；本次：${expandedResult}`,
+    formula: `ΣΔ = ΔTrader + ΔOrderVault + ΔPositionVault + ΔLPVaultAssets + ΔFeeHandler；本次：${expandedResult}`,
     basis: {
       title: 'USDC 五方封闭账本守恒',
       sourcePath: input.ledgerSource,
@@ -101,7 +104,7 @@ function buildConservationRow(input: {
     },
     unit: 'USDC raw / USDC 1e6',
     txStep: input.txStep,
-    note: 'Position Fee 与 Funding 已分别在 Fee/Funding 行复算；它们在资金守恒式中通过 PositionVault、LPVault、FeeReceiver 的实际余额变化体现，不再作为第六、第七项重复相加。Claimable Fee/Funding 属于 DataStore 应收账本，单独核对。',
+    note: 'Position Fee 与 Funding 已分别在 Fee/Funding 行复算；它们在资金守恒式中通过 PositionVault、LPVault、FeeHandler 的实际余额变化体现，不再作为第六、第七项重复相加。Claimable Fee/Funding 属于 DataStore 应收账本，单独核对。第五方是 FeeHandler 合约（claimFees 第一跳收款方，交易执行窗口余额恒不变）；DataStore.FEE_RECEIVER 指向的 RevenuePool 只在 withdrawFees 后才有资金流，不在本守恒圈内。',
   };
 }
 
@@ -202,7 +205,7 @@ const LEDGER_FIELDS: readonly LedgerField[] = [
   { key: 'orderVaultUsdc', label: 'ΔOrderVault', family: '资金账户', decimals: 6, symbol: 'USDC', unit: 'USDC 1e6' },
   { key: 'posVaultUsdc', label: 'ΔPositionVault', family: '资金账户', decimals: 6, symbol: 'USDC', unit: 'USDC 1e6' },
   { key: 'lpVaultAssets', label: 'ΔLPVaultAssets', family: '资金账户', decimals: 6, symbol: 'USDC', unit: 'USDC 1e6' },
-  { key: 'feeReceiverUsdc', label: 'ΔFeeReceiver', family: '资金账户', decimals: 6, symbol: 'USDC', unit: 'USDC 1e6' },
+  { key: 'feeReceiverUsdc', label: 'ΔFeeHandler', family: '资金账户', decimals: 6, symbol: 'USDC', unit: 'USDC 1e6' },
   { key: 'claimableFeeAmountPosition', label: '待领取仓位费', family: '资金账户', decimals: 6, symbol: 'USDC', unit: 'USDC 1e6' },
   { key: 'claimableFeeAmountFunding', label: '待领取 Funding', family: '资金账户', decimals: 6, symbol: 'USDC', unit: 'USDC 1e6' },
   { key: 'claimableFeeAmountLiquidation', label: '待领取清算费', family: '资金账户', decimals: 6, symbol: 'USDC', unit: 'USDC 1e6' },
@@ -246,7 +249,7 @@ function buildLedgerDeltaExpectations(input: {
       orderVaultUsdc: { value: margin, formula: `Expected ΔOrderVault = +inputMargin = +${margin}` },
       posVaultUsdc: zero('订单尚未执行：Expected ΔPositionVault = 0'),
       lpVaultAssets: zero('订单尚未执行：Expected ΔLPVault = 0'),
-      feeReceiverUsdc: zero('费用尚未结算：Expected ΔFeeReceiver balance = 0'),
+      feeReceiverUsdc: zero('费用尚未结算：Expected ΔFeeHandler balance = 0'),
       claimableFeeAmountPosition: zero('费用尚未结算：Expected ΔClaimable Position Fee = 0'),
       claimableFeeAmountFunding: zero('Funding 尚未结算：Expected ΔClaimable Funding = 0'),
       claimableFeeAmountLiquidation: zero('非清算订单：Expected ΔClaimable Liquidation Fee = 0'),
@@ -264,7 +267,7 @@ function buildLedgerDeltaExpectations(input: {
       orderVaultUsdc: zero('减仓订单没有 USDC 抵押品存入：Expected ΔOrderVault = 0'),
       posVaultUsdc: zero('订单尚未执行：Expected ΔPositionVault = 0'),
       lpVaultAssets: zero('订单尚未执行：Expected ΔLPVault = 0'),
-      feeReceiverUsdc: zero('费用尚未结算：Expected ΔFeeReceiver balance = 0'),
+      feeReceiverUsdc: zero('费用尚未结算：Expected ΔFeeHandler balance = 0'),
       claimableFeeAmountPosition: zero('费用尚未结算：Expected ΔClaimable Position Fee = 0'),
       claimableFeeAmountFunding: zero('Funding 尚未结算：Expected ΔClaimable Funding = 0'),
       claimableFeeAmountLiquidation: zero('非清算订单：Expected ΔClaimable Liquidation Fee = 0'),
@@ -314,7 +317,7 @@ function buildLedgerDeltaExpectations(input: {
         value: lpVaultDelta,
         formula: `Expected ΔLPVault = feeForPool − LP→Position Funding = ${feeForPool} − ${lpToPositionVault} = ${lpVaultDelta}`,
       },
-      feeReceiverUsdc: zero('Fee Receiver 使用 Claimable 记账，尚未领取：Expected ERC20 balance Δ = 0'),
+      feeReceiverUsdc: zero('协议费只记 Claimable（USDC 物理留在 PositionVault）；claimFees 之前 FeeHandler 余额不变：Expected ΔFeeHandler = 0'),
       claimableFeeAmountPosition: {
         value: feeReceiverAmount,
         formula: `Expected ΔClaimable Position Fee = feeReceiverAmount = ${feeReceiverAmount}`,
@@ -376,7 +379,7 @@ function buildLedgerDeltaExpectations(input: {
       value: lpVaultDelta,
       formula: `Expected ΔLPVault = feeForPool + negativePnl − positivePnl − LP→Position Funding = ${feeForPool} + ${negativePnl} − ${positivePnl} − ${lpToPositionVault} = ${lpVaultDelta}`,
     },
-    feeReceiverUsdc: zero('Fee Receiver 使用 Claimable 记账，尚未领取：Expected ERC20 balance Δ = 0'),
+    feeReceiverUsdc: zero('协议费只记 Claimable（USDC 物理留在 PositionVault）；claimFees 之前 FeeHandler 余额不变：Expected ΔFeeHandler = 0'),
     claimableFeeAmountPosition: {
       value: feeReceiverAmount,
       formula: `Expected ΔClaimable Position Fee = feeReceiverAmount = ${feeReceiverAmount}`,
@@ -508,8 +511,24 @@ function buildGraceRows(input: {
   const afterEnd = bigintValue(input.after.graceEnd);
   if (!boolValue(input.after.exists)) return [];
   const parameterSnapshotAvailable = input.parameters.source === 'chain-at-block';
-  // 历史证据没有保存执行区块参数时不生成 Grace 公式行，避免用 0 或本地默认值伪造复算。
-  if (!parameterSnapshotAvailable) return [];
+  // 历史证据没有保存执行区块参数时，如实输出 NOT_VERIFIED 行（不整行省略、也不用 0 或本地默认值伪造复算）。
+  if (!parameterSnapshotAvailable) {
+    return [{
+      id: `${input.phaseId}-grace-formula`, group: `${input.phaseLabel} · Grace`, label: 'Grace 公式核对',
+      status: 'NOT_VERIFIED',
+      before: `graceStart=${timestampAndIso(beforeStart)}；graceEnd=${timestampAndIso(beforeEnd)}`,
+      after: `graceStart=${timestampAndIso(afterStart)}；graceEnd=${timestampAndIso(afterEnd)}`,
+      expected: '缺少执行区块参数快照（graceBase / tierMultiplier），无法独立复算',
+      formula: 'graceEnd = graceStart + graceBase × tierMultiplier / 1e18',
+      basis: {
+        title: 'Grace 终点按执行区块实际参数精确复算',
+        sourcePath: PAGE_FORMULA_SOURCE,
+        section: '四、清算保护卡片 / 4.1 保护期推导',
+      },
+      unit: 'Unix timestamp / seconds',
+      note: `历史证据未保存执行区块参数，不能倒推 PASS，如实标 NOT_VERIFIED。链上阶段快照：${input.ledgerSource}`,
+    }];
+  }
   const graceBaseSeconds = bigintValue(input.parameters.graceBaseSeconds);
   const referralTier = bigintValue(input.parameters.referralTier);
   const tierMultiplier = bigintValue(input.parameters.tierMultiplier);
@@ -612,7 +631,7 @@ function buildPricingRows(input: {
     {
       id: `${input.phaseId}-pricing-long-oi-usd`, group: `${input.phaseLabel} · OI / Skew / Spread`, label: 'Long OI（USD 口径）',
       status: 'CALCULATED', before: rawAndUnit(longBeforeUsd, 30, 'USD'), after: rawAndUnit(longAfterUsd, 30, 'USD'),
-      delta: deltaAndUnit(longAfterUsd - longBeforeUsd, 30, 'USD'), expected: rawAndUnit(longAfterUsd, 30, 'USD'),
+      delta: deltaAndUnit(longAfterUsd - longBeforeUsd, 30, 'USD'), expected: '—（派生展示行，无独立期望值）',
       formula: 'longOIUsd = longOpenInterestInTokens × indexMidPrice',
       basis: { title: '市场 Open Interest USD', sourcePath: PAGE_FORMULA_SOURCE, section: '五、Funding / OI 与 Skew' }, unit: 'USD 1e30',
       note: `indexMidPrice=(${priceMin}+${priceMax})/2=${mid}。本行是链上 OI Token 与 Oracle 价格的派生展示。`,
@@ -620,14 +639,14 @@ function buildPricingRows(input: {
     {
       id: `${input.phaseId}-pricing-short-oi-usd`, group: `${input.phaseLabel} · OI / Skew / Spread`, label: 'Short OI（USD 口径）',
       status: 'CALCULATED', before: rawAndUnit(shortBeforeUsd, 30, 'USD'), after: rawAndUnit(shortAfterUsd, 30, 'USD'),
-      delta: deltaAndUnit(shortAfterUsd - shortBeforeUsd, 30, 'USD'), expected: rawAndUnit(shortAfterUsd, 30, 'USD'),
+      delta: deltaAndUnit(shortAfterUsd - shortBeforeUsd, 30, 'USD'), expected: '—（派生展示行，无独立期望值）',
       formula: 'shortOIUsd = shortOpenInterestInTokens × indexMidPrice',
       basis: { title: '市场 Open Interest USD', sourcePath: PAGE_FORMULA_SOURCE, section: '五、Funding / OI 与 Skew' }, unit: 'USD 1e30',
     },
     {
       id: `${input.phaseId}-pricing-raw-skew`, group: `${input.phaseLabel} · OI / Skew / Spread`, label: '实时 Raw Skew（进入 EMA 前）',
       status: 'CALCULATED', before: rawAndUnit(skewBefore, 18, 'ratio'), after: rawAndUnit(skewAfter, 18, 'ratio'),
-      delta: deltaAndUnit(skewAfter - skewBefore, 18, 'ratio'), expected: rawAndUnit(skewAfter, 18, 'ratio'),
+      delta: deltaAndUnit(skewAfter - skewBefore, 18, 'ratio'), expected: '—（派生展示行，无独立期望值）',
       formula: 'skew = (longOIUsd − shortOIUsd) × 1e18 / (longOIUsd + shortOIUsd)',
       basis: { title: 'Funding 原始 Skew；实际费率使用 EMA Skew', sourcePath: PAGE_FORMULA_SOURCE, section: '五、Funding / 5.1 Raw Skew' }, unit: 'ratio 1e18',
     },
@@ -650,7 +669,7 @@ function buildPricingRows(input: {
       id: `${input.phaseId}-pricing-skew-impact`, group: `${input.phaseLabel} · OI / Skew / Spread`, label: 'Skew Impact（参数复算）',
       status: 'CALCULATED' as const,
       before: rawAndUnit(skewRef, 18, 'ratio'), after: rawAndUnit(skewImpact.skewImpact, 18, 'ratio'),
-      delta: deltaAndUnit(skewImpact.skewImpact, 18, 'ratio'), expected: rawAndUnit(skewImpact.skewImpact, 18, 'ratio'),
+      delta: deltaAndUnit(skewImpact.skewImpact, 18, 'ratio'), expected: '—（参数复算展示行，事件未单独给出 Skew 分量，无对照值）',
       formula: `skewImpact = ${skewImpact.expanded}`,
       basis: { title: 'Skew Impact 参数公式', sourcePath: PAGE_FORMULA_SOURCE, section: '一、下单面板 / Dynamic Spread' }, unit: 'ratio 1e18',
       note: `${parameterBlockNote(input.parameters)} 本行独立展示 Skew Impact 分量；Dynamic Spread 还包含 Price Impact。`,
@@ -669,6 +688,7 @@ function buildPricingRows(input: {
       delta: deltaAndUnit(executionPrice - selectedOracle, 0, 'price raw'), expected: execution.executionPrice.toString(),
       formula: `executionPrice = ${execution.expanded}`,
       basis: { title: '方向与开/平仓共同决定价格不利侧', sourcePath: PAGE_FORMULA_SOURCE, section: '一、下单面板 / 1.5 执行价' }, unit: 'price raw',
+      note: '【恒等式】oracle 价与 dynamicSpread 均取自被核对的同一事件——本行验证合约价格公式（方向/不利侧/取整）自洽，不构成独立重算；dynamicSpread 的独立复算未实现（见 Dynamic Spread 行 NOT_VERIFIED）。',
     },
   ];
   if (!isIncrease) {
@@ -778,12 +798,12 @@ function buildFeeAndFundingRows(input: {
       id: `${input.phaseId}-protocol-fee`, group: `${input.phaseLabel} · Fee`, label: 'Protocol Fee 及分账守恒',
       status: pass(protocolFee, bigintValue(fees.feeReceiverAmount) + bigintValue(fees.positionFeeAmountForPool)),
       before: `Position Fee=${rawAndUnit(positionFee, 6, 'USDC')}；折扣后 Protocol Fee=${rawAndUnit(protocolFee, 6, 'USDC')}`,
-      after: `Protocol Fee ${protocolFee} = FeeReceiver ${bigintValue(fees.feeReceiverAmount)} + LP Pool ${bigintValue(fees.positionFeeAmountForPool)}`,
+      after: `Protocol Fee ${protocolFee} = feeReceiverAmount ${bigintValue(fees.feeReceiverAmount)} + LP Pool ${bigintValue(fees.positionFeeAmountForPool)}`,
       delta: `${protocolFee} = ${bigintValue(fees.feeReceiverAmount)} + ${bigintValue(fees.positionFeeAmountForPool)}`,
       expected: `Protocol Fee ${protocolFee} = ${bigintValue(fees.feeReceiverAmount) + bigintValue(fees.positionFeeAmountForPool)} raw`,
       formula: `protocolFeeAmount = feeReceiverAmount + positionFeeAmountForPool；本次：${protocolFee} = ${bigintValue(fees.feeReceiverAmount)} + ${bigintValue(fees.positionFeeAmountForPool)}`,
       basis: { title: '协议与 LP 分成', sourcePath: FORMULA_SOURCE, section: '§7.5 协议与 LP 分成' }, unit: 'USDC 1e6',
-      note: 'Position Fee 是用户仓位费总额；扣除 Referral / Pro 等折扣后得到 Protocol Fee，再按 positionFeeReceiverFactor 拆分为协议应收与 LP Pool 分成。',
+      note: '【恒等式】三个数取自同一 PositionFeesCollected 事件，本行只验证事件内部分账自洽，不构成独立重算；feeReceiverAmount 与 LP 分成的独立复算（用执行区块 positionFeeReceiverFactor）见相邻两行。Position Fee 是用户仓位费总额；扣除 Referral / Pro 等折扣后得到 Protocol Fee，再按 positionFeeReceiverFactor 拆分为协议应收与 LP Pool 分成。',
     },
     {
       id: `${input.phaseId}-fee-receiver`, group: `${input.phaseLabel} · Fee`, label: 'Fee Receiver 分成',
@@ -835,6 +855,7 @@ function buildFeeAndFundingRows(input: {
       delta: deltaAndUnit(fees.totalCostAmount, 6, 'USDC'), expected: rawAndUnit(expectedTotalCost, 6, 'USDC'),
       formula: 'totalCostAmount = positionFeeAmount + uiFeeAmount + negativeFundingFeeAmount（本用例无清算费/折扣）',
       basis: { title: '费用总额；正 Funding 单独增加抵押品', sourcePath: FORMULA_SOURCE, section: '§9 费用总额' }, unit: 'USDC 1e6',
+      note: '【恒等式】各分量取自同一 PositionFeesCollected 事件，本行只验证费用汇总自洽；positionFee 与应付/应收 Funding 已在相邻行用执行区块参数独立复算。',
     },
     {
       id: `${input.phaseId}-claimable-position-fee`, group: `${input.phaseLabel} · Fee`, label: 'Claimable Position Fee 入账',
@@ -1259,7 +1280,7 @@ function deriveScn009Evidence(
       after: stringValue(openIncreaseUint.executionPrice), expected: expectedOpenExecution.toString(),
       formula: 'ceil(indexPrice.max × (1e18 + dynamicSpread) / 1e18)',
       basis: formulaBasis('§4.5 加仓成交价', 'Long executionPrice'), unit: 'price raw',
-      note: `dynamicSpread=${stringValue(openIncreaseUint.dynamicSpread)}`,
+      note: `dynamicSpread=${stringValue(openIncreaseUint.dynamicSpread)}。【恒等式】oracle 价与 dynamicSpread 均取自被核对的 PositionIncrease 事件，验证价格公式自洽，不构成独立重算（dynamicSpread 独立复算未实现）。`,
     },
     {
       id: 'cumulative-long-open-costs-after-open', group: '市场账本',
@@ -1279,7 +1300,7 @@ function deriveScn009Evidence(
       after: stringValue(closeDecreaseUint.executionPrice), expected: expectedCloseExecution.toString(),
       formula: 'indexPrice.min × (1e18 − dynamicSpread) / 1e18',
       basis: formulaBasis('§4.6 减仓成交价', 'Long executionPrice'), unit: 'price raw',
-      note: `dynamicSpread=${stringValue(closeDecreaseUint.dynamicSpread)}`,
+      note: `dynamicSpread=${stringValue(closeDecreaseUint.dynamicSpread)}。【恒等式】oracle 价与 dynamicSpread 均取自被核对的 PositionDecrease 事件，验证价格公式自洽，不构成独立重算（dynamicSpread 独立复算未实现）。`,
     },
     {
       id: 'position-closed', group: '平仓状态', label: '全平后仓位移除',
@@ -1300,13 +1321,14 @@ function deriveScn009Evidence(
       basis: formulaBasis('§12.2 市场多空 PnL', '累计多头开仓成本全平回退'), unit: 'USD 1e30',
     },
     {
-      id: 'trader-usdc-final', group: '资金账本', label: '交易员最终 USDC',
+      id: 'trader-usdc-final', group: '守恒', label: '交易员最终 USDC（全流程守恒推论）',
       status: pass(closeValues.traderUsdc, expectedFinalUsdc),
       before: rawAndUnit(beforeValues.traderUsdc, 6, 'USDC'),
       after: rawAndUnit(closeValues.traderUsdc, 6, 'USDC'),
       expected: rawAndUnit(expectedFinalUsdc, 6, 'USDC'),
-      formula: 'expectedAfter = before − (ΔOrderVault + ΔPositionVault + ΔLPVaultAssets + ΔFeeReceiver)',
+      formula: 'expectedAfter = before − (ΔOrderVault + ΔPositionVault + ΔLPVaultAssets + ΔFeeHandler)',
       basis: ledgerBasis('checkConservation(wholeFlowDelta)', '全流程 USDC 守恒'), unit: 'USDC 1e6',
+      note: '【守恒推论】Expected 由其他四方的实测 wholeFlow Δ 反推（五方守恒式的变形），不是独立公式——本行验证的是全流程资金闭合，交易员的独立 Expected（订单输入+事件分量建模）见 TX2/TX4 资金账户组的 ΔTrader 行。',
     },
     ...detailedRows,
     ...conservationSpecs.map(([key, txStep, label]) => buildConservationRow({

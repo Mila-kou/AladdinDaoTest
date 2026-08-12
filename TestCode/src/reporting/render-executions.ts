@@ -81,7 +81,7 @@ export function renderExecutionsHtml(
         /^ΔOrderVault$/,
         /^ΔPositionVault$/,
         /^ΔLPVaultAssets$/,
-        /^ΔFeeReceiver$/,
+        /^ΔFee(?:Handler|Receiver)$/,
         /仓位规模|sizeInUsd/,
         /仓位 Margin/,
         /^Position Fee（链上实际/,
@@ -155,7 +155,8 @@ export function renderExecutionsHtml(
     function checkCategory(item) {
       const group = item.group;
       const label = item.label;
-      if (/^Δ(?:Trader|OrderVault|PositionVault|LPVaultAssets|FeeReceiver)$/.test(label) || /FeeReceiver\s+USDC/i.test(label)) return '资金 / Vault';
+      if (group === '守恒' || /守恒/.test(label)) return '守恒';
+      if (/^Δ(?:Trader|OrderVault|PositionVault|LPVaultAssets|FeeHandler|FeeReceiver)$/.test(label) || /Fee(?:Handler|Receiver)\s+USDC/i.test(label)) return '资金 / Vault';
       if (group.includes('Grace') || /grace|保护期/i.test(label)) return 'Grace';
       if (group.includes('Funding') || label.includes('Funding')) return 'Funding';
       if (group.includes('Fee') || /Fee|费用|仓位费|清算费/.test(label)) return 'Fee';
@@ -172,7 +173,7 @@ export function renderExecutionsHtml(
       const categoryCounts = rowsForScope.reduce(function (counts, item) {
         const category = checkCategory(item); counts[category] = (counts[category] || 0) + 1; return counts;
       }, {});
-      const categoryOrder = ['资金 / Vault','仓位','Fee','Funding','Grace','OI / Skew / Spread','PnL','状态 / 成交'];
+      const categoryOrder = ['守恒','资金 / Vault','仓位','Fee','Funding','Grace','OI / Skew / Spread','PnL','状态 / 成交'];
       const categoryBadges = categoryOrder.filter(function (name) { return categoryCounts[name]; }).map(function (name) {
         return '<button type="button" class="check-filter" data-filter-type="category" data-filter-value="' + esc(name) + '">' + esc(name) + ' <strong>' + esc(categoryCounts[name]) + '</strong></button>';
       }).join('');

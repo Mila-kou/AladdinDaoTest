@@ -1,7 +1,8 @@
 {
   "schemaVersion": 1,
   "name": "tx-fork-260729",
-  "chainId": 84532,
+  "chainId": 99911,
+  "chainIdNote": "Tenderly 私有 fork 的独立链 ID（2026-08-04 起）；部署基线 Base Sepolia 为 84532。以 config/mock-resources.json 登记为准，与 keeper Redis 游标清理的 chainId 口径一致",
   "deploymentManifest": "./config/deployments/base-sepolia-v0.3.1-260729.json",
   "accounts": {
     "trader": "0xEEeA43701a49F3d41EF694DdAFe2Ac74c7c8B119",
@@ -45,7 +46,7 @@
       "requiredFor": ["liquidation scenarios"]
     },
     "runtime": {
-      "source": "../Test/project/fx100/tool/keeper-runner/.env",
+      "source": "./tools/keeper-runner/.env",
       "requiredExternalServices": ["Chainlink Data Streams testnet", "Redis"]
     }
   },

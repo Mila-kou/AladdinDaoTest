@@ -38,6 +38,15 @@ const executionLinkSchema = z.object({
   }),
 });
 
+// 公式输入来源清单（深度核对方案 §5 FormulaInput/SourceRef 的首期落地）：每个公式输入登记
+// 名称 / 值 / 来源（订单输入、DataStore@区块、事件字段、账本快照…），让"这个 Expected 从哪来、
+// 用了什么参数、哪个事件证明"逐项可追踪。历史报告没有该字段时不展示、不参与判定。
+const formulaInputSchema = z.object({
+  name: z.string().min(1),
+  value: z.string(),
+  source: z.string().min(1),
+});
+
 const reconciliationSchema = z.object({
   id: z.string().min(1),
   group: z.string().min(1),
@@ -57,6 +66,16 @@ const reconciliationSchema = z.object({
   note: z.string().optional(),
   // 一笔交易确认后产生的一组核对数据。历史报告没有该字段时仍可展示在“全流程”。
   txStep: z.string().regex(/^TX\d+$/).optional(),
+  // 验证方式（证据强度分级）：计算复算=期望值由订单输入/链上参数独立算出；事件对照=期望值取自事件字段、
+  // 与链上状态交叉核对；恒等式=同源字段自洽（不构成独立重算）；守恒=ΣΔ 守恒式及其推论；
+  // 派生展示=无独立期望的展示行；缺数据=输入缺失无法核对。历史报告没有该字段时不参与筛选。
+  verification: z.enum(['计算复算', '事件对照', '恒等式', '守恒', '派生展示', '缺数据']).optional(),
+  // 数据来源分层：本行 Actual（Before/After）读的是哪一层——合约=链上状态/Reader/DataStore 读数；
+  // 事件=EventEmitter 字段；合约+事件=行内两层对照（如仓位字段==事件同名字段、链上参数 vs 事件 factor）；
+  // 前端=页面显示值（核对尚未自动化，作为覆盖缺口显式呈现）。与"验证方式"正交：
+  // 验证方式说明期望值怎么来，数据来源说明实测值读哪层。历史报告没有该字段时不参与筛选。
+  dataSource: z.enum(['合约', '事件', '合约+事件', '前端']).optional(),
+  inputs: z.array(formulaInputSchema).optional(),
 });
 
 const transactionEvidenceSchema = z.object({

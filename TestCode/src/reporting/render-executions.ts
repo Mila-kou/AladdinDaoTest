@@ -42,7 +42,15 @@ export function renderExecutionsHtml(
     function status(value) { return '<span class="status status-' + esc(value) + '">' + esc(value) + '</span>'; }
     function formulaBasis(item) {
       const formulaHref = item.basis.sourcePath.includes('页面字段计算公式') ? './page-formulas.html' : './formulas.html';
+      const inputsBlock = item.inputs && item.inputs.length
+        ? '<details class="check-inputs"><summary>输入来源 ' + item.inputs.length + ' 项</summary><ul>'
+          + item.inputs.map(function (entry) {
+            return '<li><code>' + esc(entry.name) + '</code> = ' + esc(entry.value) + '<br><small class="muted">← ' + esc(entry.source) + '</small></li>';
+          }).join('')
+          + '</ul></details>'
+        : '';
       return '<div class="formula">' + esc(item.formula) + '</div>'
+        + inputsBlock
         + '<div class="basis"><a href="' + formulaHref + '">' + esc(item.basis.section) + '</a> · ' + esc(item.basis.title)
         + '<br><code>' + esc(item.basis.sourcePath) + '</code></div>'
         + (item.note ? '<div class="note">' + esc(item.note) + '</div>' : '');
@@ -166,6 +174,14 @@ export function renderExecutionsHtml(
       if (/资金|账本|Vault|余额|抵押品/.test(group + ' ' + label)) return '资金 / Vault';
       return '状态 / 成交';
     }
+    function verificationOf(item) {
+      // 验证方式由数据层（execution-evidence）分级写入；历史 results.json 无该字段时显示为 —。
+      return item.verification || '—';
+    }
+    function sourceOf(item) {
+      // 数据来源分层（合约/事件/合约+事件/前端）说明 Actual 值读的是哪一层；与验证方式正交。
+      return item.dataSource || '—';
+    }
     function renderChecks(rowsForScope, title) {
       const groupCounts = rowsForScope.reduce(function (counts, item) {
         counts[item.group] = (counts[item.group] || 0) + 1; return counts;
@@ -173,6 +189,27 @@ export function renderExecutionsHtml(
       const categoryCounts = rowsForScope.reduce(function (counts, item) {
         const category = checkCategory(item); counts[category] = (counts[category] || 0) + 1; return counts;
       }, {});
+      const verificationCounts = rowsForScope.reduce(function (counts, item) {
+        const kind = verificationOf(item); counts[kind] = (counts[kind] || 0) + 1; return counts;
+      }, {});
+      const sourceCounts = rowsForScope.reduce(function (counts, item) {
+        const kind = sourceOf(item); counts[kind] = (counts[kind] || 0) + 1; return counts;
+      }, {});
+      const sourceOrder = ['合约', '事件', '合约+事件', '前端', '—'];
+      const sourceBadges = sourceOrder.map(function (name) {
+        const count = sourceCounts[name] || 0;
+        if (count === 0 && name !== '前端') return '';
+        // 前端层恒显示：0 项时以禁用样子呈现，让覆盖缺口可见而不是消失。
+        const disabled = count === 0 ? ' disabled title="页面显示值核对尚未自动化"' : '';
+        return '<button type="button" class="check-filter" data-filter-type="source" data-filter-value="' + esc(name) + '"' + disabled + '>' + esc(name) + ' <strong>' + count + '</strong></button>';
+      }).join('');
+      const sourceGapNote = (sourceCounts['前端'] || 0) === 0
+        ? '<span class="filter-note">前端（页面显示值）核对尚未自动化，事件层也有待补充项——两者均为覆盖缺口，逐步补齐。</span>'
+        : '';
+      const verificationOrder = ['计算复算', '事件对照', '恒等式', '守恒', '派生展示', '缺数据', '—'];
+      const verificationBadges = verificationOrder.filter(function (name) { return verificationCounts[name]; }).map(function (name) {
+        return '<button type="button" class="check-filter" data-filter-type="verification" data-filter-value="' + esc(name) + '">' + esc(name) + ' <strong>' + esc(verificationCounts[name]) + '</strong></button>';
+      }).join('');
       const categoryOrder = ['守恒','资金 / Vault','仓位','Fee','Funding','Grace','OI / Skew / Spread','PnL','状态 / 成交'];
       const categoryBadges = categoryOrder.filter(function (name) { return categoryCounts[name]; }).map(function (name) {
         return '<button type="button" class="check-filter" data-filter-type="category" data-filter-value="' + esc(name) + '">' + esc(name) + ' <strong>' + esc(categoryCounts[name]) + '</strong></button>';
@@ -181,7 +218,7 @@ export function renderExecutionsHtml(
         return '<button type="button" class="check-filter check-group-badge" data-filter-type="group" data-filter-value="' + esc(entry[0]) + '">' + esc(entry[0]) + ' <strong>' + esc(entry[1]) + '</strong></button>';
       }).join('');
       const rows = rowsForScope.map(function (item) {
-        return '<tr data-check-id="' + esc(item.id) + '" data-check-group="' + esc(item.group) + '" data-check-category="' + esc(checkCategory(item)) + '" data-check-status="' + esc(item.status) + '"><td>' + esc(item.group) + '</td><td><strong>' + esc(item.label) + '</strong></td><td>' + status(item.status) + '</td>'
+        return '<tr data-check-id="' + esc(item.id) + '" data-check-group="' + esc(item.group) + '" data-check-category="' + esc(checkCategory(item)) + '" data-check-status="' + esc(item.status) + '" data-check-verification="' + esc(verificationOf(item)) + '" data-check-source="' + esc(sourceOf(item)) + '"><td>' + esc(item.group) + '</td><td><strong>' + esc(item.label) + '</strong><div><small class="source-tag source-' + (sourceOf(item) === '合约' ? 'contract' : sourceOf(item) === '事件' ? 'event' : sourceOf(item) === '前端' ? 'frontend' : 'mixed') + '">' + esc(sourceOf(item)) + '</small></div></td><td>' + status(item.status) + '<div><small class="muted">' + esc(verificationOf(item)) + '</small></div></td>'
           + '<td class="value before">' + esc(item.before) + '</td><td class="value after">' + esc(item.after) + '</td>'
           + '<td class="value delta">' + esc(item.delta || '—') + '</td><td class="value expected">' + esc(item.expected) + '</td><td class="formula-cell">' + formulaBasis(item) + '</td></tr>';
       }).join('');
@@ -190,7 +227,9 @@ export function renderExecutionsHtml(
       const calculated = rowsForScope.filter(function (item) { return item.status === 'CALCULATED'; }).length;
       const unverified = rowsForScope.filter(function (item) { return item.status === 'NOT_VERIFIED'; }).length;
       return '<section class="panel section"><div class="section-head"><div><h2>' + esc(title || '核对数据明细') + '</h2><p class="muted">每一行遵循 Expected After = Before + 独立计算的 Expected Δ；PASS 表示链上 Actual After 与 Expected After 一致。</p></div><strong id="check-visible-count">' + passed + ' PASS · ' + failed + ' FAIL · ' + calculated + ' CALCULATED · ' + unverified + ' NOT_VERIFIED</strong></div>'
-        + '<div class="check-filter-block"><span class="filter-label">快速筛选</span><div class="check-groups"><button type="button" class="check-filter is-active" data-filter-type="all" data-filter-value="">全部 <strong>' + rowsForScope.length + '</strong></button>' + categoryBadges + '</div></div>'
+        + '<div class="check-filter-block"><span class="filter-label">数据来源</span><div class="check-groups"><button type="button" class="check-filter is-active" data-filter-type="all" data-filter-value="">全部 <strong>' + rowsForScope.length + '</strong></button>' + sourceBadges + sourceGapNote + '</div></div>'
+        + '<div class="check-filter-block"><span class="filter-label">功能点</span><div class="check-groups">' + categoryBadges + '</div></div>'
+        + '<div class="check-filter-block"><span class="filter-label">验证方式</span><div class="check-groups">' + verificationBadges + '</div></div>'
         + '<div class="check-filter-block"><span class="filter-label">交易阶段 / 明细分组</span><div class="check-groups">' + groupBadges + '</div></div>'
         + '<div class="table-scroll check-scroll"><table id="reconciliation-table"><thead><tr><th>分组</th><th>核对字段</th><th>结果</th><th>Before（链上）</th><th>After（链上 Actual）</th><th>Expected Δ（订单 / 公式）</th><th>Expected After = Before + Δ</th><th>公式与依据</th></tr></thead><tbody>' + rows + '</tbody></table></div></section>';
     }
@@ -205,7 +244,11 @@ export function renderExecutionsHtml(
           const value = button.dataset.filterValue;
           let visible = 0; let passed = 0; let failed = 0; let calculated = 0; let unverified = 0;
           rows.forEach(function (row) {
-            const matches = type === 'all' || (type === 'group' ? row.dataset.checkGroup === value : row.dataset.checkCategory === value);
+            const matches = type === 'all'
+              || (type === 'group' ? row.dataset.checkGroup === value
+                : type === 'verification' ? row.dataset.checkVerification === value
+                  : type === 'source' ? row.dataset.checkSource === value
+                    : row.dataset.checkCategory === value);
             row.hidden = !matches;
             if (matches) { visible += 1; if (row.dataset.checkStatus === 'PASS') passed += 1; if (row.dataset.checkStatus === 'FAIL') failed += 1; if (row.dataset.checkStatus === 'CALCULATED') calculated += 1; if (row.dataset.checkStatus === 'NOT_VERIFIED') unverified += 1; }
           });

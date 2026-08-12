@@ -49,14 +49,19 @@ OrderHandler try/catch 静默取消不 revert："订单离开 pending 队列"无
 
 零和五账户圈 Trader/OrderVault/PositionVault/LPVault(totalAssets)/FeeHandler（v031-facts.md §2）；LP 槽必须 totalAssets() 非 balanceOf；claimable（DataStore 应收）与 ERC20 余额两套账各自守恒禁止相加；"OI==0"式清算断言假设单仓位——多仓并存用"减少量==被清算仓 sizeInUsd + tokens 侧 + 对侧不变"三件套。
 
-## 10. TestCode 已知问题（2026-08-07 评审；同日核对推导层已修一批，标 ✅）
+## 10. TestCode 已知问题（2026-08-07 评审 → 2026-08-11 全面校对；完整清单见 TestCode/docs/reviews/2026-08-11-SCN-009-数据核对校对报告.md）
 
-- ✅ `ΔFeeReceiver` 命名错位 → 已改名 ΔFeeHandler（槽位 key 仍为 feeReceiverUsdc 兼容存量证据 JSON）；manifest 仍未登记 feeHandler/revenuePool/treasury 地址（待补）。
-- ✅ 守恒行已统一归入独立分类"守恒"（含 Protocol Fee 分账守恒、trader-usdc-final 守恒推论行）。
-- ✅ 事件自证 4 处已显式标注【恒等式】（Protocol Fee 分账、Total Cost、执行价 ×3——判定保留，但不再冒充独立重算）；trader-usdc-final 已标注【守恒推论】。
-- ✅ CALCULATED 展示行的 expected 列不再回显 actual 自身（改"—（派生展示行，无独立期望值）"）。
-- ✅ Grace 缺执行区块参数时不再整行省略，改输出 NOT_VERIFIED 行。
-- ⬜ 仍待修（runner 侧/结构性）：after-execute 快照取 latest 非执行块、参数快照标注不实；SCN-009/010 无 OrderCancelled/reasonBytes 解码（SCN-070 的实现宜下沉公共模块）；executionFee/WNT 零覆盖；`pass()` 字符串比较无 raw bigint/difference 字段；NOT_VERIFIED 不阻断整体 PASS（质量闸门）；runner check() fail-fast 断证据流。
+08-07 推导层批次一（✅）：ΔFeeHandler 改名（槽位 key 兼容存量）｜守恒独立分类｜4 处【恒等式】+【守恒推论】标注｜CALCULATED 行 expected 占位｜Grace 缺参数 NOT_VERIFIED 行。
+
+08-11 P0 批次二（✅，SCN-009）：
+
+- ✅ 七组五方守恒逐一进 check()（原先只写 observations，L1 零和总闸 FAIL 用例仍绿——审计 runner-01 高危）。
+- ✅ after/参数快照钉 OrderExecuted 真实执行块，执行步 before=execBlock−1，加"创建块→execBlock−1 窗口纯净度"断言；全部快照断言 errors 为空（审计 feefund-01/cov-04/runner-02/runner-03）。
+- ✅ 守恒行三态：UNVERIFIABLE→NOT_VERIFIED（不再误标 FAIL），PASS 前独立复算 Σterms 不信证据预存 sum（审计 ledger-04/conserve-01）。
+- ✅ fee-funding 声明阶段缺 PositionFeesCollected 事件时输出 NOT_VERIFIED 兜底行，不再整组静默消失（审计 feefund-03）。
+- ✅（附带）订单离队但找不到 OrderExecuted 事件时显式报错，不再当成功。
+
+⬜ 仍待修：**P1 共享构造器方向守卫**——size↔token 四格取整只覆盖多头格（空头开仓 ⌈⌉、多头部分平 ⌈⌉，审计 ledger-02/formula-01）、PnL/减仓期望隐含全平假设（pnl-01/02）、funding 期望只取 fundingEvents[0] 未按 orderKey/Σ 聚合（ledger-03/feefund-02）、balanceWasImproved 用 after OI 而非预备 tokenDelta（formula-02）；**P2**——OrderCancelled/reasonBytes 解码下沉公共模块；executionFee/WNT 零覆盖；`pass()` 字符串比较无 raw bigint/difference 字段；NOT_VERIFIED 不阻断整体 PASS（质量闸门）；runner check() fail-fast 断证据流；manifest 未登记 feeHandler/revenuePool/treasury。
 
 ## 11. 环境纪律
 

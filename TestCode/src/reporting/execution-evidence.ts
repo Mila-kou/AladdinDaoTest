@@ -75,23 +75,43 @@ function buildConservationRow(input: {
   readonly observation: JsonRecord;
   readonly ledgerSource: string;
 }): Reconciliation {
-  const sum = optionalBigint(input.observation.sum);
+  const reportedSum = optionalBigint(input.observation.sum);
+  const reportedStatus = stringValue(input.observation.status);
+  const missingSlots = Array.isArray(input.observation.missing)
+    ? input.observation.missing.map((slot) => String(slot))
+    : [];
   const terms = record(input.observation.terms);
   const hasAllTerms = CONSERVATION_TERM_FIELDS.every(([key]) => optionalBigint(terms[key]) !== undefined);
+  // ΣΔ 由五方逐项 Δ 独立复算，不信证据里预存的 sum/status（自证纪律）。
+  const recomputedSum = hasAllTerms
+    ? CONSERVATION_TERM_FIELDS.reduce((acc, [key]) => acc + bigintValue(terms[key]), 0n)
+    : undefined;
+  const sumMismatch = recomputedSum !== undefined && reportedSum !== undefined && recomputedSum !== reportedSum;
   const expandedTerms = hasAllTerms
     ? CONSERVATION_TERM_FIELDS.map(([key, label]) => `${label}(${bigintValue(terms[key])})`).join(' + ')
     : '历史证据未保存五方逐项 Δ';
-  const expandedResult = sum === undefined
+  const expandedResult = recomputedSum === undefined
     ? `${expandedTerms} = 无法核对`
-    : `${expandedTerms} = ${rawAndUnit(sum, 6, 'USDC')}`;
+    : `${expandedTerms} = ${rawAndUnit(recomputedSum, 6, 'USDC')}`;
+  // UNVERIFIABLE（缺读数）语义是"不可核"，不是"资金不闭合"——如实 NOT_VERIFIED，禁止倒推 PASS 也不误标 FAIL。
+  const status: Reconciliation['status'] = reportedStatus === 'UNVERIFIABLE' || !hasAllTerms
+    ? 'NOT_VERIFIED'
+    : recomputedSum === 0n && reportedStatus === 'PASS' && !sumMismatch
+      ? 'PASS'
+      : 'FAIL';
+  const statusNote = reportedStatus === 'UNVERIFIABLE'
+    ? `守恒不可核（UNVERIFIABLE）：缺少读数槽位 ${missingSlots.join('、') || '（未记录）'}——缺读数不等于守恒成立。`
+    : !hasAllTerms
+      ? '历史证据未保存五方逐项 Δ，无法独立复算 ΣΔ。'
+      : sumMismatch
+        ? `⚠️ 证据预存 sum(${reportedSum}) 与独立复算 Σterms(${recomputedSum}) 不一致，按复算结果判定。`
+        : '';
 
   return {
     id: input.id,
     group: '守恒',
     label: input.label,
-    status: stringValue(input.observation.status) === 'PASS' && sum === 0n && hasAllTerms
-      ? 'PASS'
-      : 'FAIL',
+    status,
     before: '五方账户 / Vault 的阶段前链上余额',
     after: `ΣΔ = ${expandedResult}`,
     delta: `ΣΔ = ${expandedResult}`,
@@ -104,7 +124,7 @@ function buildConservationRow(input: {
     },
     unit: 'USDC raw / USDC 1e6',
     txStep: input.txStep,
-    note: 'Position Fee 与 Funding 已分别在 Fee/Funding 行复算；它们在资金守恒式中通过 PositionVault、LPVault、FeeHandler 的实际余额变化体现，不再作为第六、第七项重复相加。Claimable Fee/Funding 属于 DataStore 应收账本，单独核对。第五方是 FeeHandler 合约（claimFees 第一跳收款方，交易执行窗口余额恒不变）；DataStore.FEE_RECEIVER 指向的 RevenuePool 只在 withdrawFees 后才有资金流，不在本守恒圈内。',
+    note: `${statusNote ? `${statusNote} ` : ''}Position Fee 与 Funding 已分别在 Fee/Funding 行复算；它们在资金守恒式中通过 PositionVault、LPVault、FeeHandler 的实际余额变化体现，不再作为第六、第七项重复相加。Claimable Fee/Funding 属于 DataStore 应收账本，单独核对。第五方是 FeeHandler 合约（claimFees 第一跳收款方，交易执行窗口余额恒不变）；DataStore.FEE_RECEIVER 指向的 RevenuePool 只在 withdrawFees 后才有资金流，不在本守恒圈内。`,
   };
 }
 
@@ -733,7 +753,22 @@ function buildFeeAndFundingRows(input: {
   readonly parameters: JsonRecord;
 }): Reconciliation[] {
   const fees = record(record(input.events.feesCollected).uint);
-  if (Object.keys(fees).length === 0) return [];
+  if (Object.keys(fees).length === 0) {
+    // 本阶段声明了 fee-funding 核对但证据缺少 PositionFeesCollected 事件：
+    // 输出 NOT_VERIFIED 兜底行而非整组静默消失（覆盖静默收缩零容忍）。
+    return [{
+      id: `${input.phaseId}-fee-funding-missing-event`,
+      group: `${input.phaseLabel} · Fee`,
+      label: 'Fee / Funding 全组核对',
+      status: 'NOT_VERIFIED',
+      before: '—',
+      after: '—',
+      expected: '执行阶段应恰有一条 PositionFeesCollected 事件作为本组全部核对行的输入',
+      formula: 'positionFee 复算 / 分账 / claimable 入账 / funding 结算各行均以 PositionFeesCollected 事件字段为输入',
+      basis: { title: '费用与资金费核对输入缺失', sourcePath: FORMULA_SOURCE, section: '§7 仓位费用 / §9 费用总额' },
+      note: '证据中 events.feesCollected 为空。可能原因：事件抓取窗口错位、订单被静默取消、或证据采集中断。本组核对无法进行，如实标注而非静默省略；请先核查同阶段 OrderExecuted/交易回执证据。',
+    }];
+  }
   const funding = record(record((Array.isArray(input.events.fundingEvents) ? input.events.fundingEvents : [])[0]).int);
   const scale30 = 10n ** 30n;
   const tradeSizeUsd = bigintValue(fees.tradeSizeUsd);

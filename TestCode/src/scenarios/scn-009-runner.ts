@@ -96,7 +96,12 @@ interface LegacyDependencies {
     block?: number,
   ) => Promise<LegacySnapshot>;
   readonly diff: (before: LegacySnapshot, after: LegacySnapshot) => Record<string, bigint | null>;
-  readonly checkConservation: (deltas: Record<string, bigint | null>) => unknown;
+  readonly checkConservation: (deltas: Record<string, bigint | null>) => {
+    status: 'PASS' | 'FAIL' | 'UNVERIFIABLE';
+    sum: bigint | null;
+    missing: string[];
+    terms: Record<string, bigint>;
+  };
   readonly orderListKey: string;
   readonly fetchEmitterEvents: (
     rpc: LegacyRpc,
@@ -137,8 +142,12 @@ export interface Scn009Evidence {
   readonly snapshots: {
     readonly before: LegacySnapshot;
     readonly afterCreateOpen: LegacySnapshot;
+    /** 执行步 before：开仓执行块 −1（创建与执行同块时为创建块快照） */
+    readonly openExecBefore: LegacySnapshot;
     readonly afterOpen: LegacySnapshot;
     readonly afterCreateClose: LegacySnapshot;
+    /** 执行步 before：全平执行块 −1（创建与执行同块时为创建块快照） */
+    readonly closeExecBefore: LegacySnapshot;
     readonly afterClose: LegacySnapshot;
   };
   readonly deltas: {
@@ -406,6 +415,38 @@ async function takeSnapshot(
   return deps.snapshot(rpc, deployment, ledgerContext, Number(BigInt(blockHex)));
 }
 
+// 用 OrderExecuted 事件定位订单的真实执行区块（traps §4：after 快照必须钉执行块，禁止 latest——
+// 轮询后的 latest 可能已被后续区块污染）。订单已离队却找不到 OrderExecuted 即显式报错，不当成功。
+async function locateOrderExecution(
+  deps: Pick<LegacyDependencies, 'fetchEmitterEvents'>,
+  rpc: LegacyRpc,
+  deployment: LegacyDeployment,
+  orderKey: string,
+  fromBlock: number,
+): Promise<DecodedEvent> {
+  const blockHex = await rpc.single('eth_blockNumber', []);
+  if (typeof blockHex !== 'string') throw new Error('eth_blockNumber 未返回十六进制区块号');
+  const events = await deps.fetchEmitterEvents(rpc, {
+    emitter: deployment.addresses.eventEmitter,
+    fromBlock,
+    toBlock: Number(BigInt(blockHex)),
+    eventName: 'OrderExecuted',
+  });
+  const match = events.find((event) => eventKey(event)?.toLowerCase() === orderKey.toLowerCase());
+  return requireValue(match, `订单 ${orderKey} 已离开挂单队列但找不到 OrderExecuted 事件（可能被静默取消）`);
+}
+
+// 窗口纯净度：diff 里的 bigint 槽位全部为 0 才算无第三方账本变动。
+// 非 bigint 项（如 position 结构体）不参与判定；缺失读数由各快照的 errors 断言单独把关。
+function ledgerDriftIsZero(drift: Record<string, bigint | null>): boolean {
+  return Object.values(drift).every((value) => typeof value !== 'bigint' || value === 0n);
+}
+
+function describeLedgerDrift(drift: Record<string, bigint | null>): string {
+  const moved = Object.entries(drift).filter(([, value]) => typeof value === 'bigint' && value !== 0n);
+  return moved.length === 0 ? '无变动' : moved.map(([key, value]) => `${key}:${value}`).join('，');
+}
+
 export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence> {
   if (!runtime.testAccount || !runtime.keeperAccount) {
     throw new Error('SCN-009 需要 E2E_TEST_ACCOUNT 与 E2E_KEEPER_ACCOUNT');
@@ -476,6 +517,7 @@ export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence>
   const openOrderKey = requireValue(open.orderKey, '开仓交易未解出 orderKey');
   // 固定读取创建交易所在区块，避免 Service Keeper 紧接着执行后丢失 TX1 的挂单态。
   const afterCreateOpen = await takeSnapshot(deps, rpc, deployment, ledgerContext, open.blockNumber);
+  check(assertions, 'afterCreateOpen 账本无缺失读数', afterCreateOpen.errors.length === 0, afterCreateOpen.errors, []);
   if (inlineKeeper) {
     const providers = await inlineOracleProviders(runtime, deployment, mockResource!.token!.address);
     const execution = await sendKeeperExecution(runtime, rpc, buildInlineExecuteOrder(
@@ -499,7 +541,24 @@ export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence>
     throw new Error(inlineKeeper ? 'Inline Keeper 已发送执行交易，但订单仍在挂单态' : '等 Service Keeper 超时（300s），订单仍在挂单态。请在看板选择 Inline Keeper，或先完成 Service Keeper 专项就绪检查。');
   }
 
-  const afterOpen = await takeSnapshot(deps, rpc, deployment, ledgerContext);
+  // after 快照与参数快照钉真实执行区块；执行步 before 钉 execBlock−1，
+  // 并对 [创建块, execBlock−1] 做窗口纯净度检测——第三方交易插入会污染阶段 Δ 与参数读数。
+  const openExecutionLocated = await locateOrderExecution(deps, rpc, deployment, openOrderKey, open.blockNumber);
+  const openExecBlock = openExecutionLocated.blockNumber;
+  const openExecBefore = openExecBlock > open.blockNumber
+    ? await takeSnapshot(deps, rpc, deployment, ledgerContext, openExecBlock - 1)
+    : afterCreateOpen; // 创建与执行同块时无法分离执行步 before，退回创建块快照
+  check(assertions, 'openExecBefore 账本无缺失读数', openExecBefore.errors.length === 0, openExecBefore.errors, []);
+  const openWindowDrift = deps.diff(afterCreateOpen, openExecBefore);
+  check(
+    assertions,
+    '开仓执行窗口无第三方账本变动（创建块 → execBlock−1）',
+    ledgerDriftIsZero(openWindowDrift),
+    describeLedgerDrift(openWindowDrift),
+    '全部账本槽位 Δ = 0',
+  );
+  const afterOpen = await takeSnapshot(deps, rpc, deployment, ledgerContext, openExecBlock);
+  check(assertions, 'afterOpen 账本无缺失读数', afterOpen.errors.length === 0, afterOpen.errors, []);
   const openedPosition = requireValue(positionOf(afterOpen), '开仓订单离队，但多头仓位不存在（可能被静默取消）');
   const openParameterSnapshot = await readTradeParameterSnapshot({
     rpcUrl: runtime.rpcUrl,
@@ -549,6 +608,7 @@ export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence>
   check(assertions, '全平创建交易成功', close.ok, close.error ?? close.txHash, 'success');
   const closeOrderKey = requireValue(close.orderKey, '全平交易未解出 orderKey');
   const afterCreateClose = await takeSnapshot(deps, rpc, deployment, ledgerContext, close.blockNumber);
+  check(assertions, 'afterCreateClose 账本无缺失读数', afterCreateClose.errors.length === 0, afterCreateClose.errors, []);
   if (inlineKeeper) {
     const providers = await inlineOracleProviders(runtime, deployment, mockResource!.token!.address);
     const execution = await sendKeeperExecution(runtime, rpc, buildInlineExecuteOrder(
@@ -572,7 +632,22 @@ export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence>
     throw new Error(inlineKeeper ? 'Inline Keeper 已发送全平执行交易，但订单仍在挂单态' : '等 Service Keeper 超时（300s），全平订单仍在挂单态。请在看板选择 Inline Keeper，或先完成 Service Keeper 专项就绪检查。');
   }
 
-  const afterClose = await takeSnapshot(deps, rpc, deployment, ledgerContext);
+  const closeExecutionLocated = await locateOrderExecution(deps, rpc, deployment, closeOrderKey, close.blockNumber);
+  const closeExecBlock = closeExecutionLocated.blockNumber;
+  const closeExecBefore = closeExecBlock > close.blockNumber
+    ? await takeSnapshot(deps, rpc, deployment, ledgerContext, closeExecBlock - 1)
+    : afterCreateClose;
+  check(assertions, 'closeExecBefore 账本无缺失读数', closeExecBefore.errors.length === 0, closeExecBefore.errors, []);
+  const closeWindowDrift = deps.diff(afterCreateClose, closeExecBefore);
+  check(
+    assertions,
+    '全平执行窗口无第三方账本变动（创建块 → execBlock−1）',
+    ledgerDriftIsZero(closeWindowDrift),
+    describeLedgerDrift(closeWindowDrift),
+    '全部账本槽位 Δ = 0',
+  );
+  const afterClose = await takeSnapshot(deps, rpc, deployment, ledgerContext, closeExecBlock);
+  check(assertions, 'afterClose 账本无缺失读数', afterClose.errors.length === 0, afterClose.errors, []);
   const closeParameterSnapshot = await readTradeParameterSnapshot({
     rpcUrl: runtime.rpcUrl,
     timeoutMs: runtime.requestTimeoutMs,
@@ -684,9 +759,10 @@ export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence>
   );
 
   const createOpenDelta = deps.diff(before, afterCreateOpen);
-  const executeOpenDelta = deps.diff(afterCreateOpen, afterOpen);
+  // 执行步 Δ 以 execBlock−1 为基准（traps §4）；创建块 → execBlock−1 的间隙已由窗口纯净度断言保证为零变动。
+  const executeOpenDelta = deps.diff(openExecBefore, afterOpen);
   const createCloseDelta = deps.diff(afterOpen, afterCreateClose);
-  const executeCloseDelta = deps.diff(afterCreateClose, afterClose);
+  const executeCloseDelta = deps.diff(closeExecBefore, afterClose);
   const openDelta = deps.diff(before, afterOpen);
   const closeDelta = deps.diff(afterOpen, afterClose);
   const wholeFlowDelta = deps.diff(before, afterClose);
@@ -694,6 +770,27 @@ export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence>
     ? openedPosition.sizeInUsd / openedPosition.sizeInTokens
     : null;
   const traderUsdcDelta = (afterClose.values.traderUsdc ?? 0n) - (before.values.traderUsdc ?? 0n);
+
+  // L1 零和守恒是总闸（整式无除法、对取整免疫）：七组结果逐一进 check()，
+  // UNVERIFIABLE（缺读数）不当通过——只写 observations 不断言等于守恒零门槛。
+  const conservation = {
+    createOpen: deps.checkConservation(createOpenDelta),
+    executeOpen: deps.checkConservation(executeOpenDelta),
+    createClose: deps.checkConservation(createCloseDelta),
+    executeClose: deps.checkConservation(executeCloseDelta),
+    open: deps.checkConservation(openDelta),
+    close: deps.checkConservation(closeDelta),
+    wholeFlow: deps.checkConservation(wholeFlowDelta),
+  };
+  for (const [stage, result] of Object.entries(conservation)) {
+    check(
+      assertions,
+      `${stage} 阶段五方守恒 ΣΔ = 0`,
+      result.status === 'PASS',
+      `status=${result.status}，ΣΔ=${result.sum ?? 'null'}${result.missing.length > 0 ? `，缺读数：${result.missing.join('/')}` : ''}`,
+      'status=PASS 且 ΣΔ=0',
+    );
+  }
 
   return {
     scenarioId: 'SCN-009',
@@ -749,7 +846,7 @@ export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence>
       isLong: true,
     },
     parameters: { open: openParameterSnapshot, close: closeParameterSnapshot },
-    snapshots: { before, afterCreateOpen, afterOpen, afterCreateClose, afterClose },
+    snapshots: { before, afterCreateOpen, openExecBefore, afterOpen, afterCreateClose, closeExecBefore, afterClose },
     deltas: {
       createOpen: createOpenDelta,
       executeOpen: executeOpenDelta,
@@ -772,13 +869,13 @@ export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence>
       traderUsdcBefore: before.values.traderUsdc,
       traderUsdcAfter: afterClose.values.traderUsdc,
       traderUsdcDelta,
-      createOpenConservation: deps.checkConservation(createOpenDelta),
-      executeOpenConservation: deps.checkConservation(executeOpenDelta),
-      createCloseConservation: deps.checkConservation(createCloseDelta),
-      executeCloseConservation: deps.checkConservation(executeCloseDelta),
-      openConservation: deps.checkConservation(openDelta),
-      closeConservation: deps.checkConservation(closeDelta),
-      wholeFlowConservation: deps.checkConservation(wholeFlowDelta),
+      createOpenConservation: conservation.createOpen,
+      executeOpenConservation: conservation.executeOpen,
+      createCloseConservation: conservation.createClose,
+      executeCloseConservation: conservation.executeClose,
+      openConservation: conservation.open,
+      closeConservation: conservation.close,
+      wholeFlowConservation: conservation.wholeFlow,
     },
   };
 }

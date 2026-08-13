@@ -6,6 +6,12 @@ import { privateKeyToAccount } from 'viem/accounts';
 
 import type { RuntimeConfig } from '../config/runtime.js';
 import { resolveMockMarketBundle } from '../config/mock-resources.js';
+import {
+  checkLedgerConservation,
+  ledgerDiff,
+  takeLedgerSnapshot,
+  type LedgerAddresses,
+} from '../drivers/ledger.js';
 import { freshOracleTimestamp, readMockOracleState, sendSetMockPrice } from '../drivers/mock-oracle.js';
 import { readTradeParameterSnapshot } from '../reconciliation/chain-parameter-snapshot.js';
 import { calculateGrace } from '../reconciliation/formulas.js';
@@ -403,17 +409,43 @@ async function signedBroadcaster(
   };
 }
 
+// 账本快照走 typed driver（src/drivers/ledger.ts，与 legacy ledger.mjs 逐槽等价，
+// 见 scripts/verify-ledger-driver.ts）；订单构造仍走 legacy flows，待 harness 二期收编。
+function ledgerAddressesOf(deployment: LegacyDeployment): LedgerAddresses {
+  return {
+    usdc: deployment.addresses.usdc,
+    dataStore: deployment.addresses.dataStore,
+    orderVault: deployment.addresses.orderVault,
+    positionVault: deployment.addresses.positionVault!,
+    feeHandler: deployment.addresses.feeHandler!,
+    lpVault: deployment.addresses.lpVault!,
+    reader: deployment.addresses.reader!,
+  };
+}
+
 async function takeSnapshot(
-  deps: Pick<LegacyDependencies, 'snapshot'>,
+  _deps: unknown,
   rpc: LegacyRpc,
   deployment: LegacyDeployment,
   ledgerContext: { trader: string; marketIndex: number; isLong: boolean },
   blockNumber?: number,
 ): Promise<LegacySnapshot> {
-  if (blockNumber !== undefined) return deps.snapshot(rpc, deployment, ledgerContext, blockNumber);
-  const blockHex = await rpc.single('eth_blockNumber', []);
-  if (typeof blockHex !== 'string') throw new Error('eth_blockNumber 未返回十六进制区块号');
-  return deps.snapshot(rpc, deployment, ledgerContext, Number(BigInt(blockHex)));
+  let block = blockNumber;
+  if (block === undefined) {
+    const blockHex = await rpc.single('eth_blockNumber', []);
+    if (typeof blockHex !== 'string') throw new Error('eth_blockNumber 未返回十六进制区块号');
+    block = Number(BigInt(blockHex));
+  }
+  return takeLedgerSnapshot({
+    rpcUrl: (rpc as unknown as { url?: string }).url ?? process.env.E2E_TX_FORK_RPC_URL!,
+    addresses: ledgerAddressesOf(deployment),
+    context: {
+      trader: ledgerContext.trader,
+      marketIndex: BigInt(ledgerContext.marketIndex),
+      isLong: ledgerContext.isLong,
+    },
+    blockNumber: block,
+  }) as Promise<LegacySnapshot>;
 }
 
 // 用 OrderExecuted 事件定位订单的真实执行区块（traps §4：after 快照必须钉执行块，禁止 latest——
@@ -427,14 +459,46 @@ async function locateOrderExecution(
 ): Promise<DecodedEvent> {
   const blockHex = await rpc.single('eth_blockNumber', []);
   if (typeof blockHex !== 'string') throw new Error('eth_blockNumber 未返回十六进制区块号');
+  const toBlock = Number(BigInt(blockHex));
   const events = await deps.fetchEmitterEvents(rpc, {
     emitter: deployment.addresses.eventEmitter,
     fromBlock,
-    toBlock: Number(BigInt(blockHex)),
+    toBlock,
     eventName: 'OrderExecuted',
   });
   const match = events.find((event) => eventKey(event)?.toLowerCase() === orderKey.toLowerCase());
-  return requireValue(match, `订单 ${orderKey} 已离开挂单队列但找不到 OrderExecuted 事件（可能被静默取消）`);
+  if (match) return match;
+  // 离队但无 OrderExecuted：同窗补查 OrderCancelled / OrderFrozen 并解码 reason，把真实死因
+  // 写进错误信息（events.mjs 已解 reason/reasonBytes 两族）。非持久模式结束后 evm_revert 会抹掉
+  // 现场，这里是拿到取消原因的唯一时机。
+  for (const eventName of ['OrderCancelled', 'OrderFrozen'] as const) {
+    const terminal = await deps.fetchEmitterEvents(rpc, {
+      emitter: deployment.addresses.eventEmitter,
+      fromBlock,
+      toBlock,
+      eventName,
+    });
+    const hit = terminal.find((event) => eventKey(event)?.toLowerCase() === orderKey.toLowerCase());
+    if (hit) {
+      const reason = (hit as { string?: Record<string, unknown> }).string?.reason;
+      const reasonBytes = (hit as { bytes?: Record<string, unknown> }).bytes?.reasonBytes;
+      const selector = typeof reasonBytes === 'string' ? reasonBytes.slice(0, 10) : undefined;
+      throw new Error(
+        `订单 ${orderKey} 被${eventName === 'OrderFrozen' ? '冻结（OrderFrozen）' : '静默取消（OrderCancelled）'}：`
+        + `reason=${String(reason ?? '未知')}；reasonBytes selector=${selector ?? '无'}；`
+        + `block=${hit.blockNumber}，tx=${hit.txHash}。`
+        + '常见取消闸门：OrderNotFulfillableAtAcceptablePrice（执行价越过 acceptablePrice，检查 mock 价与订单价格假设是否一致）、'
+        + 'MaxPriceAgeExceeded / 价格时间戳早于订单创建（刷新 Mock Oracle 时间戳）、'
+        + 'LiquidatablePosition[0xbc121108]（杠杆/保证金校验；⚠️ 手动改 mock 价后若未同步 DataStore 的 STABLE_PRICE 锚，'
+        + 'min/max 会被撑开成 [新价, 旧锚]，开仓按 max 成交、校验按 min 估值 → 必然"开仓即可清算"——改价必须连锚一起改，2026-08-12 实案）。',
+      );
+    }
+  }
+  throw new Error(
+    `订单 ${orderKey} 已离开挂单队列，但在区块 ${fromBlock}-${toBlock} 内 OrderExecuted / OrderCancelled / OrderFrozen 均未命中。`
+    + '可能原因：①事件检索窗口内日志超限（fork 上有高频 Service Keeper 交易时 eth_getLogs 可能被截断/失败）；'
+    + '②挂单列表读取与事件写入竞态。注意：非持久模式结束后 evm_revert 会抹掉现场，复诊请用持久模式（E2E_PERSIST_FORK_STATE=true）重跑。',
+  );
 }
 
 // Mock Oracle 时间戳自愈：fork 新区块使用真实时钟，而 Oracle 时间戳停在上次设价时刻，
@@ -604,7 +668,7 @@ export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence>
     ? await takeSnapshot(deps, rpc, deployment, ledgerContext, openExecBlock - 1)
     : afterCreateOpen; // 创建与执行同块时无法分离执行步 before，退回创建块快照
   check(assertions, 'openExecBefore 账本无缺失读数', openExecBefore.errors.length === 0, openExecBefore.errors, []);
-  const openWindowDrift = deps.diff(afterCreateOpen, openExecBefore);
+  const openWindowDrift = ledgerDiff(afterCreateOpen, openExecBefore);
   check(
     assertions,
     '开仓执行窗口无第三方账本变动（创建块 → execBlock−1）',
@@ -693,7 +757,7 @@ export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence>
     ? await takeSnapshot(deps, rpc, deployment, ledgerContext, closeExecBlock - 1)
     : afterCreateClose;
   check(assertions, 'closeExecBefore 账本无缺失读数', closeExecBefore.errors.length === 0, closeExecBefore.errors, []);
-  const closeWindowDrift = deps.diff(afterCreateClose, closeExecBefore);
+  const closeWindowDrift = ledgerDiff(afterCreateClose, closeExecBefore);
   check(
     assertions,
     '全平执行窗口无第三方账本变动（创建块 → execBlock−1）',
@@ -813,14 +877,14 @@ export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence>
     [true, true, true, true],
   );
 
-  const createOpenDelta = deps.diff(before, afterCreateOpen);
+  const createOpenDelta = ledgerDiff(before, afterCreateOpen);
   // 执行步 Δ 以 execBlock−1 为基准（traps §4）；创建块 → execBlock−1 的间隙已由窗口纯净度断言保证为零变动。
-  const executeOpenDelta = deps.diff(openExecBefore, afterOpen);
-  const createCloseDelta = deps.diff(afterOpen, afterCreateClose);
-  const executeCloseDelta = deps.diff(closeExecBefore, afterClose);
-  const openDelta = deps.diff(before, afterOpen);
-  const closeDelta = deps.diff(afterOpen, afterClose);
-  const wholeFlowDelta = deps.diff(before, afterClose);
+  const executeOpenDelta = ledgerDiff(openExecBefore, afterOpen);
+  const createCloseDelta = ledgerDiff(afterOpen, afterCreateClose);
+  const executeCloseDelta = ledgerDiff(closeExecBefore, afterClose);
+  const openDelta = ledgerDiff(before, afterOpen);
+  const closeDelta = ledgerDiff(afterOpen, afterClose);
+  const wholeFlowDelta = ledgerDiff(before, afterClose);
   const entryPrice = openedPosition.sizeInTokens > 0n
     ? openedPosition.sizeInUsd / openedPosition.sizeInTokens
     : null;
@@ -829,13 +893,13 @@ export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence>
   // L1 零和守恒是总闸（整式无除法、对取整免疫）：七组结果逐一进 check()，
   // UNVERIFIABLE（缺读数）不当通过——只写 observations 不断言等于守恒零门槛。
   const conservation = {
-    createOpen: deps.checkConservation(createOpenDelta),
-    executeOpen: deps.checkConservation(executeOpenDelta),
-    createClose: deps.checkConservation(createCloseDelta),
-    executeClose: deps.checkConservation(executeCloseDelta),
-    open: deps.checkConservation(openDelta),
-    close: deps.checkConservation(closeDelta),
-    wholeFlow: deps.checkConservation(wholeFlowDelta),
+    createOpen: checkLedgerConservation(createOpenDelta),
+    executeOpen: checkLedgerConservation(executeOpenDelta),
+    createClose: checkLedgerConservation(createCloseDelta),
+    executeClose: checkLedgerConservation(executeCloseDelta),
+    open: checkLedgerConservation(openDelta),
+    close: checkLedgerConservation(closeDelta),
+    wholeFlow: checkLedgerConservation(wholeFlowDelta),
   };
   for (const [stage, result] of Object.entries(conservation)) {
     check(

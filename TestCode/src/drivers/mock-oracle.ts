@@ -1,4 +1,4 @@
-import { createPublicClient, encodeFunctionData, getAddress, http, parseAbi } from 'viem';
+import { createPublicClient, encodeAbiParameters, encodeFunctionData, getAddress, http, keccak256, parseAbi, parseAbiParameters } from 'viem';
 
 // MockChainlinkOracle（fx100-contracts src/periphery/MockAssetContracts.sol）驱动。
 // setMockPrice(price, timestamp) 是 external 无权限控制；写入走 admin RPC 的
@@ -115,4 +115,35 @@ export async function sendSetMockPrice(input: {
 export function freshOracleTimestamp(latestBlockTimestamp: bigint): bigint {
   const now = BigInt(Math.floor(Date.now() / 1000));
   return now > latestBlockTimestamp ? now : latestBlockTimestamp;
+}
+
+// —— STABLE_PRICE 锚（traps §11：大幅改价三件套 feed+时间戳+STABLE_PRICE，缺一则 min/max 撑开）——
+
+const dataStoreUintAbi = parseAbi([
+  'function getUint(bytes32) view returns (uint256)',
+  'function setUint(bytes32 key, uint256 value)',
+]);
+
+export function stablePriceKey(token: string): `0x${string}` {
+  const base = keccak256(encodeAbiParameters(parseAbiParameters('string'), ['STABLE_PRICE']));
+  return keccak256(encodeAbiParameters(parseAbiParameters('bytes32, address'), [base, getAddress(token)]));
+}
+
+export async function readStablePrice(
+  rpcUrl: string,
+  dataStore: string,
+  token: string,
+  timeoutMs = 15_000,
+): Promise<bigint> {
+  const client = createPublicClient({ transport: http(rpcUrl, { timeout: timeoutMs }) });
+  return client.readContract({
+    address: getAddress(dataStore),
+    abi: dataStoreUintAbi,
+    functionName: 'getUint',
+    args: [stablePriceKey(token)],
+  });
+}
+
+export function encodeDataStoreSetUint(key: `0x${string}`, value: bigint): `0x${string}` {
+  return encodeFunctionData({ abi: dataStoreUintAbi, functionName: 'setUint', args: [key, value] });
 }

@@ -12,7 +12,15 @@ import {
   takeLedgerSnapshot,
   type LedgerAddresses,
 } from '../drivers/ledger.js';
-import { freshOracleTimestamp, readMockOracleState, sendSetMockPrice } from '../drivers/mock-oracle.js';
+import { sendAdminTransaction } from '../drivers/admin-rpc.js';
+import {
+  encodeDataStoreSetUint,
+  freshOracleTimestamp,
+  readMockOracleState,
+  readStablePrice,
+  sendSetMockPrice,
+  stablePriceKey,
+} from '../drivers/mock-oracle.js';
 import { readTradeParameterSnapshot } from '../reconciliation/chain-parameter-snapshot.js';
 import { calculateGrace } from '../reconciliation/formulas.js';
 
@@ -550,6 +558,8 @@ function describeLedgerDrift(drift: Record<string, bigint | null>): string {
 export interface MarketFlowOptions {
   readonly scenarioId: string;
   readonly isLong: boolean;
+  /** 盈亏构造：开仓后、平仓前把 Index 价格推动 ±N%（feed+时间戳+STABLE_PRICE 三件套，traps §11）。 */
+  readonly priceMovePercent?: number;
 }
 
 export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence> {
@@ -723,6 +733,48 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
     },
     `graceEnd = ${expectedGrace.expanded}`,
   );
+
+  // 盈亏构造：三件套推价（feed 价 + 时间戳 + STABLE_PRICE 锚同步缩放，保持 min/max 带宽形状）。
+  const priceMove = flow.priceMovePercent ?? 0;
+  const priceMoveTransactions: Array<Record<string, unknown>> = [];
+  if (priceMove !== 0) {
+    if (!mockResource?.oracle?.address || !mockResource.token?.address) {
+      throw new Error('盈亏构造需要 mock-market 模式（可控 Index Oracle）');
+    }
+    const adminRpcUrl = runtime.adminRpcUrl ?? runtime.rpcUrl;
+    const adminFrom = runtime.adminAccount ?? runtime.testAccount;
+    const indexState = await readMockOracleState(runtime.rpcUrl, mockResource.oracle.address, runtime.requestTimeoutMs);
+    const stableBefore = await readStablePrice(runtime.rpcUrl, deployment.addresses.dataStore, mockResource.token.address, runtime.requestTimeoutMs);
+    const factor = BigInt(100 + priceMove);
+    const scaledFeed = indexState.answer * factor / 100n;
+    const scaledStable = stableBefore * factor / 100n;
+    const moveTimestamp = freshOracleTimestamp(indexState.latestBlockTimestamp);
+    const feedReceipt = await sendSetMockPrice({
+      adminRpcUrl,
+      from: adminFrom,
+      oracle: mockResource.oracle.address,
+      priceRaw: scaledFeed,
+      timestamp: moveTimestamp,
+    });
+    const stableReceipt = await sendAdminTransaction({
+      adminRpcUrl,
+      // DataStore.setUint onlyController：模拟持有 CONTROLLER 角色的 Config 合约
+      from: deployment.addresses.config!,
+      to: deployment.addresses.dataStore,
+      data: encodeDataStoreSetUint(stablePriceKey(mockResource.token.address), scaledStable),
+    });
+    check(
+      assertions,
+      `盈亏构造：Index 价格已推动 ${priceMove > 0 ? '+' : ''}${priceMove}%（feed + STABLE_PRICE 三件套）`,
+      feedReceipt.status === 'success' && stableReceipt.status === 'success',
+      `feed=${feedReceipt.status}（${scaledFeed}），stable=${stableReceipt.status}（${scaledStable}）`,
+      '两笔环境管理交易回执成功',
+    );
+    priceMoveTransactions.push(
+      { kind: 'feed', txHash: feedReceipt.txHash, blockNumber: feedReceipt.blockNumber, priceRaw: scaledFeed.toString(), previousPriceRaw: indexState.answer.toString(), timestamp: Number(moveTimestamp) },
+      { kind: 'stablePrice', txHash: stableReceipt.txHash, blockNumber: stableReceipt.blockNumber, value: scaledStable.toString(), previousValue: stableBefore.toString() },
+    );
+  }
 
   const close = await broadcaster.send({
     ...deps.buildDecreaseOrder({
@@ -993,8 +1045,9 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
       wholeFlow: wholeFlowDelta,
     },
     transactions: {
-      // 环境管理交易：执行前的 Oracle 时间戳刷新，与四笔业务交易分开记录。
+      // 环境管理交易：执行前的 Oracle 时间戳刷新 + 盈亏构造推价，与四笔业务交易分开记录。
       oracleRefresh,
+      priceMove: priceMoveTransactions,
       createOpen: { ...open, transaction: openCreateTx, receipt: openCreateReceipt },
       executeOpen: { event: openExecutionEvent, transaction: openExecuteTx, receipt: openExecuteReceipt },
       createClose: { ...close, transaction: closeCreateTx, receipt: closeCreateReceipt },

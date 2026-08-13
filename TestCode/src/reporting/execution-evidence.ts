@@ -2444,6 +2444,9 @@ const EVIDENCE_SOURCES: Record<string, EvidenceSource> = {
   'SCN-009': { attachmentName: 'scn-009-evidence.json', derive: deriveScn009Evidence },
   // SCN-065 与 SCN-009 共用 runMarketFlow 证据形状；derive 已方向感知（isLong 取自事件/testData）。
   'SCN-065': { attachmentName: 'scn-065-evidence.json', derive: deriveScn009Evidence },
+  // SCN-022/024 是 runMarketFlow 的盈亏数据集（推价 ±10% 后全平），证据形状同源。
+  'SCN-022': { attachmentName: 'scn-022-evidence.json', derive: deriveScn009Evidence },
+  'SCN-024': { attachmentName: 'scn-024-evidence.json', derive: deriveScn009Evidence },
   'SCN-010': { attachmentName: 'scn-010-evidence.json', derive: deriveScn010Evidence },
   'SCN-070': { attachmentName: 'scn-070-evidence.json', derive: deriveScn070Evidence },
 };

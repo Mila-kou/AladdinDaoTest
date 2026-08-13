@@ -137,7 +137,7 @@ interface LegacyDependencies {
 }
 
 export interface Scn009Evidence {
-  readonly scenarioId: 'SCN-009';
+  readonly scenarioId: string;
   readonly runMode: 'tx-fork-impersonation' | 'tx-fork-private-key';
   readonly coverage: {
     readonly executed: string[];
@@ -547,7 +547,20 @@ function describeLedgerDrift(drift: Record<string, bigint | null>): string {
   return moved.length === 0 ? '无变动' : moved.map(([key, value]) => `${key}:${value}`).join('，');
 }
 
+export interface MarketFlowOptions {
+  readonly scenarioId: string;
+  readonly isLong: boolean;
+}
+
 export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence> {
+  return runMarketFlow(runtime, { scenarioId: 'SCN-009', isLong: true });
+}
+
+// 市价开仓→全平 的方向无关流程：SCN-009（long）与 SCN-065（short）共用。
+// 方向差异集中在：订单 isLong、执行价不利侧比较方向、断言与覆盖文案。
+export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOptions): Promise<Scn009Evidence> {
+  const isLong = flow.isLong;
+  const directionLabel = isLong ? '多' : '空';
   if (!runtime.testAccount || !runtime.keeperAccount) {
     throw new Error('SCN-009 需要 E2E_TEST_ACCOUNT 与 E2E_KEEPER_ACCOUNT');
   }
@@ -587,8 +600,8 @@ export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence>
   const broadcaster = runtime.signingMode === 'private-key'
     ? await signedBroadcaster(runtime, rpc, deps.extractOrderKey)
     : await deps.impersonateBroadcaster({ rpcUrl: runtime.rpcUrl, deploymentDir });
-  const context = { rpc, deployment, a: deployment.addresses, marketIndex, isLong: true };
-  const ledgerContext = { trader: runtime.testAccount, marketIndex, isLong: true };
+  const context = { rpc, deployment, a: deployment.addresses, marketIndex, isLong };
+  const ledgerContext = { trader: runtime.testAccount, marketIndex, isLong };
   const assertions: Scn009Evidence['assertions'] = [];
   const inlineKeeper = runtime.keeperMode === 'inline';
   if (inlineKeeper && !mockResource?.token?.address) {
@@ -616,7 +629,7 @@ export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence>
 
   const before = await takeSnapshot(deps, rpc, deployment, ledgerContext);
   check(assertions, 'before 账本无缺失读数', before.errors.length === 0, before.errors, []);
-  check(assertions, '执行前无 ETH 多仓', !positionOf(before), Boolean(positionOf(before)), false);
+  check(assertions, `执行前无${directionLabel}仓`, !positionOf(before), Boolean(positionOf(before)), false);
 
   const open = await broadcaster.send({
     ...deps.buildIncreaseMulticall({
@@ -625,7 +638,7 @@ export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence>
       collateralToken: deployment.addresses.usdc,
       account: runtime.testAccount,
       marketIndex,
-      isLong: true,
+      isLong,
       sizeDeltaUsd: SIZE_USD,
       collateral: COLLATERAL,
       executionFee: EXECUTION_FEE,
@@ -678,7 +691,7 @@ export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence>
   );
   const afterOpen = await takeSnapshot(deps, rpc, deployment, ledgerContext, openExecBlock);
   check(assertions, 'afterOpen 账本无缺失读数', afterOpen.errors.length === 0, afterOpen.errors, []);
-  const openedPosition = requireValue(positionOf(afterOpen), '开仓订单离队，但多头仓位不存在（可能被静默取消）');
+  const openedPosition = requireValue(positionOf(afterOpen), `开仓订单离队，但${directionLabel}头仓位不存在（可能被静默取消）`);
   const openParameterSnapshot = await readTradeParameterSnapshot({
     rpcUrl: runtime.rpcUrl,
     timeoutMs: runtime.requestTimeoutMs,
@@ -694,7 +707,7 @@ export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence>
     graceBase: graceParameters.graceBaseSeconds,
     tierMultiplier: graceParameters.tierMultiplier,
   });
-  check(assertions, '开仓后为多头', openedPosition.isLong, openedPosition.isLong, true);
+  check(assertions, `开仓后方向为${directionLabel}头`, openedPosition.isLong === isLong, openedPosition.isLong, isLong);
   check(assertions, '开仓规模为 50 USD', openedPosition.sizeInUsd === SIZE_USD, openedPosition.sizeInUsd, SIZE_USD);
   check(
     assertions,
@@ -717,7 +730,7 @@ export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence>
       orderVault: deployment.addresses.orderVault,
       account: runtime.testAccount,
       marketIndex,
-      isLong: true,
+      isLong,
       sizeDeltaUsd: openedPosition.sizeInUsd,
       collateralDelta: 0n,
       executionFee: EXECUTION_FEE,
@@ -777,12 +790,13 @@ export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence>
     blockNumber: afterClose.blockNumber,
   });
   check(assertions, '全平后仓位已移除', !positionOf(afterClose), Boolean(positionOf(afterClose)), false);
+  const openCostsKey = isLong ? 'cumulativeOpenCostsLong' : 'cumulativeOpenCostsShort';
   check(
     assertions,
-    '累计多头开仓成本回到执行前数值',
-    afterClose.values.cumulativeOpenCostsLong === before.values.cumulativeOpenCostsLong,
-    afterClose.values.cumulativeOpenCostsLong,
-    before.values.cumulativeOpenCostsLong,
+    `累计${directionLabel}头开仓成本回到执行前数值`,
+    afterClose.values[openCostsKey] === before.values[openCostsKey],
+    afterClose.values[openCostsKey],
+    before.values[openCostsKey],
   );
 
   const allOrderEvents = await deps.fetchEmitterEvents(rpc, {
@@ -819,22 +833,25 @@ export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence>
   const positionIncrease = openEvents.PositionIncrease as DecodedEvent | null;
   const positionDecrease = closeEvents.PositionDecrease as DecodedEvent | null;
   const openExecutionPrice = positionIncrease?.uint?.executionPrice;
-  const openOracleMax = positionIncrease?.uint?.['indexTokenPrice.max'];
   const closeExecutionPrice = positionDecrease?.uint?.executionPrice;
-  const closeOracleMin = positionDecrease?.uint?.['indexTokenPrice.min'];
+  // 不利侧矩阵：开多/平空 用 ask（≥ oracle max）；开空/平多 用 bid（≤ oracle min）。
+  const openOracleSide = isLong ? positionIncrease?.uint?.['indexTokenPrice.max'] : positionIncrease?.uint?.['indexTokenPrice.min'];
+  const closeOracleSide = isLong ? positionDecrease?.uint?.['indexTokenPrice.min'] : positionDecrease?.uint?.['indexTokenPrice.max'];
+  const openAdverse = (price: bigint, side: bigint): boolean => (isLong ? price >= side : price <= side);
+  const closeAdverse = (price: bigint, side: bigint): boolean => (isLong ? price <= side : price >= side);
   check(
     assertions,
-    '开多执行价使用 ask/不利侧（executionPrice ≥ oracle max）',
-    openExecutionPrice !== undefined && openOracleMax !== undefined && openExecutionPrice >= openOracleMax,
-    `${openExecutionPrice}/${openOracleMax}`,
-    'executionPrice ≥ oracle max',
+    isLong ? '开多执行价使用 ask/不利侧（executionPrice ≥ oracle max）' : '开空执行价使用 bid/不利侧（executionPrice ≤ oracle min）',
+    openExecutionPrice !== undefined && openOracleSide !== undefined && openAdverse(openExecutionPrice, openOracleSide),
+    `${openExecutionPrice}/${openOracleSide}`,
+    isLong ? 'executionPrice ≥ oracle max' : 'executionPrice ≤ oracle min',
   );
   check(
     assertions,
-    '平多执行价使用 bid/不利侧（executionPrice ≤ oracle min）',
-    closeExecutionPrice !== undefined && closeOracleMin !== undefined && closeExecutionPrice <= closeOracleMin,
-    `${closeExecutionPrice}/${closeOracleMin}`,
-    'executionPrice ≤ oracle min',
+    isLong ? '平多执行价使用 bid/不利侧（executionPrice ≤ oracle min）' : '平空执行价使用 ask/不利侧（executionPrice ≥ oracle max）',
+    closeExecutionPrice !== undefined && closeOracleSide !== undefined && closeAdverse(closeExecutionPrice, closeOracleSide),
+    `${closeExecutionPrice}/${closeOracleSide}`,
+    isLong ? 'executionPrice ≤ oracle min' : 'executionPrice ≥ oracle max',
   );
 
   const openExecutionEvent = requireValue(openExecution, '缺少开仓 OrderExecuted 事件');
@@ -912,7 +929,7 @@ export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence>
   }
 
   return {
-    scenarioId: 'SCN-009',
+    scenarioId: flow.scenarioId,
     runMode: runtime.signingMode === 'private-key' ? 'tx-fork-private-key' : 'tx-fork-impersonation',
     coverage: {
       executed: [
@@ -921,8 +938,8 @@ export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence>
           ? `${mockResourceAlias} Market #${marketIndex} / Mock Token / Mock Oracle`
           : `已部署 Market #${marketIndex} / 非 Mock Oracle`,
         runtime.signingMode === 'private-key'
-          ? '用户私钥签名：10 USDC / 5x / 50 USD 市价开多'
-          : '账户模拟：10 USDC / 5x / 50 USD 市价开多',
+          ? `用户私钥签名：10 USDC / 5x / 50 USD 市价开${directionLabel}`
+          : `账户模拟：10 USDC / 5x / 50 USD 市价开${directionLabel}`,
         inlineKeeper
           ? 'Inline Keeper：ORDER_KEEPER 私钥真实签名 executeOrder'
           : 'Service Keeper：producer + ord-worker 异步执行',
@@ -962,7 +979,7 @@ export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence>
       leverage: '5x',
       sizeUsd: '50',
       executionFeeEth: '0.00002',
-      isLong: true,
+      isLong,
     },
     parameters: { open: openParameterSnapshot, close: closeParameterSnapshot },
     snapshots: { before, afterCreateOpen, openExecBefore, afterOpen, afterCreateClose, closeExecBefore, afterClose },

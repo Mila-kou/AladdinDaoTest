@@ -30,6 +30,7 @@
     "test:scn009:signed": "E2E_ENV=tx-fork E2E_SIGNING_MODE=private-key E2E_PERSIST_FORK_STATE=true playwright test tests/S02/scn-009.spec.ts --project=tx-fork",
     "test:scn010": "E2E_ENV=oracle-fork E2E_SIGNING_MODE=private-key playwright test tests/S02/scn-010.spec.ts --project=oracle-fork",
     "test:scn010:signed": "E2E_ENV=oracle-fork E2E_SIGNING_MODE=private-key E2E_PERSIST_FORK_STATE=true playwright test tests/S02/scn-010.spec.ts --project=oracle-fork",
+    "test:scn065": "E2E_ENV=tx-fork playwright test tests/S07/scn-065.spec.ts --project=tx-fork",
     "test:scn070": "E2E_ENV=oracle-fork E2E_SIGNING_MODE=private-key playwright test tests/S07/scn-070.spec.ts --project=oracle-fork",
     "test:scn070:model": "tsx scripts/verify-scn070-model.ts",
     "test:reconciliation:model": "tsx scripts/verify-reconciliation-formulas.ts",

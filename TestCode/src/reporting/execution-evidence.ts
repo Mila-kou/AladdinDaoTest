@@ -1431,14 +1431,28 @@ function deriveScn009Evidence(
     - bigintValue(openFees.totalCostAmount)
     + bigintValue(openFees.positiveFundingFeeAmount);
   const spreadScale = 10n ** 18n;
-  const expectedOpenExecution = ceilDiv(
-    bigintValue(openIncreaseUint['indexTokenPrice.max'])
-      * (spreadScale + bigintValue(openIncreaseUint.dynamicSpread)),
-    spreadScale,
-  );
-  const expectedCloseExecution = bigintValue(closeDecreaseUint['indexTokenPrice.min'])
-    * (spreadScale - bigintValue(closeDecreaseUint.dynamicSpread)) / spreadScale;
-  const expectedCumulativeLongOpenCosts = bigintValue(beforeValues.cumulativeOpenCostsLong) + inputSizeUsd;
+  // 方向感知（SCN-009 long / SCN-065 short 共用）：开仓不利侧 = 多 ⌈max×(1+s)⌉ / 空 ⌊min×(1−s)⌋，
+  // 平仓镜像；开仓成本累计走方向侧账本。
+  const isLong = boolValue(record(openIncrease.bool).isLong ?? testData.isLong);
+  const directionLabel = isLong ? '多' : '空';
+  const expectedOpenExecution = isLong
+    ? ceilDiv(
+      bigintValue(openIncreaseUint['indexTokenPrice.max'])
+        * (spreadScale + bigintValue(openIncreaseUint.dynamicSpread)),
+      spreadScale,
+    )
+    : bigintValue(openIncreaseUint['indexTokenPrice.min'])
+      * (spreadScale - bigintValue(openIncreaseUint.dynamicSpread)) / spreadScale;
+  const expectedCloseExecution = isLong
+    ? bigintValue(closeDecreaseUint['indexTokenPrice.min'])
+      * (spreadScale - bigintValue(closeDecreaseUint.dynamicSpread)) / spreadScale
+    : ceilDiv(
+      bigintValue(closeDecreaseUint['indexTokenPrice.max'])
+        * (spreadScale + bigintValue(closeDecreaseUint.dynamicSpread)),
+      spreadScale,
+    );
+  const openCostsSlot = isLong ? 'cumulativeOpenCostsLong' : 'cumulativeOpenCostsShort';
+  const expectedCumulativeLongOpenCosts = bigintValue(beforeValues[openCostsSlot]) + inputSizeUsd;
   const expectedFinalUsdc = bigintValue(beforeValues.traderUsdc)
     - bigintValue(wholeFlow.orderVaultUsdc)
     - bigintValue(wholeFlow.posVaultUsdc)
@@ -1518,11 +1532,11 @@ function deriveScn009Evidence(
     ] as const;
   const baseReconciliations: NonNullable<ScenarioResult['executionEvidence']>['reconciliations'] = [
     {
-      id: 'position-open-exists', group: '开仓状态', label: '多头仓位建立',
-      status: pass(boolValue(openPosition.exists), true),
+      id: 'position-open-exists', group: '开仓状态', label: `${directionLabel}头仓位建立`,
+      status: boolValue(openPosition.exists) && boolValue(openPosition.isLong) === isLong ? 'PASS' : 'FAIL',
       before: stringValue(boolValue(beforePosition.exists)),
-      after: stringValue(boolValue(openPosition.exists)), expected: 'true',
-      formula: 'afterOpen.position.exists = true 且 isLong = true',
+      after: `exists=${boolValue(openPosition.exists)}；isLong=${boolValue(openPosition.isLong)}`, expected: `exists=true 且 isLong=${isLong}`,
+      formula: `afterOpen.position.exists = true 且 isLong = ${isLong}（${directionLabel}头）`,
       basis: formulaBasis('§5 仓位字段更新', '仓位建立后的结构状态'),
     },
     {
@@ -1547,32 +1561,36 @@ function deriveScn009Evidence(
       note: '这是仓位当前 Margin，不是用户最初输入值。totalCostAmount 来自 PositionFeesCollected，并在 Fee 分组使用执行区块费率独立复算。',
     },
     {
-      id: 'open-execution-price', group: '成交价格', label: '开多执行价',
+      id: 'open-execution-price', group: '成交价格', label: `开${directionLabel}执行价`,
       status: pass(openIncreaseUint.executionPrice, expectedOpenExecution),
-      before: stringValue(openIncreaseUint['indexTokenPrice.max']),
+      before: stringValue(openIncreaseUint[isLong ? 'indexTokenPrice.max' : 'indexTokenPrice.min']),
       after: stringValue(openIncreaseUint.executionPrice), expected: expectedOpenExecution.toString(),
-      formula: `ceil(indexPrice.max × (1e18 + dynamicSpread) / 1e18)；本次：ceil(${stringValue(openIncreaseUint['indexTokenPrice.max'])} × (1e18 + ${stringValue(openIncreaseUint.dynamicSpread)}) / 1e18) = ${expectedOpenExecution}`,
-      basis: formulaBasis('§4.5 加仓成交价', 'Long executionPrice'), unit: 'price raw',
+      formula: isLong
+        ? `ceil(indexPrice.max × (1e18 + dynamicSpread) / 1e18)；本次：ceil(${stringValue(openIncreaseUint['indexTokenPrice.max'])} × (1e18 + ${stringValue(openIncreaseUint.dynamicSpread)}) / 1e18) = ${expectedOpenExecution}`
+        : `⌊indexPrice.min × (1e18 − dynamicSpread) / 1e18⌋；本次：⌊${stringValue(openIncreaseUint['indexTokenPrice.min'])} × (1e18 − ${stringValue(openIncreaseUint.dynamicSpread)}) / 1e18⌋ = ${expectedOpenExecution}`,
+      basis: formulaBasis('§4.5 加仓成交价', isLong ? 'Long executionPrice' : 'Short executionPrice'), unit: 'price raw',
       note: `dynamicSpread=${stringValue(openIncreaseUint.dynamicSpread)}。【恒等式】oracle 价与 dynamicSpread 均取自被核对的 PositionIncrease 事件，验证价格公式自洽，不构成独立重算（dynamicSpread 独立复算未实现）。`,
     },
     {
       id: 'cumulative-long-open-costs-after-open', group: '市场账本',
-      label: '累计多头开仓成本 cumulativeOpenCostsLong',
-      status: pass(openValues.cumulativeOpenCostsLong, expectedCumulativeLongOpenCosts),
-      before: rawAndUnit(beforeValues.cumulativeOpenCostsLong, 30, 'USD'),
-      after: rawAndUnit(openValues.cumulativeOpenCostsLong, 30, 'USD'),
+      label: `累计${directionLabel}头开仓成本 ${openCostsSlot}`,
+      status: pass(openValues[openCostsSlot], expectedCumulativeLongOpenCosts),
+      before: rawAndUnit(beforeValues[openCostsSlot], 30, 'USD'),
+      after: rawAndUnit(openValues[openCostsSlot], 30, 'USD'),
       delta: deltaAndUnit(inputSizeUsd, 30, 'USD'),
       expected: rawAndUnit(expectedCumulativeLongOpenCosts, 30, 'USD'),
-      formula: `nextCumulativeOpenCostsLong = previousCumulativeOpenCostsLong + sizeDeltaUsd；本次：${bigintValue(beforeValues.cumulativeOpenCostsLong)} + ${inputSizeUsd} = ${expectedCumulativeLongOpenCosts}`,
-      basis: formulaBasis('§12.2 市场多空 PnL', '累计多头开仓成本增量'), unit: 'USD 1e30',
+      formula: `next ${openCostsSlot} = previous + sizeDeltaUsd；本次：${bigintValue(beforeValues[openCostsSlot])} + ${inputSizeUsd} = ${expectedCumulativeLongOpenCosts}`,
+      basis: formulaBasis('§12.2 市场多空 PnL', `累计${directionLabel}头开仓成本增量`), unit: 'USD 1e30',
     },
     {
-      id: 'close-execution-price', group: '成交价格', label: '平多执行价',
+      id: 'close-execution-price', group: '成交价格', label: `平${directionLabel}执行价`,
       status: pass(closeDecreaseUint.executionPrice, expectedCloseExecution),
-      before: stringValue(closeDecreaseUint['indexTokenPrice.min']),
+      before: stringValue(closeDecreaseUint[isLong ? 'indexTokenPrice.min' : 'indexTokenPrice.max']),
       after: stringValue(closeDecreaseUint.executionPrice), expected: expectedCloseExecution.toString(),
-      formula: `indexPrice.min × (1e18 − dynamicSpread) / 1e18；本次：${stringValue(closeDecreaseUint['indexTokenPrice.min'])} × (1e18 − ${stringValue(closeDecreaseUint.dynamicSpread)}) / 1e18 = ${expectedCloseExecution}`,
-      basis: formulaBasis('§4.6 减仓成交价', 'Long executionPrice'), unit: 'price raw',
+      formula: isLong
+        ? `⌊indexPrice.min × (1e18 − dynamicSpread) / 1e18⌋；本次：⌊${stringValue(closeDecreaseUint['indexTokenPrice.min'])} × (1e18 − ${stringValue(closeDecreaseUint.dynamicSpread)}) / 1e18⌋ = ${expectedCloseExecution}`
+        : `ceil(indexPrice.max × (1e18 + dynamicSpread) / 1e18)；本次：ceil(${stringValue(closeDecreaseUint['indexTokenPrice.max'])} × (1e18 + ${stringValue(closeDecreaseUint.dynamicSpread)}) / 1e18) = ${expectedCloseExecution}`,
+      basis: formulaBasis('§4.6 减仓成交价', isLong ? 'Long executionPrice' : 'Short executionPrice'), unit: 'price raw',
       note: `dynamicSpread=${stringValue(closeDecreaseUint.dynamicSpread)}。【恒等式】oracle 价与 dynamicSpread 均取自被核对的 PositionDecrease 事件，验证价格公式自洽，不构成独立重算（dynamicSpread 独立复算未实现）。`,
     },
     {
@@ -1585,13 +1603,13 @@ function deriveScn009Evidence(
     },
     {
       id: 'cumulative-long-open-costs-restored', group: '平仓状态',
-      label: '累计多头开仓成本恢复初始值',
-      status: pass(closeValues.cumulativeOpenCostsLong, beforeValues.cumulativeOpenCostsLong),
-      before: rawAndUnit(openValues.cumulativeOpenCostsLong, 30, 'USD'),
-      after: rawAndUnit(closeValues.cumulativeOpenCostsLong, 30, 'USD'),
-      expected: rawAndUnit(beforeValues.cumulativeOpenCostsLong, 30, 'USD'),
-      formula: `finalCumulativeOpenCostsLong = openedCumulativeOpenCostsLong − fullCloseSizeUsd = initialCumulativeOpenCostsLong；本次：${bigintValue(openValues.cumulativeOpenCostsLong)} − ${inputSizeUsd} = ${bigintValue(beforeValues.cumulativeOpenCostsLong)}`,
-      basis: formulaBasis('§12.2 市场多空 PnL', '累计多头开仓成本全平回退'), unit: 'USD 1e30',
+      label: `累计${directionLabel}头开仓成本恢复初始值`,
+      status: pass(closeValues[openCostsSlot], beforeValues[openCostsSlot]),
+      before: rawAndUnit(openValues[openCostsSlot], 30, 'USD'),
+      after: rawAndUnit(closeValues[openCostsSlot], 30, 'USD'),
+      expected: rawAndUnit(beforeValues[openCostsSlot], 30, 'USD'),
+      formula: `final ${openCostsSlot} = opened − fullCloseSizeUsd = initial；本次：${bigintValue(openValues[openCostsSlot])} − ${inputSizeUsd} = ${bigintValue(beforeValues[openCostsSlot])}`,
+      basis: formulaBasis('§12.2 市场多空 PnL', `累计${directionLabel}头开仓成本全平回退`), unit: 'USD 1e30',
     },
     {
       id: 'trader-usdc-final', group: '守恒', label: '交易员最终 USDC（全流程守恒推论）',
@@ -2424,6 +2442,8 @@ interface EvidenceSource {
 
 const EVIDENCE_SOURCES: Record<string, EvidenceSource> = {
   'SCN-009': { attachmentName: 'scn-009-evidence.json', derive: deriveScn009Evidence },
+  // SCN-065 与 SCN-009 共用 runMarketFlow 证据形状；derive 已方向感知（isLong 取自事件/testData）。
+  'SCN-065': { attachmentName: 'scn-065-evidence.json', derive: deriveScn009Evidence },
   'SCN-010': { attachmentName: 'scn-010-evidence.json', derive: deriveScn010Evidence },
   'SCN-070': { attachmentName: 'scn-070-evidence.json', derive: deriveScn070Evidence },
 };

@@ -40,7 +40,6 @@ interface VerificationResult {
   readonly graceFilteredRows: number;
   readonly graceFilteredText: string;
   readonly feeFilteredRows: number;
-  readonly phaseGroupFilteredRows: number;
   readonly allFilteredRows: number;
   readonly testCaseRows: number;
   readonly testCaseEditorEnabled: boolean;
@@ -213,7 +212,6 @@ async function verifyExecutions(page: Page, url: string) {
   let graceFilteredRows = 0;
   let graceFilteredText = '';
   let feeFilteredRows = 0;
-  let phaseGroupFilteredRows = 0;
   let allFilteredRows = 0;
   if (reconciliationRows > 0) {
     const graceFilter = page.locator('.check-filter[data-filter-type="category"][data-filter-value="Grace"]');
@@ -224,11 +222,7 @@ async function verifyExecutions(page: Page, url: string) {
     const feeFilter = page.locator('.check-filter[data-filter-type="category"][data-filter-value="Fee"]');
     await feeFilter.click();
     feeFilteredRows = await page.locator('#reconciliation-table tbody tr:not([hidden])').count();
-    const phaseGroupFilter = page.locator('.check-filter[data-filter-type="group"]').filter({ hasText: 'Fee' }).first();
-    if (await phaseGroupFilter.count() > 0) {
-      await phaseGroupFilter.click();
-      phaseGroupFilteredRows = await page.locator('#reconciliation-table tbody tr:not([hidden])').count();
-    }
+    // 「交易阶段 / 明细分组」筛选排已移除（2026-08-13 用户要求）：不再校验 group 型按钮。
     const allFilter = page.locator('.check-filter[data-filter-type="all"]');
     await allFilter.click();
     allFilteredRows = await page.locator('#reconciliation-table tbody tr:not([hidden])').count();
@@ -247,7 +241,6 @@ async function verifyExecutions(page: Page, url: string) {
     graceFilteredRows,
     graceFilteredText,
     feeFilteredRows,
-    phaseGroupFilteredRows,
     allFilteredRows,
   };
 }
@@ -515,7 +508,6 @@ if (!input) {
     || (requiresExecutionEvidence && !['Grace 公式核对', 'graceStart', 'graceEnd']
       .every((field) => result.graceFilteredText.includes(field)))
     || (requiresExecutionEvidence && (result.feeFilteredRows < 1 || result.feeFilteredRows >= result.reconciliationRows))
-    || (requiresExecutionEvidence && (result.phaseGroupFilteredRows < 1 || result.phaseGroupFilteredRows > result.feeFilteredRows))
     || (requiresExecutionEvidence && result.allFilteredRows !== result.reconciliationRows)
     || (requiresExecutionEvidence && !result.executionHeroText.includes('执行结果 PASS'))
     || (requiresExecutionEvidence && !result.executionHeroText.includes('自动化覆盖 PARTIAL'))

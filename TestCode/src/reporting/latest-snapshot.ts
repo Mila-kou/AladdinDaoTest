@@ -48,3 +48,54 @@ export async function readLatestSnapshot(outputDirectory: string): Promise<TestR
     return undefined;
   }
 }
+
+/**
+ * 执行记录删除墓碑：只影响 latest 视图，artifacts/runs 历史档案永不改动。
+ * 语义：匹配 (id, project) 且 executedAt <= deletedAt 的结果不再进入 latest；
+ * 删除之后产生的新执行（executedAt > deletedAt）会自然重新出现。
+ */
+export interface DeletedExecutionRecord {
+  readonly id: string;
+  readonly project: string;
+  readonly deletedAt: string;
+  readonly note?: string;
+}
+
+export function deletedRecordsPath(projectRoot: string): string {
+  return join(projectRoot, 'artifacts', 'deleted-records.json');
+}
+
+export async function readDeletedRecords(projectRoot: string): Promise<DeletedExecutionRecord[]> {
+  try {
+    const parsed = JSON.parse(await readFile(deletedRecordsPath(projectRoot), 'utf8')) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((entry): entry is DeletedExecutionRecord =>
+      Boolean(entry) && typeof entry === 'object'
+      && typeof (entry as DeletedExecutionRecord).id === 'string'
+      && typeof (entry as DeletedExecutionRecord).project === 'string'
+      && Number.isFinite(Date.parse((entry as DeletedExecutionRecord).deletedAt)));
+  } catch {
+    return [];
+  }
+}
+
+export function applyDeletedRecords(
+  snapshot: TestRunArtifact,
+  deleted: readonly DeletedExecutionRecord[],
+): TestRunArtifact {
+  if (deleted.length === 0) return snapshot;
+  const results = snapshot.results.filter((result) => !deleted.some((record) =>
+    record.id === result.id && record.project === result.project
+    && Date.parse(result.executedAt) <= Date.parse(record.deletedAt)));
+  if (results.length === snapshot.results.length) return snapshot;
+  return {
+    ...snapshot,
+    run: {
+      ...snapshot.run,
+      environments: [...new Set(results.map((item) => item.environment))].sort(),
+      projectNames: [...new Set(results.map((item) => item.project))].sort(),
+      discoveredTests: results.length,
+    },
+    results,
+  };
+}

@@ -1,6 +1,6 @@
 ---
 name: fx100-verify-handbook
-description: FX100 数据核对知识手册（公式、取整、v0.3.1 费用路由与部署事实、核对陷阱）。Use whenever the task involves FX100 verification in this workspace — 数据核对 / 深度核对 / 核对公式 / Expected Δ / 守恒 / ΣΔ / 账本 / ledger / execution-evidence / reconciliation / SCN-009 / SCN-010 / SCN-070 / TestCode 核对重构 / 手续费公式 / 资金费 / funding / 执行价 / 动态点差 / dynamicSpread / 取整方向 / 清算价 / leverage 公式 / PnL / 支付瀑布 / claimable / FeeHandler / RevenuePool / 费用路由 / DataStore key — even if none of these words appear but the task requires computing expected on-chain values for fx100 positions/fees/funding/PnL, designing reconciliation checks, or reading DataStore/event fields. 与 Test/standards 冲突时以 standards 为准；本 skill 只提供领域知识。
+description: FX100 数据核对知识手册（公式、取整、v0.3.1 费用路由与部署事实、核对陷阱）。Use whenever the task involves FX100 verification in this workspace — 数据核对 / 深度核对 / 核对公式 / Expected Δ / 守恒 / ΣΔ / 账本 / ledger / execution-evidence / reconciliation / SCN-009 / SCN-010 / SCN-070 / TestCode 核对重构 / 手续费公式 / 资金费 / funding / 执行价 / 动态点差 / dynamicSpread / 取整方向 / 清算价 / leverage 公式 / PnL / 支付瀑布 / claimable / FeeHandler / RevenuePool / 费用路由 / DataStore key — even if none of these words appear but the task requires computing expected on-chain values for fx100 positions/fees/funding/PnL, designing reconciliation checks, or reading DataStore/event fields. 与 Test/standards 冲突时以 standards 为准；本 skill 只提供领域知识。工程操作（环境/跑批/看板/记录管理）见隔壁 skill fx100-testcode-ops。
 ---
 
 # FX100 核对手册

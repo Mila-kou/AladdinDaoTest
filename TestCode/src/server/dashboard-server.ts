@@ -1,7 +1,13 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import { readFile } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { dirname, join, resolve } from 'node:path';
 
+import {
+  applyDeletedRecords,
+  deletedRecordsPath,
+  readDeletedRecords,
+} from '../reporting/latest-snapshot.js';
+import { writeRunOutputs } from '../reporting/write-outputs.js';
 import { validateTestRunArtifact, type TestRunArtifact } from '../reporting/schema.js';
 import { saveTestCaseOverride } from '../reporting/test-case-overrides.js';
 import { attachExecutions, loadTestCases, type TestCaseView } from '../reporting/test-cases.js';
@@ -627,6 +633,37 @@ export async function startDashboardServer(options: DashboardServerOptions) {
         } catch (error) {
           sendJson(response, 400, { error: '测试用例保存失败', detail: String(error) });
         }
+        return;
+      }
+
+      if (url.pathname === '/api/execution-records/delete' && method === 'POST') {
+        const body = (await readJsonBody(request) ?? {}) as { id?: unknown; project?: unknown };
+        const id = typeof body.id === 'string' ? body.id : '';
+        const project = typeof body.project === 'string' ? body.project : '';
+        if (!/^SCN-\d{3}$/.test(id) || !project) {
+          sendJson(response, 400, { error: '需要 id（SCN-xxx）与 project。' });
+          return;
+        }
+        const artifact = await readArtifact(artifactDirectory);
+        const matches = artifact.results.filter((item) => item.id === id && item.project === project);
+        if (matches.length === 0) {
+          sendJson(response, 404, { error: `latest 中没有 ${id}:${project} 的执行记录。` });
+          return;
+        }
+        const deletedAt = new Date().toISOString();
+        const records = await readDeletedRecords(projectRoot);
+        records.push({
+          id,
+          project,
+          deletedAt,
+          note: `删除前状态 ${matches[0]!.status} · executedAt ${matches[0]!.executedAt}`,
+        });
+        const tombstonePath = deletedRecordsPath(projectRoot);
+        await mkdir(dirname(tombstonePath), { recursive: true });
+        await writeFile(tombstonePath, `${JSON.stringify(records, null, 2)}\n`, 'utf8');
+        // 仅重写 latest 视图；artifacts/runs 历史档案不动，该场景未来的新执行会重新出现。
+        await writeRunOutputs(applyDeletedRecords(artifact, records), artifactDirectory);
+        sendJson(response, 200, { ok: true, id, project, deletedAt });
         return;
       }
 

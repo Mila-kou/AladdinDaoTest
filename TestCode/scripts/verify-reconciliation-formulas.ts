@@ -7,6 +7,9 @@ import {
   calculatePositionFee,
   calculateSignedSkew,
   calculateSkewImpact,
+  calculatePriceImpactSpread,
+  composeDynamicSpread,
+  logExpMathExp,
 } from '../src/reconciliation/formulas.js';
 
 const zeroGrace = calculateGrace({ graceStart: 1_000n, graceBase: 0n, tierMultiplier: 10n ** 18n });
@@ -59,5 +62,27 @@ const skewImpact = calculateSkewImpact({
   maximum: 4n * 10n ** 15n,
 });
 assert.equal(skewImpact.skewImpact, -4n * 10n ** 15n, '改善平衡时应为负并触发最小值 clamp');
+
+// LogExpMath.exp 逐句移植回归向量（蓝本 src/common/math/LogExpMath.sol；任何魔数/运算序改动都会打破 bit 级一致）
+assert.equal(logExpMathExp(0n), 10n ** 18n, 'exp(0) = 1');
+assert.equal(logExpMathExp(10n ** 18n), 2718281828459045235n, 'exp(1) = e（a7/100 截断）');
+assert.equal(logExpMathExp(250000000000000000n), 1284025416687741484n, 'exp(0.25) 恰触 x9 阈值（a9/100）');
+assert.equal(logExpMathExp(100000000000000n), 1000100005000166670n, 'exp(1e-4) 纯泰勒段');
+assert.equal(logExpMathExp(-(10n ** 18n)), (10n ** 36n) / 2718281828459045235n, 'exp(-1) 负分支 = 1e36/exp(1)');
+assert.throws(() => logExpMathExp(131n * 10n ** 18n), 'exp 域上界 130e18 越界应抛错');
+
+// Dynamic Spread 实盘锚定向量（SCN-009 2026-08-13 运行 TX2，事件值 bit 级复现）
+const piSpread = calculatePriceImpactSpread({
+  orderSizeUsd: 50n * 10n ** 30n,
+  priceImpactParameter: 600000000000000000n,
+  depth: 7923961270000000000000000000000000000n,
+  maxPriceImpactSpread: 5000000000000000n,
+});
+const dynSpread = composeDynamicSpread({
+  constantPriceSpread: 100000000000000n,
+  priceImpactSpread: piSpread.spread,
+  skewImpact: 1250000000000000n,
+});
+assert.equal(dynSpread.spread, 1350063099753136n, 'SCN-009 TX2 实盘 dynamicSpread bit 级复现');
 
 console.log('Shared reconciliation formula model: PASS');

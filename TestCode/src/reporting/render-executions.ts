@@ -23,6 +23,7 @@ export function renderExecutionsHtml(
     </label>
     <div class="source-state"><span>数据状态</span><strong>${artifact.sourceStatus.toUpperCase()}</strong></div>
     <div class="source-state"><span>Run ID</span><strong>${artifact.run.id}</strong></div>
+    <div class="source-state"><span>记录管理</span><button id="delete-record" type="button">删除本条执行记录</button></div>
   </section>
   <section id="execution-content"></section>
   <script id="execution-data" type="application/json">${payload}</script>`;
@@ -43,7 +44,7 @@ export function renderExecutionsHtml(
     function formulaBasis(item) {
       const formulaHref = item.basis.sourcePath.includes('页面字段计算公式') ? './page-formulas.html' : './formulas.html';
       const inputsBlock = item.inputs && item.inputs.length
-        ? '<details class="check-inputs"><summary>输入来源 ' + item.inputs.length + ' 项</summary><ul>'
+        ? '<details class="check-inputs" open><summary>输入来源 ' + item.inputs.length + ' 项</summary><ul>'
           + item.inputs.map(function (entry) {
             return '<li><code>' + esc(entry.name) + '</code> = ' + esc(entry.value) + '<br><small class="muted">← ' + esc(entry.source) + '</small></li>';
           }).join('')
@@ -166,10 +167,14 @@ export function renderExecutionsHtml(
       if (group === '守恒' || /守恒/.test(label)) return '守恒';
       if (/^Δ(?:Trader|OrderVault|PositionVault|LPVaultAssets|FeeHandler|FeeReceiver)$/.test(label) || /Fee(?:Handler|Receiver)\s+USDC/i.test(label)) return '资金 / Vault';
       if (group.includes('Grace') || /grace|保护期/i.test(label)) return 'Grace';
+      if (/清算|Liquidat|ADL|Adl/.test(group + ' ' + label)) return '清算/ADL';
+      // 价格功能点：Oracle 价、执行价（成交价格组 + OI/Skew 组内的 Spread 调整后执行价）、Dynamic Spread。
+      // 需在 OI/Skew 规则之前判定，否则会被组名里的 Spread 抢走。
+      if (/执行价|价格|Dynamic Spread/.test(group + ' ' + label)) return '价格';
       if (group.includes('Funding') || label.includes('Funding')) return 'Funding';
-      if (group.includes('Fee') || /Fee|费用|仓位费|清算费/.test(label)) return 'Fee';
+      if (group.includes('Fee') || /Fee|费用|仓位费/.test(label)) return 'Fee';
       if (group.includes('PnL') || label.includes('PnL')) return 'PnL';
-      if (/OI|Skew|Spread/.test(group + ' ' + label)) return 'OI / Skew / Spread';
+      if (/OI|Skew|Spread/.test(group + ' ' + label)) return 'OI / Skew';
       if (group.includes('仓位') || label.includes('仓位')) return '仓位';
       if (/资金|账本|Vault|余额|抵押品/.test(group + ' ' + label)) return '资金 / Vault';
       return '状态 / 成交';
@@ -183,9 +188,6 @@ export function renderExecutionsHtml(
       return item.dataSource || '—';
     }
     function renderChecks(rowsForScope, title) {
-      const groupCounts = rowsForScope.reduce(function (counts, item) {
-        counts[item.group] = (counts[item.group] || 0) + 1; return counts;
-      }, {});
       const categoryCounts = rowsForScope.reduce(function (counts, item) {
         const category = checkCategory(item); counts[category] = (counts[category] || 0) + 1; return counts;
       }, {});
@@ -210,13 +212,12 @@ export function renderExecutionsHtml(
       const verificationBadges = verificationOrder.filter(function (name) { return verificationCounts[name]; }).map(function (name) {
         return '<button type="button" class="check-filter" data-filter-type="verification" data-filter-value="' + esc(name) + '">' + esc(name) + ' <strong>' + esc(verificationCounts[name]) + '</strong></button>';
       }).join('');
-      const categoryOrder = ['守恒','资金 / Vault','仓位','Fee','Funding','Grace','OI / Skew / Spread','PnL','状态 / 成交'];
+      const categoryOrder = ['守恒','资金 / Vault','仓位','价格','Fee','Funding','清算/ADL','Grace','OI / Skew','PnL','状态 / 成交'];
       const categoryBadges = categoryOrder.filter(function (name) { return categoryCounts[name]; }).map(function (name) {
         return '<button type="button" class="check-filter" data-filter-type="category" data-filter-value="' + esc(name) + '">' + esc(name) + ' <strong>' + esc(categoryCounts[name]) + '</strong></button>';
       }).join('');
-      const groupBadges = Object.entries(groupCounts).map(function (entry) {
-        return '<button type="button" class="check-filter check-group-badge" data-filter-type="group" data-filter-value="' + esc(entry[0]) + '">' + esc(entry[0]) + ' <strong>' + esc(entry[1]) + '</strong></button>';
-      }).join('');
+      // 「交易阶段 / 明细分组」筛选排已按用户要求移除（2026-08-13）：TX 阶段已有页签承担，
+      // 明细分组信息保留在每行「分组」列与 data-check-group 属性中，不再重复出一排按钮。
       const rows = rowsForScope.map(function (item) {
         return '<tr data-check-id="' + esc(item.id) + '" data-check-group="' + esc(item.group) + '" data-check-category="' + esc(checkCategory(item)) + '" data-check-status="' + esc(item.status) + '" data-check-verification="' + esc(verificationOf(item)) + '" data-check-source="' + esc(sourceOf(item)) + '"><td>' + esc(item.group) + '</td><td><strong>' + esc(item.label) + '</strong><div><small class="source-tag source-' + (sourceOf(item) === '合约' ? 'contract' : sourceOf(item) === '事件' ? 'event' : sourceOf(item) === '前端' ? 'frontend' : 'mixed') + '">' + esc(sourceOf(item)) + '</small></div></td><td>' + status(item.status) + '<div><small class="muted">' + esc(verificationOf(item)) + '</small></div></td>'
           + '<td class="value before">' + esc(item.before) + '</td><td class="value after">' + esc(item.after) + '</td>'
@@ -230,7 +231,6 @@ export function renderExecutionsHtml(
         + '<div class="check-filter-block"><span class="filter-label">数据来源</span><div class="check-groups"><button type="button" class="check-filter is-active" data-filter-type="all" data-filter-value="">全部 <strong>' + rowsForScope.length + '</strong></button>' + sourceBadges + sourceGapNote + '</div></div>'
         + '<div class="check-filter-block"><span class="filter-label">功能点</span><div class="check-groups">' + categoryBadges + '</div></div>'
         + '<div class="check-filter-block"><span class="filter-label">验证方式</span><div class="check-groups">' + verificationBadges + '</div></div>'
-        + '<div class="check-filter-block"><span class="filter-label">交易阶段 / 明细分组</span><div class="check-groups">' + groupBadges + '</div></div>'
         + '<div class="table-scroll check-scroll"><table id="reconciliation-table"><thead><tr><th>分组</th><th>核对字段</th><th>结果</th><th>Before（链上）</th><th>After（链上 Actual）</th><th>Expected Δ（订单 / 公式）</th><th>Expected After = Before + Δ</th><th>公式与依据</th></tr></thead><tbody>' + rows + '</tbody></table></div></section>';
     }
     function bindCheckFilters() {
@@ -280,6 +280,27 @@ export function renderExecutionsHtml(
     const match = data.results.find(function (item) { return item.id === requested; });
     if (match) select.value = match.id + ':' + match.project;
     select.addEventListener('change', render);
+    const deleteButton = document.getElementById('delete-record');
+    deleteButton.addEventListener('click', async function () {
+      const result = data.results.find(function (item) { return item.id + ':' + item.project === select.value; });
+      if (!result) { window.alert('当前没有可删除的执行记录。'); return; }
+      const label = result.id + ' · ' + result.scenarioTitle + ' · ' + result.project;
+      if (!window.confirm('确认删除执行记录「' + label + '」？\\n只从“最近结果”视图移除（artifacts/runs 历史档案保留）；该场景之后的新执行会重新出现。')) return;
+      deleteButton.disabled = true;
+      try {
+        const response = await fetch('./api/execution-records/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: result.id, project: result.project }),
+        });
+        const body = await response.json().catch(function () { return {}; });
+        if (!response.ok) throw new Error(body.error || ('接口返回 ' + response.status));
+        location.reload();
+      } catch (error) {
+        deleteButton.disabled = false;
+        window.alert('删除失败：' + error.message + '\\n（删除需要经 npm run dashboard:serve 打开本页，直接打开 HTML 文件无本机服务。）');
+      }
+    });
     render();
     document.getElementById('executions-page').dataset.pageReady = 'true';
   })();`;
@@ -292,7 +313,10 @@ export function renderExecutionsHtml(
     content,
     script,
     extraStyles: `
-      .controls { display:grid; grid-template-columns:minmax(260px,2fr) 1fr 1.4fr; gap:14px; align-items:end; margin-bottom:14px; }
+      .controls { display:grid; grid-template-columns:minmax(260px,2fr) 1fr 1.4fr auto; gap:14px; align-items:end; margin-bottom:14px; }
+      #delete-record { min-height:40px; border:1px solid #8b3a3a; border-radius:9px; background:#2b1118; color:#ff9a9a; padding:8px 12px; cursor:pointer; }
+      #delete-record:hover { background:#3a1520; }
+      #delete-record:disabled { opacity:.5; cursor:not-allowed; }
       label,.source-state { display:grid; gap:5px; color:var(--muted); font-size:12px; min-width:0; }
       select { min-height:40px; border:1px solid var(--line); border-radius:9px; background:#0b1220; color:var(--text); padding:8px 10px; }
       .source-state strong { color:var(--text); overflow-wrap:anywhere; }

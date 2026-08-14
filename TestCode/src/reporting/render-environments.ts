@@ -16,14 +16,16 @@ export function renderEnvironmentsHtml(generatedAt: string): string {
   <section class="panel section-card">
     <div class="section-heading"><div><h2>① Fork 与 RPC</h2><p id="rpc-step-description">先有可用的 Fork，再谈其他配置。填好 RPC 后点击保存即可生效。</p></div><div class="actions"><button id="create-tenderly-fork" type="button" class="secondary">创建 Tenderly Fork 并回填 RPC / WSS</button><button id="save-rpc" type="button">保存 RPC 配置</button></div></div>
     <div id="fork-guide" class="guide">
-      <strong>tx-fork / oracle-fork / time-fork 的建法（Tenderly 控制台）：</strong>
-      <ol>
-        <li>在 Tenderly 创建 Virtual TestNet，Parent Network 选 <code>Base Sepolia (84532)</code>；</li>
-        <li>Custom Chain ID 填一个独立值（当前 tx-fork 使用 <code>99911</code>），避免与真链混淆、也便于 Keeper 按 Chain ID 隔离游标；</li>
-        <li>oracle-fork / time-fork 关闭运行期 State Sync（tx-fork 按需）；</li>
-        <li>建好后把 HTTPS RPC 填到下方 <strong>主 RPC</strong> 与 <strong>Admin RPC</strong>，Chain ID 填自定义值，点击“保存 RPC 配置”。</li>
-      </ol>
-      <p class="muted">“创建 Tenderly Fork”按钮走 legacy fork API（Chain ID 继承 84532），适合快速起临时 Fork；要自定义 Chain ID 请用控制台手建。</p>
+      <strong id="fork-guide-title">tx-fork / oracle-fork / time-fork 的建法（Tenderly 控制台）：</strong>
+      <div id="fork-guide-body">
+        <ol>
+          <li>在 Tenderly 创建 Virtual TestNet，Parent Network 选 <code>Base Sepolia (84532)</code>；</li>
+          <li>Custom Chain ID 按环境固定编号：tx-fork = <code>99911</code> / oracle-fork = <code>99912</code> / time-fork = <code>99913</code>；</li>
+          <li>oracle-fork / time-fork 关闭运行期 State Sync（tx-fork 按需）；</li>
+          <li>建好后把 HTTPS RPC 填到下方 <strong>主 RPC</strong> 与 <strong>Admin RPC</strong>，Chain ID 填固定编号，点击“保存 RPC 配置”。</li>
+        </ol>
+        <p class="muted">“创建 Tenderly Fork”按钮走 legacy fork API（Chain ID 继承 84532），适合快速起临时 Fork；要固定 Chain ID 请用控制台手建。</p>
+      </div>
     </div>
     <div id="rpc-fields" class="field-grid"></div>
     <p id="save-status" class="notice"></p>
@@ -67,7 +69,7 @@ export function renderEnvironmentsHtml(generatedAt: string): string {
     [hidden]{display:none!important}.toolbar,.section-heading,.init-actions{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}.toolbar label{min-width:min(420px,100%)}
     label{display:grid;gap:6px;color:var(--muted)}select,input,button{font:inherit}select,input{width:100%;border:1px solid var(--line);border-radius:9px;background:#0a1322;color:var(--text);padding:9px 11px}input[type=checkbox]{width:auto;accent-color:var(--accent)}button{border:1px solid #367dc6;border-radius:9px;background:#1764aa;color:white;padding:9px 14px;cursor:pointer}button.secondary{background:#101b2d;border-color:var(--line);color:var(--text)}button:disabled{opacity:.5;cursor:not-allowed}
     .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.notice{width:100%;margin:2px 0 0;color:#f6c85f}.section-card{margin-top:16px}.section-heading h2,.subsection h3{margin:0}.section-heading p,.subsection p{margin:4px 0 0;color:var(--muted)}
-    .guide{border:1px solid var(--line);border-left:4px solid #367dc6;border-radius:9px;background:#0d1627;padding:12px 16px;margin-top:14px}.guide ol{margin:8px 0 0;padding-left:20px;display:grid;gap:4px}.guide p{margin:8px 0 0}
+    .guide{border:1px solid var(--line);border-left:4px solid #367dc6;border-radius:9px;background:#0d1627;padding:12px 16px;margin-top:14px}.guide ol,.guide ul{margin:8px 0 0;padding-left:20px;display:grid;gap:4px}.guide p{margin:8px 0 0}
     .config-section,.subsection{border-top:1px solid var(--line);padding-top:16px;margin-top:16px}.config-section h3{margin:0 0 2px}.config-section summary{display:flex;align-items:baseline;gap:8px;cursor:pointer}.config-section summary strong{font-size:15px}.field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:13px;margin-top:13px}.field{border:1px solid var(--line);border-radius:10px;padding:11px;background:#0d1627}.field small{color:var(--muted);min-height:34px;display:block;overflow-wrap:anywhere}.field-line{display:flex;align-items:center;justify-content:space-between;gap:8px}.required{color:#ff9a9a}.secret-state{font-size:12px;color:#73d8a4}.clear-secret{display:flex;margin-top:7px;grid-template-columns:auto 1fr;align-items:center}
     .check-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px}.check-result{border:1px solid var(--line);border-left-width:4px;border-radius:9px;padding:10px;background:#0d1627}.check-result.PASS{border-left-color:#44c488}.check-result.FAIL{border-left-color:#ff6868}.check-result.WARN{border-left-color:#f6c85f}.check-result strong{display:block}.check-result small{color:var(--muted)}.status{border-radius:999px;padding:5px 10px;background:#17243a;color:var(--muted);white-space:nowrap}.status.PASS,.status.READY{color:#76e3aa}.status.FAIL,.status.NOT_READY{color:#ff9090}
     .operation-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:9px;margin-top:12px}.operation-grid label,.check{display:flex;grid-template-columns:auto 1fr;align-items:flex-start;gap:9px;border:1px solid var(--line);border-radius:9px;padding:10px;background:#0d1627;color:var(--text)}.bundle-alias{min-width:min(310px,100%)}.danger-check{border-color:#8b6227;color:#f6c85f}.market-source{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:9px;background:#0d1627}.market-source label{min-width:min(680px,100%)}.market-source span{padding:9px 0}details summary{cursor:pointer;font-weight:700}.table-wrap{overflow:auto;margin-top:12px}table{width:100%;border-collapse:collapse}th,td{text-align:left;border-bottom:1px solid var(--line);padding:8px;white-space:nowrap}td input{min-width:260px}.group-funding{color:#73d8a4}.group-fee{color:#f6c85f}.init-actions{border-top:1px dashed var(--line);padding-top:16px;margin-top:16px}.init-actions label{min-width:min(240px,100%)}pre{max-height:360px;overflow:auto;white-space:pre-wrap;background:#08101d;border-radius:9px;padding:12px}footer{margin-top:18px;color:var(--muted)}
@@ -75,6 +77,36 @@ export function renderEnvironmentsHtml(generatedAt: string): string {
 
   const script = `
     const environmentNames=['dev-readonly','tx-fork','oracle-fork','time-fork','base-sepolia'];
+    const forkGuides={
+      'tx-fork':{chainId:'99911',role:'交易账本线——SCN-009 等交易与数据核对用例的默认环境',special:[
+        'State Sync 按需：需要跟随真链最新状态时可开启；跑受控核对用例期间建议关闭，避免窗口内混入外部状态变化；',
+        'Service Keeper 可指向本 Fork：启动命令会注入当前 RPC 与 KEEPER_EXPECTED_CHAIN_ID=99911；',
+        '改 Mock 价格必须三件套同步（feed 价 + 时间戳 + STABLE_PRICE 锚）——只改其一会触发订单静默取消（LiquidatablePosition）。']},
+      'oracle-fork':{chainId:'99912',role:'受控价格边界线——SCN-010 / SCN-070 固定在此运行',special:[
+        '必须关闭运行期 State Sync：用例靠受控推价构造精确价格边界，真链同步会覆盖推价状态；',
+        'Admin RPC 必填（可与主 RPC 相同）：用例依赖 evm_snapshot / evm_revert 与免签名推价、DataStore 写入；',
+        '必须完成 ③ 双 Mock Oracle Market Bundle 初始化（Index 与 USDC 两个 Mock Oracle 都是 mock）——缺一个 SCN-010/070 直接拒跑；',
+        '用例会反复激进推价，勿与交易账本线（tx-fork）共用一个 Fork，避免价格状态互相污染。']},
+      'time-fork':{chainId:'99913',role:'时间推进线——grace / funding 时效等需要拨快区块时间的用例',special:[
+        '必须关闭运行期 State Sync：时间拨快后与真链时钟脱钩，同步会产生冲突；',
+        'Admin RPC 必填：时间控制依赖 evm_increaseTime / evm_setNextBlockTimestamp / evm_snapshot；',
+        '时间只能拨快不能回退：时钟领先后，Mock Oracle 时间戳会显得过旧（60s 价龄上限），执行交易前先刷新 Oracle 时间戳。']}
+    };
+    function renderForkGuide(){
+      const guide=forkGuides[environment.value];
+      const title=document.getElementById('fork-guide-title'),body=document.getElementById('fork-guide-body');
+      if(!guide){title.textContent='tx-fork / oracle-fork / time-fork 的建法（Tenderly 控制台）：';return;}
+      title.textContent=environment.value+' 的建法（Tenderly 控制台）· Chain ID 固定 '+guide.chainId+'：';
+      body.innerHTML='<p>定位：'+guide.role+'。</p>'
+        +'<ol>'
+        +'<li>在 Tenderly <code>aladdindao/test</code> 项目创建 Virtual TestNet，Parent Network 选 <code>Base Sepolia (84532)</code>；</li>'
+        +'<li>Custom Chain ID 固定填 <code>'+guide.chainId+'</code>（本环境专用编号；tx-fork=99911 / oracle-fork=99912 / time-fork=99913，避免与真链混淆、也便于 Keeper 按 Chain ID 隔离游标）；</li>'
+        +'<li>建好后把 HTTPS RPC 填到下方 <strong>主 RPC</strong> 与 <strong>Admin RPC</strong>，Chain ID 填 <code>'+guide.chainId+'</code>，点击“保存 RPC 配置”。</li>'
+        +'</ol>'
+        +'<p><strong>本环境特殊要求（区别于其他 Fork）：</strong></p>'
+        +'<ul>'+guide.special.map(function(item){return '<li>'+item+'</li>';}).join('')+'</ul>'
+        +'<p class="muted">“创建 Tenderly Fork”按钮走 legacy fork API（Chain ID 继承 84532，不符合本环境固定编号），要固定 Chain ID 请在 Tenderly 控制台手建。</p>';
+    }
     const state={configuration:null,profile:null,marketSources:[],activeInitializationId:null,poll:null};
     const environment=document.getElementById('environment');
     environment.innerHTML=environmentNames.map(function(name){return '<option value="'+name+'">'+name+'</option>';}).join('');
@@ -94,7 +126,7 @@ export function renderEnvironmentsHtml(generatedAt: string): string {
     function getPath(object,path){return path.split('.').reduce(function(value,key){return value[key];},object);}
     function setPath(object,path,value){const keys=path.split('.');let target=object;keys.slice(0,-1).forEach(function(key){target=target[key];});target[keys[keys.length-1]]=value;}
     function profileField(definition){const path=definition[0],label=definition[1],type=definition[2],value=getPath(state.profile.profile,path);if(type==='select')return '<label class="field"><strong>'+label+'</strong><select data-profile="'+path+'"><option value="max" '+(value==='max'?'selected':'')+'>最大授权</option><option value="exact" '+(value==='exact'?'selected':'')+'>精确额度</option></select></label>';return '<label class="field"><strong>'+label+'</strong><input data-profile="'+path+'" type="'+(type==='number'?'number':'text')+'" value="'+esc(value)+'"></label>';}
-    function renderEnvironmentMode(){const supported=state.configuration.capabilities.initializesDefaultMockResources;const isBase=environment.value==='base-sepolia';document.getElementById('initialization-panel').hidden=!supported;document.getElementById('create-tenderly-fork').hidden=!supported;document.getElementById('fork-guide').hidden=!supported;document.getElementById('rpc-step-description').textContent=isBase?'Base Sepolia 使用公共 RPC：填好主 RPC/WSS 后保存即可。':'先有可用的 Fork，再谈其他配置。填好 RPC 后点击保存即可生效。';document.getElementById('configuration-description').textContent=isBase?'Base Sepolia 使用已有部署：这里只维护 Trade、Trader、Admin、签名和本机数据源。默认折叠，需要修改自行展开。':'默认折叠：不修改即沿用现有配置；需要调整时展开对应分组。';document.getElementById('check-description').textContent=isBase?'只读检查 Trade、Base Sepolia RPC、部署清单、账户/Admin 与 Case 数据源；不会部署 Mock Token/Oracle、Market，也不会执行 Keeper 初始化。':'只读检查 Trade、RPC、部署清单、账户、角色、default-mock 与 Case 数据源——配置完成后的验收步骤。';}
+    function renderEnvironmentMode(){const supported=state.configuration.capabilities.initializesDefaultMockResources;const isBase=environment.value==='base-sepolia';document.getElementById('initialization-panel').hidden=!supported;document.getElementById('create-tenderly-fork').hidden=!supported;document.getElementById('fork-guide').hidden=!supported;document.getElementById('rpc-step-description').textContent=isBase?'Base Sepolia 使用公共 RPC：填好主 RPC/WSS 后保存即可。':'先有可用的 Fork，再谈其他配置。填好 RPC 后点击保存即可生效。';document.getElementById('configuration-description').textContent=isBase?'Base Sepolia 使用已有部署：这里只维护 Trade、Trader、Admin、签名和本机数据源。默认折叠，需要修改自行展开。':'默认折叠：不修改即沿用现有配置；需要调整时展开对应分组。';document.getElementById('check-description').textContent=isBase?'只读检查 Trade、Base Sepolia RPC、部署清单、账户/Admin 与 Case 数据源；不会部署 Mock Token/Oracle、Market，也不会执行 Keeper 初始化。':'只读检查 Trade、RPC、部署清单、账户、角色、default-mock 与 Case 数据源——配置完成后的验收步骤。';renderForkGuide();}
     function renderProfile(){const supported=state.configuration.capabilities.initializesDefaultMockResources;renderEnvironmentMode();if(!supported||!state.profile)return;document.getElementById('mock-capability').textContent='支持完整初始化';document.getElementById('asset-profile').innerHTML=assetFields.map(profileField).join('');document.getElementById('funding-profile').innerHTML=fundingFields.map(profileField).join('');document.getElementById('operation-profile').innerHTML=Object.entries(operationLabels).map(function(entry){return '<label><input type="checkbox" data-operation="'+entry[0]+'" '+(state.profile.profile.operations[entry[0]]?'checked':'')+'><span>'+esc(entry[1])+'</span></label>';}).join('');document.getElementById('parameter-rows').innerHTML=state.profile.parameters.map(function(parameter){return '<tr><td class="group-'+parameter.group+'">'+({funding:'Funding',fee:'Fee Ratio',market:'Market'}[parameter.group])+'</td><td><code>'+esc(parameter.label)+'</code></td><td>'+parameter.valueType+'</td><td><input data-parameter="'+esc(parameter.label)+'" value="'+esc(parameter.overrideValue||'')+'" placeholder="从参考 Market 复制"></td></tr>';}).join('');document.getElementById('run-initialization').disabled=false;}
     function collectProfile(){document.querySelectorAll('[data-profile]').forEach(function(input){const path=input.dataset.profile;let value=input.value.trim();if(input.type==='number')value=Number(value);setPath(state.profile.profile,path,value);});document.querySelectorAll('[data-operation]').forEach(function(input){state.profile.profile.operations[input.dataset.operation]=input.checked;});const overrides={};document.querySelectorAll('[data-parameter]').forEach(function(input){if(input.value.trim())overrides[input.dataset.parameter]=input.value.trim();});state.profile.profile.parameterOverrides=overrides;return state.profile.profile;}
     async function requestJson(url,options){const response=await fetch(url,options);const result=await response.json();if(!response.ok)throw new Error(result.detail||result.error||('接口返回 '+response.status));return result;}

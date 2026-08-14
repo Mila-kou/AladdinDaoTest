@@ -247,7 +247,7 @@ function oracleParamsLiteral(input: {
 }
 
 /** default-mock 配置的是 Chainlink price-feed provider；其价格来自 Mock Oracle，data 为空即可。 */
-function buildInlineExecuteOrder(
+export function buildInlineExecuteOrder(
   deps: Pick<LegacyDependencies, 'calldata'>,
   deployment: LegacyDeployment,
   orderKey: string,
@@ -309,7 +309,7 @@ function oracleProviderKey(oracle: string, token: string): `0x${string}` {
   return keccak256(encodeAbiParameters(parseAbiParameters('bytes32,address,address'), [baseKey, getAddress(oracle), getAddress(token)]));
 }
 
-async function inlineOracleProviders(runtime: RuntimeConfig, deployment: LegacyDeployment, indexToken: string) {
+export async function inlineOracleProviders(runtime: RuntimeConfig, deployment: LegacyDeployment, indexToken: string) {
   const client = createPublicClient({ transport: http(runtime.rpcUrl, { timeout: runtime.requestTimeoutMs }) });
   const abi = parseAbi(['function getAddress(bytes32) view returns (address)']);
   const [indexProvider, collateralProvider] = await Promise.all([

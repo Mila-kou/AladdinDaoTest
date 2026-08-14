@@ -101,6 +101,7 @@ const commonFields: readonly FieldSpec[] = [
   { key: 'E2E_TEST_ACCOUNT', label: 'Trader 地址', section: 'accounts', type: 'text', help: '发起订单的测试账户。', validation: 'address' },
   { key: 'E2E_KEEPER_ACCOUNT', label: 'Keeper 地址', section: 'accounts', type: 'text', help: '执行订单并持有 ORDER_KEEPER 角色。', validation: 'address' },
   { key: 'E2E_ADMIN_ACCOUNT', label: 'Admin 地址', section: 'accounts', type: 'text', help: '修改 Oracle/配置并持有 CONTROLLER 角色。', validation: 'address' },
+  { key: 'E2E_NOISE_TRADER_ACCOUNTS', label: '模拟交易 Trader 列表', section: 'accounts', type: 'text', help: '逗号分隔的地址（fork 上 impersonation 免私钥）。供 env:noise:trades 铺底模拟交易，使环境数据更复杂：双侧 OI、Skew、Funding、多仓并存；这些交易不做核验。' },
   { key: 'E2E_TEST_PRIVATE_KEY', label: 'Trader 私钥', section: 'accounts', type: 'secret', help: '已有值不会回显；留空保持不变。', secret: true, validation: 'private-key' },
   { key: 'E2E_SECONDARY_TEST_PRIVATE_KEY', label: 'Keeper 私钥', section: 'accounts', type: 'secret', help: '已有值不会回显；也可从 Keeper 配置文件读取。', secret: true, validation: 'private-key' },
   { key: 'E2E_TOKEN_OWNER_PRIVATE_KEY', label: 'Token Owner 私钥', section: 'accounts', type: 'secret', help: '仅 Base Sepolia Fund USDC 使用：必须匹配链上 Mock USDC 的 owner()，用于发送真实 mint 交易；不会回显或写入报告。', secret: true, validation: 'private-key' },

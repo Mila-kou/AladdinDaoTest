@@ -11,6 +11,7 @@
     "doctor": "tsx scripts/doctor.ts",
     "config:print": "tsx scripts/print-config.ts",
     "config:validate": "tsx scripts/validate-deployment.ts",
+    "env:noise:trades": "tsx scripts/generate-noise-trades.ts",
     "env:init:mock": "tsx scripts/init-mock-resources.ts",
     "env:bind:mock-market": "tsx scripts/bind-default-mock-market.ts",
     "env:show:mock": "tsx scripts/show-mock-resources.ts",

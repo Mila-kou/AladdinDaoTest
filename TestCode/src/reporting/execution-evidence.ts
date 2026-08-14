@@ -305,9 +305,13 @@ function buildLedgerDeltaExpectations(input: {
   readonly events: JsonRecord;
   readonly collateralDecimals: number;
 }): Record<string, LedgerDeltaExpectation> {
-  const margin = decimalToRaw(input.testData.collateralUsdc, input.collateralDecimals);
+  // 阶段级覆盖：中段阶段/最终全平传入 raw 值（marginRaw/sizeUsdRaw/closeSizeUsdRaw），
+  // 缺省回落到 testData 十进制推导（历史证据兼容）。
+  const marginOverride = optionalBigint(input.testData.marginRaw);
+  const margin = marginOverride ?? decimalToRaw(input.testData.collateralUsdc, input.collateralDecimals);
   const sizeModel = expectedOrderSizeUsd(input.testData);
-  const sizeUsd = sizeModel.value;
+  const sizeUsdOverride = optionalBigint(input.testData.sizeUsdRaw);
+  const sizeUsd = sizeUsdOverride ?? sizeModel.value;
   const eventUint = record(input.positionEvent.uint);
   const eventInt = record(input.positionEvent.int);
   const fees = record(record(input.events.feesCollected).uint);
@@ -372,7 +376,7 @@ function buildLedgerDeltaExpectations(input: {
     const orderVaultDelta = input.phaseKind === 'execute-increase' ? -margin : 0n;
     const positionVaultDelta = margin - feeForPool + lpToPositionVault;
     const lpVaultDelta = feeForPool - lpToPositionVault;
-    const increaseFormula = `${sizeModel.expanded}；${sizeTokensModel?.expanded ?? 'executionPrice 为 0，无法换算'}`;
+    const increaseFormula = `${sizeUsdOverride !== undefined ? `sizeDeltaUsd（阶段指定 raw）= ${sizeUsd}` : sizeModel.expanded}；${sizeTokensModel?.expanded ?? 'executionPrice 为 0，无法换算'}`;
     return {
       traderUsdc: {
         value: traderDelta,
@@ -443,8 +447,10 @@ function buildLedgerDeltaExpectations(input: {
   const oldMargin = bigintValue(input.positionBefore.collateralAmount);
   const oldSizeUsd = bigintValue(input.positionBefore.sizeInUsd);
   const oldSizeInTokens = bigintValue(input.positionBefore.sizeInTokens);
+  // 减仓有效规模：最终全平传 closeSizeUsdRaw（含中段变动后的总规模）；中段部分平传 sizeUsdRaw。
+  const decreaseSizeUsd = optionalBigint(input.testData.closeSizeUsdRaw) ?? sizeUsd;
   // 全平守卫：只有 sizeDeltaUsd == oldSizeUsd 才退还全部剩余押金；部分平退 min(请求提取额, 剩余押金)。
-  const fullClose = sizeUsd === oldSizeUsd;
+  const fullClose = decreaseSizeUsd === oldSizeUsd;
   const requestedWithdrawal = decimalToRaw(input.testData.collateralWithdrawUsdc ?? '0', input.collateralDecimals);
   const waterfall = decreaseWaterfall({
     oldMargin,
@@ -460,7 +466,7 @@ function buildLedgerDeltaExpectations(input: {
   const lpVaultDelta = feeForPool + negativePnl - positivePnl - lpToPositionVault;
   const positionVaultDelta = -traderOutput - lpVaultDelta;
   // 四格取整矩阵（平仓格）：全平恒等分支精确清零；部分平多头 ⌈⌉ / 空头 ⌊⌋。
-  const decreaseModel = decreaseSizeInTokens({ oldSizeUsd, oldSizeInTokens, sizeDeltaUsd: sizeUsd, isLong });
+  const decreaseModel = decreaseSizeInTokens({ oldSizeUsd, oldSizeInTokens, sizeDeltaUsd: decreaseSizeUsd, isLong });
   const decreaseTokens = decreaseModel.value;
   const pnlFormula = `positivePnl=${positivePnl}；negativePnl=ceil(abs(${basePnlUsd})/${collateralMin})=${negativePnl}`;
   return {
@@ -512,16 +518,16 @@ function buildLedgerDeltaExpectations(input: {
     },
     claimableFeeAmountLiquidation: zero('非清算订单：Expected ΔClaimable Liquidation Fee = 0'),
     cumulativeOpenCostsLong: {
-      value: isLong ? -sizeUsd : 0n,
+      value: isLong ? -decreaseSizeUsd : 0n,
       formula: isLong
-        ? `Expected ΔLong Open Costs = isLong ? −inputSizeUsd : 0；本次 isLong=true（平多）→ −${sizeUsd}`
-        : 'Expected ΔLong Open Costs = isLong ? −inputSizeUsd : 0；本次 isLong=false（平空）→ Long 侧不动，Expected Δ = 0',
+        ? `Expected ΔLong Open Costs = −sizeDeltaUsd；本次 isLong=true（平多）→ −${decreaseSizeUsd}`
+        : 'Expected ΔLong Open Costs：本次 isLong=false（平空）→ Long 侧不动，Expected Δ = 0',
     },
     cumulativeOpenCostsShort: {
-      value: isLong ? 0n : -sizeUsd,
+      value: isLong ? 0n : -decreaseSizeUsd,
       formula: isLong
-        ? 'Expected ΔShort Open Costs = isLong ? 0 : −inputSizeUsd；本次 isLong=true（平多）→ Short 侧不动，Expected Δ = 0'
-        : `Expected ΔShort Open Costs = isLong ? 0 : −inputSizeUsd；本次 isLong=false（平空）→ −${sizeUsd}`,
+        ? 'Expected ΔShort Open Costs：本次 isLong=true（平多）→ Short 侧不动，Expected Δ = 0'
+        : `Expected ΔShort Open Costs = −sizeDeltaUsd；本次 isLong=false（平空）→ −${decreaseSizeUsd}`,
     },
     openInterestInTokensLong: {
       ...(decreaseTokens === undefined ? {} : { value: isLong ? -decreaseTokens : 0n }),
@@ -1421,6 +1427,16 @@ function deriveMarketFlowSingle(
   const closeGraceParameters = Object.keys(record(closeParameters.grace)).length > 0
     ? record(closeParameters.grace) : legacyGraceParameters;
 
+  // 中段阶段（加仓/部分平）：close 的 TX 编号顺延、创建窗口基准移到最后一个中段快照
+  const middlePhaseList = Array.isArray(raw.middlePhases) ? raw.middlePhases.map((item) => record(item)) : [];
+  const middleCount = middlePhaseList.length;
+  const closeCreateTx = `TX${3 + middleCount * 2}`;
+  const closeExecTx = `TX${4 + middleCount * 2}`;
+  const lastMiddleValues = middleCount > 0
+    ? record(record(record(middlePhaseList[middleCount - 1]!.snapshots).afterExec).values)
+    : undefined;
+  const closeBaseValues = lastMiddleValues ?? openValues;
+  const closeBasePosition = record(closeBaseValues.position);
   const sizeBefore = bigintValue(beforePosition.sizeInUsd);
   const orderSize = expectedOrderSizeUsd(testData);
   const inputSizeUsd = orderSize.value;
@@ -1473,17 +1489,81 @@ function deriveMarketFlowSingle(
   });
   const closeExecutionRows = buildTradePhaseRows({
     phaseKind: hasPerTransactionSnapshots ? 'execute-decrease' : 'create-and-decrease',
-    phaseId: 'tx4-execute-close', phaseLabel: 'TX4 · Keeper 执行全平',
+    phaseId: `${closeExecTx.toLowerCase()}-execute-close`, phaseLabel: `${closeExecTx} · Keeper 执行全平`,
     beforeLabel: hasPerTransactionSnapshots ? 'afterCreateClose' : 'afterOpen', afterLabel: 'afterClose',
-    before: hasPerTransactionSnapshots ? createCloseValues : openValues, after: closeValues, testData,
-    positionBefore: hasPerTransactionSnapshots ? createClosePosition : openPosition,
+    before: hasPerTransactionSnapshots ? createCloseValues : closeBaseValues, after: closeValues, testData,
+    positionBefore: hasPerTransactionSnapshots ? createClosePosition : closeBasePosition,
     positionAfter: closePosition, positionExpected: beforePosition,
     positionExpectedReason: '全平后 sizeInUsd = 0，仓位删除并将原始字段清零',
     positionEvent: closeDecrease, events: closeEvents, parameters: closeParameters,
     graceParameters: closeGraceParameters, marketIndex: environment.marketIndex,
     tokenDecimals: 18, tokenSymbol: 'ETH', collateralDecimals: 6, ledgerSource: LEDGER_SOURCE,
-    checks: ['ledger', 'position', 'grace', 'pricing', 'fee-funding'], txStep: 'TX4',
+    checks: ['ledger', 'position', 'grace', 'pricing', 'fee-funding'], txStep: closeExecTx,
   });
+  // 中段阶段行（加仓/部分平）：每阶段 创建+执行 两组 TX 行 + 两条守恒行；
+  // 阶段级 raw 覆盖（marginRaw/sizeUsdRaw）走 buildLedgerDeltaExpectations 的覆盖入口。
+  const middleRows: Reconciliation[] = middlePhaseList.flatMap((phase, index) => {
+    const kind = stringValue(phase.kind);
+    const isIncreasePhase = kind === 'increase';
+    const middleLabel = stringValue(phase.label, `中段${index + 1}`);
+    const snaps = record(phase.snapshots);
+    const createValues = record(record(snaps.afterCreate).values);
+    const execBeforeValues = record(record(snaps.execBefore).values);
+    const afterExecValues = record(record(snaps.afterExec).values);
+    const prevValues = index === 0
+      ? openValues
+      : record(record(record(middlePhaseList[index - 1]!.snapshots).afterExec).values);
+    const prevPosition = record(prevValues.position);
+    const phaseEvents = record(phase.events);
+    const phaseEvent = record(phaseEvents[isIncreasePhase ? 'PositionIncrease' : 'PositionDecrease']);
+    const phaseTestData: JsonRecord = {
+      ...testData,
+      marginRaw: stringValue(phase.marginRaw, '0'),
+      sizeUsdRaw: stringValue(phase.sizeUsdRaw, '0'),
+      closeSizeUsdRaw: stringValue(phase.sizeUsdRaw, '0'),
+    };
+    const createTx = `TX${3 + index * 2}`;
+    const execTx = `TX${4 + index * 2}`;
+    return [
+      ...buildTradePhaseRows({
+        phaseKind: isIncreasePhase ? 'create-order' : 'create-decrease-order',
+        phaseId: `${createTx.toLowerCase()}-create-middle-${index + 1}`,
+        phaseLabel: `${createTx} · 创建订单（${middleLabel}）`,
+        beforeLabel: index === 0 ? 'afterOpen' : '上一中段 afterExec', afterLabel: 'afterCreate',
+        before: prevValues, after: createValues, testData: phaseTestData,
+        positionBefore: prevPosition, positionAfter: record(createValues.position), positionExpected: prevPosition,
+        positionExpectedReason: '仅创建订单，Keeper 尚未执行，仓位原始字段保持不变',
+        positionEvent: {}, events: {}, parameters: {}, marketIndex: environment.marketIndex,
+        tokenDecimals: 18, tokenSymbol: 'ETH', collateralDecimals: 6, ledgerSource: LEDGER_SOURCE,
+        checks: ['ledger', 'position'], txStep: createTx,
+      }),
+      ...buildTradePhaseRows({
+        phaseKind: isIncreasePhase ? 'execute-increase' : 'execute-decrease',
+        phaseId: `${execTx.toLowerCase()}-execute-middle-${index + 1}`,
+        phaseLabel: `${execTx} · Keeper 执行（${middleLabel}）`,
+        beforeLabel: 'execBefore', afterLabel: 'afterExec',
+        before: execBeforeValues, after: afterExecValues, testData: phaseTestData,
+        positionBefore: record(execBeforeValues.position), positionAfter: record(afterExecValues.position),
+        positionExpected: record(phaseEvent.uint),
+        positionExpectedReason: 'After Position 原始字段 = 执行事件的同名字段',
+        positionEvent: phaseEvent, events: phaseEvents, parameters: record(phase.parameters),
+        marketIndex: environment.marketIndex,
+        tokenDecimals: 18, tokenSymbol: 'ETH', collateralDecimals: 6, ledgerSource: LEDGER_SOURCE,
+        checks: ['ledger', 'position', 'pricing', 'fee-funding'], txStep: execTx,
+      }),
+      buildConservationRow({
+        id: `middle-${index + 1}-create-conservation`, txStep: createTx,
+        label: `${middleLabel}·创建资金守恒`,
+        observation: record(record(phase.conservation).create), ledgerSource: LEDGER_SOURCE,
+      }),
+      buildConservationRow({
+        id: `middle-${index + 1}-execute-conservation`, txStep: execTx,
+        label: `${middleLabel}·执行资金守恒`,
+        observation: record(record(phase.conservation).execute), ledgerSource: LEDGER_SOURCE,
+      }),
+    ];
+  });
+
   const detailedRows: Reconciliation[] = [
     ...(hasPerTransactionSnapshots ? buildTradePhaseRows({
       phaseKind: 'create-order', phaseId: 'tx1-create-open', phaseLabel: 'TX1 · 创建开仓订单',
@@ -1495,14 +1575,16 @@ function deriveMarketFlowSingle(
       checks: ['ledger', 'position'], txStep: 'TX1',
     }) : []),
     ...openExecutionRows,
+    ...middleRows,
     ...(hasPerTransactionSnapshots ? buildTradePhaseRows({
-      phaseKind: 'create-decrease-order', phaseId: 'tx3-create-close', phaseLabel: 'TX3 · 创建全平订单',
-      beforeLabel: 'afterOpen', afterLabel: 'afterCreateClose', before: openValues, after: createCloseValues, testData,
-      positionBefore: openPosition, positionAfter: createClosePosition, positionExpected: openPosition,
+      phaseKind: 'create-decrease-order', phaseId: `${closeCreateTx.toLowerCase()}-create-close`, phaseLabel: `${closeCreateTx} · 创建全平订单`,
+      beforeLabel: middleCount > 0 ? '最后中段 afterExec' : 'afterOpen', afterLabel: 'afterCreateClose',
+      before: closeBaseValues, after: createCloseValues, testData,
+      positionBefore: closeBasePosition, positionAfter: createClosePosition, positionExpected: closeBasePosition,
       positionExpectedReason: '仅创建全平订单，Keeper 尚未执行，仓位原始字段保持不变',
       positionEvent: {}, events: {}, parameters: {}, marketIndex: environment.marketIndex,
       tokenDecimals: 18, tokenSymbol: 'ETH', collateralDecimals: 6, ledgerSource: LEDGER_SOURCE,
-      checks: ['ledger', 'position'], txStep: 'TX3',
+      checks: ['ledger', 'position'], txStep: closeCreateTx,
     }) : []),
     ...closeExecutionRows,
   ];
@@ -1521,14 +1603,14 @@ function deriveMarketFlowSingle(
     ? [
       ['createOpenConservation', 'TX1', '创建开仓订单资金守恒'],
       ['executeOpenConservation', 'TX2', '执行开仓资金守恒'],
-      ['createCloseConservation', 'TX3', '创建全平订单资金守恒'],
-      ['executeCloseConservation', 'TX4', '执行全平资金守恒'],
-      ['wholeFlowConservation', 'TX4', '全流程资金守恒'],
+      ['createCloseConservation', closeCreateTx, '创建全平订单资金守恒'],
+      ['executeCloseConservation', closeExecTx, '执行全平资金守恒'],
+      ['wholeFlowConservation', closeExecTx, '全流程资金守恒'],
     ] as const
     : [
       ['openConservation', 'TX2', '开仓资金守恒（历史证据包含创建与执行）'],
-      ['closeConservation', 'TX4', '平仓资金守恒（历史证据包含创建与执行）'],
-      ['wholeFlowConservation', 'TX4', '全流程资金守恒'],
+      ['closeConservation', closeExecTx, '平仓资金守恒（历史证据包含创建与执行）'],
+      ['wholeFlowConservation', closeExecTx, '全流程资金守恒'],
     ] as const;
   const baseReconciliations: NonNullable<ScenarioResult['executionEvidence']>['reconciliations'] = [
     {
@@ -1608,7 +1690,9 @@ function deriveMarketFlowSingle(
       before: rawAndUnit(openValues[openCostsSlot], 30, 'USD'),
       after: rawAndUnit(closeValues[openCostsSlot], 30, 'USD'),
       expected: rawAndUnit(beforeValues[openCostsSlot], 30, 'USD'),
-      formula: `final ${openCostsSlot} = opened − fullCloseSizeUsd = initial；本次：${bigintValue(openValues[openCostsSlot])} − ${inputSizeUsd} = ${bigintValue(beforeValues[openCostsSlot])}`,
+      formula: middleCount > 0
+        ? `全流程各阶段 ±sizeDeltaUsd 相抵：final ${openCostsSlot} 恢复 initial ${bigintValue(beforeValues[openCostsSlot])}（含 ${middleCount} 个中段阶段）`
+        : `final ${openCostsSlot} = opened − fullCloseSizeUsd = initial；本次：${bigintValue(openValues[openCostsSlot])} − ${inputSizeUsd} = ${bigintValue(beforeValues[openCostsSlot])}`,
       basis: formulaBasis('§12.2 市场多空 PnL', `累计${directionLabel}头开仓成本全平回退`), unit: 'USD 1e30',
     },
     {
@@ -1636,7 +1720,7 @@ function deriveMarketFlowSingle(
   ]);
   const reconciliations = baseReconciliations.map((row) => row.txStep
     ? row
-    : { ...row, txStep: openOverviewIds.has(row.id) ? 'TX2' : 'TX4' }).map(withVerification);
+    : { ...row, txStep: openOverviewIds.has(row.id) ? 'TX2' : closeExecTx }).map(withVerification);
 
   const transactionsRecord = record(raw.transactions);
   const transactions = [
@@ -2511,6 +2595,8 @@ const EVIDENCE_SOURCES: Record<string, EvidenceSource> = {
   // SCN-022/024 是 runMarketFlow 的盈亏数据集（推价 ±10% 后全平），证据形状同源。
   'SCN-022': { attachmentName: 'scn-022-evidence.json', derive: deriveScn009Evidence },
   'SCN-024': { attachmentName: 'scn-024-evidence.json', derive: deriveScn009Evidence },
+  'SCN-025': { attachmentName: 'scn-025-evidence.json', derive: deriveScn009Evidence },
+  'SCN-023': { attachmentName: 'scn-023-evidence.json', derive: deriveScn009Evidence },
   'SCN-010': { attachmentName: 'scn-010-evidence.json', derive: deriveScn010Evidence },
   'SCN-070': { attachmentName: 'scn-070-evidence.json', derive: deriveScn070Evidence },
 };

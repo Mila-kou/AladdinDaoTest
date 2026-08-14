@@ -174,6 +174,7 @@ export interface Scn009Evidence {
     readonly close: Record<string, bigint | null>;
     readonly wholeFlow: Record<string, bigint | null>;
   };
+  readonly middlePhases?: readonly unknown[];
   readonly transactions: Record<string, unknown>;
   readonly events: Record<string, unknown>;
   readonly assertions: Array<{ name: string; passed: boolean; actual: unknown; expected: unknown }>;
@@ -310,6 +311,12 @@ async function sendKeeperExecution(
   const txHash = await wallet.sendTransaction({ account, chain, to, data, value });
   const txReceipt = await publicClient.waitForTransactionReceipt({ hash: txHash, timeout: 120_000 });
   return { ok: txReceipt.status === 'success', txHash, blockNumber: Number(txReceipt.blockNumber), gasUsed: txReceipt.gasUsed.toString() };
+}
+
+function decimalToRawUsdc(value: string): bigint {
+  const [whole, fraction = ''] = value.split('.');
+  if (fraction.length > 6) throw new Error(`USDC 金额 ${value} 小数位超过 6`);
+  return BigInt(`${whole}${fraction.padEnd(6, '0')}`);
 }
 
 function requireValue<T>(value: T | null | undefined, message: string): T {
@@ -555,11 +562,24 @@ function describeLedgerDrift(drift: Record<string, bigint | null>): string {
   return moved.length === 0 ? '无变动' : moved.map(([key, value]) => `${key}:${value}`).join('，');
 }
 
+export interface MarketFlowMiddlePhase {
+  readonly kind: 'increase' | 'decrease';
+  readonly label: string;
+  /** increase：追加的抵押（十进制 USDC）；缺省 '10' */
+  readonly collateralUsdc?: string;
+  /** increase：追加规模（USD 1e30 raw）；缺省 50e30 */
+  readonly sizeUsdRaw?: bigint;
+  /** decrease：按当前仓位规模的百分比部分平仓（1-99） */
+  readonly percentOfPosition?: number;
+}
+
 export interface MarketFlowOptions {
   readonly scenarioId: string;
   readonly isLong: boolean;
-  /** 盈亏构造：开仓后、平仓前把 Index 价格推动 ±N%（feed+时间戳+STABLE_PRICE 三件套，traps §11）。 */
+  /** 盈亏构造：开仓后（中段阶段前）把 Index 价格推动 ±N%（feed+时间戳+STABLE_PRICE 三件套，traps §11）。 */
   readonly priceMovePercent?: number;
+  /** 中段阶段（加仓/部分平），按序执行于开仓与最终全平之间；证据落 middlePhases 数组。 */
+  readonly middlePhases?: readonly MarketFlowMiddlePhase[];
 }
 
 export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence> {
@@ -776,6 +796,174 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
     );
   }
 
+  // 中段阶段（加仓 / 部分平）：每阶段完整走 创建→执行→钉块快照→纯净度→参数快照→事件，
+  // 证据落 middlePhases 数组；最终全平的窗口基准移到最后一个中段快照。
+  interface MiddlePhaseRecord {
+    readonly kind: 'increase' | 'decrease';
+    readonly label: string;
+    readonly sizeUsdRaw: string;
+    readonly marginRaw: string;
+    readonly orderKey: string;
+    readonly snapshots: { afterCreate: LegacySnapshot; execBefore: LegacySnapshot; afterExec: LegacySnapshot };
+    readonly deltas: { create: Record<string, bigint | null>; execute: Record<string, bigint | null> };
+    readonly conservation: { create: unknown; execute: unknown };
+    readonly events: Record<string, unknown>;
+    readonly parameters: unknown;
+    readonly transactions: Record<string, unknown>;
+  }
+  const middlePhaseRecords: MiddlePhaseRecord[] = [];
+  let flowCursor = afterOpen;
+  let currentPosition = openedPosition;
+  for (const [middleIndex, phase] of (flow.middlePhases ?? []).entries()) {
+    const phaseTag = `中段${middleIndex + 1}·${phase.label}`;
+    const isIncreasePhase = phase.kind === 'increase';
+    const phaseMargin = isIncreasePhase ? decimalToRawUsdc(phase.collateralUsdc ?? '10') : 0n;
+    const phaseSizeUsd = isIncreasePhase
+      ? (phase.sizeUsdRaw ?? SIZE_USD)
+      : currentPosition.sizeInUsd * BigInt(phase.percentOfPosition ?? 50) / 100n;
+    const phaseOrder = await broadcaster.send({
+      ...(isIncreasePhase
+        ? deps.buildIncreaseMulticall({
+          exchangeRouter: deployment.addresses.exchangeRouter,
+          orderVault: deployment.addresses.orderVault,
+          collateralToken: deployment.addresses.usdc,
+          account: runtime.testAccount,
+          marketIndex,
+          isLong,
+          sizeDeltaUsd: phaseSizeUsd,
+          collateral: phaseMargin,
+          executionFee: EXECUTION_FEE,
+        })
+        : deps.buildDecreaseOrder({
+          exchangeRouter: deployment.addresses.exchangeRouter,
+          orderVault: deployment.addresses.orderVault,
+          account: runtime.testAccount,
+          marketIndex,
+          isLong,
+          sizeDeltaUsd: phaseSizeUsd,
+          collateralDelta: 0n,
+          executionFee: EXECUTION_FEE,
+        })),
+      from: runtime.testAccount,
+    });
+    check(assertions, `${phaseTag}：创建交易成功`, phaseOrder.ok, phaseOrder.error ?? phaseOrder.txHash, 'success');
+    const phaseOrderKey = requireValue(phaseOrder.orderKey, `${phaseTag}：交易未解出 orderKey`);
+    const phaseAfterCreate = await takeSnapshot(deps, rpc, deployment, ledgerContext, phaseOrder.blockNumber);
+    check(assertions, `${phaseTag}：afterCreate 账本无缺失读数`, phaseAfterCreate.errors.length === 0, phaseAfterCreate.errors, []);
+    if (inlineKeeper) {
+      const providers = await inlineOracleProviders(runtime, deployment, mockResource!.token!.address);
+      const execution = await sendKeeperExecution(runtime, rpc, buildInlineExecuteOrder(
+        deps, deployment, phaseOrderKey, mockResource!.token!.address, providers,
+      ));
+      check(assertions, `${phaseTag}：Inline Keeper 执行交易成功`, execution.ok, execution.txHash, 'success');
+    }
+    const phaseSettled = inlineKeeper
+      ? { outcome: !(await deps.orderIsPending(rpc, {
+        dataStore: deployment.addresses.dataStore, orderListKey: deps.orderListKey, orderKey: phaseOrderKey,
+      })) ? 'settled' : 'pending' }
+      : await deps.waitForExecution(
+        async () => !(await deps.orderIsPending(rpc, {
+          dataStore: deployment.addresses.dataStore,
+          orderListKey: deps.orderListKey,
+          orderKey: phaseOrderKey,
+        })),
+        { timeoutMs: 300_000, pollMs: 2_000 },
+      );
+    if (phaseSettled.outcome !== 'settled') throw new Error(`${phaseTag}：订单仍在挂单态`);
+    const phaseLocated = await locateOrderExecution(deps, rpc, deployment, phaseOrderKey, phaseOrder.blockNumber);
+    const phaseExecBlock = phaseLocated.blockNumber;
+    const phaseExecBefore = phaseExecBlock > phaseOrder.blockNumber
+      ? await takeSnapshot(deps, rpc, deployment, ledgerContext, phaseExecBlock - 1)
+      : phaseAfterCreate;
+    check(assertions, `${phaseTag}：execBefore 账本无缺失读数`, phaseExecBefore.errors.length === 0, phaseExecBefore.errors, []);
+    const phaseWindowDrift = ledgerDiff(phaseAfterCreate, phaseExecBefore);
+    check(
+      assertions,
+      `${phaseTag}：执行窗口无第三方账本变动`,
+      ledgerDriftIsZero(phaseWindowDrift),
+      describeLedgerDrift(phaseWindowDrift),
+      '全部账本槽位 Δ = 0',
+    );
+    const phaseAfterExec = await takeSnapshot(deps, rpc, deployment, ledgerContext, phaseExecBlock);
+    check(assertions, `${phaseTag}：afterExec 账本无缺失读数`, phaseAfterExec.errors.length === 0, phaseAfterExec.errors, []);
+    const phaseParameters = await readTradeParameterSnapshot({
+      rpcUrl: runtime.rpcUrl,
+      timeoutMs: runtime.requestTimeoutMs,
+      dataStore: deployment.addresses.dataStore,
+      referralStorage: deployment.addresses.referralStorage,
+      marketIndex,
+      account: runtime.testAccount,
+      blockNumber: phaseExecBlock,
+    });
+    const phaseEvents = await deps.fetchExecutionEvents(context, {
+      fromBlock: phaseOrder.blockNumber,
+      toBlock: phaseExecBlock,
+      orderKey: phaseOrderKey,
+      extraNames: [isIncreasePhase ? 'PositionIncrease' : 'PositionDecrease'],
+    });
+    const [phaseCreateTx, phaseCreateReceipt, phaseExecuteTx, phaseExecuteReceipt] = await Promise.all([
+      transaction(rpc, phaseOrder.txHash), receipt(rpc, phaseOrder.txHash),
+      transaction(rpc, phaseLocated.txHash), receipt(rpc, phaseLocated.txHash),
+    ]);
+    const phaseCreateDelta = ledgerDiff(flowCursor, phaseAfterCreate);
+    const phaseExecuteDelta = ledgerDiff(phaseExecBefore, phaseAfterExec);
+    const phaseCreateConservation = checkLedgerConservation(phaseCreateDelta);
+    const phaseExecuteConservation = checkLedgerConservation(phaseExecuteDelta);
+    check(
+      assertions,
+      `${phaseTag}：创建阶段五方守恒 ΣΔ = 0`,
+      phaseCreateConservation.status === 'PASS',
+      `status=${phaseCreateConservation.status}，ΣΔ=${phaseCreateConservation.sum ?? 'null'}`,
+      'status=PASS 且 ΣΔ=0',
+    );
+    check(
+      assertions,
+      `${phaseTag}：执行阶段五方守恒 ΣΔ = 0`,
+      phaseExecuteConservation.status === 'PASS',
+      `status=${phaseExecuteConservation.status}，ΣΔ=${phaseExecuteConservation.sum ?? 'null'}`,
+      'status=PASS 且 ΣΔ=0',
+    );
+    const phasePosition = positionOf(phaseAfterExec);
+    if (isIncreasePhase) {
+      const expectedPhaseSize = currentPosition.sizeInUsd + phaseSizeUsd;
+      check(
+        assertions,
+        `${phaseTag}：加仓后规模 = 原规模 + 增量`,
+        phasePosition !== undefined && phasePosition.sizeInUsd === expectedPhaseSize,
+        phasePosition?.sizeInUsd,
+        expectedPhaseSize,
+      );
+      currentPosition = requireValue(phasePosition, `${phaseTag}：加仓后仓位不存在`);
+    } else {
+      const expectedPhaseSize = currentPosition.sizeInUsd - phaseSizeUsd;
+      check(
+        assertions,
+        `${phaseTag}：部分平后规模 = 原规模 − 减量`,
+        phasePosition !== undefined && phasePosition.sizeInUsd === expectedPhaseSize,
+        phasePosition?.sizeInUsd,
+        expectedPhaseSize,
+      );
+      currentPosition = requireValue(phasePosition, `${phaseTag}：部分平后仓位不存在（应保留剩余仓位）`);
+    }
+    middlePhaseRecords.push({
+      kind: phase.kind,
+      label: phase.label,
+      sizeUsdRaw: phaseSizeUsd.toString(),
+      marginRaw: phaseMargin.toString(),
+      orderKey: phaseOrderKey,
+      snapshots: { afterCreate: phaseAfterCreate, execBefore: phaseExecBefore, afterExec: phaseAfterExec },
+      deltas: { create: phaseCreateDelta, execute: phaseExecuteDelta },
+      conservation: { create: phaseCreateConservation, execute: phaseExecuteConservation },
+      events: phaseEvents,
+      parameters: phaseParameters,
+      transactions: {
+        create: { ...phaseOrder, transaction: phaseCreateTx, receipt: phaseCreateReceipt },
+        execute: { event: phaseLocated, transaction: phaseExecuteTx, receipt: phaseExecuteReceipt },
+      },
+    });
+    flowCursor = phaseAfterExec;
+  }
+
   const close = await broadcaster.send({
     ...deps.buildDecreaseOrder({
       exchangeRouter: deployment.addresses.exchangeRouter,
@@ -783,7 +971,7 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
       account: runtime.testAccount,
       marketIndex,
       isLong,
-      sizeDeltaUsd: openedPosition.sizeInUsd,
+      sizeDeltaUsd: currentPosition.sizeInUsd,
       collateralDelta: 0n,
       executionFee: EXECUTION_FEE,
     }),
@@ -949,7 +1137,7 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
   const createOpenDelta = ledgerDiff(before, afterCreateOpen);
   // 执行步 Δ 以 execBlock−1 为基准（traps §4）；创建块 → execBlock−1 的间隙已由窗口纯净度断言保证为零变动。
   const executeOpenDelta = ledgerDiff(openExecBefore, afterOpen);
-  const createCloseDelta = ledgerDiff(afterOpen, afterCreateClose);
+  const createCloseDelta = ledgerDiff(flowCursor, afterCreateClose);
   const executeCloseDelta = ledgerDiff(closeExecBefore, afterClose);
   const openDelta = ledgerDiff(before, afterOpen);
   const closeDelta = ledgerDiff(afterOpen, afterClose);
@@ -1032,9 +1220,11 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
       sizeUsd: '50',
       executionFeeEth: '0.00002',
       isLong,
+      closeSizeUsdRaw: currentPosition.sizeInUsd.toString(),
     },
     parameters: { open: openParameterSnapshot, close: closeParameterSnapshot },
     snapshots: { before, afterCreateOpen, openExecBefore, afterOpen, afterCreateClose, closeExecBefore, afterClose },
+    middlePhases: middlePhaseRecords,
     deltas: {
       createOpen: createOpenDelta,
       executeOpen: executeOpenDelta,
@@ -1077,6 +1267,7 @@ export interface MarketFlowDataset {
   readonly label: string;
   readonly isLong: boolean;
   readonly priceMovePercent?: number;
+  readonly middlePhases?: readonly MarketFlowMiddlePhase[];
 }
 
 export interface MarketFlowMatrixEvidence {
@@ -1121,6 +1312,7 @@ export async function runMarketFlowMatrix(
         scenarioId: `${input.scenarioId}/${dataset.datasetId}`,
         isLong: dataset.isLong,
         ...(dataset.priceMovePercent !== undefined ? { priceMovePercent: dataset.priceMovePercent } : {}),
+        ...(dataset.middlePhases !== undefined ? { middlePhases: dataset.middlePhases } : {}),
       });
       assertionCount += evidence.assertions.length;
       results.push({

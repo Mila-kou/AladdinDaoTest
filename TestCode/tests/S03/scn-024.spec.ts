@@ -3,87 +3,69 @@ import { writeFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
 import { loadRuntimeConfig } from '../../src/config/runtime.js';
-import { runMarketFlow, stringifyEvidence, type Scn009Evidence } from '../../src/scenarios/scn-009-runner.js';
-
-async function rawRpc(url: string, method: string, params: readonly unknown[] = []): Promise<unknown> {
-  const body = await fetch(url, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
-  }).then((response) => response.json()) as {
-    result?: unknown;
-    error?: { message?: string };
-  };
-  if (body.error) throw new Error(`${method}: ${body.error.message ?? 'unknown RPC error'}`);
-  return body.result;
-}
+import { runMarketFlowMatrix, stringifyEvidence, type MarketFlowMatrixEvidence } from '../../src/scenarios/scn-009-runner.js';
 
 test.describe('S03 仓位管理与退出', () => {
-  test('SCN-024 紧急情况下全部平仓｜亏损全平 @p0 @tx @serial', async ({}, testInfo) => {
-    // 亏损全平数据集（06-策略下单矩阵 · long-close-loss）：开多 → Index 价 −10%（三件套推价）→ 紧急全平。
-    // 支付瀑布亏损路径（negativePnl ⌈÷colPrice.min⌉、PositionVault 付 LPVault）首条真实链路实证。
-    test.setTimeout(360_000);
+  test('SCN-024 紧急情况下全部平仓｜亏损全平双向数据集 @p0 @tx @serial', async ({}, testInfo) => {
+    // 亏损全平双向数据集（06-策略下单矩阵 · long/short-close-loss）：
+    // 多头 −10% / 空头 +10% 推价后紧急全平——亏损折算 ⌈÷colPrice.min⌉ 与退款路径双向实证。
+    // 数据集矩阵模式：每个数据集独立 evm_snapshot/revert（runner 内部管理，
+    // SCN-070 模式）；报告按数据集独立保留结果，txStep 跨数据集顺延编号。
+    test.setTimeout(720_000);
     test.skip(testInfo.project.name !== 'tx-fork', 'SCN-024 在 tx-fork 执行（06-策略下单矩阵）');
     const runtime = loadRuntimeConfig();
-    const persistForkState = process.env.E2E_PERSIST_FORK_STATE === 'true';
-    if (persistForkState) {
+    if (process.env.E2E_PERSIST_FORK_STATE === 'true') {
       expect(runtime.signingMode, '持久证据运行必须使用私钥签名').toBe('private-key');
     }
-    const snapshotId = persistForkState
-      ? undefined
-      : await rawRpc(runtime.adminRpcUrl ?? runtime.rpcUrl, 'evm_snapshot');
-    let evidence: Scn009Evidence | undefined;
 
+    let evidence: MarketFlowMatrixEvidence | undefined;
     try {
-      try {
-        evidence = await runMarketFlow(runtime, { scenarioId: 'SCN-024', isLong: true, priceMovePercent: -10 });
-      } catch (error) {
-        if (runtime.keeperMode === 'service') {
-          testInfo.annotations.push({
-            type: 'blocked',
-            description: `Service Keeper 专项未就绪：${error instanceof Error ? error.message : String(error)}`,
-          });
-        }
-        throw error;
+      evidence = await runMarketFlowMatrix(runtime, {
+        scenarioId: 'SCN-024',
+        datasets: [
+          { datasetId: 'long-close-loss', label: '开多 −10% 亏损全平', isLong: true, priceMovePercent: -10 },
+          { datasetId: 'short-close-loss', label: '开空 +10% 亏损全平', isLong: false, priceMovePercent: 10 },
+        ],
+      });
+    } catch (error) {
+      if (runtime.keeperMode === 'service') {
+        testInfo.annotations.push({
+          type: 'blocked',
+          description: `Service Keeper 专项未就绪：${error instanceof Error ? error.message : String(error)}`,
+        });
       }
-      const evidencePath = testInfo.outputPath('scn-024-evidence.json');
-      await writeFile(evidencePath, stringifyEvidence(evidence), 'utf8');
-      await testInfo.attach('scn-024-evidence.json', {
-        path: evidencePath,
-        contentType: 'application/json',
-      });
-
-      const txPath = testInfo.outputPath('tx-and-receipt.json');
-      await writeFile(txPath, stringifyEvidence(evidence.transactions), 'utf8');
-      await testInfo.attach('tx-and-receipt.json', {
-        path: txPath,
-        contentType: 'application/json',
-      });
-
-      const ledgerPath = testInfo.outputPath('reader-ledger-before-after.json');
-      await writeFile(ledgerPath, stringifyEvidence({
-        snapshots: evidence.snapshots,
-        deltas: evidence.deltas,
-        observations: evidence.observations,
-      }), 'utf8');
-      await testInfo.attach('reader-ledger-before-after.json', {
-        path: ledgerPath,
-        contentType: 'application/json',
-      });
-
-      testInfo.annotations.push({
-        type: 'coverage-gap',
-        description: '自动化范围是 RPC 签名订单、Inline Keeper 与链上核对；页面加载和浏览器钱包操作由手工核对用例覆盖。',
-      });
-      testInfo.annotations.push({
-        type: 'check-result',
-        description: `链上 ${evidence.assertions.length} 项核对通过（开多 → 推价 −10% → 亏损紧急全平：亏损折算 ⌈÷colPrice.min⌉ 与退款路径逐位核对）；已记录用户签名开仓/平仓、Keeper 签名执行及完整回执。`,
-      });
-    } finally {
-      if (snapshotId !== undefined) {
-        const reverted = await rawRpc(runtime.adminRpcUrl ?? runtime.rpcUrl, 'evm_revert', [snapshotId]);
-        expect(reverted).toBe(true);
-      }
+      throw error;
     }
+    expect(evidence.summary.total, '数据集应全部执行').toBe(2);
+    expect(evidence.summary.passed, '数据集应全部通过').toBe(2);
+
+    const evidencePath = testInfo.outputPath('scn-024-evidence.json');
+    await writeFile(evidencePath, stringifyEvidence(evidence), 'utf8');
+    await testInfo.attach('scn-024-evidence.json', { path: evidencePath, contentType: 'application/json' });
+
+    const txPath = testInfo.outputPath('tx-and-receipt.json');
+    await writeFile(txPath, stringifyEvidence(Object.fromEntries(
+      evidence.datasets.map((item) => [item.datasetId, item.evidence.transactions]),
+    )), 'utf8');
+    await testInfo.attach('tx-and-receipt.json', { path: txPath, contentType: 'application/json' });
+
+    const ledgerPath = testInfo.outputPath('reader-ledger-before-after.json');
+    await writeFile(ledgerPath, stringifyEvidence(Object.fromEntries(
+      evidence.datasets.map((item) => [item.datasetId, {
+        snapshots: item.evidence.snapshots,
+        deltas: item.evidence.deltas,
+        observations: item.evidence.observations,
+      }]),
+    )), 'utf8');
+    await testInfo.attach('reader-ledger-before-after.json', { path: ledgerPath, contentType: 'application/json' });
+
+    testInfo.annotations.push({
+      type: 'coverage-gap',
+      description: '自动化范围是 RPC 签名订单、Inline Keeper 与链上核对；页面加载和浏览器钱包操作由手工核对用例覆盖。',
+    });
+    testInfo.annotations.push({
+      type: 'check-result',
+      description: `双数据集（${evidence.datasets.map((item) => item.datasetId).join('、')}）共 ${evidence.summary.assertions} 项链上核对通过；亏损折算与退款路径双向逐位核对。`,
+    });
   });
 });

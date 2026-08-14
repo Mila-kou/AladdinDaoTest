@@ -1071,6 +1071,91 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
   };
 }
 
+export interface MarketFlowDataset {
+  /** 数据集 ID（06-矩阵规范：<方向>-<动作>[-<盈亏>]，如 long-close-profit） */
+  readonly datasetId: string;
+  readonly label: string;
+  readonly isLong: boolean;
+  readonly priceMovePercent?: number;
+}
+
+export interface MarketFlowMatrixEvidence {
+  readonly scenarioId: string;
+  readonly runMode: Scn009Evidence['runMode'];
+  readonly coverage: Scn009Evidence['coverage'];
+  readonly environment: Record<string, unknown>;
+  readonly datasets: Array<{
+    readonly datasetId: string;
+    readonly label: string;
+    readonly options: { readonly isLong: boolean; readonly priceMovePercent: number };
+    readonly evidence: Scn009Evidence;
+  }>;
+  readonly summary: { readonly total: number; readonly passed: number; readonly assertions: number };
+}
+
+async function adminRawRpc(url: string, method: string, params: readonly unknown[] = []): Promise<unknown> {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+  });
+  const body = await response.json() as { result?: unknown; error?: { message?: string } };
+  if (body.error) throw new Error(`${method}: ${body.error.message ?? 'unknown RPC error'}`);
+  return body.result;
+}
+
+// 数据集数组模式（SCN-070 的多数据集单 spec 移植）：每个数据集独立 evm_snapshot/revert，
+// 失败带数据集前缀抛出；报告层按数据集独立保留结果（txStep 跨数据集顺延编号）。
+export async function runMarketFlowMatrix(
+  runtime: RuntimeConfig,
+  input: { scenarioId: string; datasets: readonly MarketFlowDataset[] },
+): Promise<MarketFlowMatrixEvidence> {
+  const adminUrl = runtime.adminRpcUrl ?? runtime.rpcUrl;
+  const persist = process.env.E2E_PERSIST_FORK_STATE === 'true';
+  const results: MarketFlowMatrixEvidence['datasets'] = [];
+  let assertionCount = 0;
+  for (const dataset of input.datasets) {
+    const snapshotId = persist ? undefined : await adminRawRpc(adminUrl, 'evm_snapshot');
+    try {
+      const evidence = await runMarketFlow(runtime, {
+        scenarioId: `${input.scenarioId}/${dataset.datasetId}`,
+        isLong: dataset.isLong,
+        ...(dataset.priceMovePercent !== undefined ? { priceMovePercent: dataset.priceMovePercent } : {}),
+      });
+      assertionCount += evidence.assertions.length;
+      results.push({
+        datasetId: dataset.datasetId,
+        label: dataset.label,
+        options: { isLong: dataset.isLong, priceMovePercent: dataset.priceMovePercent ?? 0 },
+        evidence,
+      });
+    } catch (error) {
+      throw new Error(`${input.scenarioId}/${dataset.datasetId}：${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      if (snapshotId !== undefined) {
+        const reverted = await adminRawRpc(adminUrl, 'evm_revert', [snapshotId]);
+        if (reverted !== true) throw new Error(`${input.scenarioId}/${dataset.datasetId}：evm_revert 失败`);
+      }
+    }
+  }
+  const first = results[0]?.evidence;
+  return {
+    scenarioId: input.scenarioId,
+    runMode: first?.runMode ?? (runtime.signingMode === 'private-key' ? 'tx-fork-private-key' : 'tx-fork-impersonation'),
+    coverage: {
+      executed: [
+        `数据集矩阵：${results.map((item) => item.datasetId).join('、')}`,
+        ...(first?.coverage.executed ?? []),
+      ],
+      pending: first?.coverage.pending ?? [],
+      completeScenario: false,
+    },
+    environment: first?.environment ?? {},
+    datasets: results,
+    summary: { total: results.length, passed: results.length, assertions: assertionCount },
+  };
+}
+
 export function stringifyEvidence(value: unknown): string {
   return `${JSON.stringify(value, (_key, item: unknown) =>
     typeof item === 'bigint' ? item.toString() : item, 2)}\n`;

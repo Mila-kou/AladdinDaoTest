@@ -1379,7 +1379,7 @@ function buildTransaction(
   };
 }
 
-function deriveScn009Evidence(
+function deriveMarketFlowSingle(
   raw: JsonRecord,
   sourcePath: string,
 ): NonNullable<ScenarioResult['executionEvidence']> {
@@ -2431,6 +2431,70 @@ function deriveScn070Evidence(
     sourcePath,
     formulaSourcePath: ORDER_FLOW_SOURCE,
     reconciliations,
+    transactions,
+  };
+}
+
+// runMarketFlow 证据分发：单流形状直接派生；数据集数组形状（runMarketFlowMatrix）
+// 逐数据集派生后合并——row id 加数据集前缀、txStep 跨数据集顺延编号（TX1..TX4、TX5..TX8……，
+// 与 transactions 数组的全局序号一致），分组前缀 DSn 便于执行详情页按数据集筛选。
+function deriveScn009Evidence(
+  raw: JsonRecord,
+  sourcePath: string,
+): NonNullable<ScenarioResult['executionEvidence']> {
+  const datasets = Array.isArray(raw.datasets) ? raw.datasets : undefined;
+  if (!datasets || datasets.length === 0) return deriveMarketFlowSingle(raw, sourcePath);
+
+  const merged: NonNullable<ScenarioResult['executionEvidence']>['reconciliations'] = [];
+  const transactions: NonNullable<ScenarioResult['executionEvidence']>['transactions'] = [];
+  let allPass = true;
+  let txOffset = 0;
+  let mode = '';
+  let persistent = false;
+  let forkDisplayName: string | undefined;
+  const coverageNotes: string[] = [];
+  datasets.forEach((entry, index) => {
+    const item = record(entry);
+    const datasetId = stringValue(item.datasetId, `dataset-${index + 1}`);
+    const label = stringValue(item.label, datasetId);
+    const derived = deriveMarketFlowSingle(record(item.evidence), sourcePath);
+    if (derived.executionStatus !== 'PASS') allPass = false;
+    if (index === 0) {
+      mode = derived.mode;
+      persistent = derived.persistent;
+      forkDisplayName = derived.forkDisplayName;
+    }
+    const prefix = `DS${index + 1}`;
+    const stepMap = new Map<string, string>();
+    derived.transactions.forEach((tx, txIndex) => {
+      stepMap.set(`TX${txIndex + 1}`, `TX${txOffset + txIndex + 1}`);
+      transactions.push({ ...tx, action: `【${datasetId}】${tx.action}` });
+    });
+    derived.reconciliations.forEach((row) => {
+      // 分组文本里的 TXn 一并重映射，与 txStep 顺延编号保持一致
+      const remappedGroup = row.group.replace(/TX(\d+)/g, (matched) => stepMap.get(matched) ?? matched);
+      merged.push({
+        ...row,
+        id: `${datasetId}-${row.id}`,
+        group: `${prefix} ${label} · ${remappedGroup}`,
+        ...(row.txStep ? { txStep: stepMap.get(row.txStep) ?? row.txStep } : {}),
+      });
+    });
+    txOffset += derived.transactions.length;
+    coverageNotes.push(`${prefix} ${datasetId}：${derived.executionStatus}`);
+  });
+  const coverage = record(raw.coverage);
+  const pending = Array.isArray(coverage.pending) ? coverage.pending.map((item) => stringValue(item)) : [];
+  return {
+    mode,
+    persistent,
+    executionStatus: allPass ? 'PASS' : 'FAIL',
+    coverageStatus: 'PARTIAL',
+    coverageNote: `数据集矩阵（${datasets.length} 组）：${coverageNotes.join('；')}${pending.length ? `。尚未自动化：${pending.join('；')}` : ''}`,
+    ...(forkDisplayName ? { forkDisplayName } : {}),
+    sourcePath,
+    formulaSourcePath: ORDER_FLOW_SOURCE,
+    reconciliations: merged,
     transactions,
   };
 }

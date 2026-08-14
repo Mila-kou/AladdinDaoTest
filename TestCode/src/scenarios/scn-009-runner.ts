@@ -142,6 +142,7 @@ interface LegacyDependencies {
     },
   ) => Promise<Record<string, DecodedEvent | DecodedEvent[] | null>>;
   readonly calldata: (signature: string, params: unknown[]) => `0x${string}`;
+  readonly createOrderSignature: string;
 }
 
 export interface Scn009Evidence {
@@ -217,6 +218,7 @@ async function loadLegacyDependencies(): Promise<LegacyDependencies> {
       importFile<Pick<LegacyDependencies, 'fetchEmitterEvents'>>(legacyPath('integration/lib/events.mjs')),
       importFile<Pick<LegacyDependencies, 'fetchExecutionEvents'>>(legacyPath('integration/lib/scenario.mjs')),
     ]);
+  const flowsModule = await importFile<{ CREATE_ORDER_SIG: string }>(legacyPath('tool/onchain-tx/lib/flows.mjs'));
 
   return {
     ...rpcModule,
@@ -227,6 +229,7 @@ async function loadLegacyDependencies(): Promise<LegacyDependencies> {
     ...scenarioModule,
     ...castModule,
     orderListKey: keysModule.BASE.ORDER_LIST,
+    createOrderSignature: flowsModule.CREATE_ORDER_SIG,
   };
 }
 
@@ -262,6 +265,42 @@ function buildInlineExecuteOrder(
       }),
     ]),
     value: 0n,
+  };
+}
+
+const TRIGGER_ZERO_ADDRESS = `0x${'0'.repeat(40)}`;
+const TRIGGER_ZERO_BYTES32 = `0x${'0'.repeat(64)}`;
+const MAX_UINT256 = 2n ** 256n - 1n;
+
+// 触发单创建（SCN-010 buildLimitIncreaseMulticall 的通用化）：numbers 第 4 槽带 triggerPrice（内部价刻度），
+// acceptablePrice 按买/卖侧放开（买侧 MAX / 卖侧 0）；increase 三段 multicall，decrease 两段。
+function buildTriggerOrderMulticall(
+  deps: Pick<LegacyDependencies, 'calldata' | 'createOrderSignature'>,
+  input: {
+    exchangeRouter: string; orderVault: string; collateralToken: string; account: string;
+    marketIndex: number; isLong: boolean; isIncrease: boolean; orderType: number;
+    sizeDeltaUsd: bigint; collateral: bigint; triggerPriceInternal: bigint; executionFee: bigint;
+  },
+): { to: string; data: `0x${string}`; value: string; label: string } {
+  const acceptable = input.isLong === input.isIncrease ? MAX_UINT256 : 0n;
+  const addresses = `(${input.account},${input.account},${TRIGGER_ZERO_ADDRESS},${TRIGGER_ZERO_ADDRESS})`;
+  const numbers = `(${input.marketIndex},${input.sizeDeltaUsd},${input.collateral},${input.triggerPriceInternal},${acceptable},${input.executionFee},0,0,0)`;
+  const params = `(${addresses},${numbers},${input.orderType},${input.isLong},false,true,${TRIGGER_ZERO_BYTES32},[])`;
+  const parts = input.isIncrease
+    ? [
+      deps.calldata('sendWnt(address,uint256)', [input.orderVault, input.executionFee]),
+      deps.calldata('sendTokens(address,address,uint256)', [input.collateralToken, input.orderVault, input.collateral]),
+      deps.calldata(deps.createOrderSignature, [params]),
+    ]
+    : [
+      deps.calldata('sendWnt(address,uint256)', [input.orderVault, input.executionFee]),
+      deps.calldata(deps.createOrderSignature, [params]),
+    ];
+  return {
+    to: input.exchangeRouter,
+    data: deps.calldata('multicall(bytes[])', [`[${parts.join(',')}]`]),
+    value: input.executionFee.toString(),
+    label: `${ORDER_TYPE_NAMES[input.orderType] ?? input.orderType} trigger=${input.triggerPriceInternal}`,
   };
 }
 
@@ -580,7 +619,21 @@ export interface MarketFlowOptions {
   readonly priceMovePercent?: number;
   /** 中段阶段（加仓/部分平），按序执行于开仓与最终全平之间；证据落 middlePhases 数组。 */
   readonly middlePhases?: readonly MarketFlowMiddlePhase[];
+  /** 触发式开仓（LimitIncrease=1 / StopIncrease=6）：挂单 → 推价至触发 → Keeper 执行。 */
+  readonly openTrigger?: TriggerSpec;
+  /** 触发式全平（LimitDecrease/TP=3 / StopLossDecrease=4）：挂单 → 推价至触发 → Keeper 执行。 */
+  readonly closeTrigger?: TriggerSpec;
 }
+
+export interface TriggerSpec {
+  readonly orderType: 1 | 3 | 4 | 6;
+  /** 触发价 = 当前 feed ×(100+offset)/100；推价越过触发价 0.1%（闸门等号语义交给 S07 边界矩阵） */
+  readonly offsetPercent: number;
+}
+
+const ORDER_TYPE_NAMES: Record<number, string> = {
+  1: 'LimitIncrease', 3: 'LimitDecrease(TP)', 4: 'StopLossDecrease', 6: 'StopIncrease',
+};
 
 export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence> {
   return runMarketFlow(runtime, { scenarioId: 'SCN-009', isLong: true });
@@ -661,18 +714,44 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
   check(assertions, 'before 账本无缺失读数', before.errors.length === 0, before.errors, []);
   check(assertions, `执行前无${directionLabel}仓`, !positionOf(before), Boolean(positionOf(before)), false);
 
+  // 触发式开仓：先按当前 feed 计算触发价（内部价刻度 = feedRaw × 10^(12−feedDecimals)）
+  let openTriggerContext: { feedRaw: bigint; internal: bigint; feedDecimals: number } | undefined;
+  if (flow.openTrigger) {
+    if (!mockResource?.oracle?.address || !mockResource.token?.address) {
+      throw new Error('触发式开仓需要 mock-market 模式（可控 Index Oracle）');
+    }
+    const state = await readMockOracleState(runtime.rpcUrl, mockResource.oracle.address, runtime.requestTimeoutMs);
+    const feedRaw = state.answer * BigInt(100 + flow.openTrigger.offsetPercent) / 100n;
+    const internal = feedRaw * 10n ** BigInt(12 - state.decimals);
+    openTriggerContext = { feedRaw, internal, feedDecimals: state.decimals };
+  }
   const open = await broadcaster.send({
-    ...deps.buildIncreaseMulticall({
-      exchangeRouter: deployment.addresses.exchangeRouter,
-      orderVault: deployment.addresses.orderVault,
-      collateralToken: deployment.addresses.usdc,
-      account: runtime.testAccount,
-      marketIndex,
-      isLong,
-      sizeDeltaUsd: SIZE_USD,
-      collateral: COLLATERAL,
-      executionFee: EXECUTION_FEE,
-    }),
+    ...(flow.openTrigger && openTriggerContext
+      ? buildTriggerOrderMulticall(deps, {
+        exchangeRouter: deployment.addresses.exchangeRouter,
+        orderVault: deployment.addresses.orderVault,
+        collateralToken: deployment.addresses.usdc,
+        account: runtime.testAccount,
+        marketIndex,
+        isLong,
+        isIncrease: true,
+        orderType: flow.openTrigger.orderType,
+        sizeDeltaUsd: SIZE_USD,
+        collateral: COLLATERAL,
+        triggerPriceInternal: openTriggerContext.internal,
+        executionFee: EXECUTION_FEE,
+      })
+      : deps.buildIncreaseMulticall({
+        exchangeRouter: deployment.addresses.exchangeRouter,
+        orderVault: deployment.addresses.orderVault,
+        collateralToken: deployment.addresses.usdc,
+        account: runtime.testAccount,
+        marketIndex,
+        isLong,
+        sizeDeltaUsd: SIZE_USD,
+        collateral: COLLATERAL,
+        executionFee: EXECUTION_FEE,
+      })),
     from: runtime.testAccount,
   });
   check(assertions, '开仓创建交易成功', open.ok, open.error ?? open.txHash, 'success');
@@ -680,6 +759,46 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
   // 固定读取创建交易所在区块，避免 Service Keeper 紧接着执行后丢失 TX1 的挂单态。
   const afterCreateOpen = await takeSnapshot(deps, rpc, deployment, ledgerContext, open.blockNumber);
   check(assertions, 'afterCreateOpen 账本无缺失读数', afterCreateOpen.errors.length === 0, afterCreateOpen.errors, []);
+  const openTriggerPushTransactions: Array<Record<string, unknown>> = [];
+  if (flow.openTrigger && openTriggerContext) {
+    const stillPending = await deps.orderIsPending(rpc, {
+      dataStore: deployment.addresses.dataStore, orderListKey: deps.orderListKey, orderKey: requireValue(open.orderKey, '触发单未解出 orderKey'),
+    });
+    check(
+      assertions,
+      `${ORDER_TYPE_NAMES[flow.openTrigger.orderType]}：未到触发价时订单保持挂单、仓位不存在`,
+      stillPending && !positionOf(afterCreateOpen),
+      `pending=${stillPending}，position=${Boolean(positionOf(afterCreateOpen))}`,
+      'pending=true 且 position=false',
+    );
+    // 推价越过触发价 0.1%（方向 = offset 符号）；三件套：feed + 时间戳 + STABLE_PRICE
+    const crossFeed = flow.openTrigger.offsetPercent > 0
+      ? openTriggerContext.feedRaw * 1001n / 1000n
+      : openTriggerContext.feedRaw * 999n / 1000n;
+    const crossInternal = crossFeed * 10n ** BigInt(12 - openTriggerContext.feedDecimals);
+    const pushAdmin = runtime.adminRpcUrl ?? runtime.rpcUrl;
+    const pushFrom = runtime.adminAccount ?? runtime.testAccount;
+    const pushState = await readMockOracleState(runtime.rpcUrl, mockResource!.oracle!.address, runtime.requestTimeoutMs);
+    const feedReceipt = await sendSetMockPrice({
+      adminRpcUrl: pushAdmin, from: pushFrom, oracle: mockResource!.oracle!.address,
+      priceRaw: crossFeed, timestamp: freshOracleTimestamp(pushState.latestBlockTimestamp),
+    });
+    const stableReceipt = await sendAdminTransaction({
+      adminRpcUrl: pushAdmin, from: deployment.addresses.config!, to: deployment.addresses.dataStore,
+      data: encodeDataStoreSetUint(stablePriceKey(mockResource!.token!.address), crossInternal),
+    });
+    check(
+      assertions,
+      `${ORDER_TYPE_NAMES[flow.openTrigger.orderType]}：价格已推越触发价（trigger=${openTriggerContext.internal}）`,
+      feedReceipt.status === 'success' && stableReceipt.status === 'success',
+      `feed=${feedReceipt.status}（${crossFeed}），stable=${stableReceipt.status}（${crossInternal}）`,
+      '两笔环境管理交易回执成功',
+    );
+    openTriggerPushTransactions.push(
+      { kind: 'feed', txHash: feedReceipt.txHash, priceRaw: crossFeed.toString() },
+      { kind: 'stablePrice', txHash: stableReceipt.txHash, value: crossInternal.toString() },
+    );
+  }
   if (inlineKeeper) {
     const providers = await inlineOracleProviders(runtime, deployment, mockResource!.token!.address);
     const execution = await sendKeeperExecution(runtime, rpc, buildInlineExecuteOrder(
@@ -964,23 +1083,88 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
     flowCursor = phaseAfterExec;
   }
 
+  let closeTriggerContext: { feedRaw: bigint; internal: bigint; feedDecimals: number } | undefined;
+  if (flow.closeTrigger) {
+    if (!mockResource?.oracle?.address || !mockResource.token?.address) {
+      throw new Error('触发式全平需要 mock-market 模式（可控 Index Oracle）');
+    }
+    const state = await readMockOracleState(runtime.rpcUrl, mockResource.oracle.address, runtime.requestTimeoutMs);
+    const feedRaw = state.answer * BigInt(100 + flow.closeTrigger.offsetPercent) / 100n;
+    const internal = feedRaw * 10n ** BigInt(12 - state.decimals);
+    closeTriggerContext = { feedRaw, internal, feedDecimals: state.decimals };
+  }
   const close = await broadcaster.send({
-    ...deps.buildDecreaseOrder({
-      exchangeRouter: deployment.addresses.exchangeRouter,
-      orderVault: deployment.addresses.orderVault,
-      account: runtime.testAccount,
-      marketIndex,
-      isLong,
-      sizeDeltaUsd: currentPosition.sizeInUsd,
-      collateralDelta: 0n,
-      executionFee: EXECUTION_FEE,
-    }),
+    ...(flow.closeTrigger && closeTriggerContext
+      ? buildTriggerOrderMulticall(deps, {
+        exchangeRouter: deployment.addresses.exchangeRouter,
+        orderVault: deployment.addresses.orderVault,
+        collateralToken: deployment.addresses.usdc,
+        account: runtime.testAccount,
+        marketIndex,
+        isLong,
+        isIncrease: false,
+        orderType: flow.closeTrigger.orderType,
+        sizeDeltaUsd: currentPosition.sizeInUsd,
+        collateral: 0n,
+        triggerPriceInternal: closeTriggerContext.internal,
+        executionFee: EXECUTION_FEE,
+      })
+      : deps.buildDecreaseOrder({
+        exchangeRouter: deployment.addresses.exchangeRouter,
+        orderVault: deployment.addresses.orderVault,
+        account: runtime.testAccount,
+        marketIndex,
+        isLong,
+        sizeDeltaUsd: currentPosition.sizeInUsd,
+        collateralDelta: 0n,
+        executionFee: EXECUTION_FEE,
+      })),
     from: runtime.testAccount,
   });
   check(assertions, '全平创建交易成功', close.ok, close.error ?? close.txHash, 'success');
   const closeOrderKey = requireValue(close.orderKey, '全平交易未解出 orderKey');
   const afterCreateClose = await takeSnapshot(deps, rpc, deployment, ledgerContext, close.blockNumber);
   check(assertions, 'afterCreateClose 账本无缺失读数', afterCreateClose.errors.length === 0, afterCreateClose.errors, []);
+  const closeTriggerPushTransactions: Array<Record<string, unknown>> = [];
+  if (flow.closeTrigger && closeTriggerContext) {
+    const stillPending = await deps.orderIsPending(rpc, {
+      dataStore: deployment.addresses.dataStore, orderListKey: deps.orderListKey, orderKey: requireValue(close.orderKey, '触发单未解出 orderKey'),
+    });
+    const positionIntact = positionOf(afterCreateClose);
+    check(
+      assertions,
+      `${ORDER_TYPE_NAMES[flow.closeTrigger.orderType]}：未到触发价时订单保持挂单、仓位原样保留`,
+      stillPending && positionIntact !== undefined && positionIntact.sizeInUsd === currentPosition.sizeInUsd,
+      `pending=${stillPending}，positionSize=${positionIntact?.sizeInUsd}`,
+      `pending=true 且 positionSize=${currentPosition.sizeInUsd}`,
+    );
+    const crossFeed = flow.closeTrigger.offsetPercent > 0
+      ? closeTriggerContext.feedRaw * 1001n / 1000n
+      : closeTriggerContext.feedRaw * 999n / 1000n;
+    const crossInternal = crossFeed * 10n ** BigInt(12 - closeTriggerContext.feedDecimals);
+    const pushAdmin = runtime.adminRpcUrl ?? runtime.rpcUrl;
+    const pushFrom = runtime.adminAccount ?? runtime.testAccount;
+    const pushState = await readMockOracleState(runtime.rpcUrl, mockResource!.oracle!.address, runtime.requestTimeoutMs);
+    const feedReceipt = await sendSetMockPrice({
+      adminRpcUrl: pushAdmin, from: pushFrom, oracle: mockResource!.oracle!.address,
+      priceRaw: crossFeed, timestamp: freshOracleTimestamp(pushState.latestBlockTimestamp),
+    });
+    const stableReceipt = await sendAdminTransaction({
+      adminRpcUrl: pushAdmin, from: deployment.addresses.config!, to: deployment.addresses.dataStore,
+      data: encodeDataStoreSetUint(stablePriceKey(mockResource!.token!.address), crossInternal),
+    });
+    check(
+      assertions,
+      `${ORDER_TYPE_NAMES[flow.closeTrigger.orderType]}：价格已推越触发价（trigger=${closeTriggerContext.internal}）`,
+      feedReceipt.status === 'success' && stableReceipt.status === 'success',
+      `feed=${feedReceipt.status}（${crossFeed}），stable=${stableReceipt.status}（${crossInternal}）`,
+      '两笔环境管理交易回执成功',
+    );
+    closeTriggerPushTransactions.push(
+      { kind: 'feed', txHash: feedReceipt.txHash, priceRaw: crossFeed.toString() },
+      { kind: 'stablePrice', txHash: stableReceipt.txHash, value: crossInternal.toString() },
+    );
+  }
   if (inlineKeeper) {
     const providers = await inlineOracleProviders(runtime, deployment, mockResource!.token!.address);
     const execution = await sendKeeperExecution(runtime, rpc, buildInlineExecuteOrder(
@@ -1094,6 +1278,24 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
     isLong ? 'executionPrice ≤ oracle min' : 'executionPrice ≥ oracle max',
   );
 
+  if (flow.openTrigger) {
+    check(
+      assertions,
+      `开仓事件 orderType = ${flow.openTrigger.orderType}（${ORDER_TYPE_NAMES[flow.openTrigger.orderType]}）`,
+      positionIncrease?.uint?.orderType === BigInt(flow.openTrigger.orderType),
+      positionIncrease?.uint?.orderType,
+      BigInt(flow.openTrigger.orderType),
+    );
+  }
+  if (flow.closeTrigger) {
+    check(
+      assertions,
+      `全平事件 orderType = ${flow.closeTrigger.orderType}（${ORDER_TYPE_NAMES[flow.closeTrigger.orderType]}）`,
+      positionDecrease?.uint?.orderType === BigInt(flow.closeTrigger.orderType),
+      positionDecrease?.uint?.orderType,
+      BigInt(flow.closeTrigger.orderType),
+    );
+  }
   const openExecutionEvent = requireValue(openExecution, '缺少开仓 OrderExecuted 事件');
   const closeExecutionEvent = requireValue(closeExecution, '缺少平仓 OrderExecuted 事件');
   const [openCreateTx, openCreateReceipt, openExecuteTx, openExecuteReceipt,
@@ -1221,6 +1423,14 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
       executionFeeEth: '0.00002',
       isLong,
       closeSizeUsdRaw: currentPosition.sizeInUsd.toString(),
+      ...(flow.openTrigger && openTriggerContext ? {
+        openTriggerOrderType: flow.openTrigger.orderType,
+        openTriggerPriceInternal: openTriggerContext.internal.toString(),
+      } : {}),
+      ...(flow.closeTrigger && closeTriggerContext ? {
+        closeTriggerOrderType: flow.closeTrigger.orderType,
+        closeTriggerPriceInternal: closeTriggerContext.internal.toString(),
+      } : {}),
     },
     parameters: { open: openParameterSnapshot, close: closeParameterSnapshot },
     snapshots: { before, afterCreateOpen, openExecBefore, afterOpen, afterCreateClose, closeExecBefore, afterClose },
@@ -1238,6 +1448,8 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
       // 环境管理交易：执行前的 Oracle 时间戳刷新 + 盈亏构造推价，与四笔业务交易分开记录。
       oracleRefresh,
       priceMove: priceMoveTransactions,
+      openTriggerPush: openTriggerPushTransactions,
+      closeTriggerPush: closeTriggerPushTransactions,
       createOpen: { ...open, transaction: openCreateTx, receipt: openCreateReceipt },
       executeOpen: { event: openExecutionEvent, transaction: openExecuteTx, receipt: openExecuteReceipt },
       createClose: { ...close, transaction: closeCreateTx, receipt: closeCreateReceipt },

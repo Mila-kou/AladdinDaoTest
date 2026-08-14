@@ -2597,6 +2597,14 @@ const EVIDENCE_SOURCES: Record<string, EvidenceSource> = {
   'SCN-024': { attachmentName: 'scn-024-evidence.json', derive: deriveScn009Evidence },
   'SCN-025': { attachmentName: 'scn-025-evidence.json', derive: deriveScn009Evidence },
   'SCN-023': { attachmentName: 'scn-023-evidence.json', derive: deriveScn009Evidence },
+  // 矩阵 B 触发单组（openTrigger/closeTrigger 流，证据形状同源）
+  'SCN-011': { attachmentName: 'scn-011-evidence.json', derive: deriveScn009Evidence },
+  'SCN-012': { attachmentName: 'scn-012-evidence.json', derive: deriveScn009Evidence },
+  'SCN-013': { attachmentName: 'scn-013-evidence.json', derive: deriveScn009Evidence },
+  'SCN-015': { attachmentName: 'scn-015-evidence.json', derive: deriveScn009Evidence },
+  'SCN-016': { attachmentName: 'scn-016-evidence.json', derive: deriveScn009Evidence },
+  'SCN-066': { attachmentName: 'scn-066-evidence.json', derive: deriveScn009Evidence },
+  'SCN-067': { attachmentName: 'scn-067-evidence.json', derive: deriveScn009Evidence },
   'SCN-010': { attachmentName: 'scn-010-evidence.json', derive: deriveScn010Evidence },
   'SCN-070': { attachmentName: 'scn-070-evidence.json', derive: deriveScn070Evidence },
 };

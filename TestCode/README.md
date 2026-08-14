@@ -106,6 +106,12 @@ npm run env:init:mock -- --project tx-fork --bundle mock-eth
 # 明确重建共享 USDC Oracle（会影响同 Fork 全部 Market）
 npm run env:init:mock -- --project tx-fork --bundle default-mock --force --force-shared-collateral
 
+# 多 Trader 模拟交易铺底（默认 3 个内置 noise trader × 2 单留仓；交易不做核验）：
+# 使环境数据更复杂——双侧非零 OI、Skew、Funding、多仓并存。
+# 纪律：在跑用例批次前铺底；与批次并发会被用例的窗口纯净度断言如实拦截。
+# 可选：--traders 0xA,0xB（或配 E2E_NOISE_TRADER_ACCOUNTS）、--orders N、--close 随即平仓
+npm run env:noise:trades
+
 # 独立核对 Bundle、两路 Mock Oracle、Reader Market 和 33 项参数
 E2E_ENV=oracle-fork npm run env:verify:mock
 

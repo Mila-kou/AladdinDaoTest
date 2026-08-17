@@ -57,7 +57,21 @@ export function renderFaucetHtml(): string {
     .funding-receipt { margin-top:12px; padding-top:12px; border-top:1px dashed var(--line); }
     .funding-receipt dl { margin:0; grid-template-columns:120px 1fr; }
     .funding-receipt a { color:#8fc2ff; overflow-wrap:anywhere; }
+    .noise-panel { margin-bottom:14px; }
+    .noise-form { display:grid; grid-template-columns:minmax(160px,.7fr) minmax(140px,.6fr) minmax(300px,1.6fr) auto; gap:10px; align-items:end; }
+    .noise-form button, .noise-traders-actions button { min-height:38px; border:1px solid #3978bd; border-radius:9px; background:#14569a; color:white; padding:7px 16px; cursor:pointer; white-space:nowrap; }
+    .noise-traders-actions button.secondary { background:#101b2d; border-color:var(--line); color:var(--text); }
+    .noise-form button:disabled, .noise-traders-actions button:disabled { opacity:.45; cursor:not-allowed; }
+    .noise-check { display:flex; align-items:center; gap:8px; min-height:38px; padding:0 10px; border:1px solid var(--line); border-radius:9px; background:#0b1220; color:var(--text); font-size:12px; }
+    .noise-check input { width:auto; min-height:0; accent-color:#5ea7ff; }
+    .noise-traders { margin-top:12px; } .noise-traders textarea { width:100%; border:1px solid var(--line); border-radius:9px; background:#0b1220; color:var(--text); padding:8px 10px; font:inherit; font-size:12px; resize:vertical; }
+    .noise-traders-actions { display:flex; align-items:center; gap:12px; margin-top:8px; }
+    .noise-warning { margin:12px 0 0; padding:9px 12px; border:1px solid #785d13; border-radius:9px; background:#2d240e; color:#fde68a; }
+    .noise-message { color:var(--muted); margin:10px 0 0; overflow-wrap:anywhere; } .noise-message.success { color:var(--pass); } .noise-message.error { color:var(--fail); }
+    #noise-log { margin-top:10px; } #noise-log summary { cursor:pointer; color:var(--muted); } #noise-log pre { max-height:260px; overflow:auto; white-space:pre-wrap; background:#08101d; border-radius:9px; padding:10px; font-size:11px; }
+    .table-scroll { overflow:auto; margin-top:12px; } .noise-jobs { width:100%; border-collapse:collapse; font-size:12px; } .noise-jobs th, .noise-jobs td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--line); vertical-align:top; } .noise-jobs th { color:var(--muted); }
     @media (max-width:650px) {
+      .noise-form { grid-template-columns:1fr; }
       .funding-form { grid-template-columns:1fr; }
       .faucet-monitor-grid { grid-template-columns:1fr; }
       .faucet-monitor-actions { align-items:stretch; flex-direction:column; }
@@ -98,6 +112,23 @@ export function renderFaucetHtml(): string {
     </div>
     <p id="funding-status" class="funding-status">正在连接本机 Funding 服务…</p>
     <div id="funding-receipt" class="funding-receipt" hidden></div>
+  </section>
+  <section class="panel noise-panel" aria-label="模拟交易铺底">
+    <div class="panel-head"><div><h2>模拟交易铺底（多 Trader）</h2><span class="panel-note">用多个 noise trader 在私有 Fork 的 default-mock 市场铺底真实成交，使环境数据更复杂：双侧非零 OI、Skew、Funding 累加器、多仓并存。<strong>这些交易不做核验。</strong></span></div><span id="noise-state" class="status-chip">等待读取</span></div>
+    <div class="noise-form">
+      <label>环境<select id="noise-environment"><option value="tx-fork">tx-fork</option><option value="oracle-fork">oracle-fork</option><option value="time-fork">time-fork</option></select></label>
+      <label>每 Trader 单数<input id="noise-orders" type="number" min="1" max="10" value="2"></label>
+      <label class="noise-check"><input id="noise-close" type="checkbox">铺底后随即全平（只留成交历史与 Funding 痕迹）</label>
+      <button id="noise-start" type="button">开始铺底</button>
+    </div>
+    <div class="noise-traders">
+      <label>模拟交易 Trader 列表（逗号分隔地址；fork 上 impersonation 免私钥；留空 = 内置 3 个 noise trader）<textarea id="noise-traders" rows="3" spellcheck="false" placeholder="0x…, 0x…"></textarea></label>
+      <div class="noise-traders-actions"><button id="noise-save-traders" type="button" class="secondary">保存 Trader 列表到环境配置</button><span id="noise-traders-status" class="panel-note"></span></div>
+    </div>
+    <p class="noise-warning">⚠️ 使用纪律：在跑用例批次<strong>之前</strong>铺底。与批次并发时，被测用例的窗口纯净度断言会把并发账本变动如实判 FAIL——这是断言的职责。铺底完成后的静态仓位不影响核对（期望模型全部基于 before 快照的增量）。</p>
+    <p id="noise-message" class="noise-message">正在读取任务状态…</p>
+    <details id="noise-log" hidden><summary>任务日志</summary><pre id="noise-log-content"></pre></details>
+    <div class="table-scroll"><table class="noise-jobs"><thead><tr><th>任务</th><th>环境</th><th>Trader</th><th>单数</th><th>状态</th><th>结果</th></tr></thead><tbody id="noise-job-rows"><tr><td colspan="6" class="muted">尚无任务</td></tr></tbody></table></div>
   </section>`;
 
   const script = `
@@ -382,7 +413,84 @@ export function renderFaucetHtml(): string {
     }
   });
 
-  await Promise.all([initializeFunding(), refreshFaucetBalance(), loadFaucetServiceStatus(true)]);
+  // —— 模拟交易铺底 ——
+  const noiseState = document.getElementById('noise-state');
+  const noiseEnvironment = document.getElementById('noise-environment');
+  const noiseOrders = document.getElementById('noise-orders');
+  const noiseClose = document.getElementById('noise-close');
+  const noiseStart = document.getElementById('noise-start');
+  const noiseTraders = document.getElementById('noise-traders');
+  const noiseSaveTraders = document.getElementById('noise-save-traders');
+  const noiseTradersStatus = document.getElementById('noise-traders-status');
+  const noiseMessage = document.getElementById('noise-message');
+  const noiseLog = document.getElementById('noise-log');
+  const noiseLogContent = document.getElementById('noise-log-content');
+  const noiseJobRows = document.getElementById('noise-job-rows');
+  let noiseTradersInitialized = false;
+  let noiseActiveJobId = null;
+  function noiseSay(message, kind) { noiseMessage.textContent = message; noiseMessage.className = 'noise-message' + (kind ? ' ' + kind : ''); }
+  function noiseChip(status) { return '<span class="status-chip status-' + (status === 'PASS' ? 'PASS' : status === 'RUNNING' ? 'FLAKY' : status === 'FAIL' ? 'FAIL' : 'SKIP') + '">' + escapeHtml(status) + '</span>'; }
+  function renderNoiseJobs(jobs) {
+    noiseJobRows.innerHTML = jobs.length ? jobs.map(function (job) {
+      const traders = job.traders && job.traders.length ? job.traders.length + ' 个自定义' : '内置 3 个';
+      const result = job.summary ? ('成交 ' + job.summary.executed + '（' + job.summary.longs + ' 多 / ' + job.summary.shorts + ' 空' + (job.closed || job.summary.closed ? '，平仓 ' + job.summary.closed : '') + '）') : (job.message || '');
+      return '<tr><td><code>' + escapeHtml(job.id) + '</code></td><td>' + escapeHtml(job.environment) + '</td><td>' + escapeHtml(traders) + '</td><td>' + escapeHtml(job.ordersPerTrader) + '</td><td>' + noiseChip(job.status) + '</td><td>' + escapeHtml(result) + '</td></tr>';
+    }).join('') : '<tr><td colspan="6" class="muted">尚无任务</td></tr>';
+    const running = jobs.find(function (job) { return job.status === 'RUNNING'; });
+    noiseState.textContent = running ? 'RUNNING' : (jobs[0] ? jobs[0].status : 'IDLE');
+    noiseState.className = 'status-chip ' + (running ? 'status-FLAKY' : jobs[0] && jobs[0].status === 'PASS' ? 'status-PASS' : jobs[0] && jobs[0].status === 'FAIL' ? 'status-FAIL' : '');
+    noiseStart.disabled = Boolean(running);
+    if (running) {
+      noiseActiveJobId = running.id;
+      noiseSay('运行中：' + (running.message || ''), '');
+      noiseLog.hidden = false; noiseLogContent.textContent = (running.logTail || []).join('\\n');
+    } else if (noiseActiveJobId) {
+      const finished = jobs.find(function (job) { return job.id === noiseActiveJobId; });
+      if (finished) { noiseSay(finished.message || finished.status, finished.status === 'PASS' ? 'success' : 'error'); noiseLog.hidden = false; noiseLogContent.textContent = (finished.logTail || []).join('\\n'); }
+      noiseActiveJobId = null;
+    }
+  }
+  async function loadNoise() {
+    if (!['http:', 'https:'].includes(location.protocol)) { noiseState.textContent = '离线不可用'; noiseStart.disabled = true; noiseSaveTraders.disabled = true; noiseSay('请通过 Node 看板服务打开页面后使用模拟交易铺底。'); return; }
+    try {
+      const response = await fetch('/api/noise-trades', { headers:{Accept:'application/json'}, cache:'no-store' });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.detail || body.error || ('接口返回 ' + response.status));
+      if (!noiseTradersInitialized) { noiseTraders.value = (body.configuredTraders || []).join(',\\n'); noiseTradersInitialized = true; }
+      renderNoiseJobs(body.jobs || []);
+      if (!noiseActiveJobId && !(body.jobs || []).length) noiseSay('尚无任务。填写参数后点击“开始铺底”。');
+    } catch (error) { noiseState.textContent = 'ERROR'; noiseState.className = 'status-chip status-FAIL'; noiseSay('任务状态读取失败：' + error.message, 'error'); }
+  }
+  noiseStart.addEventListener('click', async function () {
+    const traders = noiseTraders.value.split(/[\\s,]+/).map(function (item) { return item.trim(); }).filter(Boolean);
+    const invalid = traders.find(function (item) { return !/^0x[0-9a-fA-F]{40}$/.test(item); });
+    if (invalid) { noiseSay('Trader 地址格式不正确：' + invalid, 'error'); return; }
+    noiseStart.disabled = true; noiseSay('正在启动模拟交易铺底…'); noiseLog.hidden = false; noiseLogContent.textContent = '';
+    try {
+      const response = await fetch('/api/noise-trades', { method:'POST', headers:{'Content-Type':'application/json',Accept:'application/json'}, body: JSON.stringify({ environment: noiseEnvironment.value, ordersPerTrader: Number(noiseOrders.value) || 2, closeAfter: noiseClose.checked, traders: traders }) });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.detail || body.error || ('接口返回 ' + response.status));
+      noiseActiveJobId = body.job.id;
+      await loadNoise();
+    } catch (error) { noiseSay('启动失败：' + error.message, 'error'); noiseStart.disabled = false; }
+  });
+  noiseSaveTraders.addEventListener('click', async function () {
+    const traders = noiseTraders.value.split(/[\\s,]+/).map(function (item) { return item.trim(); }).filter(Boolean);
+    const invalid = traders.find(function (item) { return !/^0x[0-9a-fA-F]{40}$/.test(item); });
+    if (invalid) { noiseTradersStatus.textContent = '地址格式不正确：' + invalid; return; }
+    noiseSaveTraders.disabled = true; noiseTradersStatus.textContent = '保存中…';
+    try {
+      // 复用环境配置接口写入 E2E_NOISE_TRADER_ACCOUNTS（写 .env.local，同源 PUT）
+      const response = await fetch('/api/environment-configuration', { method:'PUT', headers:{'Content-Type':'application/json',Accept:'application/json'}, body: JSON.stringify({ environment: noiseEnvironment.value, values: { E2E_NOISE_TRADER_ACCOUNTS: traders.join(',') }, clearKeys: traders.length ? [] : ['E2E_NOISE_TRADER_ACCOUNTS'] }) });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.detail || body.error || ('接口返回 ' + response.status));
+      noiseTradersStatus.textContent = traders.length ? '已保存 ' + traders.length + ' 个 Trader 到本机 .env.local。' : '已清空，回落内置 3 个 noise trader。';
+    } catch (error) { noiseTradersStatus.textContent = '保存失败：' + error.message; }
+    finally { noiseSaveTraders.disabled = false; }
+  });
+
+  await Promise.all([initializeFunding(), refreshFaucetBalance(), loadFaucetServiceStatus(true), loadNoise()]);
+  window.setInterval(function () { if (!document.hidden && noiseActiveJobId) loadNoise(); }, 2_000);
   window.setInterval(function () { if (!document.hidden) refreshFaucetBalance(); }, 30_000);
   window.setInterval(function () { if (!document.hidden) loadFaucetServiceStatus(false); }, 5_000);
   document.getElementById('faucet-page').dataset.pageReady = 'true';
@@ -390,8 +498,8 @@ export function renderFaucetHtml(): string {
 `;
 
   return renderPageShell({
-    title: 'FX100 Faucet',
-    subtitle: 'Base Sepolia Faucet 余额监控、低余额告警与自动补款、Fund USDC。测试期运维工具，与测试结果数据无耦合；上线后如不再需要可整页下线。',
+    title: 'FX100 Faucet & 交易',
+    subtitle: 'Base Sepolia Faucet 余额监控、低余额告警与自动补款、Fund USDC、多 Trader 模拟交易铺底。测试期运维工具，与测试结果数据无耦合；上线后如不再需要可整页下线。',
     active: 'faucet',
     readyId: 'faucet-page',
     content,

@@ -197,7 +197,7 @@ npm run dashboard:serve
 - `http://localhost:4173/test-cases`：80 条测试用例查看、按计划 Project / 市场兼容性筛选与编辑；每条用例显示默认市场资源、标准 Market 兼容性、时间能力、签名方式和 Mock 资源别名；
 - `http://localhost:4173/runs`：创建版本化测试运行；支持单条、部分、全部用例，默认使用用例的 Mock 资源，也可对兼容用例切换标准 Market；同时支持默认/覆盖环境和新 RPC；
 - `http://localhost:4173/environments`：按顺序分步配置——①Fork 与 RPC（含 Tenderly Virtual TestNet 建法指引与自定义 Chain ID 提示，填好即存）→ ②Trade/账户/高级配置（默认折叠，需修改自行展开）→ ③Mock Market Bundle 初始化 → ④环境检查（验收）。选择 `base-sepolia` 时隐藏 ③，只维护已有部署需要的配置；Mock Oracle 价格与参数直写在"合约参数"页；
-- `http://localhost:4173/faucet`：Faucet 运维工具页（从主看板拆出）：Base Sepolia Faucet 余额监控、低余额告警与自动补款、Fund USDC（默认 `base-sepolia`，也可切换三个私有 Fork，展示 Before / Fund / After、执行方式及真实交易哈希）。测试期专用，与测试结果数据无耦合，上线后如不再需要可整页下线；
+- `http://localhost:4173/faucet`：**Faucet & 交易** 运维工具页：Base Sepolia Faucet 余额监控、低余额告警与自动补款、Fund USDC，以及**多 Trader 模拟交易铺底**（配置 Trader 列表并保存到环境配置；选环境/每 Trader 单数/是否随即平仓 → 后台任务 + 实时日志 + 历史任务表；交易不做核验；纪律：批次前铺底，并发会被窗口纯净度断言拦截）。测试期专用，与测试结果数据无耦合，上线后如不再需要可整页下线；
 - `http://localhost:4173/parameters`：合约参数清单与筛选；私有 Fork 环境额外提供 **Mock Oracle 价格面板**（实时读数 + 刷新时间戳/设置新价格）与**单参数直写**（每行"修改"按钮 → DataStore 直写 + 回读核对；改动不自动恢复，页面有显著警示）；
 - `http://localhost:4173/formulas`：合约核心公式和精度口径；
 - `http://localhost:4173/page-formulas`：需求总结中的页面数据计算公式。
@@ -209,6 +209,7 @@ npm run dashboard:serve
 - `POST /api/fund-usdc`：同源测试看板专用；按链上 LPVault `asset()` 解析 USDC。`base-sepolia` 使用匹配 token `owner()` 的 `E2E_TOKEN_OWNER_PRIVATE_KEY` 发送真实 `MockToken.mint` 交易，三个私有 Fork 使用 `tenderly_setErc20Balance`，两种方式都会回读核对；
 - `GET /api/environments`：环境能力、RPC 是否已配置及脱敏地址；
 - `GET/POST /api/mock-oracle-prices`：读取 default-mock 两个 Mock Oracle 的链上 feed 价、有效 Min/Max 区间与时间戳新鲜度；同源 POST 刷新时间戳（价格不变）或设置 Min/Max（Min 写 MockOracle answer，Max 写 DataStore `STABLE_PRICE`，provider 取两者排序为价格区间）；仅三个私有 Fork 可用；
+- `GET/POST /api/noise-trades`（+ `/:id`）：模拟交易铺底任务——GET 列任务与已配置 Trader；同源 POST 启动（environment / traders / ordersPerTrader / closeAfter），一次只允许一个任务运行；任务落盘 `artifacts/noise-trades/<id>/job.json`，服务重启时未完成任务标 INTERRUPTED；
 - `POST /api/parameters/set`：单参数直写（同源）：按 DataStore key + 类型写入新值（模拟持有 CONTROLLER 的 Config 合约），写入后回读核对并返回 before/after/txHash；仅三个私有 Fork 可用；
 - `GET/POST /api/environment-initializations`：查询或创建环境初始化任务；保存 RPC、验证 chainId/快照能力，并按 `bundleAlias` 部署独立 Market Bundle；`forceSharedCollateral` 仅用于明确重建环境共享 USDC Oracle；
 - `GET /api/environment-initializations/<id>`：查询初始化状态和脱敏日志；

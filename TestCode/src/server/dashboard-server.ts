@@ -20,6 +20,7 @@ import { UsdcFundingManager } from './usdc-funding.js';
 import { FaucetBalanceMonitor } from './faucet-monitor.js';
 import { MockOraclePriceManager } from './mock-oracle-prices.js';
 import { ParameterWriteManager } from './parameter-write.js';
+import { NoiseTradeManager } from './noise-trades.js';
 import { FaucetAutoFundingManager } from './faucet-auto-funding.js';
 import {
   checkEnvironmentConfiguration,
@@ -161,6 +162,7 @@ export async function startDashboardServer(options: DashboardServerOptions) {
   const faucetBalanceMonitor = new FaucetBalanceMonitor(projectRoot);
   const mockOraclePriceManager = new MockOraclePriceManager(projectRoot);
   const parameterWriteManager = new ParameterWriteManager(projectRoot);
+  const noiseTradeManager = await NoiseTradeManager.create(projectRoot);
   const faucetAutoFundingManager = await FaucetAutoFundingManager.create(
     projectRoot,
     faucetBalanceMonitor,
@@ -234,6 +236,40 @@ export async function startDashboardServer(options: DashboardServerOptions) {
             detail: error instanceof Error ? error.message : String(error),
           });
         }
+        return;
+      }
+
+      if (url.pathname === '/api/noise-trades') {
+        if (method === 'GET' || method === 'HEAD') {
+          sendJson(response, 200, {
+            jobs: noiseTradeManager.list(),
+            configuredTraders: await noiseTradeManager.configuredTraders(),
+          }, headOnly);
+          return;
+        }
+        if (method === 'POST') {
+          if (!isSameOriginRequest(request)) {
+            sendJson(response, 403, { error: '仅允许同源测试看板启动模拟交易。' });
+            return;
+          }
+          try {
+            sendJson(response, 202, { job: await noiseTradeManager.start(await readJsonBody(request)) });
+          } catch (error) {
+            sendJson(response, 400, {
+              error: '模拟交易任务创建失败',
+              detail: error instanceof Error ? error.message : String(error),
+            });
+          }
+          return;
+        }
+        sendJson(response, 405, { error: 'Method Not Allowed' }, headOnly);
+        return;
+      }
+      const noiseJobMatch = /^\/api\/noise-trades\/([a-zA-Z0-9._-]+)$/.exec(url.pathname);
+      if (noiseJobMatch && (method === 'GET' || method === 'HEAD')) {
+        const job = noiseTradeManager.get(noiseJobMatch[1]!);
+        if (!job) { sendJson(response, 404, { error: '模拟交易任务不存在。' }, headOnly); return; }
+        sendJson(response, 200, { job }, headOnly);
         return;
       }
 
@@ -732,6 +768,7 @@ export async function startDashboardServer(options: DashboardServerOptions) {
               '/api/faucet-auto-funding/run-now',
               '/api/mock-oracle-prices',
               '/api/parameters/set',
+              '/api/noise-trades',
               '/api/manual-check-target',
             ],
             capabilities: {
@@ -746,6 +783,7 @@ export async function startDashboardServer(options: DashboardServerOptions) {
               faucetAutoFunding: true,
               mockOraclePrices: true,
               parameterWrite: true,
+              noiseTrades: true,
               telegramNotifications: true,
             },
           },

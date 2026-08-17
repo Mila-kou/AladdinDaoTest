@@ -468,7 +468,7 @@ if (!input) {
   const failed = dashboard.title !== 'FX100 E2E 测试看板'
     || dashboard.dashboardNavLabel !== '测试看板'
     || dashboard.testRunNavHref !== './runs.html'
-    || faucet.faucetTitle !== 'FX100 Faucet'
+    || faucet.faucetTitle !== 'FX100 Faucet & 交易'
     || !faucet.fundingPanelExists
     || !faucet.faucetMonitorExists
     || faucet.faucetMonitorAccount !== '0x6E2Df1a8d0366ac1e55fF1dC23523299613902e5'

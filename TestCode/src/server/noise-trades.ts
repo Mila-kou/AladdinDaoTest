@@ -6,6 +6,8 @@ import dotenv from 'dotenv';
 import { getAddress } from 'viem';
 import { z } from 'zod';
 
+import { expandPlan, NOISE_PLAN_PRESETS, noisePlanSchema, summarizePlan, type NoisePlan } from '../domain/noise-plan.js';
+
 // 模拟交易铺底任务管理器：spawn scripts/generate-noise-trades.ts 子进程，
 // 记录状态与日志尾（脱敏——脚本本身不打印 RPC/密钥），任务落盘 artifacts/noise-trades/<id>/。
 // 交易不做核验（按设计）；一次只允许一个任务运行，避免与用例批次并发污染核对窗口。
@@ -15,6 +17,8 @@ const requestSchema = z.object({
   traders: z.array(z.string().regex(/^0x[0-9a-fA-F]{40}$/)).max(20).optional(),
   ordersPerTrader: z.number().int().min(1).max(10).default(2),
   closeAfter: z.boolean().default(false),
+  /** 计划模式：传完整造数据计划（优先于上面的兼容字段） */
+  plan: noisePlanSchema.optional(),
 });
 
 export interface NoiseTradeJob {
@@ -24,6 +28,9 @@ export interface NoiseTradeJob {
   readonly ordersPerTrader: number;
   readonly closeAfter: boolean;
   readonly createdAt: string;
+  /** 计划模式：计划名与摘要（兼容模式为空） */
+  readonly planName?: string;
+  readonly planSummary?: ReturnType<typeof summarizePlan>;
   status: 'RUNNING' | 'PASS' | 'FAIL' | 'INTERRUPTED';
   logTail: string[];
   message: string;
@@ -111,6 +118,47 @@ export class NoiseTradeManager {
     return raw.split(',').map((item) => item.trim()).filter(Boolean).map((item) => getAddress(item));
   }
 
+  private planPath(): string {
+    return resolve(this.projectRoot, 'config/noise-plan.json');
+  }
+
+  /** 已保存的造数据计划（无则给一个预设骨架） */
+  async loadPlan(): Promise<{ plan: NoisePlan; saved: boolean }> {
+    try {
+      const plan = noisePlanSchema.parse(JSON.parse(await readFile(this.planPath(), 'utf8')));
+      return { plan, saved: true };
+    } catch {
+      return { plan: NOISE_PLAN_PRESETS['grid-basic']!, saved: false };
+    }
+  }
+
+  async savePlan(raw: unknown): Promise<NoisePlan> {
+    const plan = noisePlanSchema.parse(raw);
+    await mkdir(resolve(this.projectRoot, 'config'), { recursive: true });
+    await writeFile(this.planPath(), `${JSON.stringify(plan, null, 2)}\n`, 'utf8');
+    return plan;
+  }
+
+  /** 展开预览：不落盘、不上链，仅返回逐单清单（bigint 转字符串）与摘要 */
+  preview(raw: unknown) {
+    const plan = noisePlanSchema.parse(raw);
+    const orders = expandPlan(plan).map((order) => ({
+      seq: order.seq,
+      traderIndex: order.traderIndex,
+      trader: order.trader,
+      rule: order.ruleLabel,
+      side: order.isLong ? 'long' : 'short',
+      collateralUsdc: (Number(order.collateralRaw) / 1e6).toFixed(2),
+      leverage: order.leverage,
+      sizeUsd: (order.sizeUsdRaw / 10n ** 30n).toString(),
+    }));
+    return { summary: summarizePlan(plan), orders, presets: Object.keys(NOISE_PLAN_PRESETS) };
+  }
+
+  presets() {
+    return Object.fromEntries(Object.entries(NOISE_PLAN_PRESETS).map(([key, plan]) => [key, { name: plan.name, plan }]));
+  }
+
   async start(raw: unknown): Promise<NoiseTradeJob> {
     const input = requestSchema.parse(raw);
     if (this.running) {
@@ -121,31 +169,44 @@ export class NoiseTradeManager {
     const rpcUrl = values[RPC_VARIABLE[input.environment]!];
     if (!rpcUrl) throw new Error(`${input.environment} 未配置 RPC；请先在环境页完成 ① Fork 与 RPC。`);
     if (!values.E2E_KEEPER_ACCOUNT) throw new Error('未配置 E2E_KEEPER_ACCOUNT（模拟 ORDER_KEEPER 执行需要该地址）。');
-    const traders = input.traders?.length ? input.traders.map((item) => getAddress(item)) : await this.configuredTraders();
-    // traders 为空时脚本回落内置 3 个 noise trader
+    const plan = input.plan ? { ...input.plan, environment: input.environment } : undefined;
+    const traders = plan
+      ? []
+      : (input.traders?.length ? input.traders.map((item) => getAddress(item)) : await this.configuredTraders());
+    // 兼容模式 traders 为空时脚本回落内置 3 个 noise trader
 
     const id = `${new Date().toISOString().replace(/[:.]/g, '-')}-${input.environment}`;
     const job: NoiseTradeJob = {
       id,
       environment: input.environment,
       traders,
-      ordersPerTrader: input.ordersPerTrader,
-      closeAfter: input.closeAfter,
+      ordersPerTrader: plan ? 0 : input.ordersPerTrader,
+      closeAfter: plan ? plan.closeAfter : input.closeAfter,
       createdAt: new Date().toISOString(),
+      ...(plan ? { planName: plan.name, planSummary: summarizePlan(plan) } : {}),
       status: 'RUNNING',
       logTail: [],
-      message: '正在启动模拟交易铺底…',
+      message: plan ? `正在按计划「${plan.name}」启动铺底…` : '正在启动模拟交易铺底…',
     };
     this.jobs.set(id, job);
     this.running = id;
     await this.persist(job);
+    let planFile: string | undefined;
+    if (plan) {
+      planFile = join(this.directory(), id, 'plan.json');
+      await writeFile(planFile, `${JSON.stringify(plan, null, 2)}\n`, 'utf8');
+    }
 
     const args = [
       resolve(this.projectRoot, 'node_modules/.bin/tsx'),
       resolve(this.projectRoot, 'scripts/generate-noise-trades.ts'),
-      '--orders', String(input.ordersPerTrader),
-      ...(traders.length ? ['--traders', traders.join(',')] : []),
-      ...(input.closeAfter ? ['--close'] : []),
+      ...(planFile
+        ? ['--plan', planFile]
+        : [
+          '--orders', String(input.ordersPerTrader),
+          ...(traders.length ? ['--traders', traders.join(',')] : []),
+          ...(input.closeAfter ? ['--close'] : []),
+        ]),
     ];
     const child = spawn(process.execPath, args, {
       cwd: this.projectRoot,

@@ -239,6 +239,34 @@ export async function startDashboardServer(options: DashboardServerOptions) {
         return;
       }
 
+      if (url.pathname === '/api/noise-plan') {
+        if (method === 'GET' || method === 'HEAD') {
+          const loaded = await noiseTradeManager.loadPlan();
+          sendJson(response, 200, { ...loaded, presets: noiseTradeManager.presets() }, headOnly);
+          return;
+        }
+        if (method === 'PUT') {
+          if (!isSameOriginRequest(request)) { sendJson(response, 403, { error: '仅允许同源测试看板保存造数据计划。' }); return; }
+          try {
+            sendJson(response, 200, { plan: await noiseTradeManager.savePlan(await readJsonBody(request)), saved: true });
+          } catch (error) {
+            sendJson(response, 400, { error: '造数据计划保存失败', detail: error instanceof Error ? error.message : String(error) });
+          }
+          return;
+        }
+        if (method === 'POST') {
+          // POST = 展开预览（不落盘、不上链）
+          try {
+            sendJson(response, 200, noiseTradeManager.preview(await readJsonBody(request)));
+          } catch (error) {
+            sendJson(response, 400, { error: '造数据计划展开失败', detail: error instanceof Error ? error.message : String(error) });
+          }
+          return;
+        }
+        sendJson(response, 405, { error: 'Method Not Allowed' }, headOnly);
+        return;
+      }
+
       if (url.pathname === '/api/noise-trades') {
         if (method === 'GET' || method === 'HEAD') {
           sendJson(response, 200, {
@@ -769,6 +797,7 @@ export async function startDashboardServer(options: DashboardServerOptions) {
               '/api/mock-oracle-prices',
               '/api/parameters/set',
               '/api/noise-trades',
+              '/api/noise-plan',
               '/api/manual-check-target',
             ],
             capabilities: {

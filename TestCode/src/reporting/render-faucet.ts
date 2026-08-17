@@ -58,6 +58,17 @@ export function renderFaucetHtml(): string {
     .funding-receipt dl { margin:0; grid-template-columns:120px 1fr; }
     .funding-receipt a { color:#8fc2ff; overflow-wrap:anywhere; }
     .noise-panel { margin-bottom:14px; }
+    .plan-toolbar { display:grid; grid-template-columns:minmax(200px,1.4fr) minmax(120px,.7fr) minmax(130px,.7fr) minmax(120px,.7fr) minmax(140px,.8fr) minmax(200px,1fr) minmax(150px,.8fr); gap:10px; align-items:end; }
+    .plan-advanced-traders { margin-top:10px; } .plan-advanced-traders summary { cursor:pointer; color:var(--muted); font-size:12px; } .plan-advanced-traders textarea { width:100%; margin-top:6px; border:1px solid var(--line); border-radius:9px; background:#0b1220; color:var(--text); padding:8px 10px; font:inherit; font-size:12px; }
+    .plan-rules-head { display:flex; align-items:end; justify-content:space-between; gap:12px; margin-top:16px; } .plan-rules-head h3 { margin:0; font-size:14px; } .plan-rules-actions { display:flex; align-items:end; gap:10px; } .plan-rules-actions label { min-width:220px; }
+    .plan-rules td input, .plan-rules td select { min-height:32px; font-size:12px; padding:4px 7px; } .plan-rules td { padding:5px 4px; } .plan-rules th { white-space:nowrap; }
+    .plan-rules .col-name { min-width:150px; } .plan-rules .col-num { min-width:90px; } .plan-rules .col-sel { min-width:100px; } .plan-rules .col-step { min-width:110px; } .plan-rules .col-traders { min-width:110px; }
+    .plan-rule-remove { min-height:32px; padding:4px 10px; border:1px solid #8b3a49; border-radius:8px; background:#682536; color:white; cursor:pointer; font-size:12px; }
+    .plan-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:12px; } .plan-actions button { min-height:38px; border:1px solid #3978bd; border-radius:9px; background:#14569a; color:white; padding:7px 16px; cursor:pointer; white-space:nowrap; } .plan-actions button.secondary { background:#101b2d; border-color:var(--line); color:var(--text); } .plan-actions button:disabled { opacity:.45; cursor:not-allowed; }
+    #plan-preview-panel, .plan-json { margin-top:12px; } #plan-preview-panel summary, .plan-json summary { cursor:pointer; color:var(--muted); font-size:12px; }
+    .plan-orders { width:100%; border-collapse:collapse; font-size:12px; margin-top:8px; } .plan-orders th, .plan-orders td { text-align:left; padding:5px 8px; border-bottom:1px solid var(--line); } .plan-orders th { color:var(--muted); }
+    .plan-json textarea { width:100%; margin-top:6px; border:1px solid var(--line); border-radius:9px; background:#0b1220; color:var(--text); padding:8px 10px; font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace; }
+    .side-long { color:var(--pass); } .side-short { color:var(--fail); }
     .noise-form { display:grid; grid-template-columns:minmax(160px,.7fr) minmax(140px,.6fr) minmax(300px,1.6fr) auto; gap:10px; align-items:end; }
     .noise-form button, .noise-traders-actions button { min-height:38px; border:1px solid #3978bd; border-radius:9px; background:#14569a; color:white; padding:7px 16px; cursor:pointer; white-space:nowrap; }
     .noise-traders-actions button.secondary { background:#101b2d; border-color:var(--line); color:var(--text); }
@@ -71,7 +82,7 @@ export function renderFaucetHtml(): string {
     #noise-log { margin-top:10px; } #noise-log summary { cursor:pointer; color:var(--muted); } #noise-log pre { max-height:260px; overflow:auto; white-space:pre-wrap; background:#08101d; border-radius:9px; padding:10px; font-size:11px; }
     .table-scroll { overflow:auto; margin-top:12px; } .noise-jobs { width:100%; border-collapse:collapse; font-size:12px; } .noise-jobs th, .noise-jobs td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--line); vertical-align:top; } .noise-jobs th { color:var(--muted); }
     @media (max-width:650px) {
-      .noise-form { grid-template-columns:1fr; }
+      .plan-toolbar { grid-template-columns:1fr; }
       .funding-form { grid-template-columns:1fr; }
       .faucet-monitor-grid { grid-template-columns:1fr; }
       .faucet-monitor-actions { align-items:stretch; flex-direction:column; }
@@ -113,22 +124,43 @@ export function renderFaucetHtml(): string {
     <p id="funding-status" class="funding-status">正在连接本机 Funding 服务…</p>
     <div id="funding-receipt" class="funding-receipt" hidden></div>
   </section>
-  <section class="panel noise-panel" aria-label="模拟交易铺底">
-    <div class="panel-head"><div><h2>模拟交易铺底（多 Trader）</h2><span class="panel-note">用多个 noise trader 在私有 Fork 的 default-mock 市场铺底真实成交，使环境数据更复杂：双侧非零 OI、Skew、Funding 累加器、多仓并存。<strong>这些交易不做核验。</strong></span></div><span id="noise-state" class="status-chip">等待读取</span></div>
-    <div class="noise-form">
+  <section class="panel noise-panel" aria-label="造数据计划">
+    <div class="panel-head"><div><h2>造数据计划：多 Trader 注资 + 网格交易</h2><span class="panel-note">最多 100 个 Trader（地址自动派生或粘贴覆盖）→ 逐个注资 ETH/USDC + Router 授权 → 按网格规则批量下单（fixed 固定 / linear 线性递增 / ratio 等比递增，多空可交替）。<strong>这些交易不做核验</strong>，只为把环境数据铺复杂。</span></div><span id="noise-state" class="status-chip">等待读取</span></div>
+
+    <div class="plan-toolbar">
+      <label>计划名<input id="plan-name" type="text" maxlength="80"></label>
       <label>环境<select id="noise-environment"><option value="tx-fork">tx-fork</option><option value="oracle-fork">oracle-fork</option><option value="time-fork">time-fork</option></select></label>
-      <label>每 Trader 单数<input id="noise-orders" type="number" min="1" max="10" value="2"></label>
-      <label class="noise-check"><input id="noise-close" type="checkbox">铺底后随即全平（只留成交历史与 Funding 痕迹）</label>
-      <button id="noise-start" type="button">开始铺底</button>
+      <label>Trader 数量（1–100）<input id="plan-trader-count" type="number" min="1" max="100" value="10"></label>
+      <label>每 Trader 注资 ETH<input id="plan-eth" type="text" inputmode="decimal" value="10"></label>
+      <label>每 Trader 注资 USDC<input id="plan-usdc" type="text" inputmode="decimal" value="1000000"></label>
+      <label class="noise-check"><input id="noise-close" type="checkbox">全部下单后随即全平</label>
+      <label>单单间随机间隔上限（秒）<input id="plan-delay" type="number" min="0" max="60" value="0"></label>
     </div>
-    <div class="noise-traders">
-      <label>模拟交易 Trader 列表（逗号分隔地址；fork 上 impersonation 免私钥；留空 = 内置 3 个 noise trader）<textarea id="noise-traders" rows="3" spellcheck="false" placeholder="0x…, 0x…"></textarea></label>
-      <div class="noise-traders-actions"><button id="noise-save-traders" type="button" class="secondary">保存 Trader 列表到环境配置</button><span id="noise-traders-status" class="panel-note"></span></div>
+    <details class="plan-advanced-traders"><summary>Trader 地址（默认按序号自动派生 0x1001…0001、0x1002…0002…，展开可粘贴覆盖）</summary>
+      <textarea id="plan-trader-addresses" rows="3" spellcheck="false" placeholder="留空 = 自动派生；粘贴地址列表（逗号/换行分隔）则按顺序覆盖前 N 个"></textarea>
+    </details>
+
+    <div class="plan-rules-head"><h3>网格规则（每条规则对指定 Trader 各下 count 单）</h3><div class="plan-rules-actions"><label>预设生成器<select id="plan-preset"><option value="">选择预设填充…</option></select></label><button id="plan-add-rule" type="button" class="secondary">+ 添加规则</button></div></div>
+    <div class="table-scroll"><table class="plan-rules"><thead><tr><th>规则名</th><th>起始抵押 USDC</th><th>起始杠杆</th><th>方向</th><th>步进</th><th>单数</th><th>抵押增量 / 倍率</th><th>杠杆增量 / 倍率</th><th>应用 Trader</th><th></th></tr></thead><tbody id="plan-rule-rows"></tbody></table></div>
+
+    <div class="plan-actions">
+      <button id="plan-preview" type="button" class="secondary">展开预览</button>
+      <button id="plan-save" type="button" class="secondary">保存计划</button>
+      <button id="noise-start" type="button">按计划开始铺底</button>
+      <span id="plan-summary" class="panel-note"></span>
     </div>
-    <p class="noise-warning">⚠️ 使用纪律：在跑用例批次<strong>之前</strong>铺底。与批次并发时，被测用例的窗口纯净度断言会把并发账本变动如实判 FAIL——这是断言的职责。铺底完成后的静态仓位不影响核对（期望模型全部基于 before 快照的增量）。</p>
+    <details id="plan-preview-panel" hidden><summary>逐单清单预览（<span id="plan-preview-count">0</span> 单；执行前可回到规则表微调）</summary>
+      <div class="table-scroll"><table class="plan-orders"><thead><tr><th>#</th><th>Trader</th><th>规则</th><th>方向</th><th>抵押 USDC</th><th>杠杆</th><th>Size USD</th></tr></thead><tbody id="plan-order-rows"></tbody></table></div>
+    </details>
+    <details class="plan-json"><summary>高级：计划 JSON（与表格双向同步；可整段粘贴替换）</summary>
+      <textarea id="plan-json" rows="12" spellcheck="false"></textarea>
+      <div class="noise-traders-actions"><button id="plan-json-apply" type="button" class="secondary">应用 JSON 到表格</button><span id="plan-json-status" class="panel-note"></span></div>
+    </details>
+
+    <p class="noise-warning">⚠️ 使用纪律：在跑用例批次<strong>之前</strong>铺底。与批次并发时，被测用例的窗口纯净度断言会把并发账本变动如实判 FAIL——这是断言的职责。铺底完成后的静态仓位不影响核对（期望模型全部基于 before 快照的增量）。大计划（如 100 Trader × 多单）耗时以分钟计，任务在后台运行，可离开页面。</p>
     <p id="noise-message" class="noise-message">正在读取任务状态…</p>
     <details id="noise-log" hidden><summary>任务日志</summary><pre id="noise-log-content"></pre></details>
-    <div class="table-scroll"><table class="noise-jobs"><thead><tr><th>任务</th><th>环境</th><th>Trader</th><th>单数</th><th>状态</th><th>结果</th></tr></thead><tbody id="noise-job-rows"><tr><td colspan="6" class="muted">尚无任务</td></tr></tbody></table></div>
+    <div class="table-scroll"><table class="noise-jobs"><thead><tr><th>任务</th><th>环境</th><th>计划</th><th>Trader / 单数</th><th>状态</th><th>结果</th></tr></thead><tbody id="noise-job-rows"><tr><td colspan="6" class="muted">尚无任务</td></tr></tbody></table></div>
   </section>`;
 
   const script = `
@@ -413,28 +445,158 @@ export function renderFaucetHtml(): string {
     }
   });
 
-  // —— 模拟交易铺底 ——
+  // —— 造数据计划：多 Trader 注资 + 网格交易 ——
   const noiseState = document.getElementById('noise-state');
   const noiseEnvironment = document.getElementById('noise-environment');
-  const noiseOrders = document.getElementById('noise-orders');
   const noiseClose = document.getElementById('noise-close');
   const noiseStart = document.getElementById('noise-start');
-  const noiseTraders = document.getElementById('noise-traders');
-  const noiseSaveTraders = document.getElementById('noise-save-traders');
-  const noiseTradersStatus = document.getElementById('noise-traders-status');
   const noiseMessage = document.getElementById('noise-message');
   const noiseLog = document.getElementById('noise-log');
   const noiseLogContent = document.getElementById('noise-log-content');
   const noiseJobRows = document.getElementById('noise-job-rows');
-  let noiseTradersInitialized = false;
+  const planName = document.getElementById('plan-name');
+  const planTraderCount = document.getElementById('plan-trader-count');
+  const planEth = document.getElementById('plan-eth');
+  const planUsdc = document.getElementById('plan-usdc');
+  const planDelay = document.getElementById('plan-delay');
+  const planTraderAddresses = document.getElementById('plan-trader-addresses');
+  const planPreset = document.getElementById('plan-preset');
+  const planRuleRows = document.getElementById('plan-rule-rows');
+  const planSummary = document.getElementById('plan-summary');
+  const planPreviewPanel = document.getElementById('plan-preview-panel');
+  const planPreviewCount = document.getElementById('plan-preview-count');
+  const planOrderRows = document.getElementById('plan-order-rows');
+  const planJson = document.getElementById('plan-json');
+  const planJsonStatus = document.getElementById('plan-json-status');
   let noiseActiveJobId = null;
+  let presets = {};
+  let rules = [];
+
   function noiseSay(message, kind) { noiseMessage.textContent = message; noiseMessage.className = 'noise-message' + (kind ? ' ' + kind : ''); }
   function noiseChip(status) { return '<span class="status-chip status-' + (status === 'PASS' ? 'PASS' : status === 'RUNNING' ? 'FLAKY' : status === 'FAIL' ? 'FAIL' : 'SKIP') + '">' + escapeHtml(status) + '</span>'; }
+
+  // 表格 ⇄ 计划对象
+  function ruleRow(rule, index) {
+    const opt = function (value, current, label) { return '<option value="' + value + '"' + (value === current ? ' selected' : '') + '>' + label + '</option>'; };
+    const tradersText = rule.traders === 'all' ? 'all' : Array.isArray(rule.traders) ? rule.traders.join(',') : String(rule.traders);
+    return '<tr data-rule="' + index + '">'
+      + '<td class="col-name"><input data-field="label" value="' + escapeHtml(rule.label) + '"></td>'
+      + '<td class="col-num"><input data-field="collateralUsdc" inputmode="decimal" value="' + escapeHtml(rule.collateralUsdc) + '"></td>'
+      + '<td class="col-num"><input data-field="leverage" type="number" min="1" max="50" step="0.5" value="' + escapeHtml(rule.leverage) + '"></td>'
+      + '<td class="col-sel"><select data-field="side">' + opt('alternate', rule.side, '多空交替') + opt('long', rule.side, '全多') + opt('short', rule.side, '全空') + '</select></td>'
+      + '<td class="col-sel"><select data-field="step">' + opt('fixed', rule.step, '固定') + opt('linear', rule.step, '线性 +') + opt('ratio', rule.step, '等比 ×') + '</select></td>'
+      + '<td class="col-num"><input data-field="count" type="number" min="1" max="50" value="' + escapeHtml(rule.count) + '"></td>'
+      + '<td class="col-step"><input data-field="collateralStepOrRatio" placeholder="' + (rule.step === 'ratio' ? '倍率 如 1.5' : rule.step === 'linear' ? '增量 USDC' : '—') + '" value="' + escapeHtml(rule.step === 'ratio' ? (rule.collateralRatio == null ? '' : rule.collateralRatio) : (rule.collateralStep == null ? '' : rule.collateralStep)) + '"' + (rule.step === 'fixed' ? ' disabled' : '') + '></td>'
+      + '<td class="col-step"><input data-field="leverageStepOrRatio" placeholder="' + (rule.step === 'ratio' ? '倍率 如 1.2' : rule.step === 'linear' ? '增量 如 10' : '—') + '" value="' + escapeHtml(rule.step === 'ratio' ? (rule.leverageRatio == null ? '' : rule.leverageRatio) : (rule.leverageStep == null ? '' : rule.leverageStep)) + '"' + (rule.step === 'fixed' ? ' disabled' : '') + '></td>'
+      + '<td class="col-traders"><input data-field="traders" placeholder="all / 1-20 / 1,5,9" value="' + escapeHtml(tradersText) + '"></td>'
+      + '<td><button type="button" class="plan-rule-remove" data-remove="' + index + '">删</button></td></tr>';
+  }
+  function renderRules() { planRuleRows.innerHTML = rules.map(ruleRow).join('') || '<tr><td colspan="10" class="muted">尚无规则，点击"+ 添加规则"或选择预设</td></tr>'; }
+  function parseTraders(text) {
+    const trimmed = String(text || '').trim();
+    if (!trimmed || trimmed === 'all') return 'all';
+    if (/^\\d+-\\d+$/.test(trimmed)) return trimmed;
+    return trimmed.split(/[\\s,]+/).map(function (item) { return Number(item); }).filter(function (item) { return Number.isInteger(item) && item > 0; });
+  }
+  function collectRules() {
+    const out = [];
+    planRuleRows.querySelectorAll('tr[data-rule]').forEach(function (row) {
+      const get = function (field) { const el = row.querySelector('[data-field="' + field + '"]'); return el ? el.value : ''; };
+      const step = get('step');
+      const rule = { label: get('label') || '规则', collateralUsdc: String(get('collateralUsdc') || '0'), leverage: Number(get('leverage')) || 1, side: get('side') || 'alternate', step: step || 'fixed', count: Number(get('count')) || 1, traders: parseTraders(get('traders')) };
+      const cs = get('collateralStepOrRatio'), ls = get('leverageStepOrRatio');
+      if (step === 'linear') { if (cs) rule.collateralStep = String(cs); if (ls) rule.leverageStep = Number(ls); }
+      if (step === 'ratio') { if (cs) rule.collateralRatio = Number(cs); if (ls) rule.leverageRatio = Number(ls); }
+      out.push(rule);
+    });
+    return out;
+  }
+  function collectPlan() {
+    const addresses = planTraderAddresses.value.split(/[\\s,]+/).map(function (item) { return item.trim(); }).filter(Boolean);
+    const plan = {
+      schemaVersion: 1,
+      name: planName.value.trim() || '默认造数据计划',
+      environment: noiseEnvironment.value,
+      traderCount: Math.max(1, Math.min(100, Number(planTraderCount.value) || 1)),
+      funding: { ethPerTrader: String(planEth.value || '10'), usdcPerTrader: String(planUsdc.value || '1000000') },
+      rules: collectRules(),
+      closeAfter: noiseClose.checked,
+      maxDelaySeconds: Math.max(0, Math.min(60, Number(planDelay.value) || 0)),
+    };
+    if (addresses.length) plan.traderAddresses = addresses;
+    return plan;
+  }
+  function applyPlan(plan) {
+    planName.value = plan.name || '';
+    noiseEnvironment.value = plan.environment || 'tx-fork';
+    planTraderCount.value = plan.traderCount || 1;
+    planEth.value = (plan.funding && plan.funding.ethPerTrader) || '10';
+    planUsdc.value = (plan.funding && plan.funding.usdcPerTrader) || '1000000';
+    noiseClose.checked = Boolean(plan.closeAfter);
+    planDelay.value = plan.maxDelaySeconds || 0;
+    planTraderAddresses.value = (plan.traderAddresses || []).join(',\\n');
+    rules = (plan.rules || []).map(function (rule) { return Object.assign({ label: '规则', side: 'alternate', step: 'fixed', count: 1, traders: 'all' }, rule); });
+    renderRules();
+    syncJson();
+  }
+  function syncJson() { planJson.value = JSON.stringify(collectPlan(), null, 2); }
+
+  planRuleRows.addEventListener('input', function () { rules = collectRules(); syncJson(); });
+  planRuleRows.addEventListener('change', function (event) {
+    rules = collectRules();
+    if (event.target && event.target.dataset && event.target.dataset.field === 'step') renderRules();
+    syncJson();
+  });
+  planRuleRows.addEventListener('click', function (event) {
+    const button = event.target && event.target.closest ? event.target.closest('button[data-remove]') : null;
+    if (!button) return;
+    rules = collectRules(); rules.splice(Number(button.dataset.remove), 1); renderRules(); syncJson();
+  });
+  document.getElementById('plan-add-rule').addEventListener('click', function () {
+    rules = collectRules(); rules.push({ label: '规则 ' + (rules.length + 1), collateralUsdc: '1000', leverage: 10, side: 'alternate', step: 'fixed', count: 1, traders: 'all' }); renderRules(); syncJson();
+  });
+  [planName, planTraderCount, planEth, planUsdc, planDelay, planTraderAddresses, noiseEnvironment, noiseClose].forEach(function (el) { el.addEventListener('input', syncJson); el.addEventListener('change', syncJson); });
+  planPreset.addEventListener('change', function () {
+    const preset = presets[planPreset.value];
+    if (preset) { applyPlan(preset.plan); planSummary.textContent = '已填充预设：' + preset.name; }
+    planPreset.value = '';
+  });
+  document.getElementById('plan-json-apply').addEventListener('click', function () {
+    try { applyPlan(JSON.parse(planJson.value)); planJsonStatus.textContent = 'JSON 已应用到表格。'; }
+    catch (error) { planJsonStatus.textContent = 'JSON 解析失败：' + error.message; }
+  });
+
+  async function previewPlan() {
+    const response = await fetch('/api/noise-plan', { method:'POST', headers:{'Content-Type':'application/json',Accept:'application/json'}, body: JSON.stringify(collectPlan()) });
+    const body = await response.json();
+    if (!response.ok) throw new Error(body.detail || body.error || ('接口返回 ' + response.status));
+    const sm = body.summary;
+    planSummary.textContent = sm.traders + ' Trader · ' + sm.orders + ' 单（' + sm.longs + ' 多 / ' + sm.shorts + ' 空）· 总抵押 ' + sm.totalCollateralUsdc + ' USDC · 总规模 ' + sm.totalSizeUsd + ' USD · 最大单 ' + sm.maxSingleSizeUsd + ' USD';
+    planPreviewCount.textContent = body.orders.length;
+    planOrderRows.innerHTML = body.orders.slice(0, 500).map(function (order) {
+      return '<tr><td>' + order.seq + '</td><td>#' + order.traderIndex + ' <code>' + escapeHtml(order.trader.slice(0, 10)) + '…</code></td><td>' + escapeHtml(order.rule) + '</td><td class="side-' + order.side + '">' + (order.side === 'long' ? '多' : '空') + '</td><td>' + escapeHtml(order.collateralUsdc) + '</td><td>' + escapeHtml(order.leverage) + 'x</td><td>' + escapeHtml(order.sizeUsd) + '</td></tr>';
+    }).join('') + (body.orders.length > 500 ? '<tr><td colspan="7" class="muted">仅显示前 500 单</td></tr>' : '');
+    planPreviewPanel.hidden = false; planPreviewPanel.open = true;
+    return body;
+  }
+  document.getElementById('plan-preview').addEventListener('click', function () { previewPlan().catch(function (error) { planSummary.textContent = '展开失败：' + error.message; }); });
+  document.getElementById('plan-save').addEventListener('click', async function () {
+    const button = this; button.disabled = true;
+    try {
+      const response = await fetch('/api/noise-plan', { method:'PUT', headers:{'Content-Type':'application/json',Accept:'application/json'}, body: JSON.stringify(collectPlan()) });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.detail || body.error || ('接口返回 ' + response.status));
+      planSummary.textContent = '计划已保存到 config/noise-plan.json。';
+    } catch (error) { planSummary.textContent = '保存失败：' + error.message; }
+    finally { button.disabled = false; }
+  });
+
   function renderNoiseJobs(jobs) {
     noiseJobRows.innerHTML = jobs.length ? jobs.map(function (job) {
-      const traders = job.traders && job.traders.length ? job.traders.length + ' 个自定义' : '内置 3 个';
-      const result = job.summary ? ('成交 ' + job.summary.executed + '（' + job.summary.longs + ' 多 / ' + job.summary.shorts + ' 空' + (job.closed || job.summary.closed ? '，平仓 ' + job.summary.closed : '') + '）') : (job.message || '');
-      return '<tr><td><code>' + escapeHtml(job.id) + '</code></td><td>' + escapeHtml(job.environment) + '</td><td>' + escapeHtml(traders) + '</td><td>' + escapeHtml(job.ordersPerTrader) + '</td><td>' + noiseChip(job.status) + '</td><td>' + escapeHtml(result) + '</td></tr>';
+      const planCell = job.planName ? escapeHtml(job.planName) : '<span class="muted">兼容模式（伪随机）</span>';
+      const scale = job.planSummary ? (job.planSummary.traders + ' / ' + job.planSummary.orders) : ((job.traders && job.traders.length ? job.traders.length : 3) + ' / ' + (job.ordersPerTrader || '?') + '×');
+      const result = job.summary ? ('成交 ' + job.summary.executed + '（' + job.summary.longs + ' 多 / ' + job.summary.shorts + ' 空' + (job.summary.closed ? '，平仓 ' + job.summary.closed : '') + '）') : (job.message || '');
+      return '<tr><td><code>' + escapeHtml(job.id) + '</code></td><td>' + escapeHtml(job.environment) + '</td><td>' + planCell + '</td><td>' + escapeHtml(scale) + '</td><td>' + noiseChip(job.status) + '</td><td>' + escapeHtml(result) + '</td></tr>';
     }).join('') : '<tr><td colspan="6" class="muted">尚无任务</td></tr>';
     const running = jobs.find(function (job) { return job.status === 'RUNNING'; });
     noiseState.textContent = running ? 'RUNNING' : (jobs[0] ? jobs[0].status : 'IDLE');
@@ -451,45 +613,41 @@ export function renderFaucetHtml(): string {
     }
   }
   async function loadNoise() {
-    if (!['http:', 'https:'].includes(location.protocol)) { noiseState.textContent = '离线不可用'; noiseStart.disabled = true; noiseSaveTraders.disabled = true; noiseSay('请通过 Node 看板服务打开页面后使用模拟交易铺底。'); return; }
+    if (!['http:', 'https:'].includes(location.protocol)) { noiseState.textContent = '离线不可用'; noiseStart.disabled = true; noiseSay('请通过 Node 看板服务打开页面后使用造数据计划。'); return; }
     try {
       const response = await fetch('/api/noise-trades', { headers:{Accept:'application/json'}, cache:'no-store' });
       const body = await response.json();
       if (!response.ok) throw new Error(body.detail || body.error || ('接口返回 ' + response.status));
-      if (!noiseTradersInitialized) { noiseTraders.value = (body.configuredTraders || []).join(',\\n'); noiseTradersInitialized = true; }
       renderNoiseJobs(body.jobs || []);
-      if (!noiseActiveJobId && !(body.jobs || []).length) noiseSay('尚无任务。填写参数后点击“开始铺底”。');
+      if (!noiseActiveJobId && !(body.jobs || []).length) noiseSay('尚无任务。编辑计划 → 展开预览 → 按计划开始铺底。');
     } catch (error) { noiseState.textContent = 'ERROR'; noiseState.className = 'status-chip status-FAIL'; noiseSay('任务状态读取失败：' + error.message, 'error'); }
   }
-  noiseStart.addEventListener('click', async function () {
-    const traders = noiseTraders.value.split(/[\\s,]+/).map(function (item) { return item.trim(); }).filter(Boolean);
-    const invalid = traders.find(function (item) { return !/^0x[0-9a-fA-F]{40}$/.test(item); });
-    if (invalid) { noiseSay('Trader 地址格式不正确：' + invalid, 'error'); return; }
-    noiseStart.disabled = true; noiseSay('正在启动模拟交易铺底…'); noiseLog.hidden = false; noiseLogContent.textContent = '';
+  async function loadPlan() {
+    if (!['http:', 'https:'].includes(location.protocol)) { applyPlan({ name: '离线示例', traderCount: 10, rules: [{ label: '示例', collateralUsdc: '1000', leverage: 10, side: 'alternate', step: 'fixed', count: 1, traders: 'all' }] }); return; }
     try {
-      const response = await fetch('/api/noise-trades', { method:'POST', headers:{'Content-Type':'application/json',Accept:'application/json'}, body: JSON.stringify({ environment: noiseEnvironment.value, ordersPerTrader: Number(noiseOrders.value) || 2, closeAfter: noiseClose.checked, traders: traders }) });
+      const response = await fetch('/api/noise-plan', { headers:{Accept:'application/json'}, cache:'no-store' });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.detail || body.error || ('接口返回 ' + response.status));
+      presets = body.presets || {};
+      planPreset.innerHTML = '<option value="">选择预设填充…</option>' + Object.keys(presets).map(function (key) { return '<option value="' + escapeHtml(key) + '">' + escapeHtml(presets[key].name) + '</option>'; }).join('');
+      applyPlan(body.plan);
+      planSummary.textContent = body.saved ? '已加载保存的计划。' : '尚未保存计划，已填充预设骨架。';
+    } catch (error) { planSummary.textContent = '计划读取失败：' + error.message; }
+  }
+  noiseStart.addEventListener('click', async function () {
+    noiseStart.disabled = true; noiseSay('正在按计划启动铺底…'); noiseLog.hidden = false; noiseLogContent.textContent = '';
+    try {
+      const plan = collectPlan();
+      if (!plan.rules.length) throw new Error('至少需要一条网格规则。');
+      const response = await fetch('/api/noise-trades', { method:'POST', headers:{'Content-Type':'application/json',Accept:'application/json'}, body: JSON.stringify({ environment: plan.environment, plan: plan }) });
       const body = await response.json();
       if (!response.ok) throw new Error(body.detail || body.error || ('接口返回 ' + response.status));
       noiseActiveJobId = body.job.id;
       await loadNoise();
     } catch (error) { noiseSay('启动失败：' + error.message, 'error'); noiseStart.disabled = false; }
   });
-  noiseSaveTraders.addEventListener('click', async function () {
-    const traders = noiseTraders.value.split(/[\\s,]+/).map(function (item) { return item.trim(); }).filter(Boolean);
-    const invalid = traders.find(function (item) { return !/^0x[0-9a-fA-F]{40}$/.test(item); });
-    if (invalid) { noiseTradersStatus.textContent = '地址格式不正确：' + invalid; return; }
-    noiseSaveTraders.disabled = true; noiseTradersStatus.textContent = '保存中…';
-    try {
-      // 复用环境配置接口写入 E2E_NOISE_TRADER_ACCOUNTS（写 .env.local，同源 PUT）
-      const response = await fetch('/api/environment-configuration', { method:'PUT', headers:{'Content-Type':'application/json',Accept:'application/json'}, body: JSON.stringify({ environment: noiseEnvironment.value, values: { E2E_NOISE_TRADER_ACCOUNTS: traders.join(',') }, clearKeys: traders.length ? [] : ['E2E_NOISE_TRADER_ACCOUNTS'] }) });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.detail || body.error || ('接口返回 ' + response.status));
-      noiseTradersStatus.textContent = traders.length ? '已保存 ' + traders.length + ' 个 Trader 到本机 .env.local。' : '已清空，回落内置 3 个 noise trader。';
-    } catch (error) { noiseTradersStatus.textContent = '保存失败：' + error.message; }
-    finally { noiseSaveTraders.disabled = false; }
-  });
 
-  await Promise.all([initializeFunding(), refreshFaucetBalance(), loadFaucetServiceStatus(true), loadNoise()]);
+  await Promise.all([initializeFunding(), refreshFaucetBalance(), loadFaucetServiceStatus(true), loadNoise(), loadPlan()]);
   window.setInterval(function () { if (!document.hidden && noiseActiveJobId) loadNoise(); }, 2_000);
   window.setInterval(function () { if (!document.hidden) refreshFaucetBalance(); }, 30_000);
   window.setInterval(function () { if (!document.hidden) loadFaucetServiceStatus(false); }, 5_000);

@@ -7,10 +7,12 @@
 //    仓位不影响核对（期望模型全部基于 before 快照的增量）。
 //
 // 用法：
-//   npm run env:noise:trades                        # 默认 3 个内置 trader × 2 单，留仓
-//   npm run env:noise:trades -- --orders 4          # 每 trader 4 单
-//   npm run env:noise:trades -- --traders 0xA,0xB   # 指定 trader（或配 E2E_NOISE_TRADER_ACCOUNTS）
+//   npm run env:noise:trades -- --plan <plan.json>  # 按造数据计划执行（页面「Faucet & 交易」编辑保存的 JSON）
+//   npm run env:noise:trades                        # 无计划：兼容模式，3 个内置 trader × 2 单伪随机，留仓
+//   npm run env:noise:trades -- --orders 4          # 兼容模式：每 trader 4 单
+//   npm run env:noise:trades -- --traders 0xA,0xB   # 兼容模式：指定 trader（或配 E2E_NOISE_TRADER_ACCOUNTS）
 //   npm run env:noise:trades -- --close             # 铺底后随即全平（只留成交历史与 funding 痕迹）
+import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 
@@ -18,6 +20,7 @@ import dotenv from 'dotenv';
 import { getAddress, keccak256, toHex } from 'viem';
 
 import { resolveMockMarketBundle } from '../src/config/mock-resources.js';
+import { expandPlan, noisePlanSchema, planTraders, summarizePlan, type NoisePlan, type PlannedOrder } from '../src/domain/noise-plan.js';
 import {
   cumulativeOpenCostsKey,
   openInterestInTokensKey,
@@ -88,10 +91,28 @@ async function main(): Promise<void> {
   const keeperAccount = process.env.E2E_KEEPER_ACCOUNT;
   if (!rpcUrl || !keeperAccount) throw new Error('需要 E2E_TX_FORK_RPC_URL 与 E2E_KEEPER_ACCOUNT');
 
-  const traders = (argValue('--traders') ?? process.env.E2E_NOISE_TRADER_ACCOUNTS ?? BUILTIN_NOISE_TRADERS.join(','))
-    .split(',').map((item) => getAddress(item.trim()));
+  // 计划模式（页面/JSON）优先；无计划则退回兼容模式（内置伪随机）
+  const planPath = argValue('--plan');
+  let plan: NoisePlan | undefined;
+  if (planPath) {
+    plan = noisePlanSchema.parse(JSON.parse(await readFile(resolve(process.cwd(), planPath), 'utf8')));
+    const summary = summarizePlan(plan);
+    console.log(`▶ 计划「${plan.name}」：${summary.traders} Trader，${summary.orders} 单（${summary.longs} 多 / ${summary.shorts} 空），总抵押 ${summary.totalCollateralUsdc} USDC，总规模 ${summary.totalSizeUsd} USD，最大单 ${summary.maxSingleSizeUsd} USD`);
+  }
+  const traders = plan
+    ? planTraders(plan)
+    : (argValue('--traders') ?? process.env.E2E_NOISE_TRADER_ACCOUNTS ?? BUILTIN_NOISE_TRADERS.join(','))
+      .split(',').map((item) => getAddress(item.trim()));
   const ordersPerTrader = Number(argValue('--orders') ?? '2');
-  const closeAfter = process.argv.includes('--close');
+  const closeAfter = plan ? plan.closeAfter : process.argv.includes('--close');
+  const fundingEth = plan ? BigInt(Math.round(Number(plan.funding.ethPerTrader) * 1e6)) * 10n ** 12n : 10n * 10n ** 18n;
+  const fundingUsdc = plan ? BigInt(Math.round(Number(plan.funding.usdcPerTrader) * 1e6)) : 1_000_000n * 10n ** 6n;
+  const plannedByTrader = new Map<string, PlannedOrder[]>();
+  if (plan) for (const order of expandPlan(plan)) {
+    const list = plannedByTrader.get(order.trader.toLowerCase()) ?? [];
+    list.push(order);
+    plannedByTrader.set(order.trader.toLowerCase(), list);
+  }
 
   const bundle = await resolveMockMarketBundle('tx-fork', 'default-mock');
   const marketIndex = bundle.market!.marketIndex!;
@@ -138,8 +159,8 @@ async function main(): Promise<void> {
   const executed: Array<{ trader: string; orderKey: string; txHash: string; isLong: boolean; sizeUsd: string; closed: boolean }> = [];
   for (const trader of traders) {
     // 注资：ETH + Mock USDC + Router 授权（全部 admin/impersonation，不留私钥痕迹）
-    await rawRpc(adminRpcUrl!, 'tenderly_setBalance', [[trader], toHex(10n * 10n ** 18n)]);
-    await rawRpc(adminRpcUrl!, 'tenderly_setErc20Balance', [usdc, trader, toHex(1_000_000n * 10n ** 6n)]);
+    await rawRpc(adminRpcUrl!, 'tenderly_setBalance', [[trader], toHex(fundingEth)]);
+    await rawRpc(adminRpcUrl!, 'tenderly_setErc20Balance', [usdc, trader, toHex(fundingUsdc)]);
     const approveTx = await rawRpc(adminRpcUrl!, 'eth_sendTransaction', [{
       from: trader,
       to: usdc,
@@ -148,8 +169,16 @@ async function main(): Promise<void> {
     await waitReceipt(adminRpcUrl!, approveTx as string);
     console.log(`✔ ${trader} 注资与授权完成`);
 
-    for (let index = 0; index < ordersPerTrader; index += 1) {
-      const params = tradeParams(trader, index);
+    const plannedOrders = plannedByTrader.get(trader.toLowerCase());
+    const orderCount = plannedOrders ? plannedOrders.length : ordersPerTrader;
+    for (let index = 0; index < orderCount; index += 1) {
+      const planned = plannedOrders?.[index];
+      const params = planned
+        ? { isLong: planned.isLong, collateral: planned.collateralRaw, sizeUsd: planned.sizeUsdRaw }
+        : tradeParams(trader, index);
+      if (plan && plan.maxDelaySeconds > 0) {
+        await new Promise((resolveWait) => { setTimeout(resolveWait, Math.floor(Math.random() * plan!.maxDelaySeconds * 1000)); });
+      }
       const created = await broadcaster.send({
         ...actionsModule.buildIncreaseMulticall({
           exchangeRouter: deployment.addresses.exchangeRouter,
@@ -174,7 +203,8 @@ async function main(): Promise<void> {
       }]);
       const execReceipt = await waitReceipt(adminRpcUrl!, execTx as string);
       const ok = execReceipt.status === '0x1';
-      console.log(`${ok ? '✔' : '✘'} ${trader} #${index} ${params.isLong ? '开多' : '开空'} ${params.sizeUsd / 10n ** 30n} USD → ${created.txHash.slice(0, 12)}…`);
+      const detail = planned ? `（${planned.ruleLabel}｜${(Number(planned.collateralRaw) / 1e6).toFixed(0)} USDC × ${planned.leverage}x）` : '';
+      console.log(`${ok ? '✔' : '✘'} ${trader} #${index} ${params.isLong ? '开多' : '开空'} ${params.sizeUsd / 10n ** 30n} USD${detail} → ${created.txHash.slice(0, 12)}…`);
       let closed = false;
       if (ok && closeAfter) {
         const closeCreated = await broadcaster.send({

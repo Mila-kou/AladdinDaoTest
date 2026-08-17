@@ -21,6 +21,7 @@ import { FaucetBalanceMonitor } from './faucet-monitor.js';
 import { MockOraclePriceManager } from './mock-oracle-prices.js';
 import { ParameterWriteManager } from './parameter-write.js';
 import { NoiseTradeManager } from './noise-trades.js';
+import { rosterToCsv } from '../domain/noise-plan.js';
 import { FaucetAutoFundingManager } from './faucet-auto-funding.js';
 import {
   checkEnvironmentConfiguration,
@@ -236,6 +237,29 @@ export async function startDashboardServer(options: DashboardServerOptions) {
             detail: error instanceof Error ? error.message : String(error),
           });
         }
+        return;
+      }
+
+      if (url.pathname === '/api/noise-traders') {
+        if (method === 'GET' || method === 'HEAD') {
+          sendJson(response, 200, await noiseTradeManager.loadRoster(), headOnly);
+          return;
+        }
+        if (method === 'POST') {
+          if (!isSameOriginRequest(request)) { sendJson(response, 403, { error: '仅允许同源测试看板生成 Trader 花名册。' }); return; }
+          try {
+            sendJson(response, 200, await noiseTradeManager.generateRoster(await readJsonBody(request).catch(() => ({}))));
+          } catch (error) {
+            sendJson(response, 400, { error: 'Trader 花名册生成失败', detail: error instanceof Error ? error.message : String(error) });
+          }
+          return;
+        }
+        sendJson(response, 405, { error: 'Method Not Allowed' }, headOnly);
+        return;
+      }
+      if (url.pathname === '/api/noise-traders.csv' && (method === 'GET' || method === 'HEAD')) {
+        const loaded = await noiseTradeManager.loadRoster();
+        send(response, 200, 'text/csv; charset=utf-8', `${rosterToCsv(loaded.roster)}\n`, headOnly);
         return;
       }
 
@@ -798,6 +822,7 @@ export async function startDashboardServer(options: DashboardServerOptions) {
               '/api/parameters/set',
               '/api/noise-trades',
               '/api/noise-plan',
+              '/api/noise-traders',
               '/api/manual-check-target',
             ],
             capabilities: {

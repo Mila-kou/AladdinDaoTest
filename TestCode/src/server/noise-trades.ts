@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 import { getAddress } from 'viem';
 import { z } from 'zod';
 
-import { expandPlan, NOISE_PLAN_PRESETS, noisePlanSchema, summarizePlan, type NoisePlan } from '../domain/noise-plan.js';
+import { expandPlan, generateTraderRoster, NOISE_PLAN_PRESETS, noisePlanSchema, rosterToCsv, summarizePlan, type NoisePlan } from '../domain/noise-plan.js';
 
 // 模拟交易铺底任务管理器：spawn scripts/generate-noise-trades.ts 子进程，
 // 记录状态与日志尾（脱敏——脚本本身不打印 RPC/密钥），任务落盘 artifacts/noise-trades/<id>/。
@@ -153,6 +153,37 @@ export class NoiseTradeManager {
       sizeUsd: (order.sizeUsdRaw / 10n ** 30n).toString(),
     }));
     return { summary: summarizePlan(plan), orders, presets: Object.keys(NOISE_PLAN_PRESETS) };
+  }
+
+  private rosterPath(): string {
+    return resolve(this.projectRoot, 'config/noise-traders.json');
+  }
+
+  /** 生成 N 个 Trader 花名册并落盘 config/noise-traders.json（+ 同名 .csv 便于外部使用） */
+  async generateRoster(raw: unknown): Promise<{ roster: ReturnType<typeof generateTraderRoster>; savedAt: string; paths: { json: string; csv: string } }> {
+    const input = z.object({
+      count: z.number().int().min(1).max(100).default(100),
+      overrides: z.array(z.string().regex(/^0x[0-9a-fA-F]{40}$/)).max(100).optional(),
+    }).parse(raw ?? {});
+    const roster = generateTraderRoster(input.count, input.overrides ?? []);
+    const savedAt = new Date().toISOString();
+    await mkdir(resolve(this.projectRoot, 'config'), { recursive: true });
+    await writeFile(this.rosterPath(), `${JSON.stringify({ schemaVersion: 1, savedAt, count: roster.length, traders: roster }, null, 2)}\n`, 'utf8');
+    const csvPath = this.rosterPath().replace(/\.json$/, '.csv');
+    await writeFile(csvPath, `${rosterToCsv(roster)}\n`, 'utf8');
+    return { roster, savedAt, paths: { json: 'config/noise-traders.json', csv: 'config/noise-traders.csv' } };
+  }
+
+  async loadRoster(): Promise<{ roster: ReturnType<typeof generateTraderRoster>; savedAt?: string; saved: boolean }> {
+    try {
+      const parsed = JSON.parse(await readFile(this.rosterPath(), 'utf8')) as { savedAt?: string; traders?: ReturnType<typeof generateTraderRoster> };
+      if (Array.isArray(parsed.traders) && parsed.traders.length > 0) {
+        return { roster: parsed.traders, ...(parsed.savedAt ? { savedAt: parsed.savedAt } : {}), saved: true };
+      }
+    } catch {
+      // 尚未生成
+    }
+    return { roster: generateTraderRoster(100), saved: false };
   }
 
   presets() {

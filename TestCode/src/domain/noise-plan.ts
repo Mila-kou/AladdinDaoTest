@@ -58,6 +58,36 @@ export function traderAddressAt(index: number): `0x${string}` {
   return getAddress(`0x${hi}${'0'.repeat(32)}${lo}`) as `0x${string}`;
 }
 
+/** Trader 花名册条目：序号 · 名称（Trader1…）· 地址（确定性派生，或计划显式覆盖） */
+export interface TraderRosterEntry {
+  readonly index: number;
+  readonly name: string;
+  readonly address: `0x${string}`;
+  readonly source: 'derived' | 'override';
+}
+
+/**
+ * 生成 N 个 Trader 的花名册（默认 100）。地址确定性派生（不依赖随机、不需私钥——
+ * fork 上 impersonation 即可），因此"生成 + 保存"是记录用途，任何时候都能按序号重新算回同一地址。
+ */
+export function generateTraderRoster(count = 100, overrides: readonly string[] = []): TraderRosterEntry[] {
+  const total = Math.max(1, Math.min(100, count));
+  return Array.from({ length: total }, (_unused, offset) => {
+    const index = offset + 1;
+    const override = overrides[offset];
+    return {
+      index,
+      name: `Trader${index}`,
+      address: override ? (getAddress(override) as `0x${string}`) : traderAddressAt(index),
+      source: override ? 'override' : 'derived',
+    };
+  });
+}
+
+export function rosterToCsv(roster: readonly TraderRosterEntry[]): string {
+  return ['index,name,address,source', ...roster.map((item) => `${item.index},${item.name},${item.address},${item.source}`)].join('\n');
+}
+
 export function planTraders(plan: NoisePlan): `0x${string}`[] {
   if (plan.traderAddresses && plan.traderAddresses.length > 0) {
     return plan.traderAddresses.slice(0, plan.traderCount).map((item) => getAddress(item) as `0x${string}`);

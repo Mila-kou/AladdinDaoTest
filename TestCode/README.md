@@ -213,6 +213,7 @@ npm run dashboard:serve
 - `GET /api/environments`：环境能力、RPC 是否已配置及脱敏地址；
 - `GET/POST /api/mock-oracle-prices`：读取 default-mock 两个 Mock Oracle 的链上 feed 价、有效 Min/Max 区间与时间戳新鲜度；同源 POST 刷新时间戳（价格不变）或设置 Min/Max（Min 写 MockOracle answer，Max 写 DataStore `STABLE_PRICE`，provider 取两者排序为价格区间）；仅三个私有 Fork 可用；
 - `GET/POST /api/noise-trades`（+ `/:id`）：模拟交易铺底任务——GET 列任务与已配置 Trader；同源 POST 启动（计划模式传 `plan`；兼容模式 traders / ordersPerTrader / closeAfter），一次只允许一个任务运行；任务与计划落盘 `artifacts/noise-trades/<id>/`，服务重启时未完成任务标 INTERRUPTED；
+- `GET/POST /api/noise-traders` + `GET /api/noise-traders.csv`：Trader 花名册——GET 读已保存花名册（无则 100 个派生地址预览）；同源 POST 生成 N 个（1–100）并落盘 `config/noise-traders.json` + `.csv`（可传 overrides 覆盖前若干个）；CSV 下载接口。地址按序号确定性派生（`0x1001…0001`…），fork 上 impersonation 免私钥，任何时候可按序号重算；
 - `GET/PUT/POST /api/noise-plan`：造数据计划——GET 读已保存计划（无则预设骨架）与全部预设；同源 PUT 保存到 `config/noise-plan.json`；POST 展开预览（不落盘不上链，返回摘要与逐单清单）；
 - `POST /api/parameters/set`：单参数直写（同源）：按 DataStore key + 类型写入新值（模拟持有 CONTROLLER 的 Config 合约），写入后回读核对并返回 before/after/txHash；仅三个私有 Fork 可用；
 - `GET/POST /api/environment-initializations`：查询或创建环境初始化任务；保存 RPC、验证 chainId/快照能力，并按 `bundleAlias` 部署独立 Market Bundle；`forceSharedCollateral` 仅用于明确重建环境共享 USDC Oracle；

@@ -69,6 +69,10 @@ export function renderFaucetHtml(): string {
     .plan-orders { width:100%; border-collapse:collapse; font-size:12px; margin-top:8px; } .plan-orders th, .plan-orders td { text-align:left; padding:5px 8px; border-bottom:1px solid var(--line); } .plan-orders th { color:var(--muted); }
     .plan-json textarea { width:100%; margin-top:6px; border:1px solid var(--line); border-radius:9px; background:#0b1220; color:var(--text); padding:8px 10px; font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace; }
     .side-long { color:var(--pass); } .side-short { color:var(--fail); }
+    .plan-roster { margin-top:10px; } .plan-roster summary { cursor:pointer; color:var(--muted); font-size:12px; }
+    .plan-roster-actions { display:flex; align-items:end; gap:10px; flex-wrap:wrap; margin-top:8px; } .plan-roster-actions label { min-width:120px; }
+    .plan-roster-actions button { min-height:38px; border:1px solid var(--line); border-radius:9px; background:#101b2d; color:var(--text); padding:7px 14px; cursor:pointer; white-space:nowrap; } .plan-roster-actions button:disabled { opacity:.45; cursor:not-allowed; }
+    .roster-link { color:#8fc2ff; align-self:center; } .roster-scroll { max-height:320px; } .roster-table code { overflow-wrap:anywhere; }
     .noise-form { display:grid; grid-template-columns:minmax(160px,.7fr) minmax(140px,.6fr) minmax(300px,1.6fr) auto; gap:10px; align-items:end; }
     .noise-form button, .noise-traders-actions button { min-height:38px; border:1px solid #3978bd; border-radius:9px; background:#14569a; color:white; padding:7px 16px; cursor:pointer; white-space:nowrap; }
     .noise-traders-actions button.secondary { background:#101b2d; border-color:var(--line); color:var(--text); }
@@ -138,6 +142,16 @@ export function renderFaucetHtml(): string {
     </div>
     <details class="plan-advanced-traders"><summary>Trader 地址（默认按序号自动派生 0x1001…0001、0x1002…0002…，展开可粘贴覆盖）</summary>
       <textarea id="plan-trader-addresses" rows="3" spellcheck="false" placeholder="留空 = 自动派生；粘贴地址列表（逗号/换行分隔）则按顺序覆盖前 N 个"></textarea>
+    </details>
+    <details class="plan-roster"><summary>Trader 花名册（一键生成 Trader1…Trader100 并保存记录；地址确定性派生，任何时候可按序号重算）</summary>
+      <div class="plan-roster-actions">
+        <label>生成数量<input id="roster-count" type="number" min="1" max="100" value="100"></label>
+        <button id="roster-generate" type="button" class="secondary">生成并保存花名册</button>
+        <button id="roster-fill-plan" type="button" class="secondary">用花名册填入计划（Trader 数 = 花名册长度）</button>
+        <a id="roster-csv" class="roster-link" href="./api/noise-traders.csv" download="noise-traders.csv">下载 CSV</a>
+        <span id="roster-status" class="panel-note"></span>
+      </div>
+      <div class="table-scroll roster-scroll"><table class="plan-orders roster-table"><thead><tr><th>#</th><th>名称</th><th>地址</th><th>来源</th></tr></thead><tbody id="roster-rows"><tr><td colspan="4" class="muted">尚未生成</td></tr></tbody></table></div>
     </details>
 
     <div class="plan-rules-head"><h3>网格规则（每条规则对指定 Trader 各下 count 单）</h3><div class="plan-rules-actions"><label>预设生成器<select id="plan-preset"><option value="">选择预设填充…</option></select></label><button id="plan-add-rule" type="button" class="secondary">+ 添加规则</button></div></div>
@@ -634,6 +648,47 @@ export function renderFaucetHtml(): string {
       planSummary.textContent = body.saved ? '已加载保存的计划。' : '尚未保存计划，已填充预设骨架。';
     } catch (error) { planSummary.textContent = '计划读取失败：' + error.message; }
   }
+  // —— Trader 花名册 ——
+  const rosterRows = document.getElementById('roster-rows');
+  const rosterStatus = document.getElementById('roster-status');
+  let roster = [];
+  function renderRoster(items, saved, savedAt) {
+    roster = items || [];
+    rosterRows.innerHTML = roster.length ? roster.map(function (item) {
+      return '<tr><td>' + item.index + '</td><td>' + escapeHtml(item.name) + '</td><td><code>' + escapeHtml(item.address) + '</code></td><td>' + (item.source === 'override' ? '覆盖' : '派生') + '</td></tr>';
+    }).join('') : '<tr><td colspan="4" class="muted">尚未生成</td></tr>';
+    rosterStatus.textContent = saved ? ('已保存 ' + roster.length + ' 个（' + (savedAt ? new Date(savedAt).toLocaleString('zh-CN', { hour12:false }) : '') + '，config/noise-traders.json + .csv）') : ('预览 ' + roster.length + ' 个派生地址；点击"生成并保存"落盘');
+  }
+  async function loadRoster() {
+    if (!['http:', 'https:'].includes(location.protocol)) { rosterStatus.textContent = '离线不可用'; return; }
+    try {
+      const response = await fetch('/api/noise-traders', { headers:{Accept:'application/json'}, cache:'no-store' });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.detail || body.error || ('接口返回 ' + response.status));
+      renderRoster(body.roster, body.saved, body.savedAt);
+    } catch (error) { rosterStatus.textContent = '花名册读取失败：' + error.message; }
+  }
+  document.getElementById('roster-generate').addEventListener('click', async function () {
+    const button = this; button.disabled = true; rosterStatus.textContent = '生成中…';
+    try {
+      const overrides = planTraderAddresses.value.split(/[\\s,]+/).map(function (item) { return item.trim(); }).filter(Boolean);
+      const response = await fetch('/api/noise-traders', { method:'POST', headers:{'Content-Type':'application/json',Accept:'application/json'}, body: JSON.stringify({ count: Number(document.getElementById('roster-count').value) || 100, overrides: overrides }) });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.detail || body.error || ('接口返回 ' + response.status));
+      renderRoster(body.roster, true, body.savedAt);
+    } catch (error) { rosterStatus.textContent = '生成失败：' + error.message; }
+    finally { button.disabled = false; }
+  });
+  document.getElementById('roster-fill-plan').addEventListener('click', function () {
+    if (!roster.length) { rosterStatus.textContent = '请先生成花名册。'; return; }
+    planTraderCount.value = roster.length;
+    // 派生地址无需写入 traderAddresses（计划会按序号自动派生同一地址）；仅覆盖项需要显式写入
+    const overrides = roster.filter(function (item) { return item.source === 'override'; }).map(function (item) { return item.address; });
+    planTraderAddresses.value = overrides.length ? roster.map(function (item) { return item.address; }).join(',\\n') : '';
+    syncJson();
+    rosterStatus.textContent = '已填入计划：Trader 数 = ' + roster.length + (overrides.length ? '（含 ' + overrides.length + ' 个覆盖地址）' : '（全部派生地址，无需显式列出）');
+  });
+
   noiseStart.addEventListener('click', async function () {
     noiseStart.disabled = true; noiseSay('正在按计划启动铺底…'); noiseLog.hidden = false; noiseLogContent.textContent = '';
     try {
@@ -647,7 +702,7 @@ export function renderFaucetHtml(): string {
     } catch (error) { noiseSay('启动失败：' + error.message, 'error'); noiseStart.disabled = false; }
   });
 
-  await Promise.all([initializeFunding(), refreshFaucetBalance(), loadFaucetServiceStatus(true), loadNoise(), loadPlan()]);
+  await Promise.all([initializeFunding(), refreshFaucetBalance(), loadFaucetServiceStatus(true), loadNoise(), loadPlan(), loadRoster()]);
   window.setInterval(function () { if (!document.hidden && noiseActiveJobId) loadNoise(); }, 2_000);
   window.setInterval(function () { if (!document.hidden) refreshFaucetBalance(); }, 30_000);
   window.setInterval(function () { if (!document.hidden) loadFaucetServiceStatus(false); }, 5_000);

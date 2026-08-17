@@ -1,4 +1,5 @@
 import { getAddress, keccak256, toHex } from 'viem';
+import { english, generateMnemonic, generatePrivateKey, mnemonicToAccount, privateKeyToAccount } from 'viem/accounts';
 import { z } from 'zod';
 
 // 造数据计划（noise plan）：多 Trader 注资 + 网格/等比批量下单的唯一真源。
@@ -63,7 +64,77 @@ export interface TraderRosterEntry {
   readonly index: number;
   readonly name: string;
   readonly address: `0x${string}`;
-  readonly source: 'derived' | 'override';
+  /** derived=按序号占位地址（impersonation）；override=用户粘贴；wallet=真实 EOA（私钥在 secret 文件） */
+  readonly source: 'derived' | 'override' | 'wallet';
+}
+
+/** 真实钱包花名册（含私钥）：仅本机 secret 文件，绝不经 API 返回、绝不进仓 */
+export interface TraderWalletSecret {
+  readonly index: number;
+  readonly name: string;
+  readonly address: `0x${string}`;
+  readonly privateKey: `0x${string}`;
+  /** 助记词派生路径（mnemonic 模式）；random 模式为空 */
+  readonly derivationPath?: string;
+}
+
+export interface TraderWalletBundle {
+  readonly schemaVersion: 1;
+  readonly generatedAt: string;
+  readonly mode: 'mnemonic' | 'random';
+  /** mnemonic 模式：24 词助记词——备份它即可完全恢复全部 100 个钱包 */
+  readonly mnemonic?: string;
+  readonly wallets: readonly TraderWalletSecret[];
+}
+
+/**
+ * 生成 N 个真实 EOA（含私钥）。默认 mnemonic 模式：一个 24 词助记词按 BIP-44
+ * m/44'/60'/0'/0/i 派生 N 个账户（备份助记词即可恢复）；random 模式每个独立随机私钥。
+ * 传入已有 mnemonic 可重新派生同一批地址（恢复/扩容）。
+ */
+export function generateTraderWallets(input: {
+  readonly count?: number;
+  readonly mode?: 'mnemonic' | 'random';
+  readonly mnemonic?: string;
+} = {}): TraderWalletBundle {
+  const total = Math.max(1, Math.min(100, input.count ?? 100));
+  const mode = input.mode ?? 'mnemonic';
+  const generatedAt = new Date().toISOString();
+  if (mode === 'random') {
+    return {
+      schemaVersion: 1,
+      generatedAt,
+      mode,
+      wallets: Array.from({ length: total }, (_unused, offset) => {
+        const privateKey = generatePrivateKey();
+        return { index: offset + 1, name: `Trader${offset + 1}`, address: privateKeyToAccount(privateKey).address, privateKey };
+      }),
+    };
+  }
+  const mnemonic = input.mnemonic ?? generateMnemonic(english, 256);
+  return {
+    schemaVersion: 1,
+    generatedAt,
+    mode,
+    mnemonic,
+    wallets: Array.from({ length: total }, (_unused, offset) => {
+      const account = mnemonicToAccount(mnemonic, { addressIndex: offset });
+      const hdKey = account.getHdKey();
+      const privateKey = `0x${Buffer.from(hdKey.privateKey!).toString('hex')}` as `0x${string}`;
+      return {
+        index: offset + 1,
+        name: `Trader${offset + 1}`,
+        address: account.address,
+        privateKey,
+        derivationPath: `m/44'/60'/0'/0/${offset}`,
+      };
+    }),
+  };
+}
+
+/** 从钱包束投影出公开花名册（无私钥） */
+export function walletsToRoster(bundle: TraderWalletBundle): TraderRosterEntry[] {
+  return bundle.wallets.map((wallet) => ({ index: wallet.index, name: wallet.name, address: wallet.address, source: 'wallet' }));
 }
 
 /**

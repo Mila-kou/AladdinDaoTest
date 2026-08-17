@@ -17,10 +17,11 @@ import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 
 import dotenv from 'dotenv';
-import { getAddress, keccak256, toHex } from 'viem';
+import { createPublicClient, createWalletClient, defineChain, getAddress, http, keccak256, toHex } from 'viem';
+import { privateKeyToAccount } from 'viem/accounts';
 
 import { resolveMockMarketBundle } from '../src/config/mock-resources.js';
-import { expandPlan, noisePlanSchema, planTraders, summarizePlan, type NoisePlan, type PlannedOrder } from '../src/domain/noise-plan.js';
+import { expandPlan, noisePlanSchema, planTraders, summarizePlan, type NoisePlan, type PlannedOrder, type TraderWalletBundle } from '../src/domain/noise-plan.js';
 import {
   cumulativeOpenCostsKey,
   openInterestInTokensKey,
@@ -85,6 +86,50 @@ function tradeParams(trader: string, index: number): { isLong: boolean; collater
   };
 }
 
+/** 本机真实钱包私钥束（config/noise-traders.secret.json）；不存在则返回空 map（走 impersonation） */
+async function loadWalletSecrets(): Promise<Map<string, `0x${string}`>> {
+  const map = new Map<string, `0x${string}`>();
+  try {
+    const bundle = JSON.parse(await readFile(resolve(process.cwd(), 'config/noise-traders.secret.json'), 'utf8')) as TraderWalletBundle;
+    for (const wallet of bundle.wallets ?? []) map.set(wallet.address.toLowerCase(), wallet.privateKey);
+  } catch {
+    // 无私钥束
+  }
+  return map;
+}
+
+/** viem 私钥签名广播器：与 legacy impersonateBroadcaster 同形状（send → {ok, txHash, blockNumber, orderKey}） */
+function signingBroadcaster(input: {
+  rpcUrl: string; chainId: number; secrets: Map<string, `0x${string}`>;
+  extractOrderKey: (result: string) => `0x${string}` | null;
+}) {
+  const chain = defineChain({ id: input.chainId, name: 'FX100 Fork', nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 }, rpcUrls: { default: { http: [input.rpcUrl] } } });
+  const publicClient = createPublicClient({ chain, transport: http(input.rpcUrl) });
+  return {
+    mode: 'private-key',
+    async send({ to, data, from, value = '0', label }: { to: string; data: `0x${string}`; from: string; value?: string; label?: string }) {
+      const privateKey = input.secrets.get(from.toLowerCase());
+      if (!privateKey) throw new Error(`钱包 ${from} 无私钥（不在 secret 束中）`);
+      const account = privateKeyToAccount(privateKey);
+      const wallet = createWalletClient({ account, chain, transport: http(input.rpcUrl) });
+      // 先 eth_call 模拟拿 orderKey（与 legacy 同口径），失败即返回可读错误
+      let simulated: `0x${string}`;
+      try {
+        simulated = (await publicClient.call({ account, to: to as `0x${string}`, data, value: BigInt(value) })).data ?? '0x';
+      } catch (error) {
+        return { ok: false, simulated: true, error: error instanceof Error ? error.message.split('\n')[0] : String(error), label };
+      }
+      const txHash = await wallet.sendTransaction({ account, chain, to: to as `0x${string}`, data, value: BigInt(value) });
+      const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash, timeout: 120_000 });
+      return {
+        ok: receipt.status === 'success', simulated: false, txHash, blockNumber: Number(receipt.blockNumber),
+        gasUsed: receipt.gasUsed.toString(), orderKey: input.extractOrderKey(simulated),
+        error: receipt.status === 'success' ? null : '交易 reverted', label,
+      };
+    },
+  };
+}
+
 async function main(): Promise<void> {
   const rpcUrl = process.env.E2E_TX_FORK_RPC_URL;
   const adminRpcUrl = process.env.E2E_TX_FORK_ADMIN_RPC_URL ?? rpcUrl;
@@ -127,7 +172,15 @@ async function main(): Promise<void> {
   const deploymentDir = resolve(process.cwd(), '../Github/fx100-contracts@release-v0.3.1/base_sepolia_v0.3.1_260729');
   const baseDeployment = deploymentModule.loadDeployment(deploymentDir);
   const deployment = { ...baseDeployment, addresses: { ...baseDeployment.addresses, usdc } };
-  const broadcaster = await actionsModule.impersonateBroadcaster({ rpcUrl, deploymentDir });
+  const secrets = await loadWalletSecrets();
+  const allSigned = traders.length > 0 && traders.every((trader) => secrets.has(trader.toLowerCase()));
+  const chainIdHex = await rawRpc(rpcUrl, 'eth_chainId', []) as string;
+  const broadcaster = allSigned
+    ? signingBroadcaster({ rpcUrl, chainId: Number(BigInt(chainIdHex)), secrets, extractOrderKey: actionsModule.extractOrderKey })
+    : await actionsModule.impersonateBroadcaster({ rpcUrl, deploymentDir });
+  console.log(allSigned
+    ? `🔐 签名模式：${traders.length} 个 Trader 全部有本机私钥，订单由各钱包真实签名`
+    : `👤 impersonation 模式：${secrets.size ? `${traders.filter((t) => !secrets.has(t.toLowerCase())).length} 个 Trader 无私钥，` : ''}走 admin RPC 免签名`);
   const castModule = await import(pathToFileURL(legacyPath('tool/onchain-tx/lib/cast.mjs')).href);
   const deps = { calldata: castModule.calldata };
 
@@ -161,12 +214,14 @@ async function main(): Promise<void> {
     // 注资：ETH + Mock USDC + Router 授权（全部 admin/impersonation，不留私钥痕迹）
     await rawRpc(adminRpcUrl!, 'tenderly_setBalance', [[trader], toHex(fundingEth)]);
     await rawRpc(adminRpcUrl!, 'tenderly_setErc20Balance', [usdc, trader, toHex(fundingUsdc)]);
-    const approveTx = await rawRpc(adminRpcUrl!, 'eth_sendTransaction', [{
-      from: trader,
-      to: usdc,
-      data: deps.calldata('approve(address,uint256)', [deployment.addresses.router, (2n ** 256n - 1n).toString()]),
-    }]);
-    await waitReceipt(adminRpcUrl!, approveTx as string);
+    const approveData = deps.calldata('approve(address,uint256)', [deployment.addresses.router, (2n ** 256n - 1n).toString()]);
+    if (allSigned) {
+      const approved = await broadcaster.send({ to: usdc, data: approveData, from: trader, label: 'approve' });
+      if (!approved.ok) throw new Error(`${trader} Router 授权失败：${approved.error ?? approved.txHash}`);
+    } else {
+      const approveTx = await rawRpc(adminRpcUrl!, 'eth_sendTransaction', [{ from: trader, to: usdc, data: approveData }]);
+      await waitReceipt(adminRpcUrl!, approveTx as string);
+    }
     console.log(`✔ ${trader} 注资与授权完成`);
 
     const plannedOrders = plannedByTrader.get(trader.toLowerCase());

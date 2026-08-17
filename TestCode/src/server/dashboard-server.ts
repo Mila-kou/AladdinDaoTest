@@ -257,6 +257,16 @@ export async function startDashboardServer(options: DashboardServerOptions) {
         sendJson(response, 405, { error: 'Method Not Allowed' }, headOnly);
         return;
       }
+      if (url.pathname === '/api/noise-traders/wallets' && method === 'POST') {
+        if (!isSameOriginRequest(request)) { sendJson(response, 403, { error: '仅允许同源测试看板生成 Trader 钱包。' }); return; }
+        try {
+          // 返回值绝不含私钥/助记词；私钥束仅落本机 config/noise-traders.secret.json（0600、gitignore）
+          sendJson(response, 200, await noiseTradeManager.generateWallets(await readJsonBody(request).catch(() => ({}))));
+        } catch (error) {
+          sendJson(response, 400, { error: 'Trader 钱包生成失败', detail: error instanceof Error ? error.message : String(error) });
+        }
+        return;
+      }
       if (url.pathname === '/api/noise-traders.csv' && (method === 'GET' || method === 'HEAD')) {
         const loaded = await noiseTradeManager.loadRoster();
         send(response, 200, 'text/csv; charset=utf-8', `${rosterToCsv(loaded.roster)}\n`, headOnly);

@@ -73,6 +73,7 @@ export function renderFaucetHtml(): string {
     .plan-roster-actions { display:flex; align-items:end; gap:10px; flex-wrap:wrap; margin-top:8px; } .plan-roster-actions label { min-width:120px; }
     .plan-roster-actions button { min-height:38px; border:1px solid var(--line); border-radius:9px; background:#101b2d; color:var(--text); padding:7px 14px; cursor:pointer; white-space:nowrap; } .plan-roster-actions button:disabled { opacity:.45; cursor:not-allowed; }
     .roster-link { color:#8fc2ff; align-self:center; } .roster-scroll { max-height:320px; } .roster-table code { overflow-wrap:anywhere; }
+    #roster-generate-wallets { border-color:#3978bd; background:#14569a; color:white; } .roster-secret-note { margin-top:10px; font-size:12px; }
     .noise-form { display:grid; grid-template-columns:minmax(160px,.7fr) minmax(140px,.6fr) minmax(300px,1.6fr) auto; gap:10px; align-items:end; }
     .noise-form button, .noise-traders-actions button { min-height:38px; border:1px solid #3978bd; border-radius:9px; background:#14569a; color:white; padding:7px 16px; cursor:pointer; white-space:nowrap; }
     .noise-traders-actions button.secondary { background:#101b2d; border-color:var(--line); color:var(--text); }
@@ -146,11 +147,14 @@ export function renderFaucetHtml(): string {
     <details class="plan-roster"><summary>Trader 花名册（一键生成 Trader1…Trader100 并保存记录；地址确定性派生，任何时候可按序号重算）</summary>
       <div class="plan-roster-actions">
         <label>生成数量<input id="roster-count" type="number" min="1" max="100" value="100"></label>
-        <button id="roster-generate" type="button" class="secondary">生成并保存花名册</button>
+        <button id="roster-generate" type="button" class="secondary">生成占位地址花名册（impersonation，无私钥）</button>
+        <button id="roster-generate-wallets" type="button">生成真实钱包（含私钥，可自主签名发交易）</button>
         <button id="roster-fill-plan" type="button" class="secondary">用花名册填入计划（Trader 数 = 花名册长度）</button>
         <a id="roster-csv" class="roster-link" href="./api/noise-traders.csv" download="noise-traders.csv">下载 CSV</a>
         <span id="roster-status" class="panel-note"></span>
       </div>
+      <p id="roster-wallet-status" class="panel-note"></p>
+      <p class="noise-warning roster-secret-note">🔐 真实钱包私钥只写入本机 <code>config/noise-traders.secret.json</code>（权限 0600、已 gitignore），页面与 API <strong>永不返回私钥/助记词</strong>。默认助记词模式：一个 24 词助记词按 BIP-44 派生全部账户——<strong>备份助记词即可完全恢复</strong>；重新生成会覆盖旧文件。造数据计划检测到真实钱包时自动改为<strong>私钥真实签名</strong>下单（不再 impersonation）。</p>
       <div class="table-scroll roster-scroll"><table class="plan-orders roster-table"><thead><tr><th>#</th><th>名称</th><th>地址</th><th>来源</th></tr></thead><tbody id="roster-rows"><tr><td colspan="4" class="muted">尚未生成</td></tr></tbody></table></div>
     </details>
 
@@ -655,7 +659,7 @@ export function renderFaucetHtml(): string {
   function renderRoster(items, saved, savedAt) {
     roster = items || [];
     rosterRows.innerHTML = roster.length ? roster.map(function (item) {
-      return '<tr><td>' + item.index + '</td><td>' + escapeHtml(item.name) + '</td><td><code>' + escapeHtml(item.address) + '</code></td><td>' + (item.source === 'override' ? '覆盖' : '派生') + '</td></tr>';
+      return '<tr><td>' + item.index + '</td><td>' + escapeHtml(item.name) + '</td><td><code>' + escapeHtml(item.address) + '</code></td><td>' + (item.source === 'wallet' ? '真实钱包' : item.source === 'override' ? '覆盖' : '派生占位') + '</td></tr>';
     }).join('') : '<tr><td colspan="4" class="muted">尚未生成</td></tr>';
     rosterStatus.textContent = saved ? ('已保存 ' + roster.length + ' 个（' + (savedAt ? new Date(savedAt).toLocaleString('zh-CN', { hour12:false }) : '') + '，config/noise-traders.json + .csv）') : ('预览 ' + roster.length + ' 个派生地址；点击"生成并保存"落盘');
   }
@@ -666,8 +670,26 @@ export function renderFaucetHtml(): string {
       const body = await response.json();
       if (!response.ok) throw new Error(body.detail || body.error || ('接口返回 ' + response.status));
       renderRoster(body.roster, body.saved, body.savedAt);
+      const walletStatus = document.getElementById('roster-wallet-status');
+      walletStatus.textContent = body.wallets && body.wallets.exists
+        ? ('🔐 本机存在真实钱包私钥束：' + body.wallets.count + ' 个（' + (body.wallets.mode === 'mnemonic' ? '助记词派生' : '独立随机') + '，' + (body.wallets.generatedAt ? new Date(body.wallets.generatedAt).toLocaleString('zh-CN', { hour12:false }) : '') + '）；造数据计划将用私钥真实签名。')
+        : '本机尚无真实钱包私钥束；当前造数据走 impersonation 占位地址。';
     } catch (error) { rosterStatus.textContent = '花名册读取失败：' + error.message; }
   }
+  document.getElementById('roster-generate-wallets').addEventListener('click', async function () {
+    const count = Number(document.getElementById('roster-count').value) || 100;
+    if (!window.confirm('将生成 ' + count + ' 个真实钱包（含私钥）并写入本机 config/noise-traders.secret.json（覆盖旧文件）。私钥不会显示在页面或经 API 返回；请妥善备份助记词。继续？')) return;
+    const button = this; button.disabled = true; rosterStatus.textContent = '生成真实钱包中…';
+    try {
+      const response = await fetch('/api/noise-traders/wallets', { method:'POST', headers:{'Content-Type':'application/json',Accept:'application/json'}, body: JSON.stringify({ count: count, mode: 'mnemonic' }) });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.detail || body.error || ('接口返回 ' + response.status));
+      renderRoster(body.roster, true, body.generatedAt);
+      await loadRoster();
+      rosterStatus.textContent = '已生成 ' + body.roster.length + ' 个真实钱包（' + body.mode + (body.mnemonicWords ? '，' + body.mnemonicWords + ' 词助记词' : '') + '）；私钥束：' + body.secretPath + '（0600）；公开花名册：' + body.paths.json + ' / ' + body.paths.csv;
+    } catch (error) { rosterStatus.textContent = '生成失败：' + error.message; }
+    finally { button.disabled = false; }
+  });
   document.getElementById('roster-generate').addEventListener('click', async function () {
     const button = this; button.disabled = true; rosterStatus.textContent = '生成中…';
     try {

@@ -1,12 +1,12 @@
 import { spawn } from 'node:child_process';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
 import dotenv from 'dotenv';
 import { getAddress } from 'viem';
 import { z } from 'zod';
 
-import { expandPlan, generateTraderRoster, NOISE_PLAN_PRESETS, noisePlanSchema, rosterToCsv, summarizePlan, type NoisePlan } from '../domain/noise-plan.js';
+import { expandPlan, generateTraderRoster, generateTraderWallets, NOISE_PLAN_PRESETS, noisePlanSchema, rosterToCsv, summarizePlan, walletsToRoster, type NoisePlan, type TraderWalletBundle } from '../domain/noise-plan.js';
 
 // 模拟交易铺底任务管理器：spawn scripts/generate-noise-trades.ts 子进程，
 // 记录状态与日志尾（脱敏——脚本本身不打印 RPC/密钥），任务落盘 artifacts/noise-trades/<id>/。
@@ -174,16 +174,83 @@ export class NoiseTradeManager {
     return { roster, savedAt, paths: { json: 'config/noise-traders.json', csv: 'config/noise-traders.csv' } };
   }
 
-  async loadRoster(): Promise<{ roster: ReturnType<typeof generateTraderRoster>; savedAt?: string; saved: boolean }> {
+  async loadRoster(): Promise<{
+    roster: ReturnType<typeof generateTraderRoster>;
+    savedAt?: string;
+    saved: boolean;
+    kind: 'derived' | 'wallet';
+    wallets: { exists: boolean; count?: number; mode?: string; generatedAt?: string };
+  }> {
+    const wallets = await this.walletSecretStatus();
     try {
-      const parsed = JSON.parse(await readFile(this.rosterPath(), 'utf8')) as { savedAt?: string; traders?: ReturnType<typeof generateTraderRoster> };
+      const parsed = JSON.parse(await readFile(this.rosterPath(), 'utf8')) as { savedAt?: string; kind?: string; traders?: ReturnType<typeof generateTraderRoster> };
       if (Array.isArray(parsed.traders) && parsed.traders.length > 0) {
-        return { roster: parsed.traders, ...(parsed.savedAt ? { savedAt: parsed.savedAt } : {}), saved: true };
+        return {
+          roster: parsed.traders,
+          ...(parsed.savedAt ? { savedAt: parsed.savedAt } : {}),
+          saved: true,
+          kind: parsed.kind === 'wallet' ? 'wallet' : 'derived',
+          wallets,
+        };
       }
     } catch {
       // 尚未生成
     }
-    return { roster: generateTraderRoster(100), saved: false };
+    return { roster: generateTraderRoster(100), saved: false, kind: 'derived', wallets };
+  }
+
+  private walletSecretPath(): string {
+    return resolve(this.projectRoot, 'config/noise-traders.secret.json');
+  }
+
+  /**
+   * 生成 N 个真实 EOA（含私钥）：私钥束写入 config/noise-traders.secret.json（0600、gitignore、仅本机），
+   * 公开花名册（无私钥）同步写入 config/noise-traders.json + .csv。API 返回值绝不包含私钥/助记词。
+   */
+  async generateWallets(raw: unknown): Promise<{
+    roster: ReturnType<typeof walletsToRoster>;
+    generatedAt: string;
+    mode: 'mnemonic' | 'random';
+    mnemonicWords?: number;
+    secretPath: string;
+    paths: { json: string; csv: string };
+  }> {
+    const input = z.object({
+      count: z.number().int().min(1).max(100).default(100),
+      mode: z.enum(['mnemonic', 'random']).default('mnemonic'),
+      /** 传入已有助记词可重新派生同一批地址（恢复/扩容）；只在请求体里出现，不落日志 */
+      mnemonic: z.string().min(1).optional(),
+    }).parse(raw ?? {});
+    const bundle = generateTraderWallets({ count: input.count, mode: input.mode, ...(input.mnemonic ? { mnemonic: input.mnemonic } : {}) });
+    await mkdir(resolve(this.projectRoot, 'config'), { recursive: true });
+    const secretPath = this.walletSecretPath();
+    // 原子写 + 0600：先写临时文件再 rename，避免半写状态；权限收紧到仅当前用户
+    const temporary = `${secretPath}.${process.pid}.tmp`;
+    await writeFile(temporary, `${JSON.stringify(bundle, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
+    await chmod(temporary, 0o600);
+    const { rename } = await import('node:fs/promises');
+    await rename(temporary, secretPath);
+    const roster = walletsToRoster(bundle);
+    await writeFile(this.rosterPath(), `${JSON.stringify({ schemaVersion: 1, savedAt: bundle.generatedAt, count: roster.length, kind: 'wallet', traders: roster }, null, 2)}\n`, 'utf8');
+    await writeFile(this.rosterPath().replace(/\.json$/, '.csv'), `${rosterToCsv(roster)}\n`, 'utf8');
+    return {
+      roster,
+      generatedAt: bundle.generatedAt,
+      mode: bundle.mode,
+      ...(bundle.mnemonic ? { mnemonicWords: bundle.mnemonic.split(' ').length } : {}),
+      secretPath: 'config/noise-traders.secret.json',
+      paths: { json: 'config/noise-traders.json', csv: 'config/noise-traders.csv' },
+    };
+  }
+
+  /** 是否存在私钥束（只报有无与数量，不返回内容） */
+  async walletSecretStatus(): Promise<{ exists: boolean; count?: number; mode?: string; generatedAt?: string }> {
+    try {
+      const bundle = JSON.parse(await readFile(this.walletSecretPath(), 'utf8')) as TraderWalletBundle;
+      return { exists: true, count: bundle.wallets?.length ?? 0, mode: bundle.mode, generatedAt: bundle.generatedAt };
+    } catch {
+      return { exists: false };
+    }
   }
 
   presets() {

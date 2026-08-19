@@ -611,6 +611,11 @@ export class RunBatchManager {
     const executionRunId = `${safeIdPart(batch.id, 32)}-${environment}-${marketMode}-${safeIdPart(mockResourceAlias, 24)}`;
     const specPaths = Array.from(new Set(items.flatMap((item) => item.specPath ? [item.specPath] : [])));
     const args = ['test', ...specPaths, `--project=${environment}`];
+    const injectedKeys = [
+      'E2E_ENV', 'E2E_RELEASE', 'E2E_RUN_ID', 'E2E_MARKET_MODE', 'E2E_MARKET_RESOURCE_ALIAS', 'E2E_KEEPER_MODE',
+      definition.rpcEnvironmentVariable,
+      ...(definition.adminRpcEnvironmentVariable && settings.adminRpcUrl ? [definition.adminRpcEnvironmentVariable] : []),
+    ];
     const childEnvironment: NodeJS.ProcessEnv = {
       ...process.env,
       E2E_ENV: environment,
@@ -623,6 +628,8 @@ export class RunBatchManager {
       ...(definition.adminRpcEnvironmentVariable && settings.adminRpcUrl
         ? { [definition.adminRpcEnvironmentVariable]: settings.adminRpcUrl }
         : {}),
+      // 按批次注入的键必须压过 .env.local（见 src/config/runtime.ts 加载注释）
+      E2E_ENV_PRIORITY_KEYS: injectedKeys.join(','),
     };
     const secrets = [settings.rpcUrl, settings.adminRpcUrl ?? ''];
     const executable = join(this.projectRoot, 'node_modules', '.bin', 'playwright');

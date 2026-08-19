@@ -378,12 +378,12 @@ export async function loadReferenceSources(): Promise<ReferenceSources> {
     process.cwd(),
     process.env.E2E_CONTRACT_FORMULAS_SOURCE
       ?? process.env.E2E_FORMULAS_SOURCE
-      ?? '../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md',
+      ?? '../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md',
   );
   const pageFormulasPath = resolve(
     process.cwd(),
     process.env.E2E_PAGE_FORMULAS_SOURCE
-      ?? '../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md',
+      ?? '../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md',
   );
 
   const [parameters, contractFormulas, pageFormulas] = await Promise.all([

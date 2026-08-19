@@ -4,9 +4,10 @@ import { expect, test } from '@playwright/test';
 
 import { loadRuntimeConfig } from '../../src/config/runtime.js';
 import { runMarketFlowMatrix, stringifyEvidence, type MarketFlowMatrixEvidence } from '../../src/scenarios/scn-009-runner.js';
+import { makeCloseDialogHook, prepareUiCollect, uiCollectEnabled } from '../../src/ui/ui-collect-hook.js';
 
 test.describe('S03 仓位管理与退出', () => {
-  test('SCN-022 交易员观察纯价格 PnL 与实际可得差异｜盈利全平双向数据集 @p0 @tx @serial', async ({}, testInfo) => {
+  test('SCN-022 交易员观察纯价格 PnL 与实际可得差异｜盈利全平双向数据集 @p0 @tx @serial', async ({ page }, testInfo) => {
     // 盈利全平双向数据集（06-策略下单矩阵 · long/short-close-profit）：
     // 多头 +10% / 空头 −10% 推价后全平——支付瀑布盈利路径（⌊÷colPrice.max⌋、LPVault 付盈利）双向实证。
     // 数据集矩阵模式：每个数据集独立 evm_snapshot/revert（runner 内部管理，
@@ -14,17 +15,21 @@ test.describe('S03 仓位管理与退出', () => {
     test.setTimeout(720_000);
     test.skip(testInfo.project.name !== 'tx-fork', 'SCN-022 在 tx-fork 执行（06-策略下单矩阵）');
     const runtime = loadRuntimeConfig();
+    // 环境必须与 Playwright project 一致：.env.local 的 E2E_ENV 曾静默把 tx-fork 批次改跑 oracle-fork（2026-08-14 实例）
+    expect(runtime.environment, 'runtime 环境须与 --project 一致（见 src/config/runtime.ts E2E_ENV_PRIORITY_KEYS）').toBe(testInfo.project.name);
     if (process.env.E2E_PERSIST_FORK_STATE === 'true') {
       expect(runtime.signingMode, '持久证据运行必须使用私钥签名').toBe('private-key');
     }
+    // 前端显示值采集（docs/07 Phase 1-D）：E2E_UI_COLLECT=true 时在每个数据集全平前停点打开平仓弹窗采 Est.Receive/Fee/Est.P&L
+    const uiHook = uiCollectEnabled() ? makeCloseDialogHook(page, testInfo, await prepareUiCollect(runtime)) : undefined;
 
     let evidence: MarketFlowMatrixEvidence | undefined;
     try {
       evidence = await runMarketFlowMatrix(runtime, {
         scenarioId: 'SCN-022',
         datasets: [
-          { datasetId: 'long-close-profit', label: '开多 +10% 盈利全平', isLong: true, priceMovePercent: 10 },
-          { datasetId: 'short-close-profit', label: '开空 −10% 盈利全平', isLong: false, priceMovePercent: -10 },
+          { datasetId: 'long-close-profit', label: '开多 +10% 盈利全平', isLong: true, priceMovePercent: 10, ...(uiHook ? { beforeClose: uiHook } : {}) },
+          { datasetId: 'short-close-profit', label: '开空 −10% 盈利全平', isLong: false, priceMovePercent: -10, ...(uiHook ? { beforeClose: uiHook } : {}) },
         ],
       });
     } catch (error) {

@@ -249,6 +249,16 @@ npm run dashboard:serve -- --dir artifacts/fixture-dashboard --port 4173
 
 测试用例页面不会直接重写 `TestCase/E2E/scenarios/*.md`。编辑内容经过字段长度、编号、套件和优先级校验后保存到 `config/test-case-overrides.json`；后续 Reporter 和看板会自动应用覆盖层。直接双击 HTML 文件时保持只读。
 
+## 前端显示值核对（Phase 1，2026-08-19）
+
+链驱动制备状态 + Playwright 在全平前停点打开本地前端采集平仓弹窗（Est. Receive / Fee / Est. P&L / 执行价）→ 与链上事实三方核对，结果进看板 `dataSource=前端` 分组（UI 偏差不拉低协议状态）。方案、前端缺陷（需求 D/E/F）、运行手册与已知限制见 [`docs/07-前端显示值核对与testid契约.md`](docs/07-前端显示值核对与testid契约.md) 附录四。一键命令：
+
+```bash
+E2E_ENV=tx-fork E2E_TRADER_PROFILE=ui E2E_UI_COLLECT=true E2E_ENV_PRIORITY_KEYS=E2E_ENV,E2E_TRADER_PROFILE npx playwright test tests/S03/scn-022.spec.ts --project=tx-fork
+```
+
+前置：本地前端（`.claude/launch.json` → `fx100-frontend-local`）、`scripts/frontend-fork-patch.ts apply`、`scripts/prepare-ui-trader.ts`。
+
 ## 从看板执行用例
 
 在“测试用例”页面勾选一条、多条或全部用例，点击“执行所选”进入“测试运行”页面：

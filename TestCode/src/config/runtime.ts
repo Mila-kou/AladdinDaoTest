@@ -13,8 +13,17 @@ import {
 import { normalizeForkDisplayName } from '../domain/fork-display.js';
 
 // .env.local 是看板保存的项目当前配置，必须覆盖启动进程遗留的同名环境变量。
+// 例外：跑批子进程按批次显式注入的键（E2E_ENV_PRIORITY_KEYS 逗号列表）在加载后恢复为进程值，
+// 否则 .env.local 的 E2E_ENV 会把"tx-fork 批次"静默改成看板当前环境（2026-08-14 实例：
+// 标 tx-fork 的 SCN-022 证据 chainId=99912）。
+const priorityKeys = (process.env.E2E_ENV_PRIORITY_KEYS ?? '').split(',').map((k) => k.trim()).filter(Boolean);
+const priorityValues = new Map(priorityKeys.map((k) => [k, process.env[k]] as const));
 dotenv.config({ path: resolve(process.cwd(), '.env'), quiet: true, override: true });
 dotenv.config({ path: resolve(process.cwd(), '.env.local'), quiet: true, override: true });
+for (const [key, value] of priorityValues) {
+  if (value === undefined) delete process.env[key];
+  else process.env[key] = value;
+}
 
 const optionalUrl = z.preprocess(
   (value) => typeof value === 'string' && value.trim() === '' ? undefined : value,
@@ -59,6 +68,10 @@ const rawEnvironmentSchema = z.object({
   E2E_TIME_FORK_ADMIN_RPC_URL: optionalUrl,
   E2E_TEST_PRIVATE_KEY: optionalPrivateKey,
   E2E_SECONDARY_TEST_PRIVATE_KEY: optionalPrivateKey,
+  // 专用 trader 档案（docs/07 Phase 1-D）：E2E_TRADER_PROFILE=ui 时改用下面两项，命令行不需要传密钥
+  E2E_TRADER_PROFILE: z.enum(['default', 'ui']).default('default'),
+  E2E_UI_TEST_PRIVATE_KEY: optionalPrivateKey,
+  E2E_UI_TEST_ACCOUNT: optionalAddress,
   E2E_TENDERLY_ACCESS_TOKEN: optionalText,
   E2E_SIGNING_MODE: z.enum(['private-key', 'impersonation']).default('private-key'),
   // 默认由测试侧 Keeper Driver 直接发送真实 executeOrder；只有 Keeper 服务专项测试才切 service。
@@ -144,8 +157,16 @@ export function loadRuntimeConfig(): RuntimeConfig {
     }
   }
   const privateKeyPattern = /^0x[0-9a-fA-F]{64}$/;
-  const traderPrivateKey = raw.E2E_TEST_PRIVATE_KEY
-    ?? (privateKeyPattern.test(keeperSecrets.FX100_TRADER_PK ?? '') ? keeperSecrets.FX100_TRADER_PK : undefined);
+  // trader 档案：ui = 前端观测专用零历史地址（共享 trader 在未列市场有遗留仓位会让前端持仓列表整体为空，见 docs/07 需求 F）
+  const useUiTrader = raw.E2E_TRADER_PROFILE === 'ui';
+  if (useUiTrader && (!raw.E2E_UI_TEST_ACCOUNT || (raw.E2E_SIGNING_MODE === 'private-key' && !raw.E2E_UI_TEST_PRIVATE_KEY))) {
+    throw new Error('E2E_TRADER_PROFILE=ui 需要 .env.local 提供 E2E_UI_TEST_ACCOUNT（private-key 模式还需 E2E_UI_TEST_PRIVATE_KEY），见 scripts/prepare-ui-trader.ts');
+  }
+  const traderAccount = useUiTrader ? raw.E2E_UI_TEST_ACCOUNT : raw.E2E_TEST_ACCOUNT;
+  const traderPrivateKey = useUiTrader
+    ? raw.E2E_UI_TEST_PRIVATE_KEY
+    : (raw.E2E_TEST_PRIVATE_KEY
+      ?? (privateKeyPattern.test(keeperSecrets.FX100_TRADER_PK ?? '') ? keeperSecrets.FX100_TRADER_PK : undefined));
   const secondaryPrivateKey = raw.E2E_SECONDARY_TEST_PRIVATE_KEY
     ?? (privateKeyPattern.test(keeperSecrets.ORDER_KEEPER_PRIVATE_KEY ?? '')
       ? keeperSecrets.ORDER_KEEPER_PRIVATE_KEY
@@ -181,7 +202,7 @@ export function loadRuntimeConfig(): RuntimeConfig {
     hasTenderlyAccessToken: Boolean(raw.E2E_TENDERLY_ACCESS_TOKEN),
     signingMode: raw.E2E_SIGNING_MODE,
     keeperMode: raw.E2E_KEEPER_MODE,
-    ...(raw.E2E_TEST_ACCOUNT ? { testAccount: raw.E2E_TEST_ACCOUNT as `0x${string}` } : {}),
+    ...(traderAccount ? { testAccount: traderAccount as `0x${string}` } : {}),
     ...(raw.E2E_KEEPER_ACCOUNT ? { keeperAccount: raw.E2E_KEEPER_ACCOUNT as `0x${string}` } : {}),
     ...(raw.E2E_ADMIN_ACCOUNT ? { adminAccount: raw.E2E_ADMIN_ACCOUNT as `0x${string}` } : {}),
     forkResetMode: raw.E2E_FORK_RESET_MODE,

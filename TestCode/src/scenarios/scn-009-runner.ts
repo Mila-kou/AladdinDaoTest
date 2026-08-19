@@ -9,6 +9,7 @@ import { resolveMockMarketBundle } from '../config/mock-resources.js';
 import {
   checkLedgerConservation,
   ledgerDiff,
+  positionKey as ledgerPositionKey,
   takeLedgerSnapshot,
   type LedgerAddresses,
 } from '../drivers/ledger.js';
@@ -181,6 +182,8 @@ export interface Scn009Evidence {
   readonly assertions: Array<{ name: string; passed: boolean; actual: unknown; expected: unknown }>;
   readonly observations: Record<string, unknown>;
   readonly parameters: Record<string, unknown>;
+  /** 全平前停点的前端显示值采集（beforeClose 回调返回值；采集失败为 {error}）；无回调时缺省 */
+  readonly uiDisplay?: Record<string, unknown>;
 }
 
 const DEPLOYED_MARKET_INDEX = 2;
@@ -612,6 +615,34 @@ export interface MarketFlowMiddlePhase {
   readonly percentOfPosition?: number;
 }
 
+/**
+ * "推价后、全平前"停点上下文（docs/07 附录三 Phase 1-D）：链上状态在此静止（无新交易、mock 价不动），
+ * 供前端显示值采集器打开页面读取持仓行/平仓弹窗预览。回调只观测不改状态；抛错不阻断链上流程。
+ */
+export interface MarketFlowBeforeCloseContext {
+  readonly scenarioId: string;
+  readonly datasetId?: string;
+  readonly isLong: boolean;
+  readonly marketIndex: number;
+  readonly chainId: number;
+  readonly trader: `0x${string}`;
+  readonly positionKey: `0x${string}`;
+  /** 停点时仓位原始字段（bigint → string） */
+  readonly position: { readonly sizeInUsd: string; readonly sizeInTokens: string; readonly collateralAmount: string };
+  readonly openOrderKey: string;
+  /** 停点前最后一次链上快照块（afterOpen 或最后一个中段阶段执行块） */
+  readonly snapshotBlock: string;
+  readonly indexToken?: string;
+  readonly indexOracle?: string;
+  readonly collateralToken: string;
+  readonly dataStore: string;
+  readonly oracle: string;
+  readonly rpcUrl: string;
+  readonly appBaseUrl: string;
+}
+
+export type MarketFlowBeforeCloseHook = (context: MarketFlowBeforeCloseContext) => Promise<Record<string, unknown> | void>;
+
 export interface MarketFlowOptions {
   readonly scenarioId: string;
   readonly isLong: boolean;
@@ -623,6 +654,10 @@ export interface MarketFlowOptions {
   readonly openTrigger?: TriggerSpec;
   /** 触发式全平（LimitDecrease/TP=3 / StopLossDecrease=4）：挂单 → 推价至触发 → Keeper 执行。 */
   readonly closeTrigger?: TriggerSpec;
+  /** 全平前停点回调（前端显示值采集）；返回值原样落证据 uiDisplay，抛错记为 uiDisplay.error 不中断。 */
+  readonly beforeClose?: MarketFlowBeforeCloseHook;
+  /** 矩阵模式透传，仅用于停点上下文标注 */
+  readonly datasetId?: string;
 }
 
 export interface TriggerSpec {
@@ -1083,6 +1118,46 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
     flowCursor = phaseAfterExec;
   }
 
+  // —— 停点：推价 / 中段阶段之后、全平之前（链上静止）——前端显示值采集（docs/07 Phase 1-D）——
+  // 采集失败只记录不 throw：链上证据链完整性优先，UI 层核对在 execution-evidence 里分层呈现。
+  let uiDisplay: Record<string, unknown> | undefined;
+  if (flow.beforeClose) {
+    const context: MarketFlowBeforeCloseContext = {
+      scenarioId: flow.scenarioId,
+      ...(flow.datasetId !== undefined ? { datasetId: flow.datasetId } : {}),
+      isLong,
+      marketIndex,
+      chainId: runtime.chainId,
+      trader: getAddress(runtime.testAccount) as `0x${string}`,
+      positionKey: ledgerPositionKey(runtime.testAccount, BigInt(marketIndex), isLong),
+      position: {
+        sizeInUsd: currentPosition.sizeInUsd.toString(),
+        sizeInTokens: currentPosition.sizeInTokens.toString(),
+        collateralAmount: currentPosition.collateralAmount.toString(),
+      },
+      openOrderKey,
+      snapshotBlock: flowCursor.blockNumber.toString(),
+      ...(mockResource?.token?.address ? { indexToken: mockResource.token.address } : {}),
+      ...(mockResource?.oracle?.address ? { indexOracle: mockResource.oracle.address } : {}),
+      collateralToken: deployment.addresses.usdc,
+      dataStore: deployment.addresses.dataStore,
+      oracle: deployment.addresses.oracle,
+      rpcUrl: runtime.rpcUrl,
+      appBaseUrl: runtime.appBaseUrl,
+    };
+    const startedAt = Date.now();
+    try {
+      const collected = await flow.beforeClose(context);
+      uiDisplay = { ...(collected ?? {}), collectedAtBlock: context.snapshotBlock, durationMs: Date.now() - startedAt };
+    } catch (error) {
+      uiDisplay = {
+        error: error instanceof Error ? error.message : String(error),
+        collectedAtBlock: context.snapshotBlock,
+        durationMs: Date.now() - startedAt,
+      };
+    }
+  }
+
   let closeTriggerContext: { feedRaw: bigint; internal: bigint; feedDecimals: number } | undefined;
   if (flow.closeTrigger) {
     if (!mockResource?.oracle?.address || !mockResource.token?.address) {
@@ -1321,12 +1396,15 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
     `${transactionFrom(openExecuteTx)}/${transactionFrom(closeExecuteTx)}`,
     keeper,
   );
+  // 签名形态按模式：private-key 四笔全签；impersonation（Tenderly 免签）用户两笔 r=s=0、Keeper 两笔真签。
+  const signaturePattern = [openCreateTx, openExecuteTx, closeCreateTx, closeExecuteTx].map(hasSignature);
+  const expectedSignaturePattern = runtime.signingMode === 'private-key' ? [true, true, true, true] : [false, true, false, true];
   check(
     assertions,
-    '四笔交易均包含非零签名字段',
-    [openCreateTx, openExecuteTx, closeCreateTx, closeExecuteTx].every(hasSignature),
-    [openCreateTx, openExecuteTx, closeCreateTx, closeExecuteTx].map(hasSignature),
-    [true, true, true, true],
+    runtime.signingMode === 'private-key' ? '四笔交易均包含非零签名字段' : '用户两笔免签（impersonation）、Keeper 两笔真实签名',
+    signaturePattern.every((value, index) => value === expectedSignaturePattern[index]),
+    signaturePattern,
+    expectedSignaturePattern,
   );
   check(
     assertions,
@@ -1470,6 +1548,7 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
       closeConservation: conservation.close,
       wholeFlowConservation: conservation.wholeFlow,
     },
+    ...(uiDisplay !== undefined ? { uiDisplay } : {}),
   };
 }
 
@@ -1480,6 +1559,8 @@ export interface MarketFlowDataset {
   readonly isLong: boolean;
   readonly priceMovePercent?: number;
   readonly middlePhases?: readonly MarketFlowMiddlePhase[];
+  /** 全平前停点回调（前端显示值采集），见 MarketFlowOptions.beforeClose */
+  readonly beforeClose?: MarketFlowBeforeCloseHook;
 }
 
 export interface MarketFlowMatrixEvidence {
@@ -1525,6 +1606,7 @@ export async function runMarketFlowMatrix(
         isLong: dataset.isLong,
         ...(dataset.priceMovePercent !== undefined ? { priceMovePercent: dataset.priceMovePercent } : {}),
         ...(dataset.middlePhases !== undefined ? { middlePhases: dataset.middlePhases } : {}),
+        ...(dataset.beforeClose !== undefined ? { beforeClose: dataset.beforeClose, datasetId: dataset.datasetId } : {}),
       });
       assertionCount += evidence.assertions.length;
       results.push({

@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { relative, resolve } from 'node:path';
 
 import { normalizeForkDisplayName } from '../domain/fork-display.js';
+import { buildUiDisplayRows } from './ui-display-evidence.js';
 import {
   calculateExecutionPrice,
   calculateFundingFactors,
@@ -24,9 +25,9 @@ type JsonRecord = Record<string, unknown>;
 type Reconciliation = NonNullable<ScenarioResult['executionEvidence']>['reconciliations'][number];
 type TransactionEvidence = NonNullable<ScenarioResult['executionEvidence']>['transactions'][number];
 
-const FORMULA_SOURCE = '../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md';
-const PAGE_FORMULA_SOURCE = '../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md';
-const ORDER_FLOW_SOURCE = '../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md';
+const FORMULA_SOURCE = '../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md';
+const PAGE_FORMULA_SOURCE = '../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md';
+const ORDER_FLOW_SOURCE = '../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md';
 const LEDGER_SOURCE = 'src/scenarios/scn-009-runner.ts';
 const SCN010_LEDGER_SOURCE = 'src/scenarios/scn-010-runner.ts';
 const SCN070_MODEL_SOURCE = 'src/scenarios/scn-070-model.ts';
@@ -1718,7 +1719,20 @@ function deriveMarketFlowSingle(
     'position-open-exists', 'position-open-size', 'position-open-collateral',
     'open-execution-price', 'cumulative-long-open-costs-after-open',
   ]);
-  const reconciliations = baseReconciliations.map((row) => row.txStep
+  // 前端显示（平仓弹窗）三方核对（docs/07 Phase 1-D）：仅当 runner 停点采到 uiDisplay 时出现；
+  // 行只产 PASS/CALCULATED/NOT_VERIFIED，UI 偏差不拉低协议 executionStatus（docs/06 §8 分层）。
+  const closeDecreaseInt = record(closeDecrease.int);
+  const uiDisplayRows = buildUiDisplayRows({
+    uiDisplay: raw.uiDisplay && typeof raw.uiDisplay === 'object' ? record(raw.uiDisplay) : undefined,
+    closeCreateTx,
+    actualReceiveUsdcRaw: optionalBigint(record(deltas.executeClose).traderUsdc),
+    closeFeeAmountRaw: optionalBigint(closeFees.positionFeeAmount),
+    collateralMinPriceRaw: optionalBigint(closeFees['collateralTokenPrice.min']),
+    basePnlUsdRaw: optionalBigint(closeDecreaseInt.basePnlUsd),
+    executionPriceRaw: optionalBigint(closeDecreaseUint.executionPrice),
+    indexDecimals: 18,
+  });
+  const reconciliations = [...baseReconciliations, ...uiDisplayRows].map((row) => row.txStep
     ? row
     : { ...row, txStep: openOverviewIds.has(row.id) ? 'TX2' : closeExecTx }).map(withVerification);
 

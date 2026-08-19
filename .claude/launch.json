@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "fx100-frontend-local",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd Github/fx100-apps@develop && yarn workspace fx-base-app dev"],
+      "port": 3010
+    },
+    {
+      "name": "testcode-dashboard",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd TestCode && npm run dashboard:serve"],
+      "port": 4173
+    }
+  ]
+}

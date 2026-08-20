@@ -388,13 +388,13 @@
             - cell "0（未设置）" [ref=e793]
             - cell "0 raw (0 seconds)" [ref=e794]
             - cell "0（未设置）" [ref=e795]
-            - cell "仓位不存在 / 已删除：graceStart = 0 四、清算保护卡片 / 4.1 保护期推导 · Position 首次创建时写入 Grace 起点 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv；链上阶段快照：src/scenarios/scn-010-runner.ts" [ref=e796]:
+            - cell "仓位不存在 / 已删除：graceStart = 0 四、清算保护卡片 / 4.1 保护期推导 · Position 首次创建时写入 Grace 起点 ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv；链上阶段快照：src/scenarios/scn-010-runner.ts" [ref=e796]:
               - generic [ref=e797]: 仓位不存在 / 已删除：graceStart = 0
               - generic [ref=e798]:
                 - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e799] [cursor=pointer]:
                   - /url: ./page-formulas.html
                 - text: · Position 首次创建时写入 Grace 起点
-                - code [ref=e800]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+                - code [ref=e800]: ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
               - generic [ref=e801]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv；链上阶段快照：src/scenarios/scn-010-runner.ts
           - row [ref=e802]:
             - cell "限价单创建 · Grace" [ref=e803]
@@ -405,13 +405,13 @@
             - cell "0（未设置）" [ref=e809]
             - cell "0 raw (0 seconds)" [ref=e810]
             - cell "0（未设置）" [ref=e811]
-            - cell "仓位不存在 / 已删除：graceEnd = 0 四、清算保护卡片 / 4.1 保护期推导 · Grace 终点按市场基础时长与推荐层级乘数复算 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv" [ref=e812]:
+            - cell "仓位不存在 / 已删除：graceEnd = 0 四、清算保护卡片 / 4.1 保护期推导 · Grace 终点按市场基础时长与推荐层级乘数复算 ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv" [ref=e812]:
               - generic [ref=e813]: 仓位不存在 / 已删除：graceEnd = 0
               - generic [ref=e814]:
                 - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e815] [cursor=pointer]:
                   - /url: ./page-formulas.html
                 - text: · Grace 终点按市场基础时长与推荐层级乘数复算
-                - code [ref=e816]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+                - code [ref=e816]: ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
               - generic [ref=e817]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv
           - row [ref=e818]:
             - cell "限价单创建 · Grace" [ref=e819]
@@ -422,13 +422,13 @@
             - cell "0 seconds" [ref=e825]
             - cell "0 seconds" [ref=e826]
             - cell "0 seconds" [ref=e827]
-            - cell "graceDuration = max(graceEnd − graceStart, 0) = gracePeriodBase × tierMultiplier / 1e18 四、清算保护卡片 / 4.1 保护期推导 · 保护窗口长度 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv" [ref=e828]:
+            - cell "graceDuration = max(graceEnd − graceStart, 0) = gracePeriodBase × tierMultiplier / 1e18 四、清算保护卡片 / 4.1 保护期推导 · 保护窗口长度 ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv" [ref=e828]:
               - generic [ref=e829]: graceDuration = max(graceEnd − graceStart, 0) = gracePeriodBase × tierMultiplier / 1e18
               - generic [ref=e830]:
                 - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e831] [cursor=pointer]:
                   - /url: ./page-formulas.html
                 - text: · 保护窗口长度
-                - code [ref=e832]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+                - code [ref=e832]: ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
               - generic [ref=e833]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv
           - row [ref=e834]:
             - cell "限价单创建 · Grace" [ref=e835]
@@ -439,13 +439,13 @@
             - cell "false" [ref=e841]
             - cell "false → false" [ref=e842]
             - cell "false" [ref=e843]
-            - cell "graceActive = position.exists && graceStart > 0 && graceEnd > evaluationTimestamp 四、清算保护卡片 / 4.2 5 状态机 · 依据仓位与区块时间实时推导保护状态 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md evaluationTimestamp=1785796814 (2026-08-03T22:40:14.000Z)；Keeper 清算条件使用 graceEnd > block.timestamp。" [ref=e844]:
+            - cell "graceActive = position.exists && graceStart > 0 && graceEnd > evaluationTimestamp 四、清算保护卡片 / 4.2 5 状态机 · 依据仓位与区块时间实时推导保护状态 ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md evaluationTimestamp=1785796814 (2026-08-03T22:40:14.000Z)；Keeper 清算条件使用 graceEnd > block.timestamp。" [ref=e844]:
               - generic [ref=e845]: graceActive = position.exists && graceStart > 0 && graceEnd > evaluationTimestamp
               - generic [ref=e846]:
                 - link "四、清算保护卡片 / 4.2 5 状态机" [ref=e847] [cursor=pointer]:
                   - /url: ./page-formulas.html
                 - text: · 依据仓位与区块时间实时推导保护状态
-                - code [ref=e848]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+                - code [ref=e848]: ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
               - generic [ref=e849]: evaluationTimestamp=1785796814 (2026-08-03T22:40:14.000Z)；Keeper 清算条件使用 graceEnd > block.timestamp。
           - row [ref=e850]:
             - cell "限价单创建 · Grace" [ref=e851]
@@ -456,13 +456,13 @@
             - cell "0 seconds" [ref=e857]
             - cell "0 seconds" [ref=e858]
             - cell "0 seconds" [ref=e859]
-            - 'cell "graceRemaining = position.exists ? max(graceEnd − evaluationTimestamp, 0) : 0 四、清算保护卡片 / 4.1 保护期推导 · 页面倒计时与合约保护窗口 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md evaluationTimestamp=1785796814 (2026-08-03T22:40:14.000Z)；交易员主动平仓不受 Grace 限制，仓位删除后 Grace 字段清零。" [ref=e860]':
+            - 'cell "graceRemaining = position.exists ? max(graceEnd − evaluationTimestamp, 0) : 0 四、清算保护卡片 / 4.1 保护期推导 · 页面倒计时与合约保护窗口 ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md evaluationTimestamp=1785796814 (2026-08-03T22:40:14.000Z)；交易员主动平仓不受 Grace 限制，仓位删除后 Grace 字段清零。" [ref=e860]':
               - generic [ref=e861]: "graceRemaining = position.exists ? max(graceEnd − evaluationTimestamp, 0) : 0"
               - generic [ref=e862]:
                 - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e863] [cursor=pointer]:
                   - /url: ./page-formulas.html
                 - text: · 页面倒计时与合约保护窗口
-                - code [ref=e864]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+                - code [ref=e864]: ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
               - generic [ref=e865]: evaluationTimestamp=1785796814 (2026-08-03T22:40:14.000Z)；交易员主动平仓不受 Grace 限制，仓位删除后 Grace 字段清零。
           - row [ref=e1149]:
             - cell "限价触发开仓 · Grace" [ref=e1150]
@@ -473,13 +473,13 @@
             - cell "1785796826 (2026-08-03T22:40:26.000Z)" [ref=e1156]
             - cell "+1785796826 raw (1785796826 seconds)" [ref=e1157]
             - cell "1785796826 (2026-08-03T22:40:26.000Z)" [ref=e1158]
-            - cell "首次建立仓位：graceStart = PositionIncrease.increasedAtTime = block.timestamp 四、清算保护卡片 / 4.1 保护期推导 · Position 首次创建时写入 Grace 起点 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv；链上阶段快照：src/scenarios/scn-010-runner.ts" [ref=e1159]:
+            - cell "首次建立仓位：graceStart = PositionIncrease.increasedAtTime = block.timestamp 四、清算保护卡片 / 4.1 保护期推导 · Position 首次创建时写入 Grace 起点 ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv；链上阶段快照：src/scenarios/scn-010-runner.ts" [ref=e1159]:
               - generic [ref=e1160]: 首次建立仓位：graceStart = PositionIncrease.increasedAtTime = block.timestamp
               - generic [ref=e1161]:
                 - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e1162] [cursor=pointer]:
                   - /url: ./page-formulas.html
                 - text: · Position 首次创建时写入 Grace 起点
-                - code [ref=e1163]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+                - code [ref=e1163]: ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
               - generic [ref=e1164]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv；链上阶段快照：src/scenarios/scn-010-runner.ts
           - row [ref=e1165]:
             - cell "限价触发开仓 · Grace" [ref=e1166]
@@ -490,13 +490,13 @@
             - cell "1785797726 (2026-08-03T22:55:26.000Z)" [ref=e1172]
             - cell "+1785797726 raw (1785797726 seconds)" [ref=e1173]
             - cell "1785797726 (2026-08-03T22:55:26.000Z)" [ref=e1174]
-            - cell "graceEnd = graceStart + gracePeriodBase × tierMultiplier / 1e18 四、清算保护卡片 / 4.1 保护期推导 · Grace 终点按市场基础时长与推荐层级乘数复算 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv" [ref=e1175]:
+            - cell "graceEnd = graceStart + gracePeriodBase × tierMultiplier / 1e18 四、清算保护卡片 / 4.1 保护期推导 · Grace 终点按市场基础时长与推荐层级乘数复算 ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv" [ref=e1175]:
               - generic [ref=e1176]: graceEnd = graceStart + gracePeriodBase × tierMultiplier / 1e18
               - generic [ref=e1177]:
                 - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e1178] [cursor=pointer]:
                   - /url: ./page-formulas.html
                 - text: · Grace 终点按市场基础时长与推荐层级乘数复算
-                - code [ref=e1179]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+                - code [ref=e1179]: ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
               - generic [ref=e1180]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv
           - row [ref=e1181]:
             - cell "限价触发开仓 · Grace" [ref=e1182]
@@ -507,13 +507,13 @@
             - cell "900 seconds" [ref=e1188]
             - cell "900 seconds" [ref=e1189]
             - cell "900 seconds" [ref=e1190]
-            - cell "graceDuration = max(graceEnd − graceStart, 0) = gracePeriodBase × tierMultiplier / 1e18 四、清算保护卡片 / 4.1 保护期推导 · 保护窗口长度 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv" [ref=e1191]:
+            - cell "graceDuration = max(graceEnd − graceStart, 0) = gracePeriodBase × tierMultiplier / 1e18 四、清算保护卡片 / 4.1 保护期推导 · 保护窗口长度 ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv" [ref=e1191]:
               - generic [ref=e1192]: graceDuration = max(graceEnd − graceStart, 0) = gracePeriodBase × tierMultiplier / 1e18
               - generic [ref=e1193]:
                 - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e1194] [cursor=pointer]:
                   - /url: ./page-formulas.html
                 - text: · 保护窗口长度
-                - code [ref=e1195]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+                - code [ref=e1195]: ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
               - generic [ref=e1196]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv
           - row [ref=e1197]:
             - cell "限价触发开仓 · Grace" [ref=e1198]
@@ -524,13 +524,13 @@
             - cell "true" [ref=e1204]
             - cell "false → true" [ref=e1205]
             - cell "true" [ref=e1206]
-            - cell "graceActive = position.exists && graceStart > 0 && graceEnd > evaluationTimestamp 四、清算保护卡片 / 4.2 5 状态机 · 依据仓位与区块时间实时推导保护状态 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md evaluationTimestamp=1785796826 (2026-08-03T22:40:26.000Z)；Keeper 清算条件使用 graceEnd > block.timestamp。" [ref=e1207]:
+            - cell "graceActive = position.exists && graceStart > 0 && graceEnd > evaluationTimestamp 四、清算保护卡片 / 4.2 5 状态机 · 依据仓位与区块时间实时推导保护状态 ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md evaluationTimestamp=1785796826 (2026-08-03T22:40:26.000Z)；Keeper 清算条件使用 graceEnd > block.timestamp。" [ref=e1207]:
               - generic [ref=e1208]: graceActive = position.exists && graceStart > 0 && graceEnd > evaluationTimestamp
               - generic [ref=e1209]:
                 - link "四、清算保护卡片 / 4.2 5 状态机" [ref=e1210] [cursor=pointer]:
                   - /url: ./page-formulas.html
                 - text: · 依据仓位与区块时间实时推导保护状态
-                - code [ref=e1211]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+                - code [ref=e1211]: ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
               - generic [ref=e1212]: evaluationTimestamp=1785796826 (2026-08-03T22:40:26.000Z)；Keeper 清算条件使用 graceEnd > block.timestamp。
           - row [ref=e1213]:
             - cell "限价触发开仓 · Grace" [ref=e1214]
@@ -541,13 +541,13 @@
             - cell "900 seconds" [ref=e1220]
             - cell "900 seconds" [ref=e1221]
             - cell "900 seconds" [ref=e1222]
-            - 'cell "graceRemaining = position.exists ? max(graceEnd − evaluationTimestamp, 0) : 0 四、清算保护卡片 / 4.1 保护期推导 · 页面倒计时与合约保护窗口 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md evaluationTimestamp=1785796826 (2026-08-03T22:40:26.000Z)；交易员主动平仓不受 Grace 限制，仓位删除后 Grace 字段清零。" [ref=e1223]':
+            - 'cell "graceRemaining = position.exists ? max(graceEnd − evaluationTimestamp, 0) : 0 四、清算保护卡片 / 4.1 保护期推导 · 页面倒计时与合约保护窗口 ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md evaluationTimestamp=1785796826 (2026-08-03T22:40:26.000Z)；交易员主动平仓不受 Grace 限制，仓位删除后 Grace 字段清零。" [ref=e1223]':
               - generic [ref=e1224]: "graceRemaining = position.exists ? max(graceEnd − evaluationTimestamp, 0) : 0"
               - generic [ref=e1225]:
                 - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e1226] [cursor=pointer]:
                   - /url: ./page-formulas.html
                 - text: · 页面倒计时与合约保护窗口
-                - code [ref=e1227]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+                - code [ref=e1227]: ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
               - generic [ref=e1228]: evaluationTimestamp=1785796826 (2026-08-03T22:40:26.000Z)；交易员主动平仓不受 Grace 限制，仓位删除后 Grace 字段清零。
           - row [ref=e1758]:
             - cell "全平执行 · Grace" [ref=e1759]
@@ -558,13 +558,13 @@
             - cell "0（未设置）" [ref=e1765]
             - cell "-1785796826 raw (-1785796826 seconds)" [ref=e1766]
             - cell "0（未设置）" [ref=e1767]
-            - cell "仓位不存在 / 已删除：graceStart = 0 四、清算保护卡片 / 4.1 保护期推导 · Position 首次创建时写入 Grace 起点 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv；链上阶段快照：src/scenarios/scn-010-runner.ts" [ref=e1768]:
+            - cell "仓位不存在 / 已删除：graceStart = 0 四、清算保护卡片 / 4.1 保护期推导 · Position 首次创建时写入 Grace 起点 ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv；链上阶段快照：src/scenarios/scn-010-runner.ts" [ref=e1768]:
               - generic [ref=e1769]: 仓位不存在 / 已删除：graceStart = 0
               - generic [ref=e1770]:
                 - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e1771] [cursor=pointer]:
                   - /url: ./page-formulas.html
                 - text: · Position 首次创建时写入 Grace 起点
-                - code [ref=e1772]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+                - code [ref=e1772]: ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
               - generic [ref=e1773]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv；链上阶段快照：src/scenarios/scn-010-runner.ts
           - row [ref=e1774]:
             - cell "全平执行 · Grace" [ref=e1775]
@@ -575,13 +575,13 @@
             - cell "0（未设置）" [ref=e1781]
             - cell "-1785797726 raw (-1785797726 seconds)" [ref=e1782]
             - cell "0（未设置）" [ref=e1783]
-            - cell "仓位不存在 / 已删除：graceEnd = 0 四、清算保护卡片 / 4.1 保护期推导 · Grace 终点按市场基础时长与推荐层级乘数复算 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv" [ref=e1784]:
+            - cell "仓位不存在 / 已删除：graceEnd = 0 四、清算保护卡片 / 4.1 保护期推导 · Grace 终点按市场基础时长与推荐层级乘数复算 ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv" [ref=e1784]:
               - generic [ref=e1785]: 仓位不存在 / 已删除：graceEnd = 0
               - generic [ref=e1786]:
                 - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e1787] [cursor=pointer]:
                   - /url: ./page-formulas.html
                 - text: · Grace 终点按市场基础时长与推荐层级乘数复算
-                - code [ref=e1788]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+                - code [ref=e1788]: ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
               - generic [ref=e1789]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv
           - row [ref=e1790]:
             - cell "全平执行 · Grace" [ref=e1791]
@@ -592,13 +592,13 @@
             - cell "0 seconds" [ref=e1797]
             - cell "-900 seconds" [ref=e1798]
             - cell "0 seconds" [ref=e1799]
-            - cell "graceDuration = max(graceEnd − graceStart, 0) = gracePeriodBase × tierMultiplier / 1e18 四、清算保护卡片 / 4.1 保护期推导 · 保护窗口长度 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv" [ref=e1800]:
+            - cell "graceDuration = max(graceEnd − graceStart, 0) = gracePeriodBase × tierMultiplier / 1e18 四、清算保护卡片 / 4.1 保护期推导 · 保护窗口长度 ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv" [ref=e1800]:
               - generic [ref=e1801]: graceDuration = max(graceEnd − graceStart, 0) = gracePeriodBase × tierMultiplier / 1e18
               - generic [ref=e1802]:
                 - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e1803] [cursor=pointer]:
                   - /url: ./page-formulas.html
                 - text: · 保护窗口长度
-                - code [ref=e1804]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+                - code [ref=e1804]: ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
               - generic [ref=e1805]: 执行时参数依据：market#1 的 LIQUIDATION_GRACE_PERIOD_BASE=900s；Tier0 multiplier=1000000000000000000 (1e18)。参数快照：artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv
           - row [ref=e1806]:
             - cell "全平执行 · Grace" [ref=e1807]
@@ -609,13 +609,13 @@
             - cell "false" [ref=e1813]
             - cell "true → false" [ref=e1814]
             - cell "false" [ref=e1815]
-            - cell "graceActive = position.exists && graceStart > 0 && graceEnd > evaluationTimestamp 四、清算保护卡片 / 4.2 5 状态机 · 依据仓位与区块时间实时推导保护状态 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md evaluationTimestamp=1785796846 (2026-08-03T22:40:46.000Z)；Keeper 清算条件使用 graceEnd > block.timestamp。" [ref=e1816]:
+            - cell "graceActive = position.exists && graceStart > 0 && graceEnd > evaluationTimestamp 四、清算保护卡片 / 4.2 5 状态机 · 依据仓位与区块时间实时推导保护状态 ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md evaluationTimestamp=1785796846 (2026-08-03T22:40:46.000Z)；Keeper 清算条件使用 graceEnd > block.timestamp。" [ref=e1816]:
               - generic [ref=e1817]: graceActive = position.exists && graceStart > 0 && graceEnd > evaluationTimestamp
               - generic [ref=e1818]:
                 - link "四、清算保护卡片 / 4.2 5 状态机" [ref=e1819] [cursor=pointer]:
                   - /url: ./page-formulas.html
                 - text: · 依据仓位与区块时间实时推导保护状态
-                - code [ref=e1820]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+                - code [ref=e1820]: ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
               - generic [ref=e1821]: evaluationTimestamp=1785796846 (2026-08-03T22:40:46.000Z)；Keeper 清算条件使用 graceEnd > block.timestamp。
           - row [ref=e1822]:
             - cell "全平执行 · Grace" [ref=e1823]
@@ -626,13 +626,13 @@
             - cell "0 seconds" [ref=e1829]
             - cell "-880 seconds" [ref=e1830]
             - cell "0 seconds" [ref=e1831]
-            - 'cell "graceRemaining = position.exists ? max(graceEnd − evaluationTimestamp, 0) : 0 四、清算保护卡片 / 4.1 保护期推导 · 页面倒计时与合约保护窗口 ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md evaluationTimestamp=1785796846 (2026-08-03T22:40:46.000Z)；交易员主动平仓不受 Grace 限制，仓位删除后 Grace 字段清零。" [ref=e1832]':
+            - 'cell "graceRemaining = position.exists ? max(graceEnd − evaluationTimestamp, 0) : 0 四、清算保护卡片 / 4.1 保护期推导 · 页面倒计时与合约保护窗口 ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md evaluationTimestamp=1785796846 (2026-08-03T22:40:46.000Z)；交易员主动平仓不受 Grace 限制，仓位删除后 Grace 字段清零。" [ref=e1832]':
               - generic [ref=e1833]: "graceRemaining = position.exists ? max(graceEnd − evaluationTimestamp, 0) : 0"
               - generic [ref=e1834]:
                 - link "四、清算保护卡片 / 4.1 保护期推导" [ref=e1835] [cursor=pointer]:
                   - /url: ./page-formulas.html
                 - text: · 页面倒计时与合约保护窗口
-                - code [ref=e1836]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
+                - code [ref=e1836]: ../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md
               - generic [ref=e1837]: evaluationTimestamp=1785796846 (2026-08-03T22:40:46.000Z)；交易员主动平仓不受 Grace 限制，仓位删除后 Grace 字段清零。
     - generic [ref=e2221]:
       - heading "证据来源" [level=2] [ref=e2222]
@@ -644,4 +644,4 @@
         - definition [ref=e2228]:
           - link "合约核心公式页面" [ref=e2229] [cursor=pointer]:
             - /url: ./formulas.html
-          - code [ref=e2230]: ../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md
+          - code [ref=e2230]: ../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md

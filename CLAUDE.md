@@ -1,9 +1,9 @@
-# AladdinDaoTest 工作区
+# FX100 工作区
 
-多项目测试工作区，结构：
+FX100 测试工作区，结构：
 
-- `Docs/<项目>/` — 需求文档归档（fx100：Gordon Notion 归档 67 篇 + `汇总/` 5 篇整理稿）
-- `Github/` — 被测源码克隆。**目录命名规范：`<仓库名>@<分支名>`**（分支中的 `/` 换 `-`，如 `fx100-contracts@release-v0.3.1`）；同仓库其他分支用 git worktree 从既有克隆派生，不重复克隆
+- `Docs/` — FX100 文档根目录；版本分析统一放在 `Docs/contract-releases/<version>/`，需求归档放在 `Docs/Gordon-Notion需求文档归档/`
+- `Github/` — 被测源码克隆。**目录命名规范：`<仓库名>@<分支名>`**（分支中的 `/` 换 `-`，如 `fx100-contracts@release-v0.3.2`）；同仓库其他分支用 git worktree 从既有克隆派生，不重复克隆
 - `TestCase/` — 测试用例文档。fx100 E2E 主入口 `TestCase/E2E/`：80 条 SCN 场景（`scenarios/S01~S08`）+ 总控清单 `SCENARIO-CHECKLIST.md`
 - `TestCode/` — E2E 自动化独立工程（Playwright + 链上驱动 + 结果看板），入口 [`TestCode/README.md`](TestCode/README.md)
 - `配置文件来自开发/` — 开发交付的环境配置压缩包（含密钥类内容，不读取、不解压）
@@ -24,10 +24,11 @@
 
 | 项目 | 基线 | 入口 |
 |---|---|---|
-| fx100 | 合约 `Github/fx100-contracts@release-v0.3.1`（部署 `base_sepolia_v0.3.1_260729`）· 前端 `Github/fx100-apps@develop` | 用例 [`TestCase/E2E/README.md`](TestCase/E2E/README.md) · 自动化与看板 [`TestCode/README.md`](TestCode/README.md) |
+| fx100 | **主测合约 `Github/fx100-contracts@release-v0.3.2`** · 对比基线 `Github/fx100-contracts@release-v0.3.1` · 前端 `Github/fx100-apps@develop` | 用例 [`TestCase/E2E/README.md`](TestCase/E2E/README.md) · 自动化与看板 [`TestCode/README.md`](TestCode/README.md) |
 
 fx100 注意：
 
 - 合约 main 分支无 test 目录，禁用；需求文档里 `test-hub/...` 与 `docs/testing-standards` 分支引用全部作废。
+- 拉取新合约版本后必须执行 `.claude/skills/fx100-contract-release-workflow/SKILL.md`：完成代码变化、部署/升级、功能、参数、重要参数边界场景和测试准入材料后，才能开始该版本系统回归。当前默认目标为 release/v0.3.2。
 - 自动化现状（2026-08-11）：SCN-009/010（tx-fork）与 SCN-070（oracle-fork）已完成自动化用例；数据核对层（execution-evidence 对账）改造中，目标是确保核对内容与核对公式正确。
 - tx-fork 是 Tenderly 私有 fork，链 ID 为独立的 **99911**（部署基线 Base Sepolia 为 84532）；核对 chainId 以 `TestCode/config/mock-resources.json` 登记为准。

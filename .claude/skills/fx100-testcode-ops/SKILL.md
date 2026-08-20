@@ -5,7 +5,7 @@ description: TestCode（fx100 E2E 测试工程）操作手册：三 Fork 环境�
 
 # TestCode 操作手册
 
-> 工程根：`/Users/milakou/Documents/AladdinDaoTest/TestCode`。知识来源：2026-08 实际配置、跑批与排障过程，锚点均指向真实代码位置。**任何操作前先确认锚点仍然成立**——本工程无 git 历史，同事会并发改动。
+> 工程根：`/Users/milakou/Documents/FX100/TestCode`。知识来源：2026-08 实际配置、跑批与排障过程，锚点均指向真实代码位置。**任何操作前先确认锚点仍然成立**——同事可能并发改动。
 
 ## 一、三 Fork 环境体系（背下来这张表）
 

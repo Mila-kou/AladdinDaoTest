@@ -169,5 +169,5 @@ E2E 负责验证用户可见语义、页面/Reader/事件一致和关键资金�
 - [IncreasePositionUtils.sol：首次开仓基准和加仓结算](../../Github/fx100-contracts@release-v0.3.1/src/position/IncreasePositionUtils.sol)
 - [DecreasePositionCollateralUtils.sol：减仓的 Funding 收付](../../Github/fx100-contracts@release-v0.3.1/src/position/DecreasePositionCollateralUtils.sol)
 - [合约核心字段计算公式](ContractCodeSummary/FX100-核心字段计算公式.md)
-- [需求总结：页面字段计算公式](../../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md)
+- [需求总结：页面字段计算公式](../../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md)
 - [部署参数快照](../project/fx100/config/base_sepolia_v0.3.1_260729.params-by-module-set.csv)

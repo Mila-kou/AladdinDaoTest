@@ -1,0 +1,283 @@
+# FX100 Contracts v0.3.2 相对 v0.3.1 变更说明
+
+## 1. 文档信息
+
+| 项目 | 内容 |
+| --- | --- |
+| 对比仓库 | `AladdinDAO/fx100-contracts` |
+| 基准分支 | `release/v0.3.1` (`d9a7fd2`) |
+| 目标分支 | `release/v0.3.2` (`13880f2`) |
+| 分支关系 | `release/v0.3.1` 是 `release/v0.3.2` 的直接祖先 |
+| 变更规模 | 27 个提交，61 个文件，新增 1,997 行，删除 814 行 |
+| 验证结果 | `release/v0.3.2` Foundry 测试通过，退出码为 0 |
+| 整理日期 | 2026-08-19 |
+
+## 2. 结论摘要
+
+v0.3.2 不是单纯的补丁版本，而是包含交易定价、资金费结算、子账户授权和 Relay 支付约束等行为变化的功能升级。
+
+升级时不能只替换合约地址或实现合约。前端、签名服务、部署配置、事件索引器和测试用例均需同步适配。
+
+## 3. 功能差异总览
+
+| 模块 | v0.3.1 | v0.3.2 | 主要影响 |
+| --- | --- | --- | --- |
+| 动态点差 | 主要按非负点差处理 | 改为有符号点差，支持负点差和上下限 | 成交价格行为变化 |
+| 子账户 | 地址集合授权 | 最多 4 个命名槽位 | ABI、签名和存储结构变化 |
+| 资金费 | 更新资金费状态时处理 LP 资金流 | 仓位实际结算时处理 LP 资金流 | 结算时点和账本逻辑变化 |
+| Relay 手续费 | 手续费代币限制较宽 | 必须等于全局抵押品代币 | 客户端和部署配置需更新 |
+| 减仓 | 部分边界及最小输出校验不完整 | 增强最小输出、舍入和完整平仓处理 | 减仓结果更严格一致 |
+| Vault 提款 | 未严格验证 Strategy 实际到账金额 | 校验接收方实际到账差额 | 提款安全性增强 |
+| Claimable Collateral | 存在延迟领取机制 | 相关机制和接口被移除 | 前端与配置项需清理 |
+| Reader | 旧子账户读取模型 | 增加槽位读取并优化市场读取 | SDK/索引器需适配 |
+
+## 4. 动态点差升级
+
+### 4.1 数据类型和配置变化
+
+- `dynamicSpread` 从 `uint256` 改为 `int256`。
+- 新增按市场、方向区分的配置：
+  - `MIN_DYNAMIC_SPREAD`
+  - `MAX_DYNAMIC_SPREAD`
+- 最终动态点差会被限制在配置的最小值和最大值之间。
+- 默认市场配置新增：
+  - 最小动态点差：`-2%`
+  - 最大动态点差：`100%`
+
+### 4.2 交易行为变化
+
+- 普通开仓和减仓允许负点差。
+- 当订单改善市场多空平衡时，负点差可能给交易者更有利的成交价格。
+- 强平和 ADL 禁止负点差，最低按 0 处理，避免风险处置订单获得不合理优惠。
+- 对超大订单增加指数运算上限保护；当价格影响指数超过安全范围时，直接返回最大价格影响点差。
+
+### 4.3 适配要求
+
+- 部署脚本必须配置动态点差上下限。
+- 前端和 SDK 不应继续假设动态点差永远大于等于 0。
+- 报价、可接受价格和交易详情展示应覆盖负点差场景。
+- 测试需要覆盖普通订单、强平和 ADL 对负点差的不同处理。
+
+## 5. 子账户槽位模型
+
+### 5.1 存储模型变化
+
+v0.3.1 使用授权地址集合；v0.3.2 改为固定槽位模型。每个主账户最多拥有 4 个子账户槽位，每个槽位包括：
+
+- 槽位名称 `slot`
+- 子账户地址 `subaccount`
+- 启用状态 `isActive`
+
+同一个子账户地址不能同时占用多个有效槽位。已有槽位名称可以更新其对应的子账户。
+
+### 5.2 ABI 变化
+
+```solidity
+// v0.3.1
+addSubaccount(address subaccount)
+
+// v0.3.2
+addSubaccount(address subaccount, string slot)
+```
+
+新增能力：
+
+- 按槽位名称删除：`removeSlot(string slot)`
+- Reader 查询全部槽位：`getSubaccountSlots(...)`
+- `getSubaccountInfo(...)` 返回槽位名称和槽位状态
+
+### 5.3 EIP-712 变化
+
+`SubaccountApproval` typed data 增加 `string slot`。因此旧版本生成的子账户授权签名不能直接用于 v0.3.2。
+
+需要同步更新：
+
+- 前端 ABI
+- EIP-712 typed data 定义
+- 签名服务
+- Relay 调用参数
+- 事件索引器
+- 子账户管理界面
+
+### 5.4 迁移风险
+
+旧版子账户集合不会自动映射为新槽位。升级前应明确旧授权的迁移或重新授权方案，避免升级后子账户无法操作。
+
+## 6. 资金费结算调整
+
+### 6.1 v0.3.1 行为
+
+更新市场资金费状态时，根据全局资金费计算结果尝试处理 LP 资金流。
+
+### 6.2 v0.3.2 行为
+
+- 更新资金费状态时只更新指数并发出观察数据。
+- `positionPaysLp` 仅用于信息展示，不再直接触发结算。
+- 仓位增加或减少、资金费实际应用到仓位时，调用 `settleFundingFees()`。
+- 仓位向 LP 支付净资金费时，增加可领取资金费。
+- LP 向仓位支付净资金费时，从 Market Vault 转入 PositionVault。
+
+该改动使用逐仓实际结算金额处理现金流，有助于降低全局预估值与逐仓舍入结果不一致的问题。
+
+### 6.3 Claimable Collateral 移除
+
+以下内容在 v0.3.2 中被移除：
+
+- `ExchangeRouter.claimCollateral(...)`
+- claimable collateral 延迟与时间分段配置
+- 按时间和账户设置领取比例的接口
+- claimable collateral 相关存储键、事件和领取逻辑
+
+前端、后台任务和配置文件需要删除对这些接口及配置项的依赖。
+
+## 7. Relay 手续费代币限制
+
+v0.3.2 新增全局 `COLLATERAL_TOKEN` 配置。Relay 请求要求：
+
+```text
+relayParams.fee.feeToken == COLLATERAL_TOKEN
+```
+
+不满足条件时交易回退。如果全局抵押品代币未配置，Relay 同样无法正常执行。
+
+部署和升级时必须：
+
+1. 设置全局 `COLLATERAL_TOKEN`。
+2. 确认 Relay 客户端使用相同代币支付手续费。
+3. 移除客户端中不再支持的 Relay fee token 选择。
+
+## 8. 减仓、成交和强平修复
+
+### 8.1 最小输出校验
+
+减仓结果现在会实际检查 `minOutputAmount`。输出价值低于用户要求时，交易将回退。
+
+### 8.2 完整平仓边界
+
+按 USD 比例减仓时，token 数量向上取整可能刚好消耗全部剩余仓位。v0.3.2 会把这种情况规范为完整平仓，使以下数据使用一致的 USD 数量：
+
+- PnL
+- 手续费
+- Open Interest
+- 订单和仓位事件
+
+### 8.3 单位修复
+
+修复剩余成本把 token 数量直接当成 USD 使用的问题，现在会乘以抵押品价格后再记录为 USD。
+
+### 8.4 强平判定
+
+- 强平检查使用强平订单对应的成交价规则。
+- 正确传递 `balanceWasImproved`。
+- 强平可行性检查使用正确的手续费档位。
+- 强平和 ADL 不允许负动态点差。
+
+### 8.5 输出结构简化
+
+删除不再使用的 secondary output token 和 secondary output amount 字段，相应事件结构也发生变化。
+
+## 9. Vault 提款安全增强
+
+当 Vault 自身资产不足，需要从 Strategy 提取差额时，v0.3.2 的处理为：
+
+1. 先将 Vault 当前持有的余额发送给接收方。
+2. 从 Strategy 提取剩余差额。
+3. 比较接收方提款前后的余额。
+4. 如果实际到账差额不等于预期金额，整笔操作回退。
+
+新增错误：
+
+```solidity
+ErrorStrategyWithdrawalMismatch(uint256 expectedAssets, uint256 receivedAssets)
+```
+
+该校验可以防止 Strategy 少转、错误实现或异常代币行为造成账面提款成功但用户实际少收。
+
+## 10. 其他安全与正确性修复
+
+- `ExternalHandler` 拒绝重复退款代币，避免同一代币配置多个退款接收方时产生错误分配。
+- 推荐返佣和 Pro 折扣叠加时，对 affiliate reward 设置上限，避免总优惠或奖励超过仓位手续费。
+- 大额订单价格影响运算增加溢出保护。
+- Reader、仓位执行和强平判断的资金费计算口径进一步统一。
+- 删除未使用字段、输出和冗余检查。
+- `EmptyTokenTranferGasLimit` 更名为 `EmptyTokenTransferGasLimit`；依赖旧 error selector 的系统需要更新。
+- 配置类型增加精度说明，进一步明确 `1e30` 和 `1e18` 在比例及倍率中的含义。
+
+## 11. 兼容性评估
+
+### 11.1 明确的破坏性变化
+
+- `addSubaccount` 函数参数变化。
+- `SubaccountApproval` EIP-712 结构变化。
+- 子账户存储从地址集合改为槽位模型。
+- `claimCollateral` 及相关配置接口被移除。
+- 减仓输出事件字段发生变化。
+- 动态点差从无符号数改为有符号数。
+- Relay fee token 增加固定抵押品代币约束。
+- 部分错误名称及 selector 变化。
+
+### 11.2 受影响组件
+
+- 合约部署和升级脚本
+- Web/App 前端
+- SDK
+- Relay 与签名服务
+- Keeper
+- 事件索引器和数据服务
+- 风控、报价和清算服务
+- 自动化及手工测试用例
+
+## 12. 升级检查清单
+
+- [ ] 配置每个市场及方向的动态点差最小值和最大值。
+- [ ] 配置全局 `COLLATERAL_TOKEN`。
+- [ ] 更新子账户相关 ABI。
+- [ ] 更新 EIP-712 typed data 和签名服务。
+- [ ] 制定旧子账户授权到新槽位的迁移或重新授权方案。
+- [ ] 更新 Relay fee token 逻辑。
+- [ ] 删除 `claimCollateral` 前端入口和后台依赖。
+- [ ] 更新子账户、减仓等事件的索引规则。
+- [ ] 更新 SDK 中动态点差的数据类型和计算逻辑。
+- [ ] 验证普通订单允许负点差，强平和 ADL 禁止负点差。
+- [ ] 覆盖减仓最小输出和完整平仓舍入边界。
+- [ ] 覆盖资金费逐仓结算及 LP 资金流。
+- [ ] 覆盖 Strategy 提款金额不匹配时的回退行为。
+- [ ] 重新核对所有已部署环境的配置键和值。
+
+## 13. 建议测试范围
+
+### P0
+
+- 子账户槽位新增、替换、删除、重复地址和超过 4 个槽位。
+- 新 EIP-712 子账户授权及旧签名失效验证。
+- Relay 使用正确和错误 fee token 的行为。
+- 动态负点差对开仓和减仓成交价的影响。
+- 强平和 ADL 禁止负点差。
+- 资金费在加仓、减仓和全平时的逐仓结算。
+- 减仓 `minOutputAmount` 校验。
+- Strategy 少转或多转时 Vault 提款回退。
+
+### P1
+
+- 动态点差最小值、最大值和错误配置边界。
+- 超大订单价格影响上限。
+- USD 减仓因 token 舍入自动转换为全平。
+- Referral 与 Pro discount 叠加上限。
+- 重复 refund token 回退。
+- Reader 子账户槽位和市场读取结果。
+
+## 14. 相关提交主题
+
+v0.3.2 的主要提交主题包括：
+
+- dynamic spread phase 1–4
+- subaccount max 4 slots
+- relay fee token and global collateral token
+- decrease order minimum output validation
+- decrease position USD boundary adjustment
+- funding fee calculation synchronization
+- vault shortage withdrawal transfer and validation
+- duplicate refund token rejection
+- price impact spread overflow protection
+- liquidation fee tier correction
+

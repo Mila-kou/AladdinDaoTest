@@ -10,6 +10,7 @@ import type {
   TestResult,
 } from '@playwright/test/reporter';
 
+import { isReleaseMismatch, resolveRunRelease, targetRelease } from '../config/baseline.js';
 import { loadScenarioCatalog } from './catalog.js';
 import { mergeLatestSnapshot, readLatestSnapshot } from './latest-snapshot.js';
 import { metricDefinitions } from './metric-definitions.js';
@@ -271,6 +272,19 @@ export default class Fx100Reporter implements Reporter {
       const runId = cleanRunId(process.env.E2E_RUN_ID || defaultRunId(this.startedAt));
       const environments = Array.from(new Set(scenarioResults.map((item) => item.environment))).sort();
       const projectNames = Array.from(new Set(scenarioResults.map((item) => item.project))).sort();
+      // run.release =「环境实际部署版本」：CURRENT.json environments[env].forkOf → deployments[].releaseLabel；
+      // 无映射时回退既有 E2E_RELEASE。run.targetRelease = CURRENT.json primary；二者 vN.N.N 不同 → releaseMismatch。
+      const resolvedRelease = resolveRunRelease(environments);
+      const target = targetRelease();
+      const releaseMismatch = isReleaseMismatch(resolvedRelease.release, target?.version);
+      if (resolvedRelease.source === 'CURRENT.json' && process.env.E2E_RELEASE
+        && process.env.E2E_RELEASE.trim() !== resolvedRelease.release) {
+        console.log(
+          `FX100 Reporter: run.release=${resolvedRelease.release}（CURRENT.json：${resolvedRelease.perEnvironment
+            .map((item) => `${item.environment}→${item.release.deploymentId}`).join(', ')}）；`
+          + `E2E_RELEASE=${process.env.E2E_RELEASE} 仅作为批次标签，不再写入 run.release。`,
+        );
+      }
       const artifact: TestRunArtifact = {
         schemaVersion: 2,
         sourceStatus: 'ready',
@@ -290,7 +304,10 @@ export default class Fx100Reporter implements Reporter {
           environments,
           projectNames,
           discoveredTests: this.tests.length,
-          ...(process.env.E2E_RELEASE ? { release: process.env.E2E_RELEASE } : {}),
+          ...(resolvedRelease.release ? { release: resolvedRelease.release } : {}),
+          ...(resolvedRelease.source ? { releaseSource: resolvedRelease.source } : {}),
+          ...(target ? { targetRelease: target.label } : {}),
+          ...(releaseMismatch !== undefined ? { releaseMismatch } : {}),
           ...(process.env.E2E_FORK_BLOCK_NUMBER
             ? { forkBlockNumber: process.env.E2E_FORK_BLOCK_NUMBER }
             : {}),

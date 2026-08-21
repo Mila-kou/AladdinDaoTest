@@ -5,7 +5,7 @@ description: FX100 前端公式 vs 合约公式一致性核对（同一字段两
 
 # FX100 前端 ↔ 合约 公式一致性核对
 
-> 对象：`Github/fx100-apps@develop`（app：`apps/fx-base-app`，SDK：`packages/sdk`）↔ `Github/fx100-contracts@release-v0.3.2`（当前主测合约）。若前端尚未适配 v0.3.2，应如实判定兼容性差异，不能退回 v0.3.1 得出假“一致”。**断言以实际实现为准**（工作区规则 4）：任何公式先在两侧源码里按函数名复核，行号只作定位。
+> 对象：`Github/fx100-apps@develop`（app：`apps/fx-base-app`，SDK：`packages/sdk`）↔ `Docs/contract-releases/CURRENT.json` `primary.repoPath`（当前主测合约，不在此复述版本号）。若前端尚未适配 `primary`，应如实判定兼容性差异，不能退回 `comparison` 版本得出假“一致”。**断言以实际实现为准**（工作区规则 4）：任何公式先在两侧源码里按函数名复核，行号只作定位。
 
 ## 一句话核心事实
 
@@ -19,7 +19,7 @@ description: FX100 前端公式 vs 合约公式一致性核对（同一字段两
 
 1. **定位字段**：用户看到它在哪（页面 / 弹窗 / 列 / tooltip）。先查 [references/field-map.md](references/field-map.md) 是否已登记——已登记的直接从锚点复核，不重新找。
 2. **判来源**：沿真实调用链（组件 → hook / atom → sdk util）确认是自算、读 Reader、还是事件派生。`apps/fx-base-app/scripts/info/*` 是调试脚本，不是 app 路径，只作旁证。注意死代码 / 重复实现（同一字段多条路径要分别登记）。
-3. **抓两侧锚点**：前端 `文件::函数 L起-止`；合约 `文件::函数`（release-v0.3.2）。旧手册只能用于找线索，必须回 v0.3.2 源码复核。
+3. **抓两侧锚点**：前端 `文件::函数 L起-止`；合约 `文件::函数`（CURRENT.json `primary.repoPath`）。旧手册只能用于找线索，必须回 `primary` 源码复核。
 4. **提取公式 + 四件套**：两侧各写一遍伪代码（保留真实变量名），逐项填单位 / 取整 / 选价 / 参数来源。
 5. **判定**（分类见下表）。判"不一致 / 疑似不一致"必须尝试构造数值例子；能跑就跑数值探针（[references/probe.md](references/probe.md)）。
 6. **出报告 + 回写**：按模板出报告；新确认的差异回写 field-map.md 的差异台账；若是真 bug，按工作区规范立 `<项目代号>-BUG-NNN` 或提交给合约侧 BUGS.md 流程。

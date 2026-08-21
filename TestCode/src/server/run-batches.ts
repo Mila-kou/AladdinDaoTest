@@ -26,6 +26,7 @@ import {
   validateRpcUrl,
 } from './environment-settings.js';
 import { EnvironmentInitializationManager } from './environment-initializations.js';
+import { isReleaseMismatch, targetRelease } from '../config/baseline.js';
 
 const createRunBatchSchema = z.object({
   release: z.string().trim().min(1).max(120),
@@ -115,7 +116,12 @@ export interface RunBatchCase {
 
 export interface RunBatch {
   readonly id: string;
+  /** 批次 release = 环境实际部署版本（看板默认值来自 CURRENT.json 环境映射；用户可改）。 */
   readonly release: string;
+  /** 创建批次时 CURRENT.json primary 的标签（release-vX.Y.Z）；历史批次没有这个字段。 */
+  readonly targetRelease?: string;
+  /** release 与 targetRelease 的 vN.N.N 不同时为 true；任一方缺失时不写。 */
+  readonly releaseMismatch?: boolean;
   readonly description: string;
   readonly scope: 'single' | 'selected' | 'all';
   readonly environmentMode: 'default' | 'override';
@@ -364,6 +370,8 @@ export class RunBatchManager {
       const batch: RunBatch = {
         id: artifact.run.id,
         release: artifact.run.release ?? `Playwright-${artifact.run.id}`,
+        ...(artifact.run.targetRelease ? { targetRelease: artifact.run.targetRelease } : {}),
+        ...(artifact.run.releaseMismatch !== undefined ? { releaseMismatch: artifact.run.releaseMismatch } : {}),
         description: '由直接 Playwright 执行自动登记。',
         scope: cases.length === 1 ? 'single' : 'selected',
         environmentMode: 'default',
@@ -452,9 +460,13 @@ export class RunBatchManager {
       rpcUpdatedEnvironments.push(override);
     }
 
+    const target = targetRelease(this.projectRoot);
+    const releaseMismatch = isReleaseMismatch(input.release, target?.version);
     const batch: RunBatch = {
       id: batchId(input.release),
       release: input.release,
+      ...(target ? { targetRelease: target.label } : {}),
+      ...(releaseMismatch !== undefined ? { releaseMismatch } : {}),
       description: input.description,
       scope: input.scope,
       environmentMode: input.environmentMode,

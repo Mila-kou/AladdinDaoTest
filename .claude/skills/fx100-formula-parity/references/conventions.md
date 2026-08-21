@@ -1,6 +1,6 @@
 # 两侧约定对照：单位 · 取整原语 · 选价 · 参数来源 · 已知精度故障
 
-> 核对日期 2026-08-17。前端 `fx100-apps@develop` @ `61ec1f41`（2026-07-30，已对齐 v0.3.1 部署地址）；合约 `fx100-contracts@release-v0.3.1` @ `d9a7fd2`（2026-07-29）；`@soso-test` `src/` = release/v0.3.2（只作差异参考）。锚点以函数名为准，行号会漂。
+> 核对日期 2026-08-17（@v0.3.1 快照）。前端 `fx100-apps@develop` @ `61ec1f41`（2026-07-30，已对齐 v0.3.1 部署地址）；合约 `fx100-contracts@release-v0.3.1` @ `d9a7fd2`（2026-07-29，CURRENT.json `comparison`）。当时以 `@soso-test` `src/` 作 v0.3.2 差异参考——该目录已被 CURRENT.json `excluded` 裁决不引用，`primary` 版本差异改以 `Docs/contract-releases/v0.3.2/01-代码变化分析.md`（对比 CURRENT.json `primary.repoPath` 克隆）为准。锚点以函数名为准，行号会漂。
 
 ## 1. 精度体系（两侧必须相同的"物理单位"）
 
@@ -76,9 +76,9 @@
 - 百分比 / 杠杆 / ROE 用 float 算是可接受的（展示派生量），但**用 float 结果反推链上参数**（如 acceptablePrice、sizeDelta）不可接受。
 - `bigMath.divRound`（四舍五入）不是合约原语；用它产出要与链上比对的值一定不一致。
 
-## 7. v0.3.1 → v0.3.2 影响公式的差异（前端 develop 尚对齐 v0.3.1）
+## 7. v0.3.1 → v0.3.2 影响公式的差异（前端 develop @61ec1f41 快照，2026-08-17 时尚对齐 v0.3.1）
 
-`diff -rq fx100-contracts@release-v0.3.1/src fx100-contracts@soso-test/src`（2026-08-17）：37 个文件不同，其中会改变**字段公式或语义**的：
+`diff -rq fx100-contracts@release-v0.3.1/src fx100-contracts@soso-test/src`（2026-08-17 历史记录；`@soso-test` 已被 CURRENT.json `excluded`，正式差异以 `Docs/contract-releases/v0.3.2/01-代码变化分析.md`——对比 CURRENT.json `primary.repoPath` 克隆——为准）：37 个文件不同，其中会改变**字段公式或语义**的：
 
 | 文件 | 变化 | 受影响字段 |
 |---|---|---|
@@ -93,4 +93,4 @@
 
 其余（Config/ConfigSyncer/Keys2/FxErrors/事件工具/Router/ExternalHandler/TokenUtils）为配置键、错误、事件、权限改动，不改字段公式。
 
-**用法**：前端 develop @ `61ec1f41` 尚对齐 v0.3.1，因此默认基线取 `@release-v0.3.1`；若被核对的前端分支已跟进 v0.3.2（看 `packages/sdk/src/abis` 里 `dynamicSpread` 是否 `int256`、是否有 `OrderSizeDeltaAutoUpdated` 事件解码），基线改取 `@soso-test/src`，否则会得出假"不一致"。
+**用法**：默认基线取 CURRENT.json `primary.repoPath`（不再使用 `@soso-test`，与 SKILL.md 口径一致）；若被核对的前端分支尚未跟进 `primary`（看 `packages/sdk/src/abis` 里 `dynamicSpread` 是否 `int256`、是否有 `OrderSizeDeltaAutoUpdated` 事件解码），如实判定并登记为兼容性差异，不能退回 `comparison` 版本得出假"一致"。

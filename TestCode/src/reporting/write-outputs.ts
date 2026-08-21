@@ -12,6 +12,7 @@ import { metricDefinitions } from './metric-definitions.js';
 import { renderParametersHtml } from './render-parameters.js';
 import { renderRunBuilderHtml } from './render-run-builder.js';
 import { renderTestCasesHtml } from './render-test-cases.js';
+import { buildBaselineView } from '../config/baseline.js';
 import { discoverScenarioSpecs } from '../execution/scenario-specs.js';
 import { loadReferenceSources } from './reference-sources.js';
 import { validateTestRunArtifact, type TestRunArtifact } from './schema.js';
@@ -91,6 +92,8 @@ export async function writeRunOutputs(
     discoverScenarioSpecs(process.cwd()),
   ]);
   await mkdir(outputDirectory, { recursive: true });
+  // 基线视图在渲染时实时读取 CURRENT.json（目标基线随登记切换），run.release 仍取产物记录的环境实际部署版本。
+  const baseline = buildBaselineView(artifact.run);
 
   const resultsJson = join(outputDirectory, 'results.json');
   const summaryMarkdown = join(outputDirectory, 'summary.md');
@@ -106,8 +109,8 @@ export async function writeRunOutputs(
 
   await Promise.all([
     writeFile(resultsJson, `${JSON.stringify(artifact, null, 2)}\n`, 'utf8'),
-    writeFile(summaryMarkdown, renderMarkdownSummary(artifact), 'utf8'),
-    writeFile(dashboardHtml, renderDashboardHtml(artifact), 'utf8'),
+    writeFile(summaryMarkdown, renderMarkdownSummary(artifact, baseline), 'utf8'),
+    writeFile(dashboardHtml, renderDashboardHtml(artifact, baseline), 'utf8'),
     writeFile(executionsHtml, renderExecutionsHtml(artifact, testCases), 'utf8'),
     writeFile(parametersHtml, renderParametersHtml(references.parameters, artifact.source.generatedAt), 'utf8'),
     writeFile(formulasHtml, renderContractFormulasHtml(references.contractFormulas, artifact.source.generatedAt), 'utf8'),
@@ -119,6 +122,7 @@ export async function writeRunOutputs(
         attachExecutions(testCases, artifact.results),
         Array.from(scenarioSpecs.keys()).sort(),
         artifact.source.generatedAt,
+        baseline,
       ),
       'utf8',
     ),

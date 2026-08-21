@@ -1,3 +1,4 @@
+import { baselineHeadline, buildBaselineView, RELEASE_MISMATCH_BADGE, type BaselineView } from '../config/baseline.js';
 import { computeResultMetrics } from './metrics.js';
 import type { TestRunArtifact } from './schema.js';
 
@@ -9,7 +10,8 @@ function duration(value: number): string {
   return `${(value / 1000).toFixed(1)}s`;
 }
 
-export function renderMarkdownSummary(artifact: TestRunArtifact): string {
+export function renderMarkdownSummary(artifact: TestRunArtifact, baseline?: BaselineView): string {
+  const baselineView = baseline ?? buildBaselineView(artifact.run);
   const metrics = computeResultMetrics(artifact.catalog, artifact.results);
   const failures = artifact.results.filter((result) => result.status === 'FAIL');
   const problems = artifact.results.filter((result) =>
@@ -21,6 +23,7 @@ export function renderMarkdownSummary(artifact: TestRunArtifact): string {
     '# FX100 E2E 测试结果',
     '',
     `> 数据状态：${artifact.sourceStatus.toUpperCase()}｜Run：${artifact.run.id}｜生成：${artifact.source.generatedAt}`,
+    `> ${baselineHeadline(baselineView)}${baselineView.mismatch === true ? `｜**${RELEASE_MISMATCH_BADGE}**` : ''}`,
     '',
     '| 指标 | 结果 | 定义 |',
     '|---|---:|---|',

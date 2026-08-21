@@ -33,6 +33,28 @@ npm run typecheck
 npm run playwright:install
 ```
 
+## 基线登记与版本切换
+
+测试基线只登记在一处：[`../Docs/contract-releases/CURRENT.json`](../Docs/contract-releases/CURRENT.json)（人读镜像 `CURRENT.md`）。本工程不复述版本号，全部由 `src/config/baseline.ts` 运行时读取（缺失时 `console.warn` 并回退既有机制，不抛错）：
+
+| 字段 | 含义 | 来源 |
+|---|---|---|
+| `run.release`（`artifacts/runs/*/results.json`）/ 批次 `release`（`artifacts/run-batches/*/run.json`） | **环境实际部署版本**。Reporter 按 `CURRENT.json` `environments[env].forkOf → deployments[].releaseLabel` 解析（多环境映射到不同部署时以 ` \| ` 连接）；无映射（如未登记的环境、`forkOf=null` 的 time-fork）时回退 `E2E_RELEASE`（看板批次注入或 `.env.local`）。`run.releaseSource` 记录来源（`CURRENT.json` / `E2E_RELEASE`） | `resolveRunRelease()` |
+| `run.targetRelease` / 批次 `targetRelease` | **目标测试版本** `CURRENT.json` `primary.version` 的标签形式（`release-vX.Y.Z`），运行 / 建批时写入 | `targetRelease()` |
+| `run.releaseMismatch` / 批次 `releaseMismatch` | 环境基线与目标基线按 `vN.N.N` 归一化后不同 → `true`；任一方缺失不写 | `isReleaseMismatch()` |
+
+三个字段在 `src/reporting/schema.ts` 均为 optional，历史产物不受影响。主看板与 `/runs` 页头显示「目标基线 vX（CURRENT.json）｜环境基线 vY」（目标基线在渲染时实时读登记；环境基线取运行记录），不一致时给出醒目徽章「环境基线 ≠ 目标基线：本批不充当目标版本回归材料」；`summary.md` 第二行同步写出；`/api/version` 返回 `release / releaseSource / targetRelease / releaseMismatch / currentTargetRelease / baselineRegistry`。`/runs` 页「版本 / Release」输入框默认值取 `CURRENT.json` 环境映射的部署标签（各环境唯一时），保证「批次 release = 环境实际部署版本」；改 `.env.local` 的 `E2E_RELEASE` 只影响无映射环境的回退值。
+
+切换测试版本的步骤：只改 `CURRENT.json`（`primary` / `deployments` / `environments.*.forkOf`），然后在本目录运行基线引用 lint：
+
+```bash
+npm run baseline:lint                 # 有过期引用退出码 1（默认）
+npm run baseline:lint -- --warn-only  # 仅告警，退出码 0
+npm run baseline:lint -- --json       # 机器可读（stale 明细）；加 --verbose 连同已标注/允许项一起输出
+```
+
+lint 扫描 `CLAUDE.md`、`Docs/**/*.md`（跳过 `Docs/contract-releases/v*/` 版本目录与 `Docs/Gordon-Notion需求文档归档/`）、`TestCase/**/*.{md,csv}`、`TestCode/README.md`、`TestCode/docs/*.md`、`.claude/skills/**/*.md`，找「当前 / 主测 / CURRENT / 基线 / 适用基线 / 代码版本」12 字内出现 `release[/-]vN.N.N` 或 `vN.N.N` 字面量的行，与 `primary` 比对：版本 ≠ `primary` 且行内无「快照 / pinned / 对比基线 / 历史 / @v」标注即判 **stale**（`file:line` + 原因）。确实需要写死旧版本且不便加「@vX.Y.Z 快照」标注的行，登记到 `config/baseline-lint.allow.json`（`file:line` / 整文件 / `regex:` 前缀，相对工作区根）并在 `$why` 写明原因。
+
 ## 当前目录
 
 ```text
@@ -50,7 +72,7 @@ TestCode/
 │   ├── domain/                  # 精度与领域类型
 │   ├── drivers/                 # Fork/Oracle/Protocol/Keeper 接口
 │   └── reporting/               # 结果模型、Reporter、Markdown 和 HTML 看板
-├── tests/                       # 按 S01～S08 建立；SCN-009/010 已落在 S02
+├── tests/                       # 按 S01～S08 建立；已有 15 条 spec 落在 S02 / S03 / S07（清单见文末）
 └── artifacts/                   # 报告、Trace、截图和链上证据
 ```
 
@@ -288,4 +310,24 @@ E2E_ENV=tx-fork E2E_TRADER_PROFILE=ui E2E_UI_COLLECT=true E2E_ENV_PRIORITY_KEYS=
 如果页面提示 `Method Not Allowed`，说明当前页面仍由旧版进程或静态预览服务提供；停止旧服务后重新执行
 `npm run dashboard:serve`，再从 `http://127.0.0.1:4173/runs` 操作。新版页面会在启用按钮前检查初始化能力。
 
-当前已有自动化代码的是 SCN-009、SCN-010、SCN-070。环境资源就绪后，用例会生成测试结果、执行详情、交易链接和核对证据。
+当前已有自动化代码的 spec 共 15 条（`tests/**/scn-xxx.spec.ts`，以目录实际文件为准，`npm run test:list` 可核对）：
+
+| 套件 | spec | 覆盖要点 | 默认环境 |
+|---|---|---|---|
+| S02 | `tests/S02/scn-009.spec.ts` | SCN-009 市价开多快速退出——**涨 / 平 / 跌三组受控价格数据集**（+3% / 0 / −3%，跨数据集断言 `traderUsdcDelta` 严格递减）已自动化 | tx-fork |
+| S02 | `tests/S02/scn-010.spec.ts` | SCN-010 现价下方限价开多（Index Mock Oracle P-10% 精确触发，真实签名链路） | oracle-fork |
+| S02 | `tests/S02/scn-011.spec.ts` | SCN-011 现价上方限价开空 LimitIncrease short | tx-fork |
+| S02 | `tests/S02/scn-012.spec.ts` | SCN-012 突破追多 StopIncrease long | tx-fork |
+| S02 | `tests/S02/scn-013.spec.ts` | SCN-013 破位追空 StopIncrease short | tx-fork |
+| S02 | `tests/S02/scn-015.spec.ts` | SCN-015 括号单 TP 先触发 LimitDecrease long | tx-fork |
+| S02 | `tests/S02/scn-016.spec.ts` | SCN-016 括号单 SL 先触发 StopLossDecrease long | tx-fork |
+| S03 | `tests/S03/scn-022.spec.ts` | SCN-022 纯价格 PnL 与实际可得差异（盈利全平双向数据集；可选前端显示值采集） | tx-fork |
+| S03 | `tests/S03/scn-023.spec.ts` | SCN-023 盈利分批兑现（部分平 50% 后清仓） | tx-fork |
+| S03 | `tests/S03/scn-024.spec.ts` | SCN-024 紧急全部平仓（亏损全平双向数据集） | tx-fork |
+| S03 | `tests/S03/scn-025.spec.ts` | SCN-025 同方向加仓（加仓双向数据集） | tx-fork |
+| S07 | `tests/S07/scn-065.spec.ts` | SCN-065 市价开空与平空 MarketIncrease short | tx-fork |
+| S07 | `tests/S07/scn-066.spec.ts` | SCN-066 空头下跌止盈 LimitDecrease short | tx-fork |
+| S07 | `tests/S07/scn-067.spec.ts` | SCN-067 空头上涨止损 StopLossDecrease short | tx-fork |
+| S07 | `tests/S07/scn-070.spec.ts` | SCN-070 市价四象限可接受价（等号成交与不利越界取消，8 数据集） | oracle-fork |
+
+环境资源就绪后，用例会生成测试结果、执行详情、交易链接和核对证据。运行记录的 `release` / `targetRelease` / `releaseMismatch` 语义见上文「基线登记与版本切换」。

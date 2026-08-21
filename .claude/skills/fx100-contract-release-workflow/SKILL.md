@@ -1,14 +1,14 @@
 ---
 name: fx100-contract-release-workflow
-description: 固化 FX100 合约新版本拉取后的分析与测试准备流程。Use whenever a contract branch, release, tag, deployment package, or baseline is newly pulled or changed, or the user asks to analyze contract changes, prepare deployment instructions,整理代码功能文档、参数文档、重要参数边界场景、版本测试范围、升级影响或发布验收；尤其适用于 release/v0.3.2 及后续版本。必须产出版本证据、差异报告、部署手册、功能文档、参数目录和边界场景清单后才能进入系统回归。
+description: 固化 FX100 合约新版本拉取后的分析与测试准备流程。Use whenever a contract branch, release, tag, deployment package, or baseline is newly pulled or changed, or the user asks to analyze contract changes, prepare deployment instructions,整理代码功能文档、参数文档、重要参数边界场景、版本测试范围、升级影响或发布验收；尤其适用于 Docs/contract-releases/CURRENT.json 登记的主测版本及后续版本。必须产出版本证据、差异报告、部署手册、功能文档、参数目录和边界场景清单后才能进入系统回归。
 ---
 
 # FX100 合约版本工作流
 
 ## 基线
 
-- 当前主测合约：`Github/fx100-contracts@release-v0.3.2`。
-- 默认对比基线：上一已验证发布版 `Github/fx100-contracts@release-v0.3.1`。
+- 当前主测合约：见 `Docs/contract-releases/CURRENT.json` `primary.repoPath`（单一事实源，不在此复述版本号）。
+- 默认对比基线：CURRENT.json `comparison.repoPath`（上一已验证发布版）。
 - 前端：`Github/fx100-apps@develop`；只在核对前端兼容性时纳入。
 - 以源码和实际部署产物为准；文档只作线索。
 

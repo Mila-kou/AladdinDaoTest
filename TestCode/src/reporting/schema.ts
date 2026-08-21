@@ -171,7 +171,14 @@ export const testRunArtifactSchema = z.object({
     environments: z.array(z.string()),
     projectNames: z.array(z.string()),
     discoveredTests: z.number().int().nonnegative(),
+    /** 环境实际部署版本（CURRENT.json environments→deployments 解析；无映射时回退 E2E_RELEASE）。 */
     release: z.string().optional(),
+    /** release 的来源：CURRENT.json | E2E_RELEASE。历史产物无此字段。 */
+    releaseSource: z.string().optional(),
+    /** 目标测试版本（CURRENT.json primary，形如 release-v0.3.2）。历史产物无此字段。 */
+    targetRelease: z.string().optional(),
+    /** 环境基线 ≠ 目标基线 时为 true；任一方缺失时不写。历史产物无此字段。 */
+    releaseMismatch: z.boolean().optional(),
     forkBlockNumber: z.string().optional(),
   }),
   catalog: z.array(scenarioCatalogItemSchema),

@@ -68,7 +68,7 @@ OrderHandler try/catch 静默取消不 revert："订单离开 pending 队列"无
 ## 11. 环境纪律
 
 - **fork 时钟冻结陷阱**：Tenderly fork 只在有交易时出块，链上"最新区块时间"停在最后一次活动；而新交易挖出的区块用真实时钟。Mock Oracle 时间戳停在上次设价时刻 → 隔天执行订单必因价格过期（heartbeat/早于订单创建时间）被取消，且回滚后现场消失、只见 `eth_call reverted`。对策：跑批次前刷新 Oracle 时间戳（环境页 ④ Mock Oracle 价格 → "刷新时间戳"，或 `POST /api/mock-oracle-prices`）；SCN-009 runner 已内置执行前自愈（2026-08-12）。`setMockPrice` 无权限控制，admin RPC 免签名即可调。
-- **改 mock 价必须同步 STABLE_PRICE 锚（2026-08-12 实案，reasonBytes 0xbc121108 实锤）**：v0.3.1 价格提供器在 `STABLE_PRICE(token) > 0` 时做双侧合并 `min=min(feed,stable)、max=max(feed,stable)`。只改 feed（60060→2000）不改锚 → min/max 撑开成 [2000, 60060] → 开多按 max≈60066 成交、清算校验按 min=2000 估值 → $50 仓位 PnL 瞬间 −$48 → `LiquidatablePosition("< 0")` 静默取消。**大幅改价三件套：feed 价 + 时间戳 + `DataStore.setUint(stablePriceKey(token), 新价×1e12)`**（admin 持 CONTROLLER 可直写）；USDC 的锚（$1.001 vs feed $0.999）是该机制的正常用法勿动。诊断路径参考：离队无 Executed → 同窗抓 OrderCancelled 解码 reasonBytes selector → ABI 全库映射选择器。另注意两点通用教训：①非持久模式 evm_revert 抹现场，"事后链上查无该单任何事件"≠"没取消过"；②拥挤 fork 上（实测 30 分钟 1.4 万块）eth_getLogs 有 20000 条/10MB 上限，取证须按 topic1=事件名过滤+分块。SCN-009 runner 已内置离队后取消判别+reason 解码（2026-08-12）。
+- **改 mock 价必须同步 STABLE_PRICE 锚（2026-08-12 实案，reasonBytes 0xbc121108 实锤）**：v0.3.1 价格提供器（@v0.3.1 快照；`primary` 版本是否沿用待复核）在 `STABLE_PRICE(token) > 0` 时做双侧合并 `min=min(feed,stable)、max=max(feed,stable)`。只改 feed（60060→2000）不改锚 → min/max 撑开成 [2000, 60060] → 开多按 max≈60066 成交、清算校验按 min=2000 估值 → $50 仓位 PnL 瞬间 −$48 → `LiquidatablePosition("< 0")` 静默取消。**大幅改价三件套：feed 价 + 时间戳 + `DataStore.setUint(stablePriceKey(token), 新价×1e12)`**（admin 持 CONTROLLER 可直写）；USDC 的锚（$1.001 vs feed $0.999）是该机制的正常用法勿动。诊断路径参考：离队无 Executed → 同窗抓 OrderCancelled 解码 reasonBytes selector → ABI 全库映射选择器。另注意两点通用教训：①非持久模式 evm_revert 抹现场，"事后链上查无该单任何事件"≠"没取消过"；②拥挤 fork 上（实测 30 分钟 1.4 万块）eth_getLogs 有 20000 条/10MB 上限，取证须按 topic1=事件名过滤+分块。SCN-009 runner 已内置离队后取消判别+reason 解码（2026-08-12）。
 - 压价只用 mock feed 市场；**测完每格立即复位 mock 价**（keeper 会用 stale 价秒吃后续新单）。
 - 时间敏感用例用短 grace 真等，慎用 evm_increaseTime（时钟漂移 → MaxPriceAgeExceeded 等三连 revert）；`MAX_ORACLE_PRICE_AGE` 对 fork 偏紧可临时调大。
 - Chainlink DataStream 必须 testnet 端点（mainnet 报文 → DigestNotSet）。
@@ -77,4 +77,4 @@ OrderHandler try/catch 静默取消不 revert："订单离开 pending 队列"无
 
 ## 12. 引用外部结论的纪律
 
-任何"已验证/通过"结论都是特定版本+特定 fork 的快照；在本仓基线 release-v0.3.1 上复核后才能引用。参考实现的覆盖表 ✅ 常指"代码已写"≠"实测通过"，引用前区分。
+任何"已验证/通过"结论都是特定版本+特定 fork 的快照；在 `Docs/contract-releases/CURRENT.json` 所载基线上复核后才能引用（断言回 `primary`；环境实际部署版本见 `environments.*.forkOf` → `deployments[]`）。参考实现的覆盖表 ✅ 常指"代码已写"≠"实测通过"，引用前区分。

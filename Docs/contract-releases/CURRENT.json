@@ -1,0 +1,43 @@
+{
+  "$comment": "FX100 测试基线唯一登记（单一事实源）。切换测试版本只改本文件（并执行 TestCode: npm run baseline:lint 校验全工作区引用）。文档不得复述版本号，只能引用本文件；必须写死版本的快照须标注「@vX.Y.Z 快照」。",
+  "updatedAt": "2026-08-21",
+  "primary": {
+    "version": "v0.3.2",
+    "branch": "release/v0.3.2",
+    "repoPath": "Github/fx100-contracts@release-v0.3.2",
+    "head": "13880f2416918f4fed3fea86d7f1023084a3ce0d",
+    "deliverables": "Docs/contract-releases/v0.3.2/",
+    "admission": "NOT_READY",
+    "admissionSource": "Docs/contract-releases/v0.3.2/06-测试影响与准入结论.md"
+  },
+  "comparison": {
+    "version": "v0.3.1",
+    "branch": "release/v0.3.1",
+    "repoPath": "Github/fx100-contracts@release-v0.3.1",
+    "head": "d9a7fd2f23705c0bcfe44eaa2f40d9d5c170aaa0"
+  },
+  "frontend": { "repoPath": "Github/fx100-apps@develop", "branch": "develop" },
+  "deployments": [
+    {
+      "id": "base-sepolia@v0.3.1",
+      "network": "base-sepolia",
+      "chainId": 84532,
+      "version": "v0.3.1",
+      "releaseLabel": "release-v0.3.1",
+      "paramsExport": "TestCase/project/fx100/config/base_sepolia_v0.3.1_260729.params.json",
+      "note": "唯一已知部署；v0.3.2 截至 updatedAt 无部署记录（04-参数目录 全部「待部署确认」）"
+    }
+  ],
+  "environments": {
+    "tx-fork":     { "chainId": 99911, "forkOf": "base-sepolia@v0.3.1", "status": "ready" },
+    "oracle-fork": { "chainId": 99912, "forkOf": "base-sepolia@v0.3.1", "status": "ready" },
+    "time-fork":   { "chainId": 99913, "forkOf": null, "status": "pending", "note": "须在 Tenderly 控制台手建 Virtual TestNet（Parent Base Sepolia 84532，Custom Chain ID 99913）后在 TestCode 登记；页面按钮走 legacy API 会继承 84532" }
+  },
+  "excluded": [
+    { "path": "Github/fx100-contracts@soso-test", "reason": "Sosogao fork docs/testing-standards 分支（1,944 条账本宿主）——2026-08-21 裁决暂不纳入、不引用、不迁移" }
+  ],
+  "history": [
+    { "date": "2026-08-20", "change": "主测基线 v0.3.1 → v0.3.2（提交 74e9f6a）" },
+    { "date": "2026-08-21", "change": "建立本登记文件；v0.3.2 七件套补齐，准入 NOT_READY" }
+  ]
+}

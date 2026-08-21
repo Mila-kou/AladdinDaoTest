@@ -1,0 +1,5 @@
+{
+  "$comment": "baseline-lint 允许清单（scripts/baseline-lint.ts）。条目相对工作区根：`path/to/file.md:12`（单行）、`path/to/file.md`（整文件）、`path/dir`（整目录）、`regex:^TestCase/project/.*`（对 `file:line` 的正则）。只允许登记确实需要写死旧版本且无法加「@vX.Y.Z 快照」标注的行；新增条目请在 $why 写明原因。",
+  "$why": {},
+  "allow": []
+}

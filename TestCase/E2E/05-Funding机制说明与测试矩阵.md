@@ -1,7 +1,7 @@
 # FX100 Funding 机制说明与测试矩阵
 
 > 面向交易员、页面 E2E 执行人和账本测试工程师  
-> 合约基线：`release-v0.3.1`  
+> 合约基线：见 [Docs/contract-releases/CURRENT.json](../../Docs/contract-releases/CURRENT.json)；本文公式与参数按 @v0.3.1 快照（`Github/fx100-contracts@release-v0.3.1` @d9a7fd2，CURRENT.json `comparison`）整理。`primary` 版本资金费结算架构有变（`updateFundingState` 仅更新指数、`settleFundingFees` 逐仓实结——见 `Docs/contract-releases/v0.3.2/01-代码变化分析.md` §6、`04-参数目录.md` §3.9、`05-重要参数边界场景.md` 组 5 B32-5-01～04），使用前须回 `primary.repoPath` 源码复核  
 > 专项用例：[S08 Funding 计提、结算与边界](scenarios/S08-Funding计提结算与边界.md)
 
 ## 1. Funding 有三个不同时点
@@ -70,7 +70,7 @@ Long 比 Short 多一个 `fundingFloor`。因此存在“Short OI 略多，但 L
 
 ## 3. 当前 ETH market #2 的判断示例
 
-> 下表使用本地 `base_sepolia_v0.3.1_260729` 部署快照，不代替执行时链上读数。
+> 下表使用本地 `base_sepolia_v0.3.1_260729` 部署快照（@v0.3.1 快照，CURRENT.json `deployments[0].paramsExport`），不代替执行时链上读数；`primary` 版本部署值待部署确认（见 `Docs/contract-releases/v0.3.2/04-参数目录.md`）。
 
 | 参数 | 快照年化值 |
 |---|---:|
@@ -162,12 +162,14 @@ E2E 负责验证用户可见语义、页面/Reader/事件一致和关键资金�
 
 ## 8. 代码、配置与口径依据
 
-- [MarketUtils.sol：Skew、EMA、Factor、Clamp 和市场累计](../../Github/fx100-contracts@release-v0.3.1/src/market/MarketUtils.sol)
-- [ExponentialMovingAverage.sol：3600 秒平滑语义](../../Github/fx100-contracts@release-v0.3.1/src/common/math/ExponentialMovingAverage.sol)
-- [PositionPricingUtils.sol：单仓 Funding 和取整](../../Github/fx100-contracts@release-v0.3.1/src/pricing/PositionPricingUtils.sol)
-- [ExecuteOrderUtils.sol：订单执行前更新市场 Funding](../../Github/fx100-contracts@release-v0.3.1/src/order/ExecuteOrderUtils.sol)
-- [IncreasePositionUtils.sol：首次开仓基准和加仓结算](../../Github/fx100-contracts@release-v0.3.1/src/position/IncreasePositionUtils.sol)
-- [DecreasePositionCollateralUtils.sol：减仓的 Funding 收付](../../Github/fx100-contracts@release-v0.3.1/src/position/DecreasePositionCollateralUtils.sol)
+> 以下源码链接与参数快照均为 @v0.3.1 快照（CURRENT.json `comparison` / `deployments[0]`）；按 `primary` 复核时改指 `primary.repoPath` 同名文件——其中 `MarketUtils.sol`、`IncreasePositionUtils.sol`、`DecreasePositionCollateralUtils.sol` 在 v0.3.2 已改（`settleFundingFees` 逐仓结算），改指前须复核。
+
+- [MarketUtils.sol：Skew、EMA、Factor、Clamp 和市场累计（@v0.3.1 快照；v0.3.2 已改）](../../Github/fx100-contracts@release-v0.3.1/src/market/MarketUtils.sol)
+- [ExponentialMovingAverage.sol：3600 秒平滑语义（@v0.3.1 快照）](../../Github/fx100-contracts@release-v0.3.1/src/common/math/ExponentialMovingAverage.sol)
+- [PositionPricingUtils.sol：单仓 Funding 和取整（@v0.3.1 快照）](../../Github/fx100-contracts@release-v0.3.1/src/pricing/PositionPricingUtils.sol)
+- [ExecuteOrderUtils.sol：订单执行前更新市场 Funding（@v0.3.1 快照）](../../Github/fx100-contracts@release-v0.3.1/src/order/ExecuteOrderUtils.sol)
+- [IncreasePositionUtils.sol：首次开仓基准和加仓结算（@v0.3.1 快照；v0.3.2 已改）](../../Github/fx100-contracts@release-v0.3.1/src/position/IncreasePositionUtils.sol)
+- [DecreasePositionCollateralUtils.sol：减仓的 Funding 收付（@v0.3.1 快照；v0.3.2 已改）](../../Github/fx100-contracts@release-v0.3.1/src/position/DecreasePositionCollateralUtils.sol)
 - [合约核心字段计算公式](ContractCodeSummary/FX100-核心字段计算公式.md)
 - [需求总结：页面字段计算公式](../../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md)
-- [部署参数快照](../project/fx100/config/base_sepolia_v0.3.1_260729.params-by-module-set.csv)
+- [部署参数快照（@v0.3.1 快照 base_sepolia_v0.3.1_260729）](../project/fx100/config/base_sepolia_v0.3.1_260729.params-by-module.csv)

@@ -8,6 +8,7 @@ import {
   readDeletedRecords,
 } from '../reporting/latest-snapshot.js';
 import { writeRunOutputs } from '../reporting/write-outputs.js';
+import { baselineRegistryDisplayPath, targetRelease } from '../config/baseline.js';
 import { validateTestRunArtifact, type TestRunArtifact } from '../reporting/schema.js';
 import { saveTestCaseOverride } from '../reporting/test-case-overrides.js';
 import { attachExecutions, loadTestCases, type TestCaseView } from '../reporting/test-cases.js';
@@ -812,6 +813,11 @@ export async function startDashboardServer(options: DashboardServerOptions) {
             sourceStatus: artifact.sourceStatus,
             runId: artifact.run.id,
             release: artifact.run.release ?? null,
+            releaseSource: artifact.run.releaseSource ?? null,
+            targetRelease: artifact.run.targetRelease ?? null,
+            releaseMismatch: artifact.run.releaseMismatch ?? null,
+            currentTargetRelease: targetRelease()?.label ?? null,
+            baselineRegistry: baselineRegistryDisplayPath(),
             generatedAt: artifact.source.generatedAt,
             catalogSize: artifact.catalog.length,
             resultCount: artifact.results.length,

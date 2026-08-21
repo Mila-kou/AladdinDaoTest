@@ -1,11 +1,11 @@
 ---
 name: fx100-verify-handbook
-description: FX100 数据核对知识手册（公式、取整、费用路由、部署事实与核对陷阱；当前主测基线 v0.3.2）。Use whenever the task involves FX100 verification in this workspace — 数据核对 / 深度核对 / 核对公式 / Expected Δ / 守恒 / ΣΔ / 账本 / ledger / execution-evidence / reconciliation / SCN-009 / SCN-010 / SCN-070 / TestCode 核对重构 / 手续费公式 / 资金费 / funding / 执行价 / 动态点差 / dynamicSpread / 取整方向 / 清算价 / leverage 公式 / PnL / 支付瀑布 / claimable / FeeHandler / RevenuePool / 费用路由 / DataStore key — even if none of these words appear but the task requires computing expected on-chain values for fx100 positions/fees/funding/PnL, designing reconciliation checks, or reading DataStore/event fields. 与 Test/standards 冲突时以 standards 为准；本 skill 只提供领域知识。工程操作（环境/跑批/看板/记录管理）见隔壁 skill fx100-testcode-ops。
+description: FX100 数据核对知识手册（公式、取整、费用路由、部署事实与核对陷阱；主测基线以 Docs/contract-releases/CURRENT.json 为准）。Use whenever the task involves FX100 verification in this workspace — 数据核对 / 深度核对 / 核对公式 / Expected Δ / 守恒 / ΣΔ / 账本 / ledger / execution-evidence / reconciliation / SCN-009 / SCN-010 / SCN-070 / TestCode 核对重构 / 手续费公式 / 资金费 / funding / 执行价 / 动态点差 / dynamicSpread / 取整方向 / 清算价 / leverage 公式 / PnL / 支付瀑布 / claimable / FeeHandler / RevenuePool / 费用路由 / DataStore key — even if none of these words appear but the task requires computing expected on-chain values for fx100 positions/fees/funding/PnL, designing reconciliation checks, or reading DataStore/event fields. 与 Test/standards 冲突时以 standards 为准；本 skill 只提供领域知识。工程操作（环境/跑批/看板/记录管理）见隔壁 skill fx100-testcode-ops。
 ---
 
 # FX100 核对手册
 
-> 当前主测基线是 `Github/fx100-contracts@release-v0.3.2`。本手册中的 v0.3.1 事实卡仅是历史基线，未完成 v0.3.2 复核的内容不得直接作为断言。给出任何公式、费用路由或 key 签名前，必须回 v0.3.2 源码复核；行号仅供定位，以函数名为准。
+> 当前主测基线以 `Docs/contract-releases/CURRENT.json` `primary` 为准（不在此复述版本号）。本手册中的 v031-facts 事实卡是 @v0.3.1 快照（CURRENT.json `comparison`），未完成 `primary` 复核的内容不得直接作为断言。给出任何公式、费用路由或 key 签名前，必须回 `primary.repoPath` 源码复核；行号仅供定位，以函数名为准。
 
 ## 一句话核心事实
 
@@ -22,7 +22,7 @@ description: FX100 数据核对知识手册（公式、取整、费用路由、�
 |---|---|
 | 算/核任何期望值（零和、执行价、点差、size↔token、资金费、手续费、PnL、瀑布、leverage、清算价、取整速查） | [references/formulas.md](references/formulas.md) |
 | 写核对代码/断言前防踩坑（双 key 编码、orderType 枚举、原子快照、execBlock−1、事件自证、同序复刻…） | [references/traps.md](references/traps.md) |
-| 查历史 v0.3.1 费用路由、key 签名、部署地址（仅作对比，使用前在 v0.3.2 复核） | [references/v031-facts.md](references/v031-facts.md) |
+| 查历史 v0.3.1 费用路由、key 签名、部署地址（@v0.3.1 快照，仅作对比，使用前在 CURRENT `primary` 复核） | [references/v031-facts.md](references/v031-facts.md) |
 
 ## 使用纪律
 

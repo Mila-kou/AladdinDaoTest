@@ -12,3 +12,6 @@ pk.txt
 **/.env
 
 Devconfig/*
+# 2026-08-21 凭证防护：会话记忆导出与临时扫描脚本（含 fork RPC 访问路径）不入库
+Memory/
+TestCode/tmp-scan*.mjs

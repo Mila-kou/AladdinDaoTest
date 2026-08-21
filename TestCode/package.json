@@ -24,6 +24,7 @@
     "dashboard:fixture": "tsx scripts/generate-dashboard-fixture.ts",
     "dashboard:serve": "tsx scripts/serve-dashboard.ts",
     "dashboard:verify": "tsx scripts/verify-dashboard.ts",
+    "baseline:lint": "tsx scripts/baseline-lint.ts",
     "typecheck": "tsc --noEmit",
     "test": "playwright test",
     "test:list": "playwright test --list",

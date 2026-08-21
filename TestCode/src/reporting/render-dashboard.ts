@@ -1,3 +1,5 @@
+import { baselineHeadline, buildBaselineView, RELEASE_MISMATCH_BADGE, type BaselineView } from '../config/baseline.js';
+import { BASELINE_HEADER_STYLES, renderBaselineHeaderHtml } from './render-page-shell.js';
 import type { TestRunArtifact } from './schema.js';
 
 function serializeForHtml(value: unknown): string {
@@ -7,8 +9,25 @@ function serializeForHtml(value: unknown): string {
     .replaceAll('&', '\\u0026');
 }
 
-export function renderDashboardHtml(artifact: TestRunArtifact): string {
+function baselineDetail(view: BaselineView): string | undefined {
+  const parts: string[] = [];
+  if (view.releaseSource) parts.push(`release 来源 ${view.releaseSource}`);
+  if (view.recordedTargetRelease && view.target && view.recordedTargetRelease !== view.target.label) {
+    parts.push(`运行时记录的目标基线 ${view.recordedTargetRelease}（与当前登记不同）`);
+  }
+  if (view.target?.admission) parts.push(`目标准入 ${view.target.admission}`);
+  return parts.length ? parts.join(' · ') : undefined;
+}
+
+export function renderDashboardHtml(artifact: TestRunArtifact, baseline?: BaselineView): string {
   const payload = serializeForHtml(artifact);
+  const baselineView = baseline ?? buildBaselineView(artifact.run);
+  const baselineHtml = renderBaselineHeaderHtml({
+    headline: baselineHeadline(baselineView),
+    ...(baselineView.mismatch !== undefined ? { mismatch: baselineView.mismatch } : {}),
+    mismatchBadge: RELEASE_MISMATCH_BADGE,
+    ...(baselineDetail(baselineView) ? { detail: baselineDetail(baselineView)! } : {}),
+  });
 
   return `<!doctype html>
 <html lang="zh-CN">
@@ -115,6 +134,7 @@ export function renderDashboardHtml(artifact: TestRunArtifact): string {
     .scenario-link { color: #8fc2ff; text-decoration: none; }
     .scenario-link:hover { text-decoration: underline; }
     .executed-at { white-space: nowrap; }
+    ${BASELINE_HEADER_STYLES}
     @media (max-width: 1100px) {
       .filters { grid-template-columns: repeat(3, 1fr); }
       .metric-grid { grid-template-columns: repeat(3, 1fr); }
@@ -157,6 +177,7 @@ export function renderDashboardHtml(artifact: TestRunArtifact): string {
     <div>
       <h1>FX100 E2E 测试看板</h1>
       <p class="subhead" id="run-subhead"></p>
+      ${baselineHtml}
     </div>
     <div class="badges" id="run-badges"></div>
   </header>
@@ -406,7 +427,10 @@ export function renderDashboardHtml(artifact: TestRunArtifact): string {
       ['数据状态', data.sourceStatus.toUpperCase()], ['Run ID', data.run.id],
       ['生成时间', data.source.generatedAt], ['粒度', data.source.grain],
       ['场景目录', data.source.catalogPath], ['Playwright 状态', data.run.playwrightStatus],
-      ['发现测试', data.run.discoveredTests], ['累计筛选耗时', duration(metrics().duration)]
+      ['发现测试', data.run.discoveredTests], ['累计筛选耗时', duration(metrics().duration)],
+      ['环境基线 run.release', (data.run.release || '-') + (data.run.releaseSource ? '（来源 ' + data.run.releaseSource + '）' : '')],
+      ['目标基线 run.targetRelease', data.run.targetRelease || '-（运行时未登记；页头以当前 CURRENT.json 为准）'],
+      ['基线不一致 run.releaseMismatch', data.run.releaseMismatch === undefined ? '-' : String(data.run.releaseMismatch)]
     ];
     document.getElementById('source-details').innerHTML = source.map(function (item) {
       return '<dt>' + escapeHtml(item[0]) + '</dt><dd>' + escapeHtml(item[1]) + '</dd>';

@@ -1,0 +1,44 @@
+{
+  "id": "2026-08-13T145821-962Z-FX100-20260813-2258",
+  "release": "FX100-20260813-2258",
+  "description": "",
+  "scope": "single",
+  "environmentMode": "override",
+  "marketSelection": "default",
+  "keeperMode": "inline",
+  "overrideEnvironment": "tx-fork",
+  "createdAt": "2026-08-13T14:58:21.962Z",
+  "status": "PARTIAL",
+  "rpcUpdatedEnvironments": [],
+  "cases": [
+    {
+      "id": "SCN-070",
+      "title": "市价四象限可接受价",
+      "plannedEnvironment": "oracle-fork",
+      "resolvedEnvironment": "tx-fork",
+      "plannedMarketMode": "mock-market",
+      "resolvedMarketMode": "mock-market",
+      "resolvedOracleMode": "mock-oracle",
+      "resolvedMockResourceAlias": "default-mock",
+      "marketCompatibility": "mock-only",
+      "automated": true,
+      "specPath": "tests/S07/scn-070.spec.ts",
+      "status": "SKIP",
+      "resultRunId": "2026-08-13T145821-962Z-FX100-202-tx-fork-mock-market-default-mock",
+      "message": "本次未执行核对"
+    }
+  ],
+  "logTail": [
+    "运行批次已创建，等待执行。",
+    "开始执行 1 条已自动化用例。",
+    "tx-fork: RPC Chain ID 已核对为 99911。",
+    "tx-fork: 执行 SCN-070。",
+    "Running 1 test using 1 worker",
+    "  -  1 [tx-fork] › tests/S07/scn-070.spec.ts:13:3 › S07 订单类型全矩阵 › SCN-070 市价四象限可接受价｜等号成交与不利越界取消 @p0 @tx @oracle @serial",
+    "  1 skipped",
+    "FX100 dashboard: artifacts/runs/2026-08-13T145821-962Z-FX100-202-tx-fork-mock-market-default-mock/dashboard.html",
+    "自动化执行结束：PARTIAL。"
+  ],
+  "startedAt": "2026-08-13T14:58:21.963Z",
+  "endedAt": "2026-08-13T14:58:23.206Z"
+}

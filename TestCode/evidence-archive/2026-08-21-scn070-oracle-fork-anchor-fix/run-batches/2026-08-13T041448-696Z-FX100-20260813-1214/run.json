@@ -1,0 +1,50 @@
+{
+  "id": "2026-08-13T041448-696Z-FX100-20260813-1214",
+  "release": "FX100-20260813-1214",
+  "description": "",
+  "scope": "single",
+  "environmentMode": "default",
+  "marketSelection": "default",
+  "keeperMode": "inline",
+  "createdAt": "2026-08-13T04:14:48.696Z",
+  "status": "PASS",
+  "rpcUpdatedEnvironments": [],
+  "cases": [
+    {
+      "id": "SCN-009",
+      "title": "市价开多快速退出",
+      "plannedEnvironment": "tx-fork",
+      "resolvedEnvironment": "tx-fork",
+      "plannedMarketMode": "mock-market",
+      "resolvedMarketMode": "mock-market",
+      "resolvedOracleMode": "mock-oracle",
+      "resolvedMockResourceAlias": "default-mock",
+      "marketCompatibility": "mock-only",
+      "automated": true,
+      "specPath": "tests/S02/scn-009.spec.ts",
+      "status": "PASS",
+      "resultRunId": "2026-08-13T041448-696Z-FX100-202-tx-fork-mock-market-default-mock",
+      "message": "链上 35 项核对通过；已记录用户签名开仓/平仓、Keeper 签名执行及完整回执；执行详情已展开 129 项 Before / After / Δ / Expected 对账。"
+    }
+  ],
+  "logTail": [
+    "运行批次已创建，等待执行。",
+    "开始执行 1 条已自动化用例。",
+    "tx-fork: RPC Chain ID 已核对为 99911。",
+    "tx-fork: 执行 SCN-009。",
+    "Running 1 test using 1 worker",
+    "\r  快照 multicall 13/13   ",
+    "\r  快照 multicall 13/13   ",
+    "\r  快照 multicall 13/13   ",
+    "\r  快照 multicall 13/13   ",
+    "\r  快照 multicall 13/13   ",
+    "\r  快照 multicall 13/13   ",
+    "\r  快照 multicall 13/13   ",
+    "  ✓  1 [tx-fork] › tests/S02/scn-009.spec.ts:22:3 › S02 策略下单与订单管理 › SCN-009 市价开多快速退出｜首轮真实链路证据验证 @p0 @tx @serial (40.7s)",
+    "  1 passed (41.1s)",
+    "FX100 dashboard: artifacts/runs/2026-08-13T041448-696Z-FX100-202-tx-fork-mock-market-default-mock/dashboard.html",
+    "自动化执行结束：PASS。"
+  ],
+  "startedAt": "2026-08-13T04:14:48.698Z",
+  "endedAt": "2026-08-13T04:15:31.083Z"
+}

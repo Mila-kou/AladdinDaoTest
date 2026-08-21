@@ -24,6 +24,7 @@ import { privateKeyToAccount } from 'viem/accounts';
 import { loadDeploymentManifest, type DeploymentManifest } from '../config/deployment.js';
 import { resolveMockMarketBundle, type MockResourceRecord } from '../config/mock-resources.js';
 import type { RuntimeConfig } from '../config/runtime.js';
+import { freshOracleTimestamp } from '../drivers/mock-oracle.js';
 import {
   SCN070_CASES,
   isExecutionPriceAcceptable,
@@ -462,25 +463,54 @@ async function setOraclePrice(
 ): Promise<TransactionEvidence> {
   if (rawPrice <= 0n) throw new Error(`Mock Oracle 价格必须大于 0：${rawPrice}`);
   const block = await context.adminPublicClient.getBlock();
+  // 时间戳取 max(本机时钟, 链上最新区块时间)：Tenderly fork 只在有交易时出块且新块用真实时钟，
+  // 闲置数日后"最新区块时间"会落后真实时间；若照抄旧块时间戳，下一笔 executeOrder 出的新块
+  // 会让 feed 年龄 > PRICE_FEED_HEARTBEAT_DURATION(86400) 触发 ChainlinkPriceFeedNotUpdated。
+  const timestamp = freshOracleTimestamp(block.timestamp);
   return adminSend(context, {
     from: getAddress(requireValue(context.runtime.adminAccount, '缺少 E2E_ADMIN_ACCOUNT')),
     to: oracle,
     data: encodeFunctionData({
       abi: mockOracleAbi,
       functionName: 'setMockPrice',
-      args: [rawPrice, block.timestamp],
+      args: [rawPrice, timestamp],
     }),
     label,
   });
 }
 
-async function setMockPrice(context: ScenarioContext, rawPrice: bigint): Promise<TransactionEvidence> {
-  return setOraclePrice(
+/** Index 价一次写入的两笔环境交易：feed（MockOracle.setMockPrice）+ STABLE_PRICE 锚（DataStore.setUint）。 */
+interface IndexPriceWrite {
+  readonly feed: TransactionEvidence;
+  readonly stablePrice: TransactionEvidence;
+}
+
+/**
+ * 设置 Index Mock 价（三件套：feed 价 + 新鲜时间戳 + STABLE_PRICE 锚）。
+ * 机理（v0.3.1 ChainlinkPriceFeedProvider.getOraclePrice）：STABLE_PRICE(token) > 0 时
+ * min = min(feed, stable)、max = max(feed, stable)；开多/平空按 max、开空/平多按 min 算执行价。
+ * 本 runner 的边界模型用 Reader.getExecutionPrice(min = max = feed) 推导 A 与 E，
+ * 因此每次改 feed 都必须把锚同步到同一内部价，使链上 min == max == feed；
+ * 否则锚（default-mock 初始化为 60060）与基线 60000 劈开成 [60000, 60060]，
+ * 开多等号边界按 max=60060 成交价 > A → OrderNotFulfillableAtAcceptablePrice 静默取消
+ *（2026-08-13 oracle-fork FAIL 根因；锚机理见 fx100-verify-handbook traps §11）。
+ * 锚写入走 admin（CONTROLLER）直写 DataStore；每个数据集的 evm_revert 会一并回滚。
+ */
+async function setMockPrice(context: ScenarioContext, rawPrice: bigint): Promise<IndexPriceWrite> {
+  const feed = await setOraclePrice(
     context,
     context.fixture.mockOracle,
     rawPrice,
     `SCN-070 设置 Mock Oracle ${rawPrice}`,
   );
+  const stablePrice = await writeDataStore(
+    context,
+    'setUint',
+    tokenKey('STABLE_PRICE', context.fixture.indexToken),
+    contractPriceFromRaw(context.fixture, rawPrice),
+    `SCN-070 同步 STABLE_PRICE 锚 ${rawPrice}`,
+  );
+  return { feed, stablePrice };
 }
 
 async function ensureApproval(context: ScenarioContext): Promise<TransactionEvidence | undefined> {
@@ -821,9 +851,9 @@ async function preparePosition(
   definition: Scn070CaseDefinition,
   rawPrice: bigint,
 ): Promise<{
-  readonly oracleBeforeCreate: TransactionEvidence;
+  readonly oracleBeforeCreate: IndexPriceWrite;
   readonly create: TransactionEvidence;
-  readonly oracleBeforeExecute: TransactionEvidence;
+  readonly oracleBeforeExecute: IndexPriceWrite;
   readonly execute: TransactionEvidence;
   readonly position: PositionState;
 }> {
@@ -1090,13 +1120,18 @@ async function runBoundaryCase(
       oracleConfigHeartbeat: setupTransactions[2],
       oracleConfigProvider: setupTransactions[3],
       approve,
-      prepareOracleBeforeCreate: preparation?.oracleBeforeCreate,
+      // *OracleSet = feed 写入；*StablePriceSet = 同笔三件套里的 STABLE_PRICE 锚写入（新增键，旧键语义不变）
+      prepareOracleBeforeCreate: preparation?.oracleBeforeCreate.feed,
+      prepareStablePriceBeforeCreate: preparation?.oracleBeforeCreate.stablePrice,
       prepareCreate: preparation?.create,
-      prepareOracleBeforeExecute: preparation?.oracleBeforeExecute,
+      prepareOracleBeforeExecute: preparation?.oracleBeforeExecute.feed,
+      prepareStablePriceBeforeExecute: preparation?.oracleBeforeExecute.stablePrice,
       prepareExecute: preparation?.execute,
-      baselineOracleSet,
+      baselineOracleSet: baselineOracleSet.feed,
+      baselineStablePriceSet: baselineOracleSet.stablePrice,
       create: created.transaction,
-      executionOracleSet,
+      executionOracleSet: executionOracleSet.feed,
+      executionStablePriceSet: executionOracleSet.stablePrice,
       execute: executed,
     },
     events,
@@ -1301,6 +1336,9 @@ export async function runScn070(runtime: RuntimeConfig): Promise<Scn070Evidence>
       mockOracleDecimals: context.fixture.mockOracleDecimals,
       priceFeedMultiplier: context.fixture.priceFeedMultiplier,
       resetMode: 'per-dataset-evm_snapshot',
+      // Index 价写入口径：每次 setMockPrice 同步 STABLE_PRICE 锚 → 链上 min == max == feed，
+      // 与 Reader.getExecutionPrice(min = max) 推导的 A/E 同一口径。
+      indexPriceModel: 'feed + fresh timestamp + STABLE_PRICE 锚同步（min == max == feed）',
     },
     coverage: {
       executed: [

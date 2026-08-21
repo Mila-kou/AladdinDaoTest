@@ -27,7 +27,7 @@
 ## 三、spec 状态保护差异（跨环境风险的核心）
 
 - **SCN-010**（`tests/S02/scn-010.spec.ts`）：开跑前 `evm_snapshot`，finally 里 `evm_revert`（除非 `E2E_PERSIST_FORK_STATE=true` 且成功）——自带状态回滚保护。
-- **SCN-070**（`src/scenarios/scn-070-runner.ts`）：**无 snapshot/revert**；基线价**硬编码** `60_000 × 10^oracleDecimals`（约 905 行）；`setMockPrice` 只写 feed 价+时间戳，**不动 STABLE_PRICE 锚**。
+- **SCN-070**（`src/scenarios/scn-070-runner.ts`）：每数据集 `evm_snapshot`/`evm_revert`（实测跑后价格/锚/区块与跑前一致）；基线价**硬编码** `60_000 × 10^oracleDecimals`；2026-08-21 起 `setMockPrice` 改为**三件套**（feed 价 + 新鲜时间戳 `freshOracleTimestamp` + admin 同步 DataStore `STABLE_PRICE` 锚 = feed），保证链上 min==max==feed 与 Reader 推导同口径。历史教训：oracle-fork default-mock 初始化把锚写成 60060（`scripts/init-mock-resources.ts` stablePrice=initialMaxPrice），旧 runner 只写 feed → min/max=[60000,60060] → 开多 E>A 静默取消（2026-08-13 FAIL 根因，问题记录 #1 CLOSED）。
 - 推论（2026-08-13 排查结论）：把 010/070 放到 tx-fork 跑之前，必须先解决锚同步——tx-fork 的 STABLE_PRICE 锚与 60000 基线不一致时，min/max 被劈开，边界数学全错并触发 LiquidatablePosition 静默取消（机理见 fx100-verify-handbook traps）。070 跑完还会把 fork 价格留在最后一次推价处。
 - SCN-009 有 `E2E_MARKET_MODE=deployed-market` 开关（marketIndex 硬编码 2），但 fork 上实际跑不通：inline keeper 硬性要求 mock bundle；标准 market 的真实价格源在 fork 冻结、60s 过期，runner 无冒充推价路径。SCN-010 连开关都没有。
 

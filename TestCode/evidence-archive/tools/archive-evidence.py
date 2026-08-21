@@ -3,16 +3,17 @@
 - run-batches/*/run.json（批次摘要，全部）
 - 每条 latest PASS 场景所属 run 的 results.json + summary.md + attachments/*evidence.json
 - manifest.json：场景→run id / executedAt / release / env / mode / 覆盖 / tx 数 / 首末 txHash+块号 / sha256
-用法：python3 archive-evidence.py <archive-name>（在 TestCode 目录下执行）
+用法：python3 archive-evidence.py <archive-name> [SCN-070,SCN-xxx]（在 TestCode 目录下执行；第二参数可选，只归档指定场景）
 """
 import json, glob, os, sys, shutil, hashlib, datetime
 name = sys.argv[1]
+only = set(sys.argv[2].split(',')) if len(sys.argv) > 2 else None  # 可选：只归档指定场景（逗号分隔）
 root = os.path.abspath('.')
 assert os.path.basename(root) == 'TestCode', root
 dst = os.path.join(root, 'evidence-archive', name)
 os.makedirs(dst, exist_ok=True)
 latest = json.load(open('artifacts/latest/results.json'))
-want = {(r['id'], r['project']): r for r in latest['results'] if r['status'] == 'PASS'}
+want = {(r['id'], r['project']): r for r in latest['results'] if r['status'] == 'PASS' and (only is None or r['id'] in only)}
 def sha(p):
     h = hashlib.sha256(); h.update(open(p, 'rb').read()); return h.hexdigest()
 def cp(src):

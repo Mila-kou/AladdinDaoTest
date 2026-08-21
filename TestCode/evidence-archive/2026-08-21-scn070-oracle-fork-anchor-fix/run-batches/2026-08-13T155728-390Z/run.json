@@ -1,0 +1,36 @@
+{
+  "id": "2026-08-13T155728-390Z",
+  "release": "release-v0.3.1",
+  "description": "由直接 Playwright 执行自动登记。",
+  "scope": "single",
+  "environmentMode": "default",
+  "marketSelection": "default",
+  "keeperMode": "inline",
+  "createdAt": "2026-08-13T15:57:28.390Z",
+  "startedAt": "2026-08-13T15:57:28.390Z",
+  "endedAt": "2026-08-13T15:58:12.216Z",
+  "status": "PASS",
+  "rpcUpdatedEnvironments": [],
+  "cases": [
+    {
+      "id": "SCN-065",
+      "title": "市价开空与平空",
+      "plannedEnvironment": "tx-fork",
+      "resolvedEnvironment": "tx-fork",
+      "plannedMarketMode": "mock-market",
+      "resolvedMarketMode": "mock-market",
+      "resolvedOracleMode": "mock-oracle",
+      "resolvedMockResourceAlias": "default-mock",
+      "marketCompatibility": "mock-and-deployed",
+      "automated": true,
+      "specPath": "tests/S07/scn-065.spec.ts",
+      "status": "PASS",
+      "resultRunId": "2026-08-13T155728-390Z",
+      "message": "链上 35 项核对通过（市价开空/全平对偶）；已记录用户签名开仓/平仓、Keeper 签名执行及完整回执；执行详情已展开 125 项 Before / After / Δ / Expected 对账。"
+    }
+  ],
+  "logTail": [
+    "检测到看板外直接执行的 Playwright 结果，已自动登记到最近运行。",
+    "运行结束：PASS。"
+  ]
+}

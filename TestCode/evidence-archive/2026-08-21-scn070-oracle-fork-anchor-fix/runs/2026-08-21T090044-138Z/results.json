@@ -1,0 +1,4369 @@
+{
+  "schemaVersion": 2,
+  "sourceStatus": "ready",
+  "source": {
+    "kind": "playwright-reporter",
+    "grain": "one row per scenario and Playwright project final outcome",
+    "generatedAt": "2026-08-21T09:08:49.600Z",
+    "catalogPath": "../TestCase/E2E/SCENARIO-CHECKLIST.md",
+    "metricDefinitions": {
+      "plannedScenarios": "SCENARIO-CHECKLIST 中的唯一 SCN 数量。",
+      "manualScenarios": "标记为手工核对的唯一 SCN 数量：设计上依赖真人操作（浏览器钱包切账户、换设备、拒签），不产出自动化代码；仍必须人工执行并回填证据，不等于已通过。",
+      "automatableScenarios": "规划场景数 − 手工核对场景数，即应当由自动化覆盖的场景数。",
+      "automatedScenarios": "本次 Playwright 发现并映射到场景目录的唯一 SCN 数量；手工核对场景不计入。",
+      "automationCoverage": "自动化场景数 / 应自动化场景数（规划 − 手工核对）；按唯一 SCN 计算，不按浏览器或 Project 重复计数。",
+      "executedResults": "状态为 PASS、FLAKY 或 FAIL 的场景-Project 最终结果数。",
+      "finalSuccessRate": "(PASS + FLAKY) / (PASS + FLAKY + FAIL)。BLOCKED 和 SKIP 不进入分母。",
+      "stablePassRate": "PASS / (PASS + FLAKY + FAIL)，用于识别依赖重试才能成功的场景。",
+      "flaky": "至少一次失败或超时，最终重试通过的场景-Project 结果。",
+      "blocked": "使用 blocked 注解明确标记因环境、依赖或外部条件无法执行的结果。",
+      "duration": "筛选范围内所有测试尝试耗时之和，不等于并行运行时的墙钟时间。"
+    }
+  },
+  "run": {
+    "id": "2026-08-21T090044-138Z",
+    "startedAt": "2026-08-21T09:00:44.138Z",
+    "endedAt": "2026-08-21T09:08:49.600Z",
+    "durationMs": 485462,
+    "playwrightStatus": "passed",
+    "environments": [
+      "oracle-fork"
+    ],
+    "projectNames": [
+      "oracle-fork"
+    ],
+    "discoveredTests": 1,
+    "release": "release-v0.3.1",
+    "releaseSource": "CURRENT.json",
+    "targetRelease": "release-v0.3.2",
+    "releaseMismatch": true
+  },
+  "catalog": [
+    {
+      "id": "SCN-001",
+      "suite": "S01",
+      "suiteName": "交易准备与首单",
+      "title": "首次进入并判断数据可信",
+      "priority": "P0",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-002",
+      "suite": "S01",
+      "suiteName": "交易准备与首单",
+      "title": "错误网络与安全切链",
+      "priority": "P0",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-003",
+      "suite": "S01",
+      "suiteName": "交易准备与首单",
+      "title": "钱包连接与协议披露",
+      "priority": "P0",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-004",
+      "suite": "S01",
+      "suiteName": "交易准备与首单",
+      "title": "筛选可交易市场",
+      "priority": "P1",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-005",
+      "suite": "S01",
+      "suiteName": "交易准备与首单",
+      "title": "Standard 第一笔市价开仓",
+      "priority": "P0",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-006",
+      "suite": "S01",
+      "suiteName": "交易准备与首单",
+      "title": "Flash 同意、连接与首单",
+      "priority": "P0",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-007",
+      "suite": "S01",
+      "suiteName": "交易准备与首单",
+      "title": "刷新与重开恢复上下文",
+      "priority": "P1",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-008",
+      "suite": "S01",
+      "suiteName": "交易准备与首单",
+      "title": "切账户的数据与授权隔离",
+      "priority": "P0",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-009",
+      "suite": "S02",
+      "suiteName": "策略下单与订单管理",
+      "title": "市价开多快速退出",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-010",
+      "suite": "S02",
+      "suiteName": "策略下单与订单管理",
+      "title": "现价下方限价开多",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-011",
+      "suite": "S02",
+      "suiteName": "策略下单与订单管理",
+      "title": "现价上方限价开空",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-012",
+      "suite": "S02",
+      "suiteName": "策略下单与订单管理",
+      "title": "突破追多",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-013",
+      "suite": "S02",
+      "suiteName": "策略下单与订单管理",
+      "title": "破位追空与 validFrom",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-014",
+      "suite": "S02",
+      "suiteName": "策略下单与订单管理",
+      "title": "触发价与成交价差异",
+      "priority": "P1",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-015",
+      "suite": "S02",
+      "suiteName": "策略下单与订单管理",
+      "title": "括号单 TP 先触发",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-016",
+      "suite": "S02",
+      "suiteName": "策略下单与订单管理",
+      "title": "括号单 SL 先触发",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-017",
+      "suite": "S02",
+      "suiteName": "策略下单与订单管理",
+      "title": "修改触发价与规模",
+      "priority": "P1",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-018",
+      "suite": "S02",
+      "suiteName": "策略下单与订单管理",
+      "title": "主动撤单与退款",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-019",
+      "suite": "S02",
+      "suiteName": "策略下单与订单管理",
+      "title": "市价滑点取消退款",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-020",
+      "suite": "S02",
+      "suiteName": "策略下单与订单管理",
+      "title": "Freeze 与 Oracle Revert",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-021",
+      "suite": "S03",
+      "suiteName": "仓位管理与退出",
+      "title": "新仓成交与风险核对",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-022",
+      "suite": "S03",
+      "suiteName": "仓位管理与退出",
+      "title": "PnL 与 Est. Receive",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-023",
+      "suite": "S03",
+      "suiteName": "仓位管理与退出",
+      "title": "分批止盈退出",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-024",
+      "suite": "S03",
+      "suiteName": "仓位管理与退出",
+      "title": "紧急全部平仓",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-025",
+      "suite": "S03",
+      "suiteName": "仓位管理与退出",
+      "title": "同方向加仓",
+      "priority": "P1",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-026",
+      "suite": "S03",
+      "suiteName": "仓位管理与退出",
+      "title": "追加保证金降风险",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-027",
+      "suite": "S03",
+      "suiteName": "仓位管理与退出",
+      "title": "提取部分/全部保证金",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-028",
+      "suite": "S03",
+      "suiteName": "仓位管理与退出",
+      "title": "调整目标杠杆",
+      "priority": "P1",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-029",
+      "suite": "S03",
+      "suiteName": "仓位管理与退出",
+      "title": "仓位更新结算 Funding",
+      "priority": "P1",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-030",
+      "suite": "S03",
+      "suiteName": "仓位管理与退出",
+      "title": "空头正 Funding 部分平仓",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-031",
+      "suite": "S03",
+      "suiteName": "仓位管理与退出",
+      "title": "ETH/BTC 仓位隔离",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-032",
+      "suite": "S03",
+      "suiteName": "仓位管理与退出",
+      "title": "USD/Token Mode 等价",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-033",
+      "suite": "S04",
+      "suiteName": "风险自救、保护与强平",
+      "title": "理论 100x 与真实 buffer",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-034",
+      "suite": "S04",
+      "suiteName": "风险自救、保护与强平",
+      "title": "最小抵押/仓位门槛",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-035",
+      "suite": "S04",
+      "suiteName": "风险自救、保护与强平",
+      "title": "清算区精确补保证金",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-036",
+      "suite": "S04",
+      "suiteName": "风险自救、保护与强平",
+      "title": "危险区足额部分减仓",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-037",
+      "suite": "S04",
+      "suiteName": "风险自救、保护与强平",
+      "title": "清算区紧急全平",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-038",
+      "suite": "S04",
+      "suiteName": "风险自救、保护与强平",
+      "title": "清算区限制操作",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-039",
+      "suite": "S04",
+      "suiteName": "风险自救、保护与强平",
+      "title": "保护期与刷新连续性",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-040",
+      "suite": "S04",
+      "suiteName": "风险自救、保护与强平",
+      "title": "加仓不延长保护期",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-041",
+      "suite": "S04",
+      "suiteName": "风险自救、保护与强平",
+      "title": "保护期触线后恢复",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-042",
+      "suite": "S04",
+      "suiteName": "风险自救、保护与强平",
+      "title": "保护期到期边界",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-043",
+      "suite": "S04",
+      "suiteName": "风险自救、保护与强平",
+      "title": "USDC 脱锚风险",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-044",
+      "suite": "S04",
+      "suiteName": "风险自救、保护与强平",
+      "title": "ADL 用户可见结果",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-045",
+      "suite": "S05",
+      "suiteName": "长持费用、价格冲击与多市场",
+      "title": "均衡市场 Funding floor",
+      "priority": "P1",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-046",
+      "suite": "S05",
+      "suiteName": "长持费用、价格冲击与多市场",
+      "title": "拥挤/轻侧 Funding",
+      "priority": "P1",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-047",
+      "suite": "S05",
+      "suiteName": "长持费用、价格冲击与多市场",
+      "title": "长持 Funding 侵蚀",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-048",
+      "suite": "S05",
+      "suiteName": "长持费用、价格冲击与多市场",
+      "title": "小单/大单价格冲击",
+      "priority": "P1",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-049",
+      "suite": "S05",
+      "suiteName": "长持费用、价格冲击与多市场",
+      "title": "浅流动性极端冲击",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-050",
+      "suite": "S05",
+      "suiteName": "长持费用、价格冲击与多市场",
+      "title": "改善/恶化失衡对比",
+      "priority": "P1",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-051",
+      "suite": "S05",
+      "suiteName": "长持费用、价格冲击与多市场",
+      "title": "OI/储备上限",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-052",
+      "suite": "S05",
+      "suiteName": "长持费用、价格冲击与多市场",
+      "title": "BTC 全链路精度",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-053",
+      "suite": "S06",
+      "suiteName": "Flash、异常恢复与兼容",
+      "title": "Flash 连续交易",
+      "priority": "P0",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-054",
+      "suite": "S06",
+      "suiteName": "Flash、异常恢复与兼容",
+      "title": "Standard/Flash 切换",
+      "priority": "P1",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-055",
+      "suite": "S06",
+      "suiteName": "Flash、异常恢复与兼容",
+      "title": "consent 版本升级",
+      "priority": "P0",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-056",
+      "suite": "S06",
+      "suiteName": "Flash、异常恢复与兼容",
+      "title": "Cancel All 原子撤单",
+      "priority": "P0",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-057",
+      "suite": "S06",
+      "suiteName": "Flash、异常恢复与兼容",
+      "title": "断开与撤销交易密钥",
+      "priority": "P0",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-058",
+      "suite": "S06",
+      "suiteName": "Flash、异常恢复与兼容",
+      "title": "到期/持久化/多设备",
+      "priority": "P1",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-059",
+      "suite": "S06",
+      "suiteName": "Flash、异常恢复与兼容",
+      "title": "Relay/Keeper 超时幂等",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-060",
+      "suite": "S06",
+      "suiteName": "Flash、异常恢复与兼容",
+      "title": "Oracle/Sequencer 故障恢复",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-061",
+      "suite": "S06",
+      "suiteName": "Flash、异常恢复与兼容",
+      "title": "RPC/拒签恢复",
+      "priority": "P1",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-062",
+      "suite": "S06",
+      "suiteName": "Flash、异常恢复与兼容",
+      "title": "Indexer 最终一致性",
+      "priority": "P1",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-063",
+      "suite": "S06",
+      "suiteName": "Flash、异常恢复与兼容",
+      "title": "移动端核心旅程",
+      "priority": "P2",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-064",
+      "suite": "S06",
+      "suiteName": "Flash、异常恢复与兼容",
+      "title": "多语言与账户隐私",
+      "priority": "P2",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-065",
+      "suite": "S07",
+      "suiteName": "订单类型全矩阵",
+      "title": "市价开空与平空",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-066",
+      "suite": "S07",
+      "suiteName": "订单类型全矩阵",
+      "title": "空头止盈 LimitDecrease",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-067",
+      "suite": "S07",
+      "suiteName": "订单类型全矩阵",
+      "title": "空头止损 StopLossDecrease",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-068",
+      "suite": "S07",
+      "suiteName": "订单类型全矩阵",
+      "title": "多空强平与 ADL 区分",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-069",
+      "suite": "S07",
+      "suiteName": "订单类型全矩阵",
+      "title": "四类触发单多空精确边界",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-070",
+      "suite": "S07",
+      "suiteName": "订单类型全矩阵",
+      "title": "市价四象限可接受价",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-071",
+      "suite": "S07",
+      "suiteName": "订单类型全矩阵",
+      "title": "触发单改撤冻结与重试",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-072",
+      "suite": "S07",
+      "suiteName": "订单类型全矩阵",
+      "title": "多空括号单与 autoCancel",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-073",
+      "suite": "S08",
+      "suiteName": "Funding 计提、结算与边界",
+      "title": "零 OI 与首仓 Funding 基准",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-074",
+      "suite": "S08",
+      "suiteName": "Funding 计提、结算与边界",
+      "title": "Funding Factor 方向与翻转",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-075",
+      "suite": "S08",
+      "suiteName": "Funding 计提、结算与边界",
+      "title": "按秒计提与 1h EMA",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-076",
+      "suite": "S08",
+      "suiteName": "Funding 计提、结算与边界",
+      "title": "Long/Short Factor Clamp 边界",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-077",
+      "suite": "S08",
+      "suiteName": "Funding 计提、结算与边界",
+      "title": "全仓位动作 Funding 结算",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-078",
+      "suite": "S08",
+      "suiteName": "Funding 计提、结算与边界",
+      "title": "Funding 取整与 LP 路由",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-079",
+      "suite": "S08",
+      "suiteName": "Funding 计提、结算与边界",
+      "title": "Funding-only 清算边界",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-080",
+      "suite": "S08",
+      "suiteName": "Funding 计提、结算与边界",
+      "title": "Funding 页面与市场隔离",
+      "priority": "P0",
+      "executionMode": "automated"
+    }
+  ],
+  "results": [
+    {
+      "id": "SCN-070",
+      "testId": "5de5a9e9607be6227766-cc1a59ebe772f4230e91",
+      "suite": "S07",
+      "scenarioTitle": "市价四象限可接受价",
+      "testTitle": "SCN-070 市价四象限可接受价｜等号成交与不利越界取消 @p0 @tx @oracle @serial",
+      "priority": "P0",
+      "project": "oracle-fork",
+      "environment": "oracle-fork",
+      "status": "PASS",
+      "checkResult": "8/8 数据集通过：4 条 E=A 成交、4 条最小可达不利步长取消，共 158 项链上核对；执行详情已展开 186 项 Before / After / Δ / Expected 对账。",
+      "executionLinks": [],
+      "executionEvidence": {
+        "mode": "oracle-fork-private-key-controlled-oracle",
+        "persistent": false,
+        "executionStatus": "PASS",
+        "coverageStatus": "PARTIAL",
+        "coverageNote": "已自动化：MarketIncrease long：E=A 成交 / 不利最小步长取消退款；MarketIncrease short：E=A 成交 / 不利最小步长取消退款；MarketDecrease long：E=A 成交 / 不利最小步长原仓不变；MarketDecrease short：E=A 成交 / 不利最小步长原仓不变；8 个数据集独立快照、真实 Trader/Keeper 签名、Reader/OrderStore/EventEmitter 多源核对。尚未自动化：浏览器钱包内输入订单并点击签名；页面历史状态与链上事件逐行比对。",
+        "forkDisplayName": "aladdindao/test",
+        "sourcePath": "artifacts/playwright/S07-scn-070-S07-订单类型全矩阵-SC-82651-与不利越界取消-p0-tx-oracle-serial-oracle-fork/attachments/scn-070-evidence-json-e6ea5326775d53ff282750b9d67527fdf85ebe7d.json",
+        "formulaSourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+        "reconciliations": [
+          {
+            "id": "scn070-matrix-size",
+            "group": "0 矩阵总览",
+            "label": "必做数据集数量",
+            "status": "PASS",
+            "before": "—",
+            "after": "执行 8 个 / 矩阵 8 个",
+            "expected": "8 个（4 象限 × 2 边界）",
+            "formula": "SCN070_CASES = {开多, 开空, 平多, 平空} × {E = A, 最小可达不利步长}",
+            "basis": {
+              "title": "矩阵 B 的 8 个必做数据集",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES / validateScn070Matrix()"
+            },
+            "unit": "数据集",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "scn070-executed-count",
+            "group": "0 矩阵总览",
+            "label": "等号边界链上成交数据集",
+            "status": "PASS",
+            "before": "—",
+            "after": "4 个数据集出现且仅出现一条 OrderExecuted",
+            "expected": "4 个（矩阵中 expectedOutcome = executed）",
+            "formula": "count(数据集 : OrderExecuted[orderKey] = 1) = count(矩阵 : expectedOutcome = executed)",
+            "basis": {
+              "title": "等号边界必须成交",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.expectedOutcome"
+            },
+            "unit": "数据集",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "scn070-cancelled-count",
+            "group": "0 矩阵总览",
+            "label": "不利越界链上取消数据集",
+            "status": "PASS",
+            "before": "—",
+            "after": "4 个数据集出现且仅出现一条 OrderCancelled",
+            "expected": "4 个（矩阵中 expectedOutcome = cancelled）",
+            "formula": "count(数据集 : OrderCancelled[orderKey] = 1) = count(矩阵 : expectedOutcome = cancelled)",
+            "basis": {
+              "title": "不利越界必须取消",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.expectedOutcome"
+            },
+            "unit": "数据集",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "scn070-assertion-total",
+            "group": "0 矩阵总览",
+            "label": "链上断言总数",
+            "status": "PASS",
+            "before": "—",
+            "after": "summary.assertions = 158",
+            "expected": "158（各数据集 assertions 长度之和）",
+            "formula": "summary.assertions = Σ 数据集.assertions.length",
+            "basis": {
+              "title": "断言计数与逐条断言记录一致",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "runScn070() summary"
+            },
+            "unit": "断言条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-equal-oracle-move",
+            "group": "1 开多 · 等号 E=A",
+            "label": "Mock Oracle 原始报价（基线 → 执行）",
+            "status": "PASS",
+            "before": "6000000000000 raw (60000 USD)",
+            "after": "6000000000000 raw (60000 USD)",
+            "delta": "0 raw (0 USD)",
+            "expected": "与基线一致（oracleRawStep = 0）",
+            "formula": "executionOracleRawPrice = baselineOracleRawPrice + oracleDirection × oracleRawStep",
+            "basis": {
+              "title": "不利方向按象限取值：开多 / 平空 +1，开空 / 平多 −1",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.oracleDirection"
+            },
+            "unit": "Mock Oracle raw 1e8",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-equal-acceptable-price",
+            "group": "1 开多 · 等号 E=A",
+            "label": "订单最差可接受价 A",
+            "status": "PASS",
+            "before": "基线 Oracle 下 Reader 执行价 = 60081003785985189",
+            "after": "订单 acceptablePrice = 60081003785985189",
+            "expected": "A = 基线执行价 60081003785985189",
+            "formula": "市价单 A = execPrice × (1 ± slippage)；本用例取 slippage = 0，使 A 精确落在等号边界",
+            "basis": {
+              "title": "市价单 acceptablePrice 规则",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.2 acceptablePrice 规则"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-equal-boundary-decision",
+            "group": "1 开多 · 等号 E=A",
+            "label": "四象限可接受性判定 E vs A",
+            "status": "PASS",
+            "before": "A = 60081003785985189",
+            "after": "E = 60081003785985189（可成交）",
+            "delta": "E − A = 0",
+            "expected": "开多（increase & long）：E ≤ A 可成交，E > A 必须取消；本组期望成交",
+            "formula": "isIncrease ? (isLong ? E ≤ A : E ≥ A) : (isLong ? E ≥ A : E ≤ A)",
+            "basis": {
+              "title": "四象限比较方向（与合约 BaseOrderUtils 独立同构）",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "isExecutionPriceAcceptable()"
+            },
+            "unit": "price raw",
+            "note": "执行价取值方向：useMax = true，ceil(indexAsk × (1 + totalSpread))",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-equal-assert-1",
+            "group": "1 开多 · 等号 E=A",
+            "label": "测试账户抵押币余额充足",
+            "status": "PASS",
+            "before": "—",
+            "after": "1000000000000",
+            "expected": ">= 10000000",
+            "formula": "collateralBalance(trader) ≥ COLLATERAL_AMOUNT = 10 USDC",
+            "basis": {
+              "title": "数据集前置：交易员抵押币余额",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "runBoundaryCase() 前置校验"
+            },
+            "unit": "USDC 1e6",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-equal-assert-2",
+            "group": "1 开多 · 等号 E=A",
+            "label": "开仓边界组执行前无同方向仓位",
+            "status": "PASS",
+            "before": "—",
+            "after": "无（null）",
+            "expected": "无（null）",
+            "formula": "Reader.getPosition(trader, marketIndex, isLong) = null",
+            "basis": {
+              "title": "开仓组前置：同方向无存量仓位",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "runBoundaryCase() 前置校验"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-equal-assert-3",
+            "group": "1 开多 · 等号 E=A",
+            "label": "平仓边界组已准备对应仓位",
+            "status": "PASS",
+            "before": "—",
+            "after": "无（null）",
+            "expected": "not applicable",
+            "formula": "isIncrease ? 跳过 : Reader.getPosition(trader, marketIndex, isLong) ≠ null",
+            "basis": {
+              "title": "平仓组前置：先用市价开仓建立待平仓仓位",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "preparePosition()"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-equal-assert-4",
+            "group": "1 开多 · 等号 E=A",
+            "label": "订单使用目标 marketIndex",
+            "status": "PASS",
+            "before": "—",
+            "after": "27",
+            "expected": "27",
+            "formula": "OrderStore.order(key).marketIndex = default-mock 市场的 marketIndex",
+            "basis": {
+              "title": "订单落在受控 Mock 市场",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "readOrder()"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-equal-assert-5",
+            "group": "1 开多 · 等号 E=A",
+            "label": "订单类型正确",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "order.orderType = 开仓 MarketIncrease(0) / 平仓 MarketDecrease(2)",
+            "basis": {
+              "title": "市价单类型",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "一、订单类型总览"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-equal-assert-6",
+            "group": "1 开多 · 等号 E=A",
+            "label": "订单多空方向正确",
+            "status": "PASS",
+            "before": "—",
+            "after": "true",
+            "expected": "true",
+            "formula": "order.isLong = 象限方向",
+            "basis": {
+              "title": "四象限方向定义",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.isLong"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-equal-assert-7",
+            "group": "1 开多 · 等号 E=A",
+            "label": "市价单 triggerPrice=0",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "MarketIncrease / MarketDecrease 的 triggerPrice 恒为 0（无触发条件）",
+            "basis": {
+              "title": "市价单没有触发价",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.1 精确触发条件（合约口径）"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-equal-assert-8",
+            "group": "1 开多 · 等号 E=A",
+            "label": "链上 acceptablePrice 等于模型 A",
+            "status": "PASS",
+            "before": "基线执行价 = 60081003785985189",
+            "after": "60081003785985189",
+            "expected": "60081003785985189",
+            "formula": "市价单 A = execPrice × (1 ± slippage)；本用例取 slippage = 0，使 A 精确落在等号边界",
+            "basis": {
+              "title": "市价单 acceptablePrice 规则",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.2 acceptablePrice 规则"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-equal-assert-9",
+            "group": "1 开多 · 等号 E=A",
+            "label": "市价单创建后未冻结",
+            "status": "PASS",
+            "before": "—",
+            "after": "false",
+            "expected": "false",
+            "formula": "order.isFrozen = false（市价单不进入 Frozen 状态）",
+            "basis": {
+              "title": "订单状态机",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "七、订单状态机"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-equal-assert-10",
+            "group": "1 开多 · 等号 E=A",
+            "label": "等号边界 E=A",
+            "status": "PASS",
+            "before": "A = 60081003785985189",
+            "after": "60081003785985189",
+            "expected": "60081003785985189",
+            "formula": "E(基线 Oracle) = A",
+            "basis": {
+              "title": "等号边界数据集",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.boundary = equal"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-equal-assert-11",
+            "group": "1 开多 · 等号 E=A",
+            "label": "不利边界使用最小可达 Oracle 步长",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "二分搜索最小 step，使 E(baseline + oracleDirection × step) 越过 A；等号组 step = 0",
+            "basis": {
+              "title": "最小可达不利步长搜索",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "findAdverseExecution()"
+            },
+            "unit": "Mock Oracle raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-equal-assert-12",
+            "group": "1 开多 · 等号 E=A",
+            "label": "恰好一条 OrderCreated",
+            "status": "PASS",
+            "before": "—",
+            "after": "1",
+            "expected": "1",
+            "formula": "count(OrderCreated[orderKey]) = 1",
+            "basis": {
+              "title": "EventEmitter 事件按 orderKey 过滤",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "eventsForOrder()"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-equal-assert-13",
+            "group": "1 开多 · 等号 E=A",
+            "label": "执行后订单已从 OrderStore 移除",
+            "status": "PASS",
+            "before": "—",
+            "after": "0x0000000000000000000000000000000000000000",
+            "expected": "0x0000000000000000000000000000000000000000",
+            "formula": "OrderStore.order(key).account = 0x0（成交或取消后订单均出账）",
+            "basis": {
+              "title": "订单终态出账",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "七、订单状态机"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-equal-assert-14",
+            "group": "1 开多 · 等号 E=A",
+            "label": "市价单任何边界都不得 Frozen",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "count(OrderFrozen[orderKey]) = 0",
+            "basis": {
+              "title": "市价单失败语义只有成交 / 取消",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§4.3 失败语义三分（前端提示必须区分）"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-equal-assert-15",
+            "group": "1 开多 · 等号 E=A",
+            "label": "等号边界恰好一条 OrderExecuted",
+            "status": "PASS",
+            "before": "—",
+            "after": "1",
+            "expected": "1",
+            "formula": "count(OrderExecuted[orderKey]) = 1",
+            "basis": {
+              "title": "等号边界期望成交",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.expectedOutcome = executed"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-equal-assert-16",
+            "group": "1 开多 · 等号 E=A",
+            "label": "等号边界没有 OrderCancelled",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "count(OrderCancelled[orderKey]) = 0",
+            "basis": {
+              "title": "等号边界期望成交",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.expectedOutcome = executed"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-equal-assert-17",
+            "group": "1 开多 · 等号 E=A",
+            "label": "开仓等号边界建立仓位",
+            "status": "PASS",
+            "before": "无仓位（null）",
+            "after": "size 50000000000000000000000000000000 raw (50 USD) · sizeInTokens 832209797594348 · 抵押 9975000 raw (9.975 USDC) · 多头",
+            "expected": "position exists",
+            "formula": "positionAfter ≠ null",
+            "basis": {
+              "title": "成交后 Reader 仓位快照",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "readPosition()"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-equal-assert-18",
+            "group": "1 开多 · 等号 E=A",
+            "label": "开仓成功只转出一笔抵押",
+            "status": "PASS",
+            "before": "1000000000000 raw (1000000 USDC)",
+            "after": "10000000",
+            "expected": "10000000",
+            "formula": "balanceBefore − balanceAfter = COLLATERAL_AMOUNT = 10 USDC",
+            "basis": {
+              "title": "开仓成交只划走一笔保证金",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "collateralBalance()"
+            },
+            "unit": "USDC 1e6",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-equal-assert-19",
+            "group": "1 开多 · 等号 E=A",
+            "label": "恰好一条 PositionIncrease",
+            "status": "PASS",
+            "before": "—",
+            "after": "1",
+            "expected": "1",
+            "formula": "count(PositionIncrease[orderKey]) = 1",
+            "basis": {
+              "title": "成交后仓位事件按 orderKey 过滤",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "eventsForOrder()"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-equal-assert-20",
+            "group": "1 开多 · 等号 E=A",
+            "label": "事件 executionPrice 精确等于 A",
+            "status": "PASS",
+            "before": "A = 60081003785985189",
+            "after": "60081003785985189",
+            "expected": "60081003785985189",
+            "formula": "PositionIncrease / PositionDecrease 事件的 executionPrice = A",
+            "basis": {
+              "title": "执行价公式与最差可接受价的等号关系",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§5.1 执行价公式"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-adverse-oracle-move",
+            "group": "2 开多 · 不利越界",
+            "label": "Mock Oracle 原始报价（基线 → 执行）",
+            "status": "PASS",
+            "before": "6000000000000 raw (60000 USD)",
+            "after": "6000000000001 raw (60000.00000001 USD)",
+            "delta": "+1 raw (0.00000001 USD)",
+            "expected": "基线 + 最小可达步长（oracleRawStep > 0）",
+            "formula": "executionOracleRawPrice = baselineOracleRawPrice + oracleDirection × oracleRawStep",
+            "basis": {
+              "title": "不利方向按象限取值：开多 / 平空 +1，开空 / 平多 −1",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.oracleDirection"
+            },
+            "unit": "Mock Oracle raw 1e8",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-adverse-acceptable-price",
+            "group": "2 开多 · 不利越界",
+            "label": "订单最差可接受价 A",
+            "status": "PASS",
+            "before": "基线 Oracle 下 Reader 执行价 = 60081003785985189",
+            "after": "订单 acceptablePrice = 60081003785985189",
+            "expected": "A = 基线执行价 60081003785985189",
+            "formula": "市价单 A = execPrice × (1 ± slippage)；本用例取 slippage = 0，使 A 精确落在等号边界",
+            "basis": {
+              "title": "市价单 acceptablePrice 规则",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.2 acceptablePrice 规则"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-adverse-boundary-decision",
+            "group": "2 开多 · 不利越界",
+            "label": "四象限可接受性判定 E vs A",
+            "status": "PASS",
+            "before": "A = 60081003785985189",
+            "after": "E = 60081003785995202（不可成交）",
+            "delta": "E − A = +10013",
+            "expected": "开多（increase & long）：E ≤ A 可成交，E > A 必须取消；本组期望取消",
+            "formula": "isIncrease ? (isLong ? E ≤ A : E ≥ A) : (isLong ? E ≥ A : E ≤ A)",
+            "basis": {
+              "title": "四象限比较方向（与合约 BaseOrderUtils 独立同构）",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "isExecutionPriceAcceptable()"
+            },
+            "unit": "price raw",
+            "note": "执行价取值方向：useMax = true，ceil(indexAsk × (1 + totalSpread))",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-adverse-assert-1",
+            "group": "2 开多 · 不利越界",
+            "label": "测试账户抵押币余额充足",
+            "status": "PASS",
+            "before": "—",
+            "after": "1000000000000",
+            "expected": ">= 10000000",
+            "formula": "collateralBalance(trader) ≥ COLLATERAL_AMOUNT = 10 USDC",
+            "basis": {
+              "title": "数据集前置：交易员抵押币余额",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "runBoundaryCase() 前置校验"
+            },
+            "unit": "USDC 1e6",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-adverse-assert-2",
+            "group": "2 开多 · 不利越界",
+            "label": "开仓边界组执行前无同方向仓位",
+            "status": "PASS",
+            "before": "—",
+            "after": "无（null）",
+            "expected": "无（null）",
+            "formula": "Reader.getPosition(trader, marketIndex, isLong) = null",
+            "basis": {
+              "title": "开仓组前置：同方向无存量仓位",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "runBoundaryCase() 前置校验"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-adverse-assert-3",
+            "group": "2 开多 · 不利越界",
+            "label": "平仓边界组已准备对应仓位",
+            "status": "PASS",
+            "before": "—",
+            "after": "无（null）",
+            "expected": "not applicable",
+            "formula": "isIncrease ? 跳过 : Reader.getPosition(trader, marketIndex, isLong) ≠ null",
+            "basis": {
+              "title": "平仓组前置：先用市价开仓建立待平仓仓位",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "preparePosition()"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-adverse-assert-4",
+            "group": "2 开多 · 不利越界",
+            "label": "订单使用目标 marketIndex",
+            "status": "PASS",
+            "before": "—",
+            "after": "27",
+            "expected": "27",
+            "formula": "OrderStore.order(key).marketIndex = default-mock 市场的 marketIndex",
+            "basis": {
+              "title": "订单落在受控 Mock 市场",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "readOrder()"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-adverse-assert-5",
+            "group": "2 开多 · 不利越界",
+            "label": "订单类型正确",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "order.orderType = 开仓 MarketIncrease(0) / 平仓 MarketDecrease(2)",
+            "basis": {
+              "title": "市价单类型",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "一、订单类型总览"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-adverse-assert-6",
+            "group": "2 开多 · 不利越界",
+            "label": "订单多空方向正确",
+            "status": "PASS",
+            "before": "—",
+            "after": "true",
+            "expected": "true",
+            "formula": "order.isLong = 象限方向",
+            "basis": {
+              "title": "四象限方向定义",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.isLong"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-adverse-assert-7",
+            "group": "2 开多 · 不利越界",
+            "label": "市价单 triggerPrice=0",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "MarketIncrease / MarketDecrease 的 triggerPrice 恒为 0（无触发条件）",
+            "basis": {
+              "title": "市价单没有触发价",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.1 精确触发条件（合约口径）"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-adverse-assert-8",
+            "group": "2 开多 · 不利越界",
+            "label": "链上 acceptablePrice 等于模型 A",
+            "status": "PASS",
+            "before": "基线执行价 = 60081003785985189",
+            "after": "60081003785985189",
+            "expected": "60081003785985189",
+            "formula": "市价单 A = execPrice × (1 ± slippage)；本用例取 slippage = 0，使 A 精确落在等号边界",
+            "basis": {
+              "title": "市价单 acceptablePrice 规则",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.2 acceptablePrice 规则"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-adverse-assert-9",
+            "group": "2 开多 · 不利越界",
+            "label": "市价单创建后未冻结",
+            "status": "PASS",
+            "before": "—",
+            "after": "false",
+            "expected": "false",
+            "formula": "order.isFrozen = false（市价单不进入 Frozen 状态）",
+            "basis": {
+              "title": "订单状态机",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "七、订单状态机"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-adverse-assert-10",
+            "group": "2 开多 · 不利越界",
+            "label": "不利边界 E 越过 A",
+            "status": "PASS",
+            "before": "A = 60081003785985189",
+            "after": "60081003785995202",
+            "expected": "unacceptable",
+            "formula": "!isExecutionPriceAcceptable(E, A, isIncrease, isLong)",
+            "basis": {
+              "title": "不利越界数据集",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "isExecutionPriceAcceptable()"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-adverse-assert-11",
+            "group": "2 开多 · 不利越界",
+            "label": "不利边界使用最小可达 Oracle 步长",
+            "status": "PASS",
+            "before": "—",
+            "after": "1",
+            "expected": "> 0",
+            "formula": "二分搜索最小 step，使 E(baseline + oracleDirection × step) 越过 A；等号组 step = 0",
+            "basis": {
+              "title": "最小可达不利步长搜索",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "findAdverseExecution()"
+            },
+            "unit": "Mock Oracle raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-adverse-assert-12",
+            "group": "2 开多 · 不利越界",
+            "label": "恰好一条 OrderCreated",
+            "status": "PASS",
+            "before": "—",
+            "after": "1",
+            "expected": "1",
+            "formula": "count(OrderCreated[orderKey]) = 1",
+            "basis": {
+              "title": "EventEmitter 事件按 orderKey 过滤",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "eventsForOrder()"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-adverse-assert-13",
+            "group": "2 开多 · 不利越界",
+            "label": "执行后订单已从 OrderStore 移除",
+            "status": "PASS",
+            "before": "—",
+            "after": "0x0000000000000000000000000000000000000000",
+            "expected": "0x0000000000000000000000000000000000000000",
+            "formula": "OrderStore.order(key).account = 0x0（成交或取消后订单均出账）",
+            "basis": {
+              "title": "订单终态出账",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "七、订单状态机"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-adverse-assert-14",
+            "group": "2 开多 · 不利越界",
+            "label": "市价单任何边界都不得 Frozen",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "count(OrderFrozen[orderKey]) = 0",
+            "basis": {
+              "title": "市价单失败语义只有成交 / 取消",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§4.3 失败语义三分（前端提示必须区分）"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-adverse-assert-15",
+            "group": "2 开多 · 不利越界",
+            "label": "不利越界恰好一条 OrderCancelled",
+            "status": "PASS",
+            "before": "—",
+            "after": "1",
+            "expected": "1",
+            "formula": "count(OrderCancelled[orderKey]) = 1",
+            "basis": {
+              "title": "不利越界期望取消",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.expectedOutcome = cancelled"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-adverse-assert-16",
+            "group": "2 开多 · 不利越界",
+            "label": "不利越界没有 OrderExecuted",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "count(OrderExecuted[orderKey]) = 0",
+            "basis": {
+              "title": "不利越界期望取消",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.expectedOutcome = cancelled"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-adverse-assert-17",
+            "group": "2 开多 · 不利越界",
+            "label": "开仓取消后没有新仓位",
+            "status": "PASS",
+            "before": "无仓位（null）",
+            "after": "无（null）",
+            "expected": "无（null）",
+            "formula": "positionAfter = null",
+            "basis": {
+              "title": "取消后 Reader 仓位快照",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "readPosition()"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-adverse-assert-18",
+            "group": "2 开多 · 不利越界",
+            "label": "开仓取消后抵押币全额退款",
+            "status": "PASS",
+            "before": "1000000000000 raw (1000000 USDC)",
+            "after": "1000000000000",
+            "expected": "1000000000000",
+            "formula": "balanceAfter = balanceBefore（订单取消时保证金原路退回）",
+            "basis": {
+              "title": "取消订单退款语义",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§4.3 失败语义三分（前端提示必须区分）"
+            },
+            "unit": "USDC 1e6",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-adverse-assert-19",
+            "group": "2 开多 · 不利越界",
+            "label": "取消原因是 OrderNotFulfillableAtAcceptablePrice",
+            "status": "PASS",
+            "before": "—",
+            "after": "0xe09ad0e9",
+            "expected": "0xe09ad0e9",
+            "formula": "OrderCancelled.reasonBytes 前 4 字节 = OrderNotFulfillableAtAcceptablePrice 选择器",
+            "basis": {
+              "title": "可接受价不满足时的取消原因",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§4.3 失败语义三分（前端提示必须区分）"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-adverse-assert-20",
+            "group": "2 开多 · 不利越界",
+            "label": "取消错误中的 executionPrice 等于边界模型 E",
+            "status": "PASS",
+            "before": "—",
+            "after": "60081003785995202",
+            "expected": "60081003785995202",
+            "formula": "decode(reasonBytes).executionPrice = 模型 E",
+            "basis": {
+              "title": "链上回传的越界执行价与模型一致",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "isExecutionPriceAcceptable()"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-long-adverse-assert-21",
+            "group": "2 开多 · 不利越界",
+            "label": "取消错误中的 acceptablePrice 等于订单 A",
+            "status": "PASS",
+            "before": "A = 60081003785985189",
+            "after": "60081003785985189",
+            "expected": "60081003785985189",
+            "formula": "decode(reasonBytes).acceptablePrice = 订单 A",
+            "basis": {
+              "title": "市价单 acceptablePrice 规则",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.2 acceptablePrice 规则"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-equal-oracle-move",
+            "group": "3 开空 · 等号 E=A",
+            "label": "Mock Oracle 原始报价（基线 → 执行）",
+            "status": "PASS",
+            "before": "6000000000000 raw (60000 USD)",
+            "after": "6000000000000 raw (60000 USD)",
+            "delta": "0 raw (0 USD)",
+            "expected": "与基线一致（oracleRawStep = 0）",
+            "formula": "executionOracleRawPrice = baselineOracleRawPrice + oracleDirection × oracleRawStep",
+            "basis": {
+              "title": "不利方向按象限取值：开多 / 平空 +1，开空 / 平多 −1",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.oracleDirection"
+            },
+            "unit": "Mock Oracle raw 1e8",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-equal-acceptable-price",
+            "group": "3 开空 · 等号 E=A",
+            "label": "订单最差可接受价 A",
+            "status": "PASS",
+            "before": "基线 Oracle 下 Reader 执行价 = 59918996137593926",
+            "after": "订单 acceptablePrice = 59918996137593926",
+            "expected": "A = 基线执行价 59918996137593926",
+            "formula": "市价单 A = execPrice × (1 ± slippage)；本用例取 slippage = 0，使 A 精确落在等号边界",
+            "basis": {
+              "title": "市价单 acceptablePrice 规则",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.2 acceptablePrice 规则"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-equal-boundary-decision",
+            "group": "3 开空 · 等号 E=A",
+            "label": "四象限可接受性判定 E vs A",
+            "status": "PASS",
+            "before": "A = 59918996137593926",
+            "after": "E = 59918996137593926（可成交）",
+            "delta": "E − A = 0",
+            "expected": "开空（increase & short）：E ≥ A 可成交，E < A 必须取消；本组期望成交",
+            "formula": "isIncrease ? (isLong ? E ≤ A : E ≥ A) : (isLong ? E ≥ A : E ≤ A)",
+            "basis": {
+              "title": "四象限比较方向（与合约 BaseOrderUtils 独立同构）",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "isExecutionPriceAcceptable()"
+            },
+            "unit": "price raw",
+            "note": "执行价取值方向：useMax = false，floor(indexBid × (1 − totalSpread))",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-equal-assert-1",
+            "group": "3 开空 · 等号 E=A",
+            "label": "测试账户抵押币余额充足",
+            "status": "PASS",
+            "before": "—",
+            "after": "1000000000000",
+            "expected": ">= 10000000",
+            "formula": "collateralBalance(trader) ≥ COLLATERAL_AMOUNT = 10 USDC",
+            "basis": {
+              "title": "数据集前置：交易员抵押币余额",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "runBoundaryCase() 前置校验"
+            },
+            "unit": "USDC 1e6",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-equal-assert-2",
+            "group": "3 开空 · 等号 E=A",
+            "label": "开仓边界组执行前无同方向仓位",
+            "status": "PASS",
+            "before": "—",
+            "after": "无（null）",
+            "expected": "无（null）",
+            "formula": "Reader.getPosition(trader, marketIndex, isLong) = null",
+            "basis": {
+              "title": "开仓组前置：同方向无存量仓位",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "runBoundaryCase() 前置校验"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-equal-assert-3",
+            "group": "3 开空 · 等号 E=A",
+            "label": "平仓边界组已准备对应仓位",
+            "status": "PASS",
+            "before": "—",
+            "after": "无（null）",
+            "expected": "not applicable",
+            "formula": "isIncrease ? 跳过 : Reader.getPosition(trader, marketIndex, isLong) ≠ null",
+            "basis": {
+              "title": "平仓组前置：先用市价开仓建立待平仓仓位",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "preparePosition()"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-equal-assert-4",
+            "group": "3 开空 · 等号 E=A",
+            "label": "订单使用目标 marketIndex",
+            "status": "PASS",
+            "before": "—",
+            "after": "27",
+            "expected": "27",
+            "formula": "OrderStore.order(key).marketIndex = default-mock 市场的 marketIndex",
+            "basis": {
+              "title": "订单落在受控 Mock 市场",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "readOrder()"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-equal-assert-5",
+            "group": "3 开空 · 等号 E=A",
+            "label": "订单类型正确",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "order.orderType = 开仓 MarketIncrease(0) / 平仓 MarketDecrease(2)",
+            "basis": {
+              "title": "市价单类型",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "一、订单类型总览"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-equal-assert-6",
+            "group": "3 开空 · 等号 E=A",
+            "label": "订单多空方向正确",
+            "status": "PASS",
+            "before": "—",
+            "after": "false",
+            "expected": "false",
+            "formula": "order.isLong = 象限方向",
+            "basis": {
+              "title": "四象限方向定义",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.isLong"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-equal-assert-7",
+            "group": "3 开空 · 等号 E=A",
+            "label": "市价单 triggerPrice=0",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "MarketIncrease / MarketDecrease 的 triggerPrice 恒为 0（无触发条件）",
+            "basis": {
+              "title": "市价单没有触发价",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.1 精确触发条件（合约口径）"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-equal-assert-8",
+            "group": "3 开空 · 等号 E=A",
+            "label": "链上 acceptablePrice 等于模型 A",
+            "status": "PASS",
+            "before": "基线执行价 = 59918996137593926",
+            "after": "59918996137593926",
+            "expected": "59918996137593926",
+            "formula": "市价单 A = execPrice × (1 ± slippage)；本用例取 slippage = 0，使 A 精确落在等号边界",
+            "basis": {
+              "title": "市价单 acceptablePrice 规则",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.2 acceptablePrice 规则"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-equal-assert-9",
+            "group": "3 开空 · 等号 E=A",
+            "label": "市价单创建后未冻结",
+            "status": "PASS",
+            "before": "—",
+            "after": "false",
+            "expected": "false",
+            "formula": "order.isFrozen = false（市价单不进入 Frozen 状态）",
+            "basis": {
+              "title": "订单状态机",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "七、订单状态机"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-equal-assert-10",
+            "group": "3 开空 · 等号 E=A",
+            "label": "等号边界 E=A",
+            "status": "PASS",
+            "before": "A = 59918996137593926",
+            "after": "59918996137593926",
+            "expected": "59918996137593926",
+            "formula": "E(基线 Oracle) = A",
+            "basis": {
+              "title": "等号边界数据集",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.boundary = equal"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-equal-assert-11",
+            "group": "3 开空 · 等号 E=A",
+            "label": "不利边界使用最小可达 Oracle 步长",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "二分搜索最小 step，使 E(baseline + oracleDirection × step) 越过 A；等号组 step = 0",
+            "basis": {
+              "title": "最小可达不利步长搜索",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "findAdverseExecution()"
+            },
+            "unit": "Mock Oracle raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-equal-assert-12",
+            "group": "3 开空 · 等号 E=A",
+            "label": "恰好一条 OrderCreated",
+            "status": "PASS",
+            "before": "—",
+            "after": "1",
+            "expected": "1",
+            "formula": "count(OrderCreated[orderKey]) = 1",
+            "basis": {
+              "title": "EventEmitter 事件按 orderKey 过滤",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "eventsForOrder()"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-equal-assert-13",
+            "group": "3 开空 · 等号 E=A",
+            "label": "执行后订单已从 OrderStore 移除",
+            "status": "PASS",
+            "before": "—",
+            "after": "0x0000000000000000000000000000000000000000",
+            "expected": "0x0000000000000000000000000000000000000000",
+            "formula": "OrderStore.order(key).account = 0x0（成交或取消后订单均出账）",
+            "basis": {
+              "title": "订单终态出账",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "七、订单状态机"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-equal-assert-14",
+            "group": "3 开空 · 等号 E=A",
+            "label": "市价单任何边界都不得 Frozen",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "count(OrderFrozen[orderKey]) = 0",
+            "basis": {
+              "title": "市价单失败语义只有成交 / 取消",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§4.3 失败语义三分（前端提示必须区分）"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-equal-assert-15",
+            "group": "3 开空 · 等号 E=A",
+            "label": "等号边界恰好一条 OrderExecuted",
+            "status": "PASS",
+            "before": "—",
+            "after": "1",
+            "expected": "1",
+            "formula": "count(OrderExecuted[orderKey]) = 1",
+            "basis": {
+              "title": "等号边界期望成交",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.expectedOutcome = executed"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-equal-assert-16",
+            "group": "3 开空 · 等号 E=A",
+            "label": "等号边界没有 OrderCancelled",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "count(OrderCancelled[orderKey]) = 0",
+            "basis": {
+              "title": "等号边界期望成交",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.expectedOutcome = executed"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-equal-assert-17",
+            "group": "3 开空 · 等号 E=A",
+            "label": "开仓等号边界建立仓位",
+            "status": "PASS",
+            "before": "无仓位（null）",
+            "after": "size 50000000000000000000000000000000 raw (50 USD) · sizeInTokens 834459907926084 · 抵押 9975000 raw (9.975 USDC) · 空头",
+            "expected": "position exists",
+            "formula": "positionAfter ≠ null",
+            "basis": {
+              "title": "成交后 Reader 仓位快照",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "readPosition()"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-equal-assert-18",
+            "group": "3 开空 · 等号 E=A",
+            "label": "开仓成功只转出一笔抵押",
+            "status": "PASS",
+            "before": "1000000000000 raw (1000000 USDC)",
+            "after": "10000000",
+            "expected": "10000000",
+            "formula": "balanceBefore − balanceAfter = COLLATERAL_AMOUNT = 10 USDC",
+            "basis": {
+              "title": "开仓成交只划走一笔保证金",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "collateralBalance()"
+            },
+            "unit": "USDC 1e6",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-equal-assert-19",
+            "group": "3 开空 · 等号 E=A",
+            "label": "恰好一条 PositionIncrease",
+            "status": "PASS",
+            "before": "—",
+            "after": "1",
+            "expected": "1",
+            "formula": "count(PositionIncrease[orderKey]) = 1",
+            "basis": {
+              "title": "成交后仓位事件按 orderKey 过滤",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "eventsForOrder()"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-equal-assert-20",
+            "group": "3 开空 · 等号 E=A",
+            "label": "事件 executionPrice 精确等于 A",
+            "status": "PASS",
+            "before": "A = 59918996137593926",
+            "after": "59918996137593926",
+            "expected": "59918996137593926",
+            "formula": "PositionIncrease / PositionDecrease 事件的 executionPrice = A",
+            "basis": {
+              "title": "执行价公式与最差可接受价的等号关系",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§5.1 执行价公式"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-adverse-oracle-move",
+            "group": "4 开空 · 不利越界",
+            "label": "Mock Oracle 原始报价（基线 → 执行）",
+            "status": "PASS",
+            "before": "6000000000000 raw (60000 USD)",
+            "after": "5999999999999 raw (59999.99999999 USD)",
+            "delta": "-1 raw (-0.00000001 USD)",
+            "expected": "基线 − 最小可达步长（oracleRawStep > 0）",
+            "formula": "executionOracleRawPrice = baselineOracleRawPrice + oracleDirection × oracleRawStep",
+            "basis": {
+              "title": "不利方向按象限取值：开多 / 平空 +1，开空 / 平多 −1",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.oracleDirection"
+            },
+            "unit": "Mock Oracle raw 1e8",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-adverse-acceptable-price",
+            "group": "4 开空 · 不利越界",
+            "label": "订单最差可接受价 A",
+            "status": "PASS",
+            "before": "基线 Oracle 下 Reader 执行价 = 59918996137593926",
+            "after": "订单 acceptablePrice = 59918996137593926",
+            "expected": "A = 基线执行价 59918996137593926",
+            "formula": "市价单 A = execPrice × (1 ± slippage)；本用例取 slippage = 0，使 A 精确落在等号边界",
+            "basis": {
+              "title": "市价单 acceptablePrice 规则",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.2 acceptablePrice 规则"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-adverse-boundary-decision",
+            "group": "4 开空 · 不利越界",
+            "label": "四象限可接受性判定 E vs A",
+            "status": "PASS",
+            "before": "A = 59918996137593926",
+            "after": "E = 59918996137583940（不可成交）",
+            "delta": "E − A = -9986",
+            "expected": "开空（increase & short）：E ≥ A 可成交，E < A 必须取消；本组期望取消",
+            "formula": "isIncrease ? (isLong ? E ≤ A : E ≥ A) : (isLong ? E ≥ A : E ≤ A)",
+            "basis": {
+              "title": "四象限比较方向（与合约 BaseOrderUtils 独立同构）",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "isExecutionPriceAcceptable()"
+            },
+            "unit": "price raw",
+            "note": "执行价取值方向：useMax = false，floor(indexBid × (1 − totalSpread))",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-adverse-assert-1",
+            "group": "4 开空 · 不利越界",
+            "label": "测试账户抵押币余额充足",
+            "status": "PASS",
+            "before": "—",
+            "after": "1000000000000",
+            "expected": ">= 10000000",
+            "formula": "collateralBalance(trader) ≥ COLLATERAL_AMOUNT = 10 USDC",
+            "basis": {
+              "title": "数据集前置：交易员抵押币余额",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "runBoundaryCase() 前置校验"
+            },
+            "unit": "USDC 1e6",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-adverse-assert-2",
+            "group": "4 开空 · 不利越界",
+            "label": "开仓边界组执行前无同方向仓位",
+            "status": "PASS",
+            "before": "—",
+            "after": "无（null）",
+            "expected": "无（null）",
+            "formula": "Reader.getPosition(trader, marketIndex, isLong) = null",
+            "basis": {
+              "title": "开仓组前置：同方向无存量仓位",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "runBoundaryCase() 前置校验"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-adverse-assert-3",
+            "group": "4 开空 · 不利越界",
+            "label": "平仓边界组已准备对应仓位",
+            "status": "PASS",
+            "before": "—",
+            "after": "无（null）",
+            "expected": "not applicable",
+            "formula": "isIncrease ? 跳过 : Reader.getPosition(trader, marketIndex, isLong) ≠ null",
+            "basis": {
+              "title": "平仓组前置：先用市价开仓建立待平仓仓位",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "preparePosition()"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-adverse-assert-4",
+            "group": "4 开空 · 不利越界",
+            "label": "订单使用目标 marketIndex",
+            "status": "PASS",
+            "before": "—",
+            "after": "27",
+            "expected": "27",
+            "formula": "OrderStore.order(key).marketIndex = default-mock 市场的 marketIndex",
+            "basis": {
+              "title": "订单落在受控 Mock 市场",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "readOrder()"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-adverse-assert-5",
+            "group": "4 开空 · 不利越界",
+            "label": "订单类型正确",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "order.orderType = 开仓 MarketIncrease(0) / 平仓 MarketDecrease(2)",
+            "basis": {
+              "title": "市价单类型",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "一、订单类型总览"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-adverse-assert-6",
+            "group": "4 开空 · 不利越界",
+            "label": "订单多空方向正确",
+            "status": "PASS",
+            "before": "—",
+            "after": "false",
+            "expected": "false",
+            "formula": "order.isLong = 象限方向",
+            "basis": {
+              "title": "四象限方向定义",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.isLong"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-adverse-assert-7",
+            "group": "4 开空 · 不利越界",
+            "label": "市价单 triggerPrice=0",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "MarketIncrease / MarketDecrease 的 triggerPrice 恒为 0（无触发条件）",
+            "basis": {
+              "title": "市价单没有触发价",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.1 精确触发条件（合约口径）"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-adverse-assert-8",
+            "group": "4 开空 · 不利越界",
+            "label": "链上 acceptablePrice 等于模型 A",
+            "status": "PASS",
+            "before": "基线执行价 = 59918996137593926",
+            "after": "59918996137593926",
+            "expected": "59918996137593926",
+            "formula": "市价单 A = execPrice × (1 ± slippage)；本用例取 slippage = 0，使 A 精确落在等号边界",
+            "basis": {
+              "title": "市价单 acceptablePrice 规则",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.2 acceptablePrice 规则"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-adverse-assert-9",
+            "group": "4 开空 · 不利越界",
+            "label": "市价单创建后未冻结",
+            "status": "PASS",
+            "before": "—",
+            "after": "false",
+            "expected": "false",
+            "formula": "order.isFrozen = false（市价单不进入 Frozen 状态）",
+            "basis": {
+              "title": "订单状态机",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "七、订单状态机"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-adverse-assert-10",
+            "group": "4 开空 · 不利越界",
+            "label": "不利边界 E 越过 A",
+            "status": "PASS",
+            "before": "A = 59918996137593926",
+            "after": "59918996137583940",
+            "expected": "unacceptable",
+            "formula": "!isExecutionPriceAcceptable(E, A, isIncrease, isLong)",
+            "basis": {
+              "title": "不利越界数据集",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "isExecutionPriceAcceptable()"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-adverse-assert-11",
+            "group": "4 开空 · 不利越界",
+            "label": "不利边界使用最小可达 Oracle 步长",
+            "status": "PASS",
+            "before": "—",
+            "after": "1",
+            "expected": "> 0",
+            "formula": "二分搜索最小 step，使 E(baseline + oracleDirection × step) 越过 A；等号组 step = 0",
+            "basis": {
+              "title": "最小可达不利步长搜索",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "findAdverseExecution()"
+            },
+            "unit": "Mock Oracle raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-adverse-assert-12",
+            "group": "4 开空 · 不利越界",
+            "label": "恰好一条 OrderCreated",
+            "status": "PASS",
+            "before": "—",
+            "after": "1",
+            "expected": "1",
+            "formula": "count(OrderCreated[orderKey]) = 1",
+            "basis": {
+              "title": "EventEmitter 事件按 orderKey 过滤",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "eventsForOrder()"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-adverse-assert-13",
+            "group": "4 开空 · 不利越界",
+            "label": "执行后订单已从 OrderStore 移除",
+            "status": "PASS",
+            "before": "—",
+            "after": "0x0000000000000000000000000000000000000000",
+            "expected": "0x0000000000000000000000000000000000000000",
+            "formula": "OrderStore.order(key).account = 0x0（成交或取消后订单均出账）",
+            "basis": {
+              "title": "订单终态出账",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "七、订单状态机"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-adverse-assert-14",
+            "group": "4 开空 · 不利越界",
+            "label": "市价单任何边界都不得 Frozen",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "count(OrderFrozen[orderKey]) = 0",
+            "basis": {
+              "title": "市价单失败语义只有成交 / 取消",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§4.3 失败语义三分（前端提示必须区分）"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-adverse-assert-15",
+            "group": "4 开空 · 不利越界",
+            "label": "不利越界恰好一条 OrderCancelled",
+            "status": "PASS",
+            "before": "—",
+            "after": "1",
+            "expected": "1",
+            "formula": "count(OrderCancelled[orderKey]) = 1",
+            "basis": {
+              "title": "不利越界期望取消",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.expectedOutcome = cancelled"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-adverse-assert-16",
+            "group": "4 开空 · 不利越界",
+            "label": "不利越界没有 OrderExecuted",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "count(OrderExecuted[orderKey]) = 0",
+            "basis": {
+              "title": "不利越界期望取消",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.expectedOutcome = cancelled"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-adverse-assert-17",
+            "group": "4 开空 · 不利越界",
+            "label": "开仓取消后没有新仓位",
+            "status": "PASS",
+            "before": "无仓位（null）",
+            "after": "无（null）",
+            "expected": "无（null）",
+            "formula": "positionAfter = null",
+            "basis": {
+              "title": "取消后 Reader 仓位快照",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "readPosition()"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-adverse-assert-18",
+            "group": "4 开空 · 不利越界",
+            "label": "开仓取消后抵押币全额退款",
+            "status": "PASS",
+            "before": "1000000000000 raw (1000000 USDC)",
+            "after": "1000000000000",
+            "expected": "1000000000000",
+            "formula": "balanceAfter = balanceBefore（订单取消时保证金原路退回）",
+            "basis": {
+              "title": "取消订单退款语义",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§4.3 失败语义三分（前端提示必须区分）"
+            },
+            "unit": "USDC 1e6",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-adverse-assert-19",
+            "group": "4 开空 · 不利越界",
+            "label": "取消原因是 OrderNotFulfillableAtAcceptablePrice",
+            "status": "PASS",
+            "before": "—",
+            "after": "0xe09ad0e9",
+            "expected": "0xe09ad0e9",
+            "formula": "OrderCancelled.reasonBytes 前 4 字节 = OrderNotFulfillableAtAcceptablePrice 选择器",
+            "basis": {
+              "title": "可接受价不满足时的取消原因",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§4.3 失败语义三分（前端提示必须区分）"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-adverse-assert-20",
+            "group": "4 开空 · 不利越界",
+            "label": "取消错误中的 executionPrice 等于边界模型 E",
+            "status": "PASS",
+            "before": "—",
+            "after": "59918996137583940",
+            "expected": "59918996137583940",
+            "formula": "decode(reasonBytes).executionPrice = 模型 E",
+            "basis": {
+              "title": "链上回传的越界执行价与模型一致",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "isExecutionPriceAcceptable()"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-short-adverse-assert-21",
+            "group": "4 开空 · 不利越界",
+            "label": "取消错误中的 acceptablePrice 等于订单 A",
+            "status": "PASS",
+            "before": "A = 59918996137593926",
+            "after": "59918996137593926",
+            "expected": "59918996137593926",
+            "formula": "decode(reasonBytes).acceptablePrice = 订单 A",
+            "basis": {
+              "title": "市价单 acceptablePrice 规则",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.2 acceptablePrice 规则"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-equal-oracle-move",
+            "group": "5 平多 · 等号 E=A",
+            "label": "Mock Oracle 原始报价（基线 → 执行）",
+            "status": "PASS",
+            "before": "6000000000000 raw (60000 USD)",
+            "after": "6000000000000 raw (60000 USD)",
+            "delta": "0 raw (0 USD)",
+            "expected": "与基线一致（oracleRawStep = 0）",
+            "formula": "executionOracleRawPrice = baselineOracleRawPrice + oracleDirection × oracleRawStep",
+            "basis": {
+              "title": "不利方向按象限取值：开多 / 平空 +1，开空 / 平多 −1",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.oracleDirection"
+            },
+            "unit": "Mock Oracle raw 1e8",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-equal-acceptable-price",
+            "group": "5 平多 · 等号 E=A",
+            "label": "订单最差可接受价 A",
+            "status": "PASS",
+            "before": "基线 Oracle 下 Reader 执行价 = 60000000000000000",
+            "after": "订单 acceptablePrice = 60000000000000000",
+            "expected": "A = 基线执行价 60000000000000000",
+            "formula": "市价单 A = execPrice × (1 ± slippage)；本用例取 slippage = 0，使 A 精确落在等号边界",
+            "basis": {
+              "title": "市价单 acceptablePrice 规则",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.2 acceptablePrice 规则"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-equal-boundary-decision",
+            "group": "5 平多 · 等号 E=A",
+            "label": "四象限可接受性判定 E vs A",
+            "status": "PASS",
+            "before": "A = 60000000000000000",
+            "after": "E = 60000000000000000（可成交）",
+            "delta": "E − A = 0",
+            "expected": "平多（decrease & long）：E ≥ A 可成交，E < A 必须取消；本组期望成交",
+            "formula": "isIncrease ? (isLong ? E ≤ A : E ≥ A) : (isLong ? E ≥ A : E ≤ A)",
+            "basis": {
+              "title": "四象限比较方向（与合约 BaseOrderUtils 独立同构）",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "isExecutionPriceAcceptable()"
+            },
+            "unit": "price raw",
+            "note": "执行价取值方向：useMax = false，floor(indexBid × (1 − totalSpread))",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-equal-assert-1",
+            "group": "5 平多 · 等号 E=A",
+            "label": "测试账户抵押币余额充足",
+            "status": "PASS",
+            "before": "—",
+            "after": "1000000000000",
+            "expected": ">= 10000000",
+            "formula": "collateralBalance(trader) ≥ COLLATERAL_AMOUNT = 10 USDC",
+            "basis": {
+              "title": "数据集前置：交易员抵押币余额",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "runBoundaryCase() 前置校验"
+            },
+            "unit": "USDC 1e6",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-equal-assert-2",
+            "group": "5 平多 · 等号 E=A",
+            "label": "平仓边界组已准备对应仓位",
+            "status": "PASS",
+            "before": "—",
+            "after": "size 50000000000000000000000000000000 raw (50 USD) · sizeInTokens 832209797594348 · 抵押 9975000 raw (9.975 USDC) · 多头",
+            "expected": "position exists",
+            "formula": "isIncrease ? 跳过 : Reader.getPosition(trader, marketIndex, isLong) ≠ null",
+            "basis": {
+              "title": "平仓组前置：先用市价开仓建立待平仓仓位",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "preparePosition()"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-equal-assert-3",
+            "group": "5 平多 · 等号 E=A",
+            "label": "订单使用目标 marketIndex",
+            "status": "PASS",
+            "before": "—",
+            "after": "27",
+            "expected": "27",
+            "formula": "OrderStore.order(key).marketIndex = default-mock 市场的 marketIndex",
+            "basis": {
+              "title": "订单落在受控 Mock 市场",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "readOrder()"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-equal-assert-4",
+            "group": "5 平多 · 等号 E=A",
+            "label": "订单类型正确",
+            "status": "PASS",
+            "before": "—",
+            "after": "2",
+            "expected": "2",
+            "formula": "order.orderType = 开仓 MarketIncrease(0) / 平仓 MarketDecrease(2)",
+            "basis": {
+              "title": "市价单类型",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "一、订单类型总览"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-equal-assert-5",
+            "group": "5 平多 · 等号 E=A",
+            "label": "订单多空方向正确",
+            "status": "PASS",
+            "before": "—",
+            "after": "true",
+            "expected": "true",
+            "formula": "order.isLong = 象限方向",
+            "basis": {
+              "title": "四象限方向定义",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.isLong"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-equal-assert-6",
+            "group": "5 平多 · 等号 E=A",
+            "label": "市价单 triggerPrice=0",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "MarketIncrease / MarketDecrease 的 triggerPrice 恒为 0（无触发条件）",
+            "basis": {
+              "title": "市价单没有触发价",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.1 精确触发条件（合约口径）"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-equal-assert-7",
+            "group": "5 平多 · 等号 E=A",
+            "label": "链上 acceptablePrice 等于模型 A",
+            "status": "PASS",
+            "before": "基线执行价 = 60000000000000000",
+            "after": "60000000000000000",
+            "expected": "60000000000000000",
+            "formula": "市价单 A = execPrice × (1 ± slippage)；本用例取 slippage = 0，使 A 精确落在等号边界",
+            "basis": {
+              "title": "市价单 acceptablePrice 规则",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.2 acceptablePrice 规则"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-equal-assert-8",
+            "group": "5 平多 · 等号 E=A",
+            "label": "市价单创建后未冻结",
+            "status": "PASS",
+            "before": "—",
+            "after": "false",
+            "expected": "false",
+            "formula": "order.isFrozen = false（市价单不进入 Frozen 状态）",
+            "basis": {
+              "title": "订单状态机",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "七、订单状态机"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-equal-assert-9",
+            "group": "5 平多 · 等号 E=A",
+            "label": "等号边界 E=A",
+            "status": "PASS",
+            "before": "A = 60000000000000000",
+            "after": "60000000000000000",
+            "expected": "60000000000000000",
+            "formula": "E(基线 Oracle) = A",
+            "basis": {
+              "title": "等号边界数据集",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.boundary = equal"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-equal-assert-10",
+            "group": "5 平多 · 等号 E=A",
+            "label": "不利边界使用最小可达 Oracle 步长",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "二分搜索最小 step，使 E(baseline + oracleDirection × step) 越过 A；等号组 step = 0",
+            "basis": {
+              "title": "最小可达不利步长搜索",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "findAdverseExecution()"
+            },
+            "unit": "Mock Oracle raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-equal-assert-11",
+            "group": "5 平多 · 等号 E=A",
+            "label": "恰好一条 OrderCreated",
+            "status": "PASS",
+            "before": "—",
+            "after": "1",
+            "expected": "1",
+            "formula": "count(OrderCreated[orderKey]) = 1",
+            "basis": {
+              "title": "EventEmitter 事件按 orderKey 过滤",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "eventsForOrder()"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-equal-assert-12",
+            "group": "5 平多 · 等号 E=A",
+            "label": "执行后订单已从 OrderStore 移除",
+            "status": "PASS",
+            "before": "—",
+            "after": "0x0000000000000000000000000000000000000000",
+            "expected": "0x0000000000000000000000000000000000000000",
+            "formula": "OrderStore.order(key).account = 0x0（成交或取消后订单均出账）",
+            "basis": {
+              "title": "订单终态出账",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "七、订单状态机"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-equal-assert-13",
+            "group": "5 平多 · 等号 E=A",
+            "label": "市价单任何边界都不得 Frozen",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "count(OrderFrozen[orderKey]) = 0",
+            "basis": {
+              "title": "市价单失败语义只有成交 / 取消",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§4.3 失败语义三分（前端提示必须区分）"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-equal-assert-14",
+            "group": "5 平多 · 等号 E=A",
+            "label": "等号边界恰好一条 OrderExecuted",
+            "status": "PASS",
+            "before": "—",
+            "after": "1",
+            "expected": "1",
+            "formula": "count(OrderExecuted[orderKey]) = 1",
+            "basis": {
+              "title": "等号边界期望成交",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.expectedOutcome = executed"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-equal-assert-15",
+            "group": "5 平多 · 等号 E=A",
+            "label": "等号边界没有 OrderCancelled",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "count(OrderCancelled[orderKey]) = 0",
+            "basis": {
+              "title": "等号边界期望成交",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.expectedOutcome = executed"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-equal-assert-16",
+            "group": "5 平多 · 等号 E=A",
+            "label": "全平等号边界清除仓位",
+            "status": "PASS",
+            "before": "size 50000000000000000000000000000000 raw (50 USD) · sizeInTokens 832209797594348 · 抵押 9975000 raw (9.975 USDC) · 多头",
+            "after": "无（null）",
+            "expected": "无（null）",
+            "formula": "positionAfter = null（sizeDelta = 仓位全部 sizeInUsd）",
+            "basis": {
+              "title": "全平后 Reader 仓位快照",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "readPosition()"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-equal-assert-17",
+            "group": "5 平多 · 等号 E=A",
+            "label": "恰好一条 PositionDecrease",
+            "status": "PASS",
+            "before": "—",
+            "after": "1",
+            "expected": "1",
+            "formula": "count(PositionDecrease[orderKey]) = 1",
+            "basis": {
+              "title": "成交后仓位事件按 orderKey 过滤",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "eventsForOrder()"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-equal-assert-18",
+            "group": "5 平多 · 等号 E=A",
+            "label": "事件 executionPrice 精确等于 A",
+            "status": "PASS",
+            "before": "A = 60000000000000000",
+            "after": "60000000000000000",
+            "expected": "60000000000000000",
+            "formula": "PositionIncrease / PositionDecrease 事件的 executionPrice = A",
+            "basis": {
+              "title": "执行价公式与最差可接受价的等号关系",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§5.1 执行价公式"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-adverse-oracle-move",
+            "group": "6 平多 · 不利越界",
+            "label": "Mock Oracle 原始报价（基线 → 执行）",
+            "status": "PASS",
+            "before": "6000000000000 raw (60000 USD)",
+            "after": "5999999999999 raw (59999.99999999 USD)",
+            "delta": "-1 raw (-0.00000001 USD)",
+            "expected": "基线 − 最小可达步长（oracleRawStep > 0）",
+            "formula": "executionOracleRawPrice = baselineOracleRawPrice + oracleDirection × oracleRawStep",
+            "basis": {
+              "title": "不利方向按象限取值：开多 / 平空 +1，开空 / 平多 −1",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.oracleDirection"
+            },
+            "unit": "Mock Oracle raw 1e8",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-adverse-acceptable-price",
+            "group": "6 平多 · 不利越界",
+            "label": "订单最差可接受价 A",
+            "status": "PASS",
+            "before": "基线 Oracle 下 Reader 执行价 = 60000000000000000",
+            "after": "订单 acceptablePrice = 60000000000000000",
+            "expected": "A = 基线执行价 60000000000000000",
+            "formula": "市价单 A = execPrice × (1 ± slippage)；本用例取 slippage = 0，使 A 精确落在等号边界",
+            "basis": {
+              "title": "市价单 acceptablePrice 规则",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.2 acceptablePrice 规则"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-adverse-boundary-decision",
+            "group": "6 平多 · 不利越界",
+            "label": "四象限可接受性判定 E vs A",
+            "status": "PASS",
+            "before": "A = 60000000000000000",
+            "after": "E = 59999999999990000（不可成交）",
+            "delta": "E − A = -10000",
+            "expected": "平多（decrease & long）：E ≥ A 可成交，E < A 必须取消；本组期望取消",
+            "formula": "isIncrease ? (isLong ? E ≤ A : E ≥ A) : (isLong ? E ≥ A : E ≤ A)",
+            "basis": {
+              "title": "四象限比较方向（与合约 BaseOrderUtils 独立同构）",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "isExecutionPriceAcceptable()"
+            },
+            "unit": "price raw",
+            "note": "执行价取值方向：useMax = false，floor(indexBid × (1 − totalSpread))",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-adverse-assert-1",
+            "group": "6 平多 · 不利越界",
+            "label": "测试账户抵押币余额充足",
+            "status": "PASS",
+            "before": "—",
+            "after": "1000000000000",
+            "expected": ">= 10000000",
+            "formula": "collateralBalance(trader) ≥ COLLATERAL_AMOUNT = 10 USDC",
+            "basis": {
+              "title": "数据集前置：交易员抵押币余额",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "runBoundaryCase() 前置校验"
+            },
+            "unit": "USDC 1e6",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-adverse-assert-2",
+            "group": "6 平多 · 不利越界",
+            "label": "平仓边界组已准备对应仓位",
+            "status": "PASS",
+            "before": "—",
+            "after": "size 50000000000000000000000000000000 raw (50 USD) · sizeInTokens 832209797594348 · 抵押 9975000 raw (9.975 USDC) · 多头",
+            "expected": "position exists",
+            "formula": "isIncrease ? 跳过 : Reader.getPosition(trader, marketIndex, isLong) ≠ null",
+            "basis": {
+              "title": "平仓组前置：先用市价开仓建立待平仓仓位",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "preparePosition()"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-adverse-assert-3",
+            "group": "6 平多 · 不利越界",
+            "label": "订单使用目标 marketIndex",
+            "status": "PASS",
+            "before": "—",
+            "after": "27",
+            "expected": "27",
+            "formula": "OrderStore.order(key).marketIndex = default-mock 市场的 marketIndex",
+            "basis": {
+              "title": "订单落在受控 Mock 市场",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "readOrder()"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-adverse-assert-4",
+            "group": "6 平多 · 不利越界",
+            "label": "订单类型正确",
+            "status": "PASS",
+            "before": "—",
+            "after": "2",
+            "expected": "2",
+            "formula": "order.orderType = 开仓 MarketIncrease(0) / 平仓 MarketDecrease(2)",
+            "basis": {
+              "title": "市价单类型",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "一、订单类型总览"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-adverse-assert-5",
+            "group": "6 平多 · 不利越界",
+            "label": "订单多空方向正确",
+            "status": "PASS",
+            "before": "—",
+            "after": "true",
+            "expected": "true",
+            "formula": "order.isLong = 象限方向",
+            "basis": {
+              "title": "四象限方向定义",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.isLong"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-adverse-assert-6",
+            "group": "6 平多 · 不利越界",
+            "label": "市价单 triggerPrice=0",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "MarketIncrease / MarketDecrease 的 triggerPrice 恒为 0（无触发条件）",
+            "basis": {
+              "title": "市价单没有触发价",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.1 精确触发条件（合约口径）"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-adverse-assert-7",
+            "group": "6 平多 · 不利越界",
+            "label": "链上 acceptablePrice 等于模型 A",
+            "status": "PASS",
+            "before": "基线执行价 = 60000000000000000",
+            "after": "60000000000000000",
+            "expected": "60000000000000000",
+            "formula": "市价单 A = execPrice × (1 ± slippage)；本用例取 slippage = 0，使 A 精确落在等号边界",
+            "basis": {
+              "title": "市价单 acceptablePrice 规则",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.2 acceptablePrice 规则"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-adverse-assert-8",
+            "group": "6 平多 · 不利越界",
+            "label": "市价单创建后未冻结",
+            "status": "PASS",
+            "before": "—",
+            "after": "false",
+            "expected": "false",
+            "formula": "order.isFrozen = false（市价单不进入 Frozen 状态）",
+            "basis": {
+              "title": "订单状态机",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "七、订单状态机"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-adverse-assert-9",
+            "group": "6 平多 · 不利越界",
+            "label": "不利边界 E 越过 A",
+            "status": "PASS",
+            "before": "A = 60000000000000000",
+            "after": "59999999999990000",
+            "expected": "unacceptable",
+            "formula": "!isExecutionPriceAcceptable(E, A, isIncrease, isLong)",
+            "basis": {
+              "title": "不利越界数据集",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "isExecutionPriceAcceptable()"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-adverse-assert-10",
+            "group": "6 平多 · 不利越界",
+            "label": "不利边界使用最小可达 Oracle 步长",
+            "status": "PASS",
+            "before": "—",
+            "after": "1",
+            "expected": "> 0",
+            "formula": "二分搜索最小 step，使 E(baseline + oracleDirection × step) 越过 A；等号组 step = 0",
+            "basis": {
+              "title": "最小可达不利步长搜索",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "findAdverseExecution()"
+            },
+            "unit": "Mock Oracle raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-adverse-assert-11",
+            "group": "6 平多 · 不利越界",
+            "label": "恰好一条 OrderCreated",
+            "status": "PASS",
+            "before": "—",
+            "after": "1",
+            "expected": "1",
+            "formula": "count(OrderCreated[orderKey]) = 1",
+            "basis": {
+              "title": "EventEmitter 事件按 orderKey 过滤",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "eventsForOrder()"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-adverse-assert-12",
+            "group": "6 平多 · 不利越界",
+            "label": "执行后订单已从 OrderStore 移除",
+            "status": "PASS",
+            "before": "—",
+            "after": "0x0000000000000000000000000000000000000000",
+            "expected": "0x0000000000000000000000000000000000000000",
+            "formula": "OrderStore.order(key).account = 0x0（成交或取消后订单均出账）",
+            "basis": {
+              "title": "订单终态出账",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "七、订单状态机"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-adverse-assert-13",
+            "group": "6 平多 · 不利越界",
+            "label": "市价单任何边界都不得 Frozen",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "count(OrderFrozen[orderKey]) = 0",
+            "basis": {
+              "title": "市价单失败语义只有成交 / 取消",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§4.3 失败语义三分（前端提示必须区分）"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-adverse-assert-14",
+            "group": "6 平多 · 不利越界",
+            "label": "不利越界恰好一条 OrderCancelled",
+            "status": "PASS",
+            "before": "—",
+            "after": "1",
+            "expected": "1",
+            "formula": "count(OrderCancelled[orderKey]) = 1",
+            "basis": {
+              "title": "不利越界期望取消",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.expectedOutcome = cancelled"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-adverse-assert-15",
+            "group": "6 平多 · 不利越界",
+            "label": "不利越界没有 OrderExecuted",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "count(OrderExecuted[orderKey]) = 0",
+            "basis": {
+              "title": "不利越界期望取消",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.expectedOutcome = cancelled"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-adverse-assert-16",
+            "group": "6 平多 · 不利越界",
+            "label": "平仓取消后原仓位完全不变",
+            "status": "PASS",
+            "before": "size 50000000000000000000000000000000 raw (50 USD) · sizeInTokens 832209797594348 · 抵押 9975000 raw (9.975 USDC) · 多头",
+            "after": "size 50000000000000000000000000000000 raw (50 USD) · sizeInTokens 832209797594348 · 抵押 9975000 raw (9.975 USDC) · 多头",
+            "expected": "size 50000000000000000000000000000000 raw (50 USD) · sizeInTokens 832209797594348 · 抵押 9975000 raw (9.975 USDC) · 多头",
+            "formula": "positionAfter ≡ positionBefore（marketIndex / sizeInUsd / sizeInTokens / collateralAmount / isLong 全等）",
+            "basis": {
+              "title": "取消不得改动原仓位",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "samePosition()"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-adverse-assert-17",
+            "group": "6 平多 · 不利越界",
+            "label": "平仓取消不移动钱包抵押币",
+            "status": "PASS",
+            "before": "999990000000 raw (999990 USDC)",
+            "after": "999990000000",
+            "expected": "999990000000",
+            "formula": "balanceAfter = balanceBefore（平仓单取消不产生任何资金流）",
+            "basis": {
+              "title": "取消订单退款语义",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§4.3 失败语义三分（前端提示必须区分）"
+            },
+            "unit": "USDC 1e6",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-adverse-assert-18",
+            "group": "6 平多 · 不利越界",
+            "label": "取消原因是 OrderNotFulfillableAtAcceptablePrice",
+            "status": "PASS",
+            "before": "—",
+            "after": "0xe09ad0e9",
+            "expected": "0xe09ad0e9",
+            "formula": "OrderCancelled.reasonBytes 前 4 字节 = OrderNotFulfillableAtAcceptablePrice 选择器",
+            "basis": {
+              "title": "可接受价不满足时的取消原因",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§4.3 失败语义三分（前端提示必须区分）"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-adverse-assert-19",
+            "group": "6 平多 · 不利越界",
+            "label": "取消错误中的 executionPrice 等于边界模型 E",
+            "status": "PASS",
+            "before": "—",
+            "after": "59999999999990000",
+            "expected": "59999999999990000",
+            "formula": "decode(reasonBytes).executionPrice = 模型 E",
+            "basis": {
+              "title": "链上回传的越界执行价与模型一致",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "isExecutionPriceAcceptable()"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-long-adverse-assert-20",
+            "group": "6 平多 · 不利越界",
+            "label": "取消错误中的 acceptablePrice 等于订单 A",
+            "status": "PASS",
+            "before": "A = 60000000000000000",
+            "after": "60000000000000000",
+            "expected": "60000000000000000",
+            "formula": "decode(reasonBytes).acceptablePrice = 订单 A",
+            "basis": {
+              "title": "市价单 acceptablePrice 规则",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.2 acceptablePrice 规则"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-equal-oracle-move",
+            "group": "7 平空 · 等号 E=A",
+            "label": "Mock Oracle 原始报价（基线 → 执行）",
+            "status": "PASS",
+            "before": "6000000000000 raw (60000 USD)",
+            "after": "6000000000000 raw (60000 USD)",
+            "delta": "0 raw (0 USD)",
+            "expected": "与基线一致（oracleRawStep = 0）",
+            "formula": "executionOracleRawPrice = baselineOracleRawPrice + oracleDirection × oracleRawStep",
+            "basis": {
+              "title": "不利方向按象限取值：开多 / 平空 +1，开空 / 平多 −1",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.oracleDirection"
+            },
+            "unit": "Mock Oracle raw 1e8",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-equal-acceptable-price",
+            "group": "7 平空 · 等号 E=A",
+            "label": "订单最差可接受价 A",
+            "status": "PASS",
+            "before": "基线 Oracle 下 Reader 执行价 = 60000000000000000",
+            "after": "订单 acceptablePrice = 60000000000000000",
+            "expected": "A = 基线执行价 60000000000000000",
+            "formula": "市价单 A = execPrice × (1 ± slippage)；本用例取 slippage = 0，使 A 精确落在等号边界",
+            "basis": {
+              "title": "市价单 acceptablePrice 规则",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.2 acceptablePrice 规则"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-equal-boundary-decision",
+            "group": "7 平空 · 等号 E=A",
+            "label": "四象限可接受性判定 E vs A",
+            "status": "PASS",
+            "before": "A = 60000000000000000",
+            "after": "E = 60000000000000000（可成交）",
+            "delta": "E − A = 0",
+            "expected": "平空（decrease & short）：E ≤ A 可成交，E > A 必须取消；本组期望成交",
+            "formula": "isIncrease ? (isLong ? E ≤ A : E ≥ A) : (isLong ? E ≥ A : E ≤ A)",
+            "basis": {
+              "title": "四象限比较方向（与合约 BaseOrderUtils 独立同构）",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "isExecutionPriceAcceptable()"
+            },
+            "unit": "price raw",
+            "note": "执行价取值方向：useMax = true，ceil(indexAsk × (1 + totalSpread))",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-equal-assert-1",
+            "group": "7 平空 · 等号 E=A",
+            "label": "测试账户抵押币余额充足",
+            "status": "PASS",
+            "before": "—",
+            "after": "1000000000000",
+            "expected": ">= 10000000",
+            "formula": "collateralBalance(trader) ≥ COLLATERAL_AMOUNT = 10 USDC",
+            "basis": {
+              "title": "数据集前置：交易员抵押币余额",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "runBoundaryCase() 前置校验"
+            },
+            "unit": "USDC 1e6",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-equal-assert-2",
+            "group": "7 平空 · 等号 E=A",
+            "label": "平仓边界组已准备对应仓位",
+            "status": "PASS",
+            "before": "—",
+            "after": "size 50000000000000000000000000000000 raw (50 USD) · sizeInTokens 834459907926084 · 抵押 9975000 raw (9.975 USDC) · 空头",
+            "expected": "position exists",
+            "formula": "isIncrease ? 跳过 : Reader.getPosition(trader, marketIndex, isLong) ≠ null",
+            "basis": {
+              "title": "平仓组前置：先用市价开仓建立待平仓仓位",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "preparePosition()"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-equal-assert-3",
+            "group": "7 平空 · 等号 E=A",
+            "label": "订单使用目标 marketIndex",
+            "status": "PASS",
+            "before": "—",
+            "after": "27",
+            "expected": "27",
+            "formula": "OrderStore.order(key).marketIndex = default-mock 市场的 marketIndex",
+            "basis": {
+              "title": "订单落在受控 Mock 市场",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "readOrder()"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-equal-assert-4",
+            "group": "7 平空 · 等号 E=A",
+            "label": "订单类型正确",
+            "status": "PASS",
+            "before": "—",
+            "after": "2",
+            "expected": "2",
+            "formula": "order.orderType = 开仓 MarketIncrease(0) / 平仓 MarketDecrease(2)",
+            "basis": {
+              "title": "市价单类型",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "一、订单类型总览"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-equal-assert-5",
+            "group": "7 平空 · 等号 E=A",
+            "label": "订单多空方向正确",
+            "status": "PASS",
+            "before": "—",
+            "after": "false",
+            "expected": "false",
+            "formula": "order.isLong = 象限方向",
+            "basis": {
+              "title": "四象限方向定义",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.isLong"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-equal-assert-6",
+            "group": "7 平空 · 等号 E=A",
+            "label": "市价单 triggerPrice=0",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "MarketIncrease / MarketDecrease 的 triggerPrice 恒为 0（无触发条件）",
+            "basis": {
+              "title": "市价单没有触发价",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.1 精确触发条件（合约口径）"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-equal-assert-7",
+            "group": "7 平空 · 等号 E=A",
+            "label": "链上 acceptablePrice 等于模型 A",
+            "status": "PASS",
+            "before": "基线执行价 = 60000000000000000",
+            "after": "60000000000000000",
+            "expected": "60000000000000000",
+            "formula": "市价单 A = execPrice × (1 ± slippage)；本用例取 slippage = 0，使 A 精确落在等号边界",
+            "basis": {
+              "title": "市价单 acceptablePrice 规则",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.2 acceptablePrice 规则"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-equal-assert-8",
+            "group": "7 平空 · 等号 E=A",
+            "label": "市价单创建后未冻结",
+            "status": "PASS",
+            "before": "—",
+            "after": "false",
+            "expected": "false",
+            "formula": "order.isFrozen = false（市价单不进入 Frozen 状态）",
+            "basis": {
+              "title": "订单状态机",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "七、订单状态机"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-equal-assert-9",
+            "group": "7 平空 · 等号 E=A",
+            "label": "等号边界 E=A",
+            "status": "PASS",
+            "before": "A = 60000000000000000",
+            "after": "60000000000000000",
+            "expected": "60000000000000000",
+            "formula": "E(基线 Oracle) = A",
+            "basis": {
+              "title": "等号边界数据集",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.boundary = equal"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-equal-assert-10",
+            "group": "7 平空 · 等号 E=A",
+            "label": "不利边界使用最小可达 Oracle 步长",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "二分搜索最小 step，使 E(baseline + oracleDirection × step) 越过 A；等号组 step = 0",
+            "basis": {
+              "title": "最小可达不利步长搜索",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "findAdverseExecution()"
+            },
+            "unit": "Mock Oracle raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-equal-assert-11",
+            "group": "7 平空 · 等号 E=A",
+            "label": "恰好一条 OrderCreated",
+            "status": "PASS",
+            "before": "—",
+            "after": "1",
+            "expected": "1",
+            "formula": "count(OrderCreated[orderKey]) = 1",
+            "basis": {
+              "title": "EventEmitter 事件按 orderKey 过滤",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "eventsForOrder()"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-equal-assert-12",
+            "group": "7 平空 · 等号 E=A",
+            "label": "执行后订单已从 OrderStore 移除",
+            "status": "PASS",
+            "before": "—",
+            "after": "0x0000000000000000000000000000000000000000",
+            "expected": "0x0000000000000000000000000000000000000000",
+            "formula": "OrderStore.order(key).account = 0x0（成交或取消后订单均出账）",
+            "basis": {
+              "title": "订单终态出账",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "七、订单状态机"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-equal-assert-13",
+            "group": "7 平空 · 等号 E=A",
+            "label": "市价单任何边界都不得 Frozen",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "count(OrderFrozen[orderKey]) = 0",
+            "basis": {
+              "title": "市价单失败语义只有成交 / 取消",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§4.3 失败语义三分（前端提示必须区分）"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-equal-assert-14",
+            "group": "7 平空 · 等号 E=A",
+            "label": "等号边界恰好一条 OrderExecuted",
+            "status": "PASS",
+            "before": "—",
+            "after": "1",
+            "expected": "1",
+            "formula": "count(OrderExecuted[orderKey]) = 1",
+            "basis": {
+              "title": "等号边界期望成交",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.expectedOutcome = executed"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-equal-assert-15",
+            "group": "7 平空 · 等号 E=A",
+            "label": "等号边界没有 OrderCancelled",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "count(OrderCancelled[orderKey]) = 0",
+            "basis": {
+              "title": "等号边界期望成交",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.expectedOutcome = executed"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-equal-assert-16",
+            "group": "7 平空 · 等号 E=A",
+            "label": "全平等号边界清除仓位",
+            "status": "PASS",
+            "before": "size 50000000000000000000000000000000 raw (50 USD) · sizeInTokens 834459907926084 · 抵押 9975000 raw (9.975 USDC) · 空头",
+            "after": "无（null）",
+            "expected": "无（null）",
+            "formula": "positionAfter = null（sizeDelta = 仓位全部 sizeInUsd）",
+            "basis": {
+              "title": "全平后 Reader 仓位快照",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "readPosition()"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-equal-assert-17",
+            "group": "7 平空 · 等号 E=A",
+            "label": "恰好一条 PositionDecrease",
+            "status": "PASS",
+            "before": "—",
+            "after": "1",
+            "expected": "1",
+            "formula": "count(PositionDecrease[orderKey]) = 1",
+            "basis": {
+              "title": "成交后仓位事件按 orderKey 过滤",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "eventsForOrder()"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-equal-assert-18",
+            "group": "7 平空 · 等号 E=A",
+            "label": "事件 executionPrice 精确等于 A",
+            "status": "PASS",
+            "before": "A = 60000000000000000",
+            "after": "60000000000000000",
+            "expected": "60000000000000000",
+            "formula": "PositionIncrease / PositionDecrease 事件的 executionPrice = A",
+            "basis": {
+              "title": "执行价公式与最差可接受价的等号关系",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§5.1 执行价公式"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-adverse-oracle-move",
+            "group": "8 平空 · 不利越界",
+            "label": "Mock Oracle 原始报价（基线 → 执行）",
+            "status": "PASS",
+            "before": "6000000000000 raw (60000 USD)",
+            "after": "6000000000001 raw (60000.00000001 USD)",
+            "delta": "+1 raw (0.00000001 USD)",
+            "expected": "基线 + 最小可达步长（oracleRawStep > 0）",
+            "formula": "executionOracleRawPrice = baselineOracleRawPrice + oracleDirection × oracleRawStep",
+            "basis": {
+              "title": "不利方向按象限取值：开多 / 平空 +1，开空 / 平多 −1",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.oracleDirection"
+            },
+            "unit": "Mock Oracle raw 1e8",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-adverse-acceptable-price",
+            "group": "8 平空 · 不利越界",
+            "label": "订单最差可接受价 A",
+            "status": "PASS",
+            "before": "基线 Oracle 下 Reader 执行价 = 60000000000000000",
+            "after": "订单 acceptablePrice = 60000000000000000",
+            "expected": "A = 基线执行价 60000000000000000",
+            "formula": "市价单 A = execPrice × (1 ± slippage)；本用例取 slippage = 0，使 A 精确落在等号边界",
+            "basis": {
+              "title": "市价单 acceptablePrice 规则",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.2 acceptablePrice 规则"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-adverse-boundary-decision",
+            "group": "8 平空 · 不利越界",
+            "label": "四象限可接受性判定 E vs A",
+            "status": "PASS",
+            "before": "A = 60000000000000000",
+            "after": "E = 60000000000010000（不可成交）",
+            "delta": "E − A = +10000",
+            "expected": "平空（decrease & short）：E ≤ A 可成交，E > A 必须取消；本组期望取消",
+            "formula": "isIncrease ? (isLong ? E ≤ A : E ≥ A) : (isLong ? E ≥ A : E ≤ A)",
+            "basis": {
+              "title": "四象限比较方向（与合约 BaseOrderUtils 独立同构）",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "isExecutionPriceAcceptable()"
+            },
+            "unit": "price raw",
+            "note": "执行价取值方向：useMax = true，ceil(indexAsk × (1 + totalSpread))",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-adverse-assert-1",
+            "group": "8 平空 · 不利越界",
+            "label": "测试账户抵押币余额充足",
+            "status": "PASS",
+            "before": "—",
+            "after": "1000000000000",
+            "expected": ">= 10000000",
+            "formula": "collateralBalance(trader) ≥ COLLATERAL_AMOUNT = 10 USDC",
+            "basis": {
+              "title": "数据集前置：交易员抵押币余额",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "runBoundaryCase() 前置校验"
+            },
+            "unit": "USDC 1e6",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-adverse-assert-2",
+            "group": "8 平空 · 不利越界",
+            "label": "平仓边界组已准备对应仓位",
+            "status": "PASS",
+            "before": "—",
+            "after": "size 50000000000000000000000000000000 raw (50 USD) · sizeInTokens 834459907926084 · 抵押 9975000 raw (9.975 USDC) · 空头",
+            "expected": "position exists",
+            "formula": "isIncrease ? 跳过 : Reader.getPosition(trader, marketIndex, isLong) ≠ null",
+            "basis": {
+              "title": "平仓组前置：先用市价开仓建立待平仓仓位",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "preparePosition()"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-adverse-assert-3",
+            "group": "8 平空 · 不利越界",
+            "label": "订单使用目标 marketIndex",
+            "status": "PASS",
+            "before": "—",
+            "after": "27",
+            "expected": "27",
+            "formula": "OrderStore.order(key).marketIndex = default-mock 市场的 marketIndex",
+            "basis": {
+              "title": "订单落在受控 Mock 市场",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "readOrder()"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-adverse-assert-4",
+            "group": "8 平空 · 不利越界",
+            "label": "订单类型正确",
+            "status": "PASS",
+            "before": "—",
+            "after": "2",
+            "expected": "2",
+            "formula": "order.orderType = 开仓 MarketIncrease(0) / 平仓 MarketDecrease(2)",
+            "basis": {
+              "title": "市价单类型",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "一、订单类型总览"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-adverse-assert-5",
+            "group": "8 平空 · 不利越界",
+            "label": "订单多空方向正确",
+            "status": "PASS",
+            "before": "—",
+            "after": "false",
+            "expected": "false",
+            "formula": "order.isLong = 象限方向",
+            "basis": {
+              "title": "四象限方向定义",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.isLong"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-adverse-assert-6",
+            "group": "8 平空 · 不利越界",
+            "label": "市价单 triggerPrice=0",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "MarketIncrease / MarketDecrease 的 triggerPrice 恒为 0（无触发条件）",
+            "basis": {
+              "title": "市价单没有触发价",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.1 精确触发条件（合约口径）"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-adverse-assert-7",
+            "group": "8 平空 · 不利越界",
+            "label": "链上 acceptablePrice 等于模型 A",
+            "status": "PASS",
+            "before": "基线执行价 = 60000000000000000",
+            "after": "60000000000000000",
+            "expected": "60000000000000000",
+            "formula": "市价单 A = execPrice × (1 ± slippage)；本用例取 slippage = 0，使 A 精确落在等号边界",
+            "basis": {
+              "title": "市价单 acceptablePrice 规则",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.2 acceptablePrice 规则"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-adverse-assert-8",
+            "group": "8 平空 · 不利越界",
+            "label": "市价单创建后未冻结",
+            "status": "PASS",
+            "before": "—",
+            "after": "false",
+            "expected": "false",
+            "formula": "order.isFrozen = false（市价单不进入 Frozen 状态）",
+            "basis": {
+              "title": "订单状态机",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "七、订单状态机"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-adverse-assert-9",
+            "group": "8 平空 · 不利越界",
+            "label": "不利边界 E 越过 A",
+            "status": "PASS",
+            "before": "A = 60000000000000000",
+            "after": "60000000000010000",
+            "expected": "unacceptable",
+            "formula": "!isExecutionPriceAcceptable(E, A, isIncrease, isLong)",
+            "basis": {
+              "title": "不利越界数据集",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "isExecutionPriceAcceptable()"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-adverse-assert-10",
+            "group": "8 平空 · 不利越界",
+            "label": "不利边界使用最小可达 Oracle 步长",
+            "status": "PASS",
+            "before": "—",
+            "after": "1",
+            "expected": "> 0",
+            "formula": "二分搜索最小 step，使 E(baseline + oracleDirection × step) 越过 A；等号组 step = 0",
+            "basis": {
+              "title": "最小可达不利步长搜索",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "findAdverseExecution()"
+            },
+            "unit": "Mock Oracle raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-adverse-assert-11",
+            "group": "8 平空 · 不利越界",
+            "label": "恰好一条 OrderCreated",
+            "status": "PASS",
+            "before": "—",
+            "after": "1",
+            "expected": "1",
+            "formula": "count(OrderCreated[orderKey]) = 1",
+            "basis": {
+              "title": "EventEmitter 事件按 orderKey 过滤",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "eventsForOrder()"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-adverse-assert-12",
+            "group": "8 平空 · 不利越界",
+            "label": "执行后订单已从 OrderStore 移除",
+            "status": "PASS",
+            "before": "—",
+            "after": "0x0000000000000000000000000000000000000000",
+            "expected": "0x0000000000000000000000000000000000000000",
+            "formula": "OrderStore.order(key).account = 0x0（成交或取消后订单均出账）",
+            "basis": {
+              "title": "订单终态出账",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "七、订单状态机"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-adverse-assert-13",
+            "group": "8 平空 · 不利越界",
+            "label": "市价单任何边界都不得 Frozen",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "count(OrderFrozen[orderKey]) = 0",
+            "basis": {
+              "title": "市价单失败语义只有成交 / 取消",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§4.3 失败语义三分（前端提示必须区分）"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-adverse-assert-14",
+            "group": "8 平空 · 不利越界",
+            "label": "不利越界恰好一条 OrderCancelled",
+            "status": "PASS",
+            "before": "—",
+            "after": "1",
+            "expected": "1",
+            "formula": "count(OrderCancelled[orderKey]) = 1",
+            "basis": {
+              "title": "不利越界期望取消",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.expectedOutcome = cancelled"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-adverse-assert-15",
+            "group": "8 平空 · 不利越界",
+            "label": "不利越界没有 OrderExecuted",
+            "status": "PASS",
+            "before": "—",
+            "after": "0",
+            "expected": "0",
+            "formula": "count(OrderExecuted[orderKey]) = 0",
+            "basis": {
+              "title": "不利越界期望取消",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "SCN070_CASES.expectedOutcome = cancelled"
+            },
+            "unit": "事件条数",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-adverse-assert-16",
+            "group": "8 平空 · 不利越界",
+            "label": "平仓取消后原仓位完全不变",
+            "status": "PASS",
+            "before": "size 50000000000000000000000000000000 raw (50 USD) · sizeInTokens 834459907926084 · 抵押 9975000 raw (9.975 USDC) · 空头",
+            "after": "size 50000000000000000000000000000000 raw (50 USD) · sizeInTokens 834459907926084 · 抵押 9975000 raw (9.975 USDC) · 空头",
+            "expected": "size 50000000000000000000000000000000 raw (50 USD) · sizeInTokens 834459907926084 · 抵押 9975000 raw (9.975 USDC) · 空头",
+            "formula": "positionAfter ≡ positionBefore（marketIndex / sizeInUsd / sizeInTokens / collateralAmount / isLong 全等）",
+            "basis": {
+              "title": "取消不得改动原仓位",
+              "sourcePath": "src/scenarios/scn-070-runner.ts",
+              "section": "samePosition()"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-adverse-assert-17",
+            "group": "8 平空 · 不利越界",
+            "label": "平仓取消不移动钱包抵押币",
+            "status": "PASS",
+            "before": "999990000000 raw (999990 USDC)",
+            "after": "999990000000",
+            "expected": "999990000000",
+            "formula": "balanceAfter = balanceBefore（平仓单取消不产生任何资金流）",
+            "basis": {
+              "title": "取消订单退款语义",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§4.3 失败语义三分（前端提示必须区分）"
+            },
+            "unit": "USDC 1e6",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-adverse-assert-18",
+            "group": "8 平空 · 不利越界",
+            "label": "取消原因是 OrderNotFulfillableAtAcceptablePrice",
+            "status": "PASS",
+            "before": "—",
+            "after": "0xe09ad0e9",
+            "expected": "0xe09ad0e9",
+            "formula": "OrderCancelled.reasonBytes 前 4 字节 = OrderNotFulfillableAtAcceptablePrice 选择器",
+            "basis": {
+              "title": "可接受价不满足时的取消原因",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§4.3 失败语义三分（前端提示必须区分）"
+            },
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-adverse-assert-19",
+            "group": "8 平空 · 不利越界",
+            "label": "取消错误中的 executionPrice 等于边界模型 E",
+            "status": "PASS",
+            "before": "—",
+            "after": "60000000000010000",
+            "expected": "60000000000010000",
+            "formula": "decode(reasonBytes).executionPrice = 模型 E",
+            "basis": {
+              "title": "链上回传的越界执行价与模型一致",
+              "sourcePath": "src/scenarios/scn-070-model.ts",
+              "section": "isExecutionPriceAcceptable()"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-short-adverse-assert-20",
+            "group": "8 平空 · 不利越界",
+            "label": "取消错误中的 acceptablePrice 等于订单 A",
+            "status": "PASS",
+            "before": "A = 60000000000000000",
+            "after": "60000000000000000",
+            "expected": "60000000000000000",
+            "formula": "decode(reasonBytes).acceptablePrice = 订单 A",
+            "basis": {
+              "title": "市价单 acceptablePrice 规则",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md",
+              "section": "§1.2 acceptablePrice 规则"
+            },
+            "unit": "price raw",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          }
+        ],
+        "transactions": [
+          {
+            "actor": "TRADER",
+            "action": "开多·等号｜创建市价开仓订单（acceptablePrice = A）",
+            "txHash": "0xe85d7464a72e64652abe4f8c2e580cb37a130e7d1305818ad7f94167da5521f4",
+            "from": "0xeeea43701a49f3d41ef694ddafe2ac74c7c8b119",
+            "to": "0x5f9215dff5c01671e6e77469389d694ac4af2e97",
+            "blockNumber": 45432829,
+            "status": "SUCCESS",
+            "transactionType": "eip1559",
+            "nonce": "91",
+            "gasUsed": "759717",
+            "signatureVerified": true
+          },
+          {
+            "actor": "KEEPER",
+            "action": "开多·等号｜执行订单（期望成交）",
+            "txHash": "0x97ea7344ea819ece86eceef2fbf38b0e24c4f6ffeb6809b464b266c8302891d9",
+            "from": "0x542fe841228416f6a3d65eb534a90ebc5cc36354",
+            "to": "0x84162e52063504a701cda5e931d2fd174c10648d",
+            "blockNumber": 45432832,
+            "status": "SUCCESS",
+            "transactionType": "eip1559",
+            "nonce": "3",
+            "gasUsed": "1959238",
+            "signatureVerified": true
+          },
+          {
+            "actor": "TRADER",
+            "action": "开多·越界｜创建市价开仓订单（acceptablePrice = A）",
+            "txHash": "0xe85d7464a72e64652abe4f8c2e580cb37a130e7d1305818ad7f94167da5521f4",
+            "from": "0xeeea43701a49f3d41ef694ddafe2ac74c7c8b119",
+            "to": "0x5f9215dff5c01671e6e77469389d694ac4af2e97",
+            "blockNumber": 45432829,
+            "status": "SUCCESS",
+            "transactionType": "eip1559",
+            "nonce": "91",
+            "gasUsed": "759717",
+            "signatureVerified": true
+          },
+          {
+            "actor": "KEEPER",
+            "action": "开多·越界｜执行订单（期望取消）",
+            "txHash": "0x97ea7344ea819ece86eceef2fbf38b0e24c4f6ffeb6809b464b266c8302891d9",
+            "from": "0x542fe841228416f6a3d65eb534a90ebc5cc36354",
+            "to": "0x84162e52063504a701cda5e931d2fd174c10648d",
+            "blockNumber": 45432832,
+            "status": "SUCCESS",
+            "transactionType": "eip1559",
+            "nonce": "3",
+            "gasUsed": "1265349",
+            "signatureVerified": true
+          },
+          {
+            "actor": "TRADER",
+            "action": "开空·等号｜创建市价开仓订单（acceptablePrice = A）",
+            "txHash": "0x8988c439ef211b46385ddbdf6172a8ed633543c50edd814fbf622b6da4ecc798",
+            "from": "0xeeea43701a49f3d41ef694ddafe2ac74c7c8b119",
+            "to": "0x5f9215dff5c01671e6e77469389d694ac4af2e97",
+            "blockNumber": 45432829,
+            "status": "SUCCESS",
+            "transactionType": "eip1559",
+            "nonce": "91",
+            "gasUsed": "739805",
+            "signatureVerified": true
+          },
+          {
+            "actor": "KEEPER",
+            "action": "开空·等号｜执行订单（期望成交）",
+            "txHash": "0x97ea7344ea819ece86eceef2fbf38b0e24c4f6ffeb6809b464b266c8302891d9",
+            "from": "0x542fe841228416f6a3d65eb534a90ebc5cc36354",
+            "to": "0x84162e52063504a701cda5e931d2fd174c10648d",
+            "blockNumber": 45432832,
+            "status": "SUCCESS",
+            "transactionType": "eip1559",
+            "nonce": "3",
+            "gasUsed": "1941674",
+            "signatureVerified": true
+          },
+          {
+            "actor": "TRADER",
+            "action": "开空·越界｜创建市价开仓订单（acceptablePrice = A）",
+            "txHash": "0x8988c439ef211b46385ddbdf6172a8ed633543c50edd814fbf622b6da4ecc798",
+            "from": "0xeeea43701a49f3d41ef694ddafe2ac74c7c8b119",
+            "to": "0x5f9215dff5c01671e6e77469389d694ac4af2e97",
+            "blockNumber": 45432829,
+            "status": "SUCCESS",
+            "transactionType": "eip1559",
+            "nonce": "91",
+            "gasUsed": "739805",
+            "signatureVerified": true
+          },
+          {
+            "actor": "KEEPER",
+            "action": "开空·越界｜执行订单（期望取消）",
+            "txHash": "0x97ea7344ea819ece86eceef2fbf38b0e24c4f6ffeb6809b464b266c8302891d9",
+            "from": "0x542fe841228416f6a3d65eb534a90ebc5cc36354",
+            "to": "0x84162e52063504a701cda5e931d2fd174c10648d",
+            "blockNumber": 45432832,
+            "status": "SUCCESS",
+            "transactionType": "eip1559",
+            "nonce": "3",
+            "gasUsed": "1264651",
+            "signatureVerified": true
+          },
+          {
+            "actor": "TRADER",
+            "action": "平多·等号｜前置：创建市价开仓订单",
+            "txHash": "0x8e9f9b52537ade6c9e3f13fe0b4e9382e004e296e2cc7ca64553929bfc6eeb9a",
+            "from": "0xeeea43701a49f3d41ef694ddafe2ac74c7c8b119",
+            "to": "0x5f9215dff5c01671e6e77469389d694ac4af2e97",
+            "blockNumber": 45432829,
+            "status": "SUCCESS",
+            "transactionType": "eip1559",
+            "nonce": "91",
+            "gasUsed": "760017",
+            "signatureVerified": true
+          },
+          {
+            "actor": "KEEPER",
+            "action": "平多·等号｜前置：执行市价开仓订单",
+            "txHash": "0x97ea7344ea819ece86eceef2fbf38b0e24c4f6ffeb6809b464b266c8302891d9",
+            "from": "0x542fe841228416f6a3d65eb534a90ebc5cc36354",
+            "to": "0x84162e52063504a701cda5e931d2fd174c10648d",
+            "blockNumber": 45432832,
+            "status": "SUCCESS",
+            "transactionType": "eip1559",
+            "nonce": "3",
+            "gasUsed": "1959140",
+            "signatureVerified": true
+          },
+          {
+            "actor": "TRADER",
+            "action": "平多·等号｜创建市价全平订单（acceptablePrice = A）",
+            "txHash": "0xbdf20b4db1b14db894658e251d68775e0a67bb164eac07b945667f454d891cb0",
+            "from": "0xeeea43701a49f3d41ef694ddafe2ac74c7c8b119",
+            "to": "0x5f9215dff5c01671e6e77469389d694ac4af2e97",
+            "blockNumber": 45432835,
+            "status": "SUCCESS",
+            "transactionType": "eip1559",
+            "nonce": "92",
+            "gasUsed": "721624",
+            "signatureVerified": true
+          },
+          {
+            "actor": "KEEPER",
+            "action": "平多·等号｜执行订单（期望成交）",
+            "txHash": "0x403e8061519c082429105d5ec06a8c476ceabf952e703b6423e08d38aea4187d",
+            "from": "0x542fe841228416f6a3d65eb534a90ebc5cc36354",
+            "to": "0x84162e52063504a701cda5e931d2fd174c10648d",
+            "blockNumber": 45432838,
+            "status": "SUCCESS",
+            "transactionType": "eip1559",
+            "nonce": "4",
+            "gasUsed": "1628806",
+            "signatureVerified": true
+          },
+          {
+            "actor": "TRADER",
+            "action": "平多·越界｜前置：创建市价开仓订单",
+            "txHash": "0x8e9f9b52537ade6c9e3f13fe0b4e9382e004e296e2cc7ca64553929bfc6eeb9a",
+            "from": "0xeeea43701a49f3d41ef694ddafe2ac74c7c8b119",
+            "to": "0x5f9215dff5c01671e6e77469389d694ac4af2e97",
+            "blockNumber": 45432829,
+            "status": "SUCCESS",
+            "transactionType": "eip1559",
+            "nonce": "91",
+            "gasUsed": "760017",
+            "signatureVerified": true
+          },
+          {
+            "actor": "KEEPER",
+            "action": "平多·越界｜前置：执行市价开仓订单",
+            "txHash": "0x97ea7344ea819ece86eceef2fbf38b0e24c4f6ffeb6809b464b266c8302891d9",
+            "from": "0x542fe841228416f6a3d65eb534a90ebc5cc36354",
+            "to": "0x84162e52063504a701cda5e931d2fd174c10648d",
+            "blockNumber": 45432832,
+            "status": "SUCCESS",
+            "transactionType": "eip1559",
+            "nonce": "3",
+            "gasUsed": "1959140",
+            "signatureVerified": true
+          },
+          {
+            "actor": "TRADER",
+            "action": "平多·越界｜创建市价全平订单（acceptablePrice = A）",
+            "txHash": "0xbdf20b4db1b14db894658e251d68775e0a67bb164eac07b945667f454d891cb0",
+            "from": "0xeeea43701a49f3d41ef694ddafe2ac74c7c8b119",
+            "to": "0x5f9215dff5c01671e6e77469389d694ac4af2e97",
+            "blockNumber": 45432835,
+            "status": "SUCCESS",
+            "transactionType": "eip1559",
+            "nonce": "92",
+            "gasUsed": "721624",
+            "signatureVerified": true
+          },
+          {
+            "actor": "KEEPER",
+            "action": "平多·越界｜执行订单（期望取消）",
+            "txHash": "0x403e8061519c082429105d5ec06a8c476ceabf952e703b6423e08d38aea4187d",
+            "from": "0x542fe841228416f6a3d65eb534a90ebc5cc36354",
+            "to": "0x84162e52063504a701cda5e931d2fd174c10648d",
+            "blockNumber": 45432838,
+            "status": "SUCCESS",
+            "transactionType": "eip1559",
+            "nonce": "4",
+            "gasUsed": "1346797",
+            "signatureVerified": true
+          },
+          {
+            "actor": "TRADER",
+            "action": "平空·等号｜前置：创建市价开仓订单",
+            "txHash": "0x7c147da912ca7a947cd961e9fbd90f072754322b21e672a67a75ddcc7c84818e",
+            "from": "0xeeea43701a49f3d41ef694ddafe2ac74c7c8b119",
+            "to": "0x5f9215dff5c01671e6e77469389d694ac4af2e97",
+            "blockNumber": 45432829,
+            "status": "SUCCESS",
+            "transactionType": "eip1559",
+            "nonce": "91",
+            "gasUsed": "719821",
+            "signatureVerified": true
+          },
+          {
+            "actor": "KEEPER",
+            "action": "平空·等号｜前置：执行市价开仓订单",
+            "txHash": "0x97ea7344ea819ece86eceef2fbf38b0e24c4f6ffeb6809b464b266c8302891d9",
+            "from": "0x542fe841228416f6a3d65eb534a90ebc5cc36354",
+            "to": "0x84162e52063504a701cda5e931d2fd174c10648d",
+            "blockNumber": 45432832,
+            "status": "SUCCESS",
+            "transactionType": "eip1559",
+            "nonce": "3",
+            "gasUsed": "1943674",
+            "signatureVerified": true
+          },
+          {
+            "actor": "TRADER",
+            "action": "平空·等号｜创建市价全平订单（acceptablePrice = A）",
+            "txHash": "0xb39130ddb81592351754ff328c060573aa3167e79a7d5c06962e29b4a491249a",
+            "from": "0xeeea43701a49f3d41ef694ddafe2ac74c7c8b119",
+            "to": "0x5f9215dff5c01671e6e77469389d694ac4af2e97",
+            "blockNumber": 45432835,
+            "status": "SUCCESS",
+            "transactionType": "eip1559",
+            "nonce": "92",
+            "gasUsed": "701712",
+            "signatureVerified": true
+          },
+          {
+            "actor": "KEEPER",
+            "action": "平空·等号｜执行订单（期望成交）",
+            "txHash": "0x403e8061519c082429105d5ec06a8c476ceabf952e703b6423e08d38aea4187d",
+            "from": "0x542fe841228416f6a3d65eb534a90ebc5cc36354",
+            "to": "0x84162e52063504a701cda5e931d2fd174c10648d",
+            "blockNumber": 45432838,
+            "status": "SUCCESS",
+            "transactionType": "eip1559",
+            "nonce": "4",
+            "gasUsed": "1633116",
+            "signatureVerified": true
+          },
+          {
+            "actor": "TRADER",
+            "action": "平空·越界｜前置：创建市价开仓订单",
+            "txHash": "0x7c147da912ca7a947cd961e9fbd90f072754322b21e672a67a75ddcc7c84818e",
+            "from": "0xeeea43701a49f3d41ef694ddafe2ac74c7c8b119",
+            "to": "0x5f9215dff5c01671e6e77469389d694ac4af2e97",
+            "blockNumber": 45432829,
+            "status": "SUCCESS",
+            "transactionType": "eip1559",
+            "nonce": "91",
+            "gasUsed": "719821",
+            "signatureVerified": true
+          },
+          {
+            "actor": "KEEPER",
+            "action": "平空·越界｜前置：执行市价开仓订单",
+            "txHash": "0x97ea7344ea819ece86eceef2fbf38b0e24c4f6ffeb6809b464b266c8302891d9",
+            "from": "0x542fe841228416f6a3d65eb534a90ebc5cc36354",
+            "to": "0x84162e52063504a701cda5e931d2fd174c10648d",
+            "blockNumber": 45432832,
+            "status": "SUCCESS",
+            "transactionType": "eip1559",
+            "nonce": "3",
+            "gasUsed": "1943674",
+            "signatureVerified": true
+          },
+          {
+            "actor": "TRADER",
+            "action": "平空·越界｜创建市价全平订单（acceptablePrice = A）",
+            "txHash": "0xb39130ddb81592351754ff328c060573aa3167e79a7d5c06962e29b4a491249a",
+            "from": "0xeeea43701a49f3d41ef694ddafe2ac74c7c8b119",
+            "to": "0x5f9215dff5c01671e6e77469389d694ac4af2e97",
+            "blockNumber": 45432835,
+            "status": "SUCCESS",
+            "transactionType": "eip1559",
+            "nonce": "92",
+            "gasUsed": "701712",
+            "signatureVerified": true
+          },
+          {
+            "actor": "KEEPER",
+            "action": "平空·越界｜执行订单（期望取消）",
+            "txHash": "0x403e8061519c082429105d5ec06a8c476ceabf952e703b6423e08d38aea4187d",
+            "from": "0x542fe841228416f6a3d65eb534a90ebc5cc36354",
+            "to": "0x84162e52063504a701cda5e931d2fd174c10648d",
+            "blockNumber": 45432838,
+            "status": "SUCCESS",
+            "transactionType": "eip1559",
+            "nonce": "4",
+            "gasUsed": "1346255",
+            "signatureVerified": true
+          }
+        ]
+      },
+      "executedAt": "2026-08-21T09:00:44.375Z",
+      "expectedStatus": "passed",
+      "durationMs": 485195,
+      "attempts": [
+        {
+          "retry": 0,
+          "status": "passed",
+          "startedAt": "2026-08-21T09:00:44.375Z",
+          "durationMs": 485195,
+          "attachments": [
+            {
+              "name": "scn-070-evidence.json",
+              "contentType": "application/json",
+              "path": "artifacts/runs/2026-08-21T090044-138Z/attachments/SCN-070-oracle-fork-r0-0-scn-070-evidence.json"
+            },
+            {
+              "name": "tx-and-receipt.json",
+              "contentType": "application/json",
+              "path": "artifacts/runs/2026-08-21T090044-138Z/attachments/SCN-070-oracle-fork-r0-1-tx-and-receipt.json"
+            },
+            {
+              "name": "acceptable-price-boundaries.json",
+              "contentType": "application/json",
+              "path": "artifacts/runs/2026-08-21T090044-138Z/attachments/SCN-070-oracle-fork-r0-2-acceptable-price-boundaries.json"
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "@p0",
+        "@tx",
+        "@oracle",
+        "@serial"
+      ],
+      "annotations": [
+        {
+          "type": "coverage-gap",
+          "description": "链上市价四象限和 acceptablePrice 边界已自动化；页面加载、浏览器钱包输入与历史逐行核对由手工用例覆盖。"
+        },
+        {
+          "type": "check-result",
+          "description": "8/8 数据集通过：4 条 E=A 成交、4 条最小可达不利步长取消，共 158 项链上核对。"
+        }
+      ]
+    }
+  ],
+  "qualityIssues": []
+}

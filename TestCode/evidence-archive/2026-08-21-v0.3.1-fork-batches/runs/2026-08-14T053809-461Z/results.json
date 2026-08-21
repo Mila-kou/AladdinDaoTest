@@ -1,0 +1,4153 @@
+{
+  "schemaVersion": 2,
+  "sourceStatus": "ready",
+  "source": {
+    "kind": "playwright-reporter",
+    "grain": "one row per scenario and Playwright project final outcome",
+    "generatedAt": "2026-08-14T05:38:59.805Z",
+    "catalogPath": "../TestCase/E2E/SCENARIO-CHECKLIST.md",
+    "metricDefinitions": {
+      "plannedScenarios": "SCENARIO-CHECKLIST 中的唯一 SCN 数量。",
+      "manualScenarios": "标记为手工核对的唯一 SCN 数量：设计上依赖真人操作（浏览器钱包切账户、换设备、拒签），不产出自动化代码；仍必须人工执行并回填证据，不等于已通过。",
+      "automatableScenarios": "规划场景数 − 手工核对场景数，即应当由自动化覆盖的场景数。",
+      "automatedScenarios": "本次 Playwright 发现并映射到场景目录的唯一 SCN 数量；手工核对场景不计入。",
+      "automationCoverage": "自动化场景数 / 应自动化场景数（规划 − 手工核对）；按唯一 SCN 计算，不按浏览器或 Project 重复计数。",
+      "executedResults": "状态为 PASS、FLAKY 或 FAIL 的场景-Project 最终结果数。",
+      "finalSuccessRate": "(PASS + FLAKY) / (PASS + FLAKY + FAIL)。BLOCKED 和 SKIP 不进入分母。",
+      "stablePassRate": "PASS / (PASS + FLAKY + FAIL)，用于识别依赖重试才能成功的场景。",
+      "flaky": "至少一次失败或超时，最终重试通过的场景-Project 结果。",
+      "blocked": "使用 blocked 注解明确标记因环境、依赖或外部条件无法执行的结果。",
+      "duration": "筛选范围内所有测试尝试耗时之和，不等于并行运行时的墙钟时间。"
+    }
+  },
+  "run": {
+    "id": "2026-08-14T053809-461Z",
+    "startedAt": "2026-08-14T05:38:09.461Z",
+    "endedAt": "2026-08-14T05:38:59.805Z",
+    "durationMs": 50344,
+    "playwrightStatus": "passed",
+    "environments": [
+      "tx-fork"
+    ],
+    "projectNames": [
+      "tx-fork"
+    ],
+    "discoveredTests": 1,
+    "release": "release-v0.3.1"
+  },
+  "catalog": [
+    {
+      "id": "SCN-001",
+      "suite": "S01",
+      "suiteName": "交易准备与首单",
+      "title": "首次进入并判断数据可信",
+      "priority": "P0",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-002",
+      "suite": "S01",
+      "suiteName": "交易准备与首单",
+      "title": "错误网络与安全切链",
+      "priority": "P0",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-003",
+      "suite": "S01",
+      "suiteName": "交易准备与首单",
+      "title": "钱包连接与协议披露",
+      "priority": "P0",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-004",
+      "suite": "S01",
+      "suiteName": "交易准备与首单",
+      "title": "筛选可交易市场",
+      "priority": "P1",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-005",
+      "suite": "S01",
+      "suiteName": "交易准备与首单",
+      "title": "Standard 第一笔市价开仓",
+      "priority": "P0",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-006",
+      "suite": "S01",
+      "suiteName": "交易准备与首单",
+      "title": "Flash 同意、连接与首单",
+      "priority": "P0",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-007",
+      "suite": "S01",
+      "suiteName": "交易准备与首单",
+      "title": "刷新与重开恢复上下文",
+      "priority": "P1",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-008",
+      "suite": "S01",
+      "suiteName": "交易准备与首单",
+      "title": "切账户的数据与授权隔离",
+      "priority": "P0",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-009",
+      "suite": "S02",
+      "suiteName": "策略下单与订单管理",
+      "title": "市价开多快速退出",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-010",
+      "suite": "S02",
+      "suiteName": "策略下单与订单管理",
+      "title": "现价下方限价开多",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-011",
+      "suite": "S02",
+      "suiteName": "策略下单与订单管理",
+      "title": "现价上方限价开空",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-012",
+      "suite": "S02",
+      "suiteName": "策略下单与订单管理",
+      "title": "突破追多",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-013",
+      "suite": "S02",
+      "suiteName": "策略下单与订单管理",
+      "title": "破位追空与 validFrom",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-014",
+      "suite": "S02",
+      "suiteName": "策略下单与订单管理",
+      "title": "触发价与成交价差异",
+      "priority": "P1",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-015",
+      "suite": "S02",
+      "suiteName": "策略下单与订单管理",
+      "title": "括号单 TP 先触发",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-016",
+      "suite": "S02",
+      "suiteName": "策略下单与订单管理",
+      "title": "括号单 SL 先触发",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-017",
+      "suite": "S02",
+      "suiteName": "策略下单与订单管理",
+      "title": "修改触发价与规模",
+      "priority": "P1",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-018",
+      "suite": "S02",
+      "suiteName": "策略下单与订单管理",
+      "title": "主动撤单与退款",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-019",
+      "suite": "S02",
+      "suiteName": "策略下单与订单管理",
+      "title": "市价滑点取消退款",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-020",
+      "suite": "S02",
+      "suiteName": "策略下单与订单管理",
+      "title": "Freeze 与 Oracle Revert",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-021",
+      "suite": "S03",
+      "suiteName": "仓位管理与退出",
+      "title": "新仓成交与风险核对",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-022",
+      "suite": "S03",
+      "suiteName": "仓位管理与退出",
+      "title": "PnL 与 Est. Receive",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-023",
+      "suite": "S03",
+      "suiteName": "仓位管理与退出",
+      "title": "分批止盈退出",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-024",
+      "suite": "S03",
+      "suiteName": "仓位管理与退出",
+      "title": "紧急全部平仓",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-025",
+      "suite": "S03",
+      "suiteName": "仓位管理与退出",
+      "title": "同方向加仓",
+      "priority": "P1",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-026",
+      "suite": "S03",
+      "suiteName": "仓位管理与退出",
+      "title": "追加保证金降风险",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-027",
+      "suite": "S03",
+      "suiteName": "仓位管理与退出",
+      "title": "提取部分/全部保证金",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-028",
+      "suite": "S03",
+      "suiteName": "仓位管理与退出",
+      "title": "调整目标杠杆",
+      "priority": "P1",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-029",
+      "suite": "S03",
+      "suiteName": "仓位管理与退出",
+      "title": "仓位更新结算 Funding",
+      "priority": "P1",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-030",
+      "suite": "S03",
+      "suiteName": "仓位管理与退出",
+      "title": "空头正 Funding 部分平仓",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-031",
+      "suite": "S03",
+      "suiteName": "仓位管理与退出",
+      "title": "ETH/BTC 仓位隔离",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-032",
+      "suite": "S03",
+      "suiteName": "仓位管理与退出",
+      "title": "USD/Token Mode 等价",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-033",
+      "suite": "S04",
+      "suiteName": "风险自救、保护与强平",
+      "title": "理论 100x 与真实 buffer",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-034",
+      "suite": "S04",
+      "suiteName": "风险自救、保护与强平",
+      "title": "最小抵押/仓位门槛",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-035",
+      "suite": "S04",
+      "suiteName": "风险自救、保护与强平",
+      "title": "清算区精确补保证金",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-036",
+      "suite": "S04",
+      "suiteName": "风险自救、保护与强平",
+      "title": "危险区足额部分减仓",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-037",
+      "suite": "S04",
+      "suiteName": "风险自救、保护与强平",
+      "title": "清算区紧急全平",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-038",
+      "suite": "S04",
+      "suiteName": "风险自救、保护与强平",
+      "title": "清算区限制操作",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-039",
+      "suite": "S04",
+      "suiteName": "风险自救、保护与强平",
+      "title": "保护期与刷新连续性",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-040",
+      "suite": "S04",
+      "suiteName": "风险自救、保护与强平",
+      "title": "加仓不延长保护期",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-041",
+      "suite": "S04",
+      "suiteName": "风险自救、保护与强平",
+      "title": "保护期触线后恢复",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-042",
+      "suite": "S04",
+      "suiteName": "风险自救、保护与强平",
+      "title": "保护期到期边界",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-043",
+      "suite": "S04",
+      "suiteName": "风险自救、保护与强平",
+      "title": "USDC 脱锚风险",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-044",
+      "suite": "S04",
+      "suiteName": "风险自救、保护与强平",
+      "title": "ADL 用户可见结果",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-045",
+      "suite": "S05",
+      "suiteName": "长持费用、价格冲击与多市场",
+      "title": "均衡市场 Funding floor",
+      "priority": "P1",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-046",
+      "suite": "S05",
+      "suiteName": "长持费用、价格冲击与多市场",
+      "title": "拥挤/轻侧 Funding",
+      "priority": "P1",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-047",
+      "suite": "S05",
+      "suiteName": "长持费用、价格冲击与多市场",
+      "title": "长持 Funding 侵蚀",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-048",
+      "suite": "S05",
+      "suiteName": "长持费用、价格冲击与多市场",
+      "title": "小单/大单价格冲击",
+      "priority": "P1",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-049",
+      "suite": "S05",
+      "suiteName": "长持费用、价格冲击与多市场",
+      "title": "浅流动性极端冲击",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-050",
+      "suite": "S05",
+      "suiteName": "长持费用、价格冲击与多市场",
+      "title": "改善/恶化失衡对比",
+      "priority": "P1",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-051",
+      "suite": "S05",
+      "suiteName": "长持费用、价格冲击与多市场",
+      "title": "OI/储备上限",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-052",
+      "suite": "S05",
+      "suiteName": "长持费用、价格冲击与多市场",
+      "title": "BTC 全链路精度",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-053",
+      "suite": "S06",
+      "suiteName": "Flash、异常恢复与兼容",
+      "title": "Flash 连续交易",
+      "priority": "P0",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-054",
+      "suite": "S06",
+      "suiteName": "Flash、异常恢复与兼容",
+      "title": "Standard/Flash 切换",
+      "priority": "P1",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-055",
+      "suite": "S06",
+      "suiteName": "Flash、异常恢复与兼容",
+      "title": "consent 版本升级",
+      "priority": "P0",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-056",
+      "suite": "S06",
+      "suiteName": "Flash、异常恢复与兼容",
+      "title": "Cancel All 原子撤单",
+      "priority": "P0",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-057",
+      "suite": "S06",
+      "suiteName": "Flash、异常恢复与兼容",
+      "title": "断开与撤销交易密钥",
+      "priority": "P0",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-058",
+      "suite": "S06",
+      "suiteName": "Flash、异常恢复与兼容",
+      "title": "到期/持久化/多设备",
+      "priority": "P1",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-059",
+      "suite": "S06",
+      "suiteName": "Flash、异常恢复与兼容",
+      "title": "Relay/Keeper 超时幂等",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-060",
+      "suite": "S06",
+      "suiteName": "Flash、异常恢复与兼容",
+      "title": "Oracle/Sequencer 故障恢复",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-061",
+      "suite": "S06",
+      "suiteName": "Flash、异常恢复与兼容",
+      "title": "RPC/拒签恢复",
+      "priority": "P1",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-062",
+      "suite": "S06",
+      "suiteName": "Flash、异常恢复与兼容",
+      "title": "Indexer 最终一致性",
+      "priority": "P1",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-063",
+      "suite": "S06",
+      "suiteName": "Flash、异常恢复与兼容",
+      "title": "移动端核心旅程",
+      "priority": "P2",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-064",
+      "suite": "S06",
+      "suiteName": "Flash、异常恢复与兼容",
+      "title": "多语言与账户隐私",
+      "priority": "P2",
+      "executionMode": "manual"
+    },
+    {
+      "id": "SCN-065",
+      "suite": "S07",
+      "suiteName": "订单类型全矩阵",
+      "title": "市价开空与平空",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-066",
+      "suite": "S07",
+      "suiteName": "订单类型全矩阵",
+      "title": "空头止盈 LimitDecrease",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-067",
+      "suite": "S07",
+      "suiteName": "订单类型全矩阵",
+      "title": "空头止损 StopLossDecrease",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-068",
+      "suite": "S07",
+      "suiteName": "订单类型全矩阵",
+      "title": "多空强平与 ADL 区分",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-069",
+      "suite": "S07",
+      "suiteName": "订单类型全矩阵",
+      "title": "四类触发单多空精确边界",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-070",
+      "suite": "S07",
+      "suiteName": "订单类型全矩阵",
+      "title": "市价四象限可接受价",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-071",
+      "suite": "S07",
+      "suiteName": "订单类型全矩阵",
+      "title": "触发单改撤冻结与重试",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-072",
+      "suite": "S07",
+      "suiteName": "订单类型全矩阵",
+      "title": "多空括号单与 autoCancel",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-073",
+      "suite": "S08",
+      "suiteName": "Funding 计提、结算与边界",
+      "title": "零 OI 与首仓 Funding 基准",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-074",
+      "suite": "S08",
+      "suiteName": "Funding 计提、结算与边界",
+      "title": "Funding Factor 方向与翻转",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-075",
+      "suite": "S08",
+      "suiteName": "Funding 计提、结算与边界",
+      "title": "按秒计提与 1h EMA",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-076",
+      "suite": "S08",
+      "suiteName": "Funding 计提、结算与边界",
+      "title": "Long/Short Factor Clamp 边界",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-077",
+      "suite": "S08",
+      "suiteName": "Funding 计提、结算与边界",
+      "title": "全仓位动作 Funding 结算",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-078",
+      "suite": "S08",
+      "suiteName": "Funding 计提、结算与边界",
+      "title": "Funding 取整与 LP 路由",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-079",
+      "suite": "S08",
+      "suiteName": "Funding 计提、结算与边界",
+      "title": "Funding-only 清算边界",
+      "priority": "P0",
+      "executionMode": "automated"
+    },
+    {
+      "id": "SCN-080",
+      "suite": "S08",
+      "suiteName": "Funding 计提、结算与边界",
+      "title": "Funding 页面与市场隔离",
+      "priority": "P0",
+      "executionMode": "automated"
+    }
+  ],
+  "results": [
+    {
+      "id": "SCN-067",
+      "testId": "891c46ff7c036db412e6-8cbb6b73950e66d09e3e",
+      "suite": "S07",
+      "scenarioTitle": "空头止损 StopLossDecrease",
+      "testTitle": "SCN-067 空头交易员上涨止损，补齐 StopLossDecrease short @p0 @tx @serial",
+      "priority": "P0",
+      "project": "tx-fork",
+      "environment": "tx-fork",
+      "status": "PASS",
+      "checkResult": "链上 38 项核对通过（StopLossDecrease short 上涨止损）；已记录用户签名挂单/平仓、推价触发与 Keeper 执行完整回执；执行详情已展开 125 项 Before / After / Δ / Expected 对账。",
+      "executionLinks": [],
+      "executionEvidence": {
+        "mode": "tx-fork-private-key",
+        "persistent": false,
+        "executionStatus": "PASS",
+        "coverageStatus": "PARTIAL",
+        "coverageNote": "真实签名开仓与全平链路已验证；涨/平/跌三组受控价格和浏览器钱包点击签名尚未自动化。",
+        "forkDisplayName": "aladdindao/test",
+        "sourcePath": "artifacts/playwright/S07-scn-067-S07-订单类型全矩阵-SC-80de4-Decrease-short-p0-tx-serial-tx-fork/attachments/scn-067-evidence-json-cb45d0d464f6635fddeaff4b3978e30a89ace1fd.json",
+        "formulaSourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+        "reconciliations": [
+          {
+            "id": "position-open-exists",
+            "group": "开仓状态",
+            "label": "空头仓位建立",
+            "status": "PASS",
+            "before": "false",
+            "after": "exists=true；isLong=false",
+            "expected": "exists=true 且 isLong=false",
+            "formula": "afterOpen.position.exists = true 且 isLong = false（空头）",
+            "basis": {
+              "title": "仓位建立后的结构状态",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§5 仓位字段更新"
+            },
+            "txStep": "TX2",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "position-open-size",
+            "group": "开仓状态",
+            "label": "仓位规模 sizeInUsd",
+            "status": "PASS",
+            "before": "0 raw (0 USD)",
+            "after": "50000000000000000000000000000000 raw (50 USD)",
+            "delta": "+50000000000000000000000000000000 raw (50 USD)",
+            "expected": "50000000000000000000000000000000 raw (50 USD)",
+            "formula": "Expected sizeDeltaUsd：inputMargin 10000000000000000000000000000000 × leverage 5x = 50000000000000000000000000000000；用例配置 sizeUsd=50000000000000000000000000000000；Expected After = Before + 50000000000000000000000000000000",
+            "basis": {
+              "title": "加仓后的 USD 规模",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§5.1 加仓后规模"
+            },
+            "unit": "USD 1e30",
+            "txStep": "TX2",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "position-open-collateral",
+            "group": "开仓状态",
+            "label": "仓位 Margin（链上实际；前端持仓字段对照）",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "9974975 raw (9.974975 USDC)",
+            "delta": "+9974975 raw (9.974975 USDC)",
+            "expected": "9974975 raw (9.974975 USDC)",
+            "formula": "Expected Margin After = Before 0 + inputMargin 10000000 − totalCostAmount 25025 + positiveFunding 0 = 9974975",
+            "basis": {
+              "title": "storedCollateralTokenAfterOpen",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§16.2 Pay、Margin、Size 与 Leverage"
+            },
+            "unit": "USDC 1e6",
+            "note": "这是仓位当前 Margin，不是用户最初输入值。totalCostAmount 来自 PositionFeesCollected，并在 Fee 分组使用执行区块费率独立复算。",
+            "txStep": "TX2",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "open-execution-price",
+            "group": "成交价格",
+            "label": "开空执行价",
+            "status": "PASS",
+            "before": "60000000000000000",
+            "after": "59918996137593926",
+            "expected": "59918996137593926",
+            "formula": "⌊indexPrice.min × (1e18 − dynamicSpread) / 1e18⌋；本次：⌊60000000000000000 × (1e18 − 1350064373434557) / 1e18⌋ = 59918996137593926",
+            "basis": {
+              "title": "Short executionPrice",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§4.5 加仓成交价"
+            },
+            "unit": "price raw",
+            "note": "dynamicSpread=1350064373434557。【恒等式】oracle 价与 dynamicSpread 均取自被核对的 PositionIncrease 事件，验证价格公式自洽，不构成独立重算（dynamicSpread 独立复算未实现）。",
+            "txStep": "TX2",
+            "verification": "恒等式",
+            "dataSource": "事件"
+          },
+          {
+            "id": "cumulative-long-open-costs-after-open",
+            "group": "市场账本",
+            "label": "累计空头开仓成本 cumulativeOpenCostsShort",
+            "status": "PASS",
+            "before": "0 raw (0 USD)",
+            "after": "50000000000000000000000000000000 raw (50 USD)",
+            "delta": "+50000000000000000000000000000000 raw (50 USD)",
+            "expected": "50000000000000000000000000000000 raw (50 USD)",
+            "formula": "next cumulativeOpenCostsShort = previous + sizeDeltaUsd；本次：0 + 50000000000000000000000000000000 = 50000000000000000000000000000000",
+            "basis": {
+              "title": "累计空头开仓成本增量",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§12.2 市场多空 PnL"
+            },
+            "unit": "USD 1e30",
+            "txStep": "TX2",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "close-execution-price",
+            "group": "成交价格",
+            "label": "平空执行价",
+            "status": "PASS",
+            "before": "66066000000000000",
+            "after": "66066000000000000",
+            "expected": "66066000000000000",
+            "formula": "ceil(indexPrice.max × (1e18 + dynamicSpread) / 1e18)；本次：ceil(66066000000000000 × (1e18 + 0) / 1e18) = 66066000000000000",
+            "basis": {
+              "title": "Short executionPrice",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§4.6 减仓成交价"
+            },
+            "unit": "price raw",
+            "note": "dynamicSpread=0。【恒等式】oracle 价与 dynamicSpread 均取自被核对的 PositionDecrease 事件，验证价格公式自洽，不构成独立重算（dynamicSpread 独立复算未实现）。",
+            "txStep": "TX4",
+            "verification": "恒等式",
+            "dataSource": "事件"
+          },
+          {
+            "id": "position-closed",
+            "group": "平仓状态",
+            "label": "全平后仓位移除",
+            "status": "PASS",
+            "before": "true",
+            "after": "false",
+            "expected": "false",
+            "formula": "nextSizeInUsd = oldSizeInUsd − sizeDeltaUsd；nextSize = 0 时删除仓位",
+            "basis": {
+              "title": "全量减仓",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§5.2 减仓后规模"
+            },
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "cumulative-long-open-costs-restored",
+            "group": "平仓状态",
+            "label": "累计空头开仓成本恢复初始值",
+            "status": "PASS",
+            "before": "50000000000000000000000000000000 raw (50 USD)",
+            "after": "0 raw (0 USD)",
+            "expected": "0 raw (0 USD)",
+            "formula": "final cumulativeOpenCostsShort = opened − fullCloseSizeUsd = initial；本次：50000000000000000000000000000000 − 50000000000000000000000000000000 = 0",
+            "basis": {
+              "title": "累计空头开仓成本全平回退",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§12.2 市场多空 PnL"
+            },
+            "unit": "USD 1e30",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "trader-usdc-final",
+            "group": "守恒",
+            "label": "交易员最终 USDC（全流程守恒推论）",
+            "status": "PASS",
+            "before": "1000000000000 raw (1000000 USDC)",
+            "after": "999994835362 raw (999994.835362 USDC)",
+            "expected": "999994835362 raw (999994.835362 USDC)",
+            "formula": "expectedAfter = before − (ΔOrderVault + ΔPositionVault + ΔLPVaultAssets + ΔFeeHandler)；本次：1000000000000 − (0 + 15059 + 5149579 + 0) = 999994835362",
+            "basis": {
+              "title": "全流程 USDC 守恒",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "checkConservation(wholeFlowDelta)"
+            },
+            "unit": "USDC 1e6",
+            "note": "【守恒推论】Expected 由其他四方的实测 wholeFlow Δ 反推（五方守恒式的变形），不是独立公式——本行验证的是全流程资金闭合，交易员的独立 Expected（订单输入+事件分量建模）见 TX2/TX4 资金账户组的 ΔTrader 行。",
+            "txStep": "TX4",
+            "verification": "守恒",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx1-create-open-ledger-traderUsdc",
+            "group": "TX1 · 创建开仓订单 · 资金账户",
+            "label": "ΔTrader",
+            "status": "PASS",
+            "before": "1000000000000 raw (1000000 USDC)",
+            "after": "999990000000 raw (999990 USDC)",
+            "delta": "-10000000 raw (-10 USDC)",
+            "expected": "999990000000 raw (999990 USDC)",
+            "formula": "Expected ΔTrader = −inputMargin = −10000000；Expected After = Before + Expected Δ = 1000000000000 + (-10000000) = 999990000000",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "before → afterCreateOpen"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：账户级——本交易账户的 USDC 钱包余额；Δ 核对隐含窗口内该账户无其他收支。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=-10000000 raw。",
+            "txStep": "TX1",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx1-create-open-ledger-orderVaultUsdc",
+            "group": "TX1 · 创建开仓订单 · 资金账户",
+            "label": "ΔOrderVault",
+            "status": "PASS",
+            "before": "430913615793 raw (430913.615793 USDC)",
+            "after": "430923615793 raw (430923.615793 USDC)",
+            "delta": "+10000000 raw (10 USDC)",
+            "expected": "430923615793 raw (430923.615793 USDC)",
+            "formula": "Expected ΔOrderVault = +inputMargin = +10000000；Expected After = Before + Expected Δ = 430913615793 + (10000000) = 430923615793",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "before → afterCreateOpen"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：合约级——OrderVault 合约 USDC 总余额（所有账户的在途订单资金都在此）；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=10000000 raw。",
+            "txStep": "TX1",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx1-create-open-ledger-posVaultUsdc",
+            "group": "TX1 · 创建开仓订单 · 资金账户",
+            "label": "ΔPositionVault",
+            "status": "PASS",
+            "before": "12827916676659 raw (12827916.676659 USDC)",
+            "after": "12827916676659 raw (12827916.676659 USDC)",
+            "delta": "0 raw (0 USDC)",
+            "expected": "12827916676659 raw (12827916.676659 USDC)",
+            "formula": "订单尚未执行：Expected ΔPositionVault = 0；Expected After = Before + Expected Δ = 12827916676659 + (0) = 12827916676659",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "before → afterCreateOpen"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：合约级——PositionVault 合约 USDC 总余额（全体仓位的抵押与未领费用都在此）；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX1",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx1-create-open-ledger-lpVaultAssets",
+            "group": "TX1 · 创建开仓订单 · 资金账户",
+            "label": "ΔLPVaultAssets",
+            "status": "PASS",
+            "before": "50261109645151 raw (50261109.645151 USDC)",
+            "after": "50261109645151 raw (50261109.645151 USDC)",
+            "delta": "0 raw (0 USDC)",
+            "expected": "50261109645151 raw (50261109.645151 USDC)",
+            "formula": "订单尚未执行：Expected ΔLPVault = 0；Expected After = Before + Expected Δ = 50261109645151 + (0) = 50261109645151",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "before → afterCreateOpen"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：池级——LP 金库 totalAssets（整池资产，全体 LP 共有）；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX1",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx1-create-open-ledger-feeReceiverUsdc",
+            "group": "TX1 · 创建开仓订单 · 资金账户",
+            "label": "ΔFeeHandler",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "0 raw (0 USDC)",
+            "delta": "0 raw (0 USDC)",
+            "expected": "0 raw (0 USDC)",
+            "formula": "费用尚未结算：Expected ΔFeeHandler balance = 0；Expected After = Before + Expected Δ = 0 + (0) = 0",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "before → afterCreateOpen"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：协议级——FeeHandler 合约 USDC 总余额（跨市场、跨账户累计）；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX1",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx1-create-open-ledger-claimableFeeAmountPosition",
+            "group": "TX1 · 创建开仓订单 · 资金账户",
+            "label": "待领取仓位费",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "0 raw (0 USDC)",
+            "delta": "0 raw (0 USDC)",
+            "expected": "0 raw (0 USDC)",
+            "formula": "费用尚未结算：Expected ΔClaimable Position Fee = 0；Expected After = Before + Expected Δ = 0 + (0) = 0",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "before → afterCreateOpen"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：市场级累计——claimableFeeAmount(market, USDC, POSITION)，该市场全体交易者产生的待领取仓位费；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX1",
+            "verification": "计算复算",
+            "dataSource": "合约+事件"
+          },
+          {
+            "id": "tx1-create-open-ledger-claimableFeeAmountFunding",
+            "group": "TX1 · 创建开仓订单 · 资金账户",
+            "label": "待领取 Funding",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "0 raw (0 USDC)",
+            "delta": "0 raw (0 USDC)",
+            "expected": "0 raw (0 USDC)",
+            "formula": "Funding 尚未结算：Expected ΔClaimable Funding = 0；Expected After = Before + Expected Δ = 0 + (0) = 0",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "before → afterCreateOpen"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：市场级累计——claimableFeeAmount(market, USDC, FUNDING)，该市场付给 LP 的待领取 Funding；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX1",
+            "verification": "计算复算",
+            "dataSource": "合约+事件"
+          },
+          {
+            "id": "tx1-create-open-ledger-claimableFeeAmountLiquidation",
+            "group": "TX1 · 创建开仓订单 · 资金账户",
+            "label": "待领取清算费",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "0 raw (0 USDC)",
+            "delta": "0 raw (0 USDC)",
+            "expected": "0 raw (0 USDC)",
+            "formula": "非清算订单：Expected ΔClaimable Liquidation Fee = 0；Expected After = Before + Expected Δ = 0 + (0) = 0",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "before → afterCreateOpen"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：市场级累计——claimableFeeAmount(market, USDC, LIQUIDATION)，该市场清算费 receiver 份额；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX1",
+            "verification": "计算复算",
+            "dataSource": "合约+事件"
+          },
+          {
+            "id": "tx1-create-open-ledger-cumulativeOpenCostsLong",
+            "group": "TX1 · 创建开仓订单 · 市场 / OI",
+            "label": "Long 累计开仓成本（USD 成本口径）",
+            "status": "PASS",
+            "before": "0 raw (0 USD)",
+            "after": "0 raw (0 USD)",
+            "delta": "0 raw (0 USD)",
+            "expected": "0 raw (0 USD)",
+            "formula": "订单尚未执行：Expected ΔLong Open Costs = 0；Expected After = Before + Expected Δ = 0 + (0) = 0",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "before → afterCreateOpen"
+            },
+            "unit": "USD 1e30",
+            "note": "口径：市场级总账——该市场全体交易者的多头开仓成本聚合；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX1",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx1-create-open-ledger-cumulativeOpenCostsShort",
+            "group": "TX1 · 创建开仓订单 · 市场 / OI",
+            "label": "Short 累计开仓成本（USD 成本口径）",
+            "status": "PASS",
+            "before": "0 raw (0 USD)",
+            "after": "0 raw (0 USD)",
+            "delta": "0 raw (0 USD)",
+            "expected": "0 raw (0 USD)",
+            "formula": "订单尚未执行：Expected ΔShort Open Costs = 0；Expected After = Before + Expected Δ = 0 + (0) = 0",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "before → afterCreateOpen"
+            },
+            "unit": "USD 1e30",
+            "note": "口径：市场级总账——该市场全体交易者的空头开仓成本聚合；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX1",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx1-create-open-ledger-openInterestInTokensLong",
+            "group": "TX1 · 创建开仓订单 · 市场 / OI",
+            "label": "Long OI（Token 口径）",
+            "status": "PASS",
+            "before": "0 raw (0 ETH)",
+            "after": "0 raw (0 ETH)",
+            "delta": "0 raw (0 ETH)",
+            "expected": "0 raw (0 ETH)",
+            "formula": "订单尚未执行：Expected ΔLong OI = 0；Expected After = Before + Expected Δ = 0 + (0) = 0",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "before → afterCreateOpen"
+            },
+            "unit": "ETH 1e18",
+            "note": "口径：市场级总账——该市场全体交易者的多头 OI（Token）聚合；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX1",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx1-create-open-ledger-openInterestInTokensShort",
+            "group": "TX1 · 创建开仓订单 · 市场 / OI",
+            "label": "Short OI（Token 口径）",
+            "status": "PASS",
+            "before": "0 raw (0 ETH)",
+            "after": "0 raw (0 ETH)",
+            "delta": "0 raw (0 ETH)",
+            "expected": "0 raw (0 ETH)",
+            "formula": "订单尚未执行：Expected ΔShort OI = 0；Expected After = Before + Expected Δ = 0 + (0) = 0",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "before → afterCreateOpen"
+            },
+            "unit": "ETH 1e18",
+            "note": "口径：市场级总账——该市场全体交易者的空头 OI（Token）聚合；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX1",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx1-create-open-position-sizeInUsd",
+            "group": "TX1 · 创建开仓订单 · 仓位原始字段",
+            "label": "仓位 sizeInUsd",
+            "status": "PASS",
+            "before": "0 raw (0 USD)",
+            "after": "0 raw (0 USD)",
+            "delta": "0 raw (0 USD)",
+            "expected": "0 raw (0 USD)",
+            "formula": "仅创建订单，仓位尚未执行，Position 原始字段保持不变；本次：Expected sizeInUsd = 0（Before 0 → After 0）",
+            "basis": {
+              "title": "PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "TX1 · 创建开仓订单 position"
+            },
+            "unit": "USD 1e30",
+            "txStep": "TX1",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx1-create-open-position-sizeInTokens",
+            "group": "TX1 · 创建开仓订单 · 仓位原始字段",
+            "label": "仓位 sizeInTokens",
+            "status": "PASS",
+            "before": "0 raw (0 ETH)",
+            "after": "0 raw (0 ETH)",
+            "delta": "0 raw (0 ETH)",
+            "expected": "0 raw (0 ETH)",
+            "formula": "仅创建订单，仓位尚未执行，Position 原始字段保持不变；本次：Expected sizeInTokens = 0（Before 0 → After 0）",
+            "basis": {
+              "title": "PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "TX1 · 创建开仓订单 position"
+            },
+            "unit": "ETH 1e18",
+            "txStep": "TX1",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx1-create-open-position-collateralAmount",
+            "group": "TX1 · 创建开仓订单 · 仓位原始字段",
+            "label": "仓位 Margin / collateralAmount",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "0 raw (0 USDC)",
+            "delta": "0 raw (0 USDC)",
+            "expected": "0 raw (0 USDC)",
+            "formula": "仅创建订单，仓位尚未执行，Position 原始字段保持不变；本次：Expected collateralAmount = 0（Before 0 → After 0）",
+            "basis": {
+              "title": "PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "TX1 · 创建开仓订单 position"
+            },
+            "unit": "USDC 1e6",
+            "txStep": "TX1",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx1-create-open-position-negativeFundingFeePerSize",
+            "group": "TX1 · 创建开仓订单 · 仓位原始字段",
+            "label": "仓位负 Funding 结算基准 / size",
+            "status": "PASS",
+            "before": "0 raw (0 raw)",
+            "after": "0 raw (0 raw)",
+            "delta": "0 raw (0 raw)",
+            "expected": "0 raw (0 raw)",
+            "formula": "仅创建订单，仓位尚未执行，Position 原始字段保持不变；本次：Expected negativeFundingFeePerSize = 0（Before 0 → After 0）",
+            "basis": {
+              "title": "PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "TX1 · 创建开仓订单 position"
+            },
+            "unit": "funding per-size raw",
+            "txStep": "TX1",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx1-create-open-position-positiveFundingFeePerSize",
+            "group": "TX1 · 创建开仓订单 · 仓位原始字段",
+            "label": "仓位正 Funding 结算基准 / size",
+            "status": "PASS",
+            "before": "0 raw (0 raw)",
+            "after": "0 raw (0 raw)",
+            "delta": "0 raw (0 raw)",
+            "expected": "0 raw (0 raw)",
+            "formula": "仅创建订单，仓位尚未执行，Position 原始字段保持不变；本次：Expected positiveFundingFeePerSize = 0（Before 0 → After 0）",
+            "basis": {
+              "title": "PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "TX1 · 创建开仓订单 position"
+            },
+            "unit": "funding per-size raw",
+            "txStep": "TX1",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx2-execute-open-ledger-traderUsdc",
+            "group": "TX2 · Keeper 执行开仓 · 资金账户",
+            "label": "ΔTrader",
+            "status": "PASS",
+            "before": "999990000000 raw (999990 USDC)",
+            "after": "999990000000 raw (999990 USDC)",
+            "delta": "0 raw (0 USDC)",
+            "expected": "999990000000 raw (999990 USDC)",
+            "formula": "抵押品已在创建挂单阶段支付：Expected ΔTrader = 0；Expected After = Before + Expected Δ = 999990000000 + (0) = 999990000000",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterCreateOpen → afterOpen"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：账户级——本交易账户的 USDC 钱包余额；Δ 核对隐含窗口内该账户无其他收支。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX2",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx2-execute-open-ledger-orderVaultUsdc",
+            "group": "TX2 · Keeper 执行开仓 · 资金账户",
+            "label": "ΔOrderVault",
+            "status": "PASS",
+            "before": "430923615793 raw (430923.615793 USDC)",
+            "after": "430913615793 raw (430913.615793 USDC)",
+            "delta": "-10000000 raw (-10 USDC)",
+            "expected": "430913615793 raw (430913.615793 USDC)",
+            "formula": "Expected ΔOrderVault = −inputMargin = −10000000；Expected After = Before + Expected Δ = 430923615793 + (-10000000) = 430913615793",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterCreateOpen → afterOpen"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：合约级——OrderVault 合约 USDC 总余额（所有账户的在途订单资金都在此）；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=-10000000 raw。",
+            "txStep": "TX2",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx2-execute-open-ledger-posVaultUsdc",
+            "group": "TX2 · Keeper 执行开仓 · 资金账户",
+            "label": "ΔPositionVault",
+            "status": "PASS",
+            "before": "12827916676659 raw (12827916.676659 USDC)",
+            "after": "12827926664146 raw (12827926.664146 USDC)",
+            "delta": "+9987487 raw (9.987487 USDC)",
+            "expected": "12827926664146 raw (12827926.664146 USDC)",
+            "formula": "Expected ΔPositionVault = inputMargin − feeForPool + LP→Position Funding = 10000000 − 12513 + 0 = 9987487；Expected After = Before + Expected Δ = 12827916676659 + (9987487) = 12827926664146",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterCreateOpen → afterOpen"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：合约级——PositionVault 合约 USDC 总余额（全体仓位的抵押与未领费用都在此）；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=9987487 raw。",
+            "txStep": "TX2",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx2-execute-open-ledger-lpVaultAssets",
+            "group": "TX2 · Keeper 执行开仓 · 资金账户",
+            "label": "ΔLPVaultAssets",
+            "status": "PASS",
+            "before": "50261109645151 raw (50261109.645151 USDC)",
+            "after": "50261109657664 raw (50261109.657664 USDC)",
+            "delta": "+12513 raw (0.012513 USDC)",
+            "expected": "50261109657664 raw (50261109.657664 USDC)",
+            "formula": "Expected ΔLPVault = feeForPool − LP→Position Funding = 12513 − 0 = 12513；Expected After = Before + Expected Δ = 50261109645151 + (12513) = 50261109657664",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterCreateOpen → afterOpen"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：池级——LP 金库 totalAssets（整池资产，全体 LP 共有）；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=12513 raw。",
+            "txStep": "TX2",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx2-execute-open-ledger-feeReceiverUsdc",
+            "group": "TX2 · Keeper 执行开仓 · 资金账户",
+            "label": "ΔFeeHandler",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "0 raw (0 USDC)",
+            "delta": "0 raw (0 USDC)",
+            "expected": "0 raw (0 USDC)",
+            "formula": "协议费只记 Claimable（USDC 物理留在 PositionVault）；claimFees 之前 FeeHandler 余额不变：Expected ΔFeeHandler = 0；Expected After = Before + Expected Δ = 0 + (0) = 0",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterCreateOpen → afterOpen"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：协议级——FeeHandler 合约 USDC 总余额（跨市场、跨账户累计）；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX2",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx2-execute-open-ledger-claimableFeeAmountPosition",
+            "group": "TX2 · Keeper 执行开仓 · 资金账户",
+            "label": "待领取仓位费",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "12512 raw (0.012512 USDC)",
+            "delta": "+12512 raw (0.012512 USDC)",
+            "expected": "12512 raw (0.012512 USDC)",
+            "formula": "Expected ΔClaimable Position Fee = feeReceiverAmount = 12512；Expected After = Before + Expected Δ = 0 + (12512) = 12512",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterCreateOpen → afterOpen"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：市场级累计——claimableFeeAmount(market, USDC, POSITION)，该市场全体交易者产生的待领取仓位费；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=12512 raw。【事件对照】期望值取自 PositionFeesCollected.feeReceiverAmount，与 DataStore 入账增量交叉核对；该金额的独立复算见 Fee 组「Fee Receiver 分成」行。",
+            "txStep": "TX2",
+            "verification": "事件对照",
+            "dataSource": "合约+事件"
+          },
+          {
+            "id": "tx2-execute-open-ledger-claimableFeeAmountFunding",
+            "group": "TX2 · Keeper 执行开仓 · 资金账户",
+            "label": "待领取 Funding",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "0 raw (0 USDC)",
+            "delta": "0 raw (0 USDC)",
+            "expected": "0 raw (0 USDC)",
+            "formula": "Expected ΔClaimable Funding = Σmax(positionPaysLp, 0)（Σ over 1 条 Funding 事件）= 0；Expected After = Before + Expected Δ = 0 + (0) = 0",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterCreateOpen → afterOpen"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：市场级累计——claimableFeeAmount(market, USDC, FUNDING)，该市场付给 LP 的待领取 Funding；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。【事件对照】期望值对窗口内全部 Funding 事件的 positionPaysLp 做 Σmax(·,0) 聚合（共享市场他单执行也会推进市场 Funding），与 DataStore 入账增量交叉核对。",
+            "txStep": "TX2",
+            "verification": "事件对照",
+            "dataSource": "合约+事件"
+          },
+          {
+            "id": "tx2-execute-open-ledger-claimableFeeAmountLiquidation",
+            "group": "TX2 · Keeper 执行开仓 · 资金账户",
+            "label": "待领取清算费",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "0 raw (0 USDC)",
+            "delta": "0 raw (0 USDC)",
+            "expected": "0 raw (0 USDC)",
+            "formula": "非清算订单：Expected ΔClaimable Liquidation Fee = 0；Expected After = Before + Expected Δ = 0 + (0) = 0",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterCreateOpen → afterOpen"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：市场级累计——claimableFeeAmount(market, USDC, LIQUIDATION)，该市场清算费 receiver 份额；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX2",
+            "verification": "计算复算",
+            "dataSource": "合约+事件"
+          },
+          {
+            "id": "tx2-execute-open-ledger-cumulativeOpenCostsLong",
+            "group": "TX2 · Keeper 执行开仓 · 市场 / OI",
+            "label": "Long 累计开仓成本（USD 成本口径）",
+            "status": "PASS",
+            "before": "0 raw (0 USD)",
+            "after": "0 raw (0 USD)",
+            "delta": "0 raw (0 USD)",
+            "expected": "0 raw (0 USD)",
+            "formula": "Expected ΔLong Open Costs = isLong ? inputSizeUsd : 0；本次 isLong=false（空头开仓）→ Long 侧不动，Expected Δ = 0；Expected After = Before + Expected Δ = 0 + (0) = 0",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterCreateOpen → afterOpen"
+            },
+            "unit": "USD 1e30",
+            "note": "口径：市场级总账——该市场全体交易者的多头开仓成本聚合；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX2",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx2-execute-open-ledger-cumulativeOpenCostsShort",
+            "group": "TX2 · Keeper 执行开仓 · 市场 / OI",
+            "label": "Short 累计开仓成本（USD 成本口径）",
+            "status": "PASS",
+            "before": "0 raw (0 USD)",
+            "after": "50000000000000000000000000000000 raw (50 USD)",
+            "delta": "+50000000000000000000000000000000 raw (50 USD)",
+            "expected": "50000000000000000000000000000000 raw (50 USD)",
+            "formula": "Expected ΔShort Open Costs = isLong ? 0 : inputSizeUsd；本次 isLong=false（空头开仓）→ +50000000000000000000000000000000；Expected After = Before + Expected Δ = 0 + (50000000000000000000000000000000) = 50000000000000000000000000000000",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterCreateOpen → afterOpen"
+            },
+            "unit": "USD 1e30",
+            "note": "口径：市场级总账——该市场全体交易者的空头开仓成本聚合；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=50000000000000000000000000000000 raw。",
+            "txStep": "TX2",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx2-execute-open-ledger-openInterestInTokensLong",
+            "group": "TX2 · Keeper 执行开仓 · 市场 / OI",
+            "label": "Long OI（Token 口径）",
+            "status": "PASS",
+            "before": "0 raw (0 ETH)",
+            "after": "0 raw (0 ETH)",
+            "delta": "0 raw (0 ETH)",
+            "expected": "0 raw (0 ETH)",
+            "formula": "Expected ΔLong OI：本次 isLong=false（空头开仓）→ Long 侧不动，Expected Δ = 0；Expected After = Before + Expected Δ = 0 + (0) = 0",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterCreateOpen → afterOpen"
+            },
+            "unit": "ETH 1e18",
+            "note": "口径：市场级总账——该市场全体交易者的多头 OI（Token）聚合；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX2",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx2-execute-open-ledger-openInterestInTokensShort",
+            "group": "TX2 · Keeper 执行开仓 · 市场 / OI",
+            "label": "Short OI（Token 口径）",
+            "status": "PASS",
+            "before": "0 raw (0 ETH)",
+            "after": "834459907926084 raw (0.000834459907926084 ETH)",
+            "delta": "+834459907926084 raw (0.000834459907926084 ETH)",
+            "expected": "834459907926084 raw (0.000834459907926084 ETH)",
+            "formula": "Expected ΔShort OI = ⌈sizeUsd / executionPrice⌉（空头开仓向上取整）；本次 isLong=false → inputMargin 10000000000000000000000000000000 × leverage 5x = 50000000000000000000000000000000；用例配置 sizeUsd=50000000000000000000000000000000；⌈50000000000000000000000000000000 / 59918996137593926⌉ = 834459907926084（空头开仓向上取整）；Expected After = Before + Expected Δ = 0 + (834459907926084) = 834459907926084",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterCreateOpen → afterOpen"
+            },
+            "unit": "ETH 1e18",
+            "note": "口径：市场级总账——该市场全体交易者的空头 OI（Token）聚合；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=834459907926084 raw。",
+            "txStep": "TX2",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx2-execute-open-position-sizeInUsd",
+            "group": "TX2 · Keeper 执行开仓 · 仓位原始字段",
+            "label": "仓位 sizeInUsd",
+            "status": "PASS",
+            "before": "0 raw (0 USD)",
+            "after": "50000000000000000000000000000000 raw (50 USD)",
+            "delta": "+50000000000000000000000000000000 raw (50 USD)",
+            "expected": "50000000000000000000000000000000 raw (50 USD)",
+            "formula": "After Position 原始字段 = PositionIncrease 事件的同名字段；本次：Expected sizeInUsd = 50000000000000000000000000000000（Before 0 → After 50000000000000000000000000000000）",
+            "basis": {
+              "title": "PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "TX2 · Keeper 执行开仓 position"
+            },
+            "unit": "USD 1e30",
+            "txStep": "TX2",
+            "verification": "事件对照",
+            "dataSource": "合约+事件"
+          },
+          {
+            "id": "tx2-execute-open-position-sizeInTokens",
+            "group": "TX2 · Keeper 执行开仓 · 仓位原始字段",
+            "label": "仓位 sizeInTokens",
+            "status": "PASS",
+            "before": "0 raw (0 ETH)",
+            "after": "834459907926084 raw (0.000834459907926084 ETH)",
+            "delta": "+834459907926084 raw (0.000834459907926084 ETH)",
+            "expected": "834459907926084 raw (0.000834459907926084 ETH)",
+            "formula": "After Position 原始字段 = PositionIncrease 事件的同名字段；本次：Expected sizeInTokens = 834459907926084（Before 0 → After 834459907926084）",
+            "basis": {
+              "title": "PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "TX2 · Keeper 执行开仓 position"
+            },
+            "unit": "ETH 1e18",
+            "txStep": "TX2",
+            "verification": "事件对照",
+            "dataSource": "合约+事件"
+          },
+          {
+            "id": "tx2-execute-open-position-collateralAmount",
+            "group": "TX2 · Keeper 执行开仓 · 仓位原始字段",
+            "label": "仓位 Margin / collateralAmount",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "9974975 raw (9.974975 USDC)",
+            "delta": "+9974975 raw (9.974975 USDC)",
+            "expected": "9974975 raw (9.974975 USDC)",
+            "formula": "After Position 原始字段 = PositionIncrease 事件的同名字段；本次：Expected collateralAmount = 9974975（Before 0 → After 9974975）",
+            "basis": {
+              "title": "PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "TX2 · Keeper 执行开仓 position"
+            },
+            "unit": "USDC 1e6",
+            "txStep": "TX2",
+            "verification": "事件对照",
+            "dataSource": "合约+事件"
+          },
+          {
+            "id": "tx2-execute-open-position-negativeFundingFeePerSize",
+            "group": "TX2 · Keeper 执行开仓 · 仓位原始字段",
+            "label": "仓位负 Funding 结算基准 / size",
+            "status": "PASS",
+            "before": "0 raw (0 raw)",
+            "after": "0 raw (0 raw)",
+            "delta": "0 raw (0 raw)",
+            "expected": "0 raw (0 raw)",
+            "formula": "After Position 原始字段 = PositionIncrease 事件的同名字段；本次：Expected negativeFundingFeePerSize = 0（Before 0 → After 0）",
+            "basis": {
+              "title": "PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "TX2 · Keeper 执行开仓 position"
+            },
+            "unit": "funding per-size raw",
+            "txStep": "TX2",
+            "verification": "事件对照",
+            "dataSource": "合约+事件"
+          },
+          {
+            "id": "tx2-execute-open-position-positiveFundingFeePerSize",
+            "group": "TX2 · Keeper 执行开仓 · 仓位原始字段",
+            "label": "仓位正 Funding 结算基准 / size",
+            "status": "PASS",
+            "before": "0 raw (0 raw)",
+            "after": "0 raw (0 raw)",
+            "delta": "0 raw (0 raw)",
+            "expected": "0 raw (0 raw)",
+            "formula": "After Position 原始字段 = PositionIncrease 事件的同名字段；本次：Expected positiveFundingFeePerSize = 0（Before 0 → After 0）",
+            "basis": {
+              "title": "PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "TX2 · Keeper 执行开仓 position"
+            },
+            "unit": "funding per-size raw",
+            "txStep": "TX2",
+            "verification": "事件对照",
+            "dataSource": "合约+事件"
+          },
+          {
+            "id": "tx2-execute-open-grace-formula",
+            "group": "TX2 · Keeper 执行开仓 · Grace",
+            "label": "Grace 公式核对",
+            "status": "PASS",
+            "before": "graceStart=0（未设置）；graceEnd=0（未设置）",
+            "after": "graceStart=1786633781 (2026-08-13T15:09:41.000Z)；graceEnd=1786634681 (2026-08-13T15:24:41.000Z)",
+            "delta": "effectiveGrace = 900 × 1000000000000000000 / 1e18 = 900 seconds；实际 graceEnd − graceStart = 900 seconds",
+            "expected": "graceEnd = 1786633781 + (900 × 1000000000000000000 / 1e18) = 1786634681",
+            "formula": "graceEnd = graceStart + graceBase × tierMultiplier / 1e18；本次：1786633781 + (900 × 1000000000000000000 / 1e18) = 1786634681",
+            "basis": {
+              "title": "Grace 终点按执行区块实际参数精确复算",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md",
+              "section": "四、清算保护卡片 / 4.1 保护期推导"
+            },
+            "unit": "Unix timestamp / seconds",
+            "note": "执行区块 #45432568 链上参数：market#27 graceBase=900s；用户 referralTier=0；tierMultiplier=1000000000000000000；effectiveGrace=900s。 链上阶段快照：src/scenarios/scn-009-runner.ts",
+            "txStep": "TX2",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx2-execute-open-pricing-oracle-mid",
+            "group": "TX2 · Keeper 执行开仓 · OI / Skew / Spread",
+            "label": "Oracle 价格（min / mid / max）",
+            "status": "CALCULATED",
+            "before": "min = 60000000000000000",
+            "after": "max = 60060000000000000",
+            "delta": "mid = (60000000000000000 + 60060000000000000) / 2 = 60030000000000000",
+            "expected": "—（本次执行采用的 Oracle 价格展示行）",
+            "formula": "indexMid = (indexTokenPrice.min + indexTokenPrice.max) / 2；本次：(60000000000000000 + 60060000000000000) / 2 = 60030000000000000",
+            "basis": {
+              "title": "本次执行的 Oracle 价格三元组",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md",
+              "section": "一、下单面板 / Oracle 价格"
+            },
+            "unit": "price raw（USD×1e12 / token）",
+            "note": "min/max 为执行事件携带的 Oracle 双边价（stablePrice 锚参与 min/max 合并）；mid 是 OI 盯市（USD 口径）与多空失衡判定的统一输入。执行价按方向取不利侧：多开/空平用 max、空开/多平用 min。",
+            "txStep": "TX2",
+            "verification": "派生展示",
+            "dataSource": "合约",
+            "inputs": [
+              {
+                "name": "indexTokenPrice.min",
+                "value": "60000000000000000",
+                "source": "PositionIncrease/Decrease 事件（执行回执解码）"
+              },
+              {
+                "name": "indexTokenPrice.max",
+                "value": "60060000000000000",
+                "source": "PositionIncrease/Decrease 事件（执行回执解码）"
+              },
+              {
+                "name": "indexMid（派生）",
+                "value": "60030000000000000",
+                "source": "派生：(min + max) / 2，向下取整"
+              }
+            ]
+          },
+          {
+            "id": "tx2-execute-open-pricing-long-oi-usd",
+            "group": "TX2 · Keeper 执行开仓 · OI / Skew / Spread",
+            "label": "Long OI（USD 盯市口径，派生）",
+            "status": "CALCULATED",
+            "before": "0 raw (0 USD)",
+            "after": "0 raw (0 USD)",
+            "delta": "0 raw (0 USD)",
+            "expected": "—（派生展示行，无独立期望值）",
+            "formula": "longOIUsd = longOpenInterestInTokens × indexMidPrice；本次 After：0 × 60030000000000000 = 0（Before：0 × 60030000000000000 = 0）",
+            "basis": {
+              "title": "市场 Open Interest USD",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md",
+              "section": "五、Funding / OI 与 Skew"
+            },
+            "unit": "USD 1e30",
+            "note": "indexMidPrice=(60000000000000000+60060000000000000)/2=60030000000000000。openInterestInTokensLong 取自 DataStore 市场级总账（该市场全体交易者聚合），不是本单的量——本环境只有本账户一笔仓位，总量才恰好等于本单仓位。",
+            "txStep": "TX2",
+            "verification": "派生展示",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx2-execute-open-pricing-short-oi-usd",
+            "group": "TX2 · Keeper 执行开仓 · OI / Skew / Spread",
+            "label": "Short OI（USD 盯市口径，派生）",
+            "status": "CALCULATED",
+            "before": "0 raw (0 USD)",
+            "after": "50092628272802822520000000000000 raw (50.09262827280282252 USD)",
+            "delta": "+50092628272802822520000000000000 raw (50.09262827280282252 USD)",
+            "expected": "—（派生展示行，无独立期望值）",
+            "formula": "shortOIUsd = shortOpenInterestInTokens × indexMidPrice；本次 After：834459907926084 × 60030000000000000 = 50092628272802822520000000000000（Before：0 × 60030000000000000 = 0）",
+            "basis": {
+              "title": "市场 Open Interest USD",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md",
+              "section": "五、Funding / OI 与 Skew"
+            },
+            "unit": "USD 1e30",
+            "note": "openInterestInTokensShort 同为 DataStore 市场级总账（该市场全体交易者聚合），不是本单的量。",
+            "txStep": "TX2",
+            "verification": "派生展示",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx2-execute-open-pricing-raw-skew",
+            "group": "TX2 · Keeper 执行开仓 · OI / Skew / Spread",
+            "label": "实时 Raw Skew（进入 EMA 前）",
+            "status": "CALCULATED",
+            "before": "0 raw (0 ratio)",
+            "after": "-1000000000000000000 raw (-1 ratio)",
+            "delta": "-1000000000000000000 raw (-1 ratio)",
+            "expected": "—（派生展示行，无独立期望值）",
+            "formula": "skew = (longOIUsd − shortOIUsd) × 1e18 / (longOIUsd + shortOIUsd)；本次 After：(0 − 50092628272802822520000000000000) × 1e18 / (50092628272802822520000000000000) = -1000000000000000000",
+            "basis": {
+              "title": "Funding 原始 Skew；实际费率使用 EMA Skew",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md",
+              "section": "五、Funding / 5.1 Raw Skew"
+            },
+            "unit": "ratio 1e18",
+            "note": "longOIUsd / shortOIUsd 是市场级总量（该市场全体交易者的 OI 聚合后盯市），不是本单的量。本环境仅本账户一笔多仓，市场总量恰好等于本单仓位，数值才与本次交易一致；多账户市场此处会包含他人仓位。",
+            "txStep": "TX2",
+            "verification": "派生展示",
+            "dataSource": "合约",
+            "inputs": [
+              {
+                "name": "longOIUsd（全市场 After）",
+                "value": "0",
+                "source": "DataStore openInterestInTokensLong（市场级总账，全体交易者聚合）× indexMid"
+              },
+              {
+                "name": "shortOIUsd（全市场 After）",
+                "value": "50092628272802822520000000000000",
+                "source": "DataStore openInterestInTokensShort（市场级总账，全体交易者聚合）× indexMid"
+              }
+            ]
+          },
+          {
+            "id": "tx2-execute-open-pricing-balance-improved",
+            "group": "TX2 · Keeper 执行开仓 · OI / Skew / Spread",
+            "label": "是否改善多空平衡",
+            "status": "PASS",
+            "before": "0 raw (0 USD)",
+            "after": "50025000000000040020000000000000 raw (50.02500000000004002 USD)",
+            "delta": "+50025000000000040020000000000000 raw (50.02500000000004002 USD)",
+            "expected": "false",
+            "formula": "balanceWasImproved = abs(nextLongOI − nextShortOI) < abs(currentLongOI − currentShortOI)（next 用预备 tokenDelta：⌈50000000000000000000000000000000 / index.min 60000000000000000⌉ = 833333333333334）；本次：|50025000000000040020000000000000| < |0| = false（事件实际值 false；快照终值失衡 50092628272802822520000000000000 仅作对照）",
+            "basis": {
+              "title": "Skew Impact 正负方向",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md",
+              "section": "一、下单面板 / Dynamic Spread"
+            },
+            "unit": "boolean / USD 1e30",
+            "note": "独立推算用前后快照的实测失衡近似合约\"当前失衡 + 本单预备 Δ\"的判定（单账户受控场景等价）；合约口径为盯市 OI（tokens×midPrice）+ 预备 tokenDelta，严格 <，相等算未改善。该布尔决定 Position Fee 用哪一档费率。",
+            "txStep": "TX2",
+            "verification": "计算复算",
+            "dataSource": "事件",
+            "inputs": [
+              {
+                "name": "openInterestInTokensLong（before/after）",
+                "value": "0 → 0",
+                "source": "链上阶段快照（钉块读数）"
+              },
+              {
+                "name": "openInterestInTokensShort（before/after）",
+                "value": "0 → 834459907926084",
+                "source": "链上阶段快照（钉块读数）"
+              },
+              {
+                "name": "indexMidPrice = (min+max)/2",
+                "value": "60030000000000000",
+                "source": "PositionIncrease/Decrease 事件 indexTokenPrice"
+              },
+              {
+                "name": "event.balanceWasImproved（对照对象）",
+                "value": "false",
+                "source": "PositionFeesCollected 事件 bool 字段"
+              }
+            ]
+          },
+          {
+            "id": "tx2-execute-open-pricing-skew-impact",
+            "group": "TX2 · Keeper 执行开仓 · OI / Skew / Spread",
+            "label": "Skew Impact（参数复算）",
+            "status": "CALCULATED",
+            "before": "skewRef（输入）= 500000000000000000 raw (0.5 ratio)",
+            "after": "skewImpact（分量结果）= 1250000000000000 raw (0.00125 ratio)",
+            "delta": "+1250000000000000 raw (0.00125 ratio)",
+            "expected": "—（参数复算展示行，事件未单独给出 Skew 分量，无对照值；总值对照见「Dynamic Spread 总值」行）",
+            "formula": "skewImpact = clamp(skewImpactFactor × skewRef / 1e18, minSkewImpact, maxSkewImpact)（改善失衡取负后 clamp）；本次：clamp(2500000000000000 × 500000000000000000 / 1e18, -5000000000000000, 5000000000000000) = 1250000000000000",
+            "basis": {
+              "title": "Skew Impact 参数公式",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md",
+              "section": "一、下单面板 / Dynamic Spread"
+            },
+            "unit": "ratio 1e18",
+            "note": "参数来自执行区块 #45432568 的 DataStore 实际值。 本行独立展示 Skew Impact 分量；Dynamic Spread 还包含 Price Impact。",
+            "txStep": "TX2",
+            "verification": "派生展示",
+            "dataSource": "合约",
+            "inputs": [
+              {
+                "name": "skewImpactFactor",
+                "value": "2500000000000000",
+                "source": "DataStore @ 执行区块 #45432568"
+              },
+              {
+                "name": "skewRef（前后失衡均值，市场级）",
+                "value": "500000000000000000",
+                "source": "派生：(|skewBefore 0| + |skewNext -1000000000000000000|) / 2（next 用预备 tokenDelta 口径，快照终值 skew -1000000000000000000 仅作对照）；skew 为全市场多空失衡比，非本单量"
+              },
+              {
+                "name": "balanceWasImproved（决定正负）",
+                "value": "false",
+                "source": "PositionFeesCollected 事件 bool；独立复算见「是否改善多空平衡」行"
+              },
+              {
+                "name": "min / maxSkewImpact（clamp 边界）",
+                "value": "-5000000000000000 / 5000000000000000",
+                "source": "DataStore @ 执行区块 #45432568"
+              },
+              {
+                "name": "skewImpact（结果）",
+                "value": "1250000000000000",
+                "source": "派生：进入「Dynamic Spread 总值」行的三分量之一"
+              }
+            ]
+          },
+          {
+            "id": "tx2-execute-open-pricing-dynamic-spread",
+            "group": "TX2 · Keeper 执行开仓 · OI / Skew / Spread",
+            "label": "Dynamic Spread 总值",
+            "status": "PASS",
+            "before": "0 raw (0 ratio)",
+            "after": "1350064373434557 raw (0.001350064373434557 ratio)",
+            "delta": "+1350064373434557 raw (0.001350064373434557 ratio)",
+            "expected": "1350064373434557 raw (0.001350064373434557 ratio)",
+            "formula": "dynamicSpread = max(0, constantPriceSpread + priceImpactSpread + skewImpact)；本次：max(0, skewImpact 1250000000000000 + constant 100000000000000 + priceImpact 64373434557) = 1350064373434557。priceImpact 分量：expArg = 50000000000000000000000000000000 × 600000000000000000 / 7767179170000000000000000000000000000 = 3862406073478；max(exp(expArg) − 1e18 = 3862413532577, 线性 50000000000000000000000000000000 × 1e18 / 7767179170000000000000000000000000000 = 6437343455796) / 100 = 64373434557；封顶 min(·, 5000000000000000) = 64373434557",
+            "basis": {
+              "title": "动态点差总公式",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md",
+              "section": "一、下单面板 / Dynamic Spread"
+            },
+            "unit": "ratio 1e18",
+            "note": "参数来自执行区块 #45432568 的 DataStore 实际值。 LogExpMath.exp 已逐句 BigInt 移植（蓝本 src/common/math/LogExpMath.sol，同序截断故可 bit 级）；skew 分量沿用快照失衡近似（skewImpactFactor=0 时精确，非零时预备值口径差异可能假 FAIL——P1 已知）；orderSize 用事件 sizeDeltaUsd（USD 模式=合约预备值；token 模式开仓需按 index 价重算，当前场景均为 USD 模式）。",
+            "txStep": "TX2",
+            "verification": "计算复算",
+            "dataSource": "事件",
+            "inputs": [
+              {
+                "name": "orderSizeUsd（预备值，本单量）",
+                "value": "50000000000000000000000000000000",
+                "source": "PositionIncrease/Decrease 事件 sizeDeltaUsd；Spread 输入中唯一的本单量，其余为市场级参数/状态"
+              },
+              {
+                "name": "priceImpactParameter",
+                "value": "600000000000000000",
+                "source": "DataStore @ 执行区块 #45432568"
+              },
+              {
+                "name": "bidOrderBookDepth",
+                "value": "7767179170000000000000000000000000000",
+                "source": "DataStore @ 执行区块 #45432568；depth 按不利侧选 bid"
+              },
+              {
+                "name": "MAX_PRICE_IMPACT_SPREAD（全局封顶）",
+                "value": "5000000000000000",
+                "source": "DataStore @ 执行区块 #45432568"
+              },
+              {
+                "name": "constantPriceSpread",
+                "value": "100000000000000",
+                "source": "DataStore @ 执行区块 #45432568"
+              },
+              {
+                "name": "skewImpact（快照近似）",
+                "value": "1250000000000000",
+                "source": "本组「Skew Impact（参数复算）」行"
+              },
+              {
+                "name": "dynamicSpread（对照对象）",
+                "value": "1350064373434557",
+                "source": "PositionIncrease/Decrease 事件"
+              }
+            ]
+          },
+          {
+            "id": "tx2-execute-open-pricing-execution-price",
+            "group": "TX2 · Keeper 执行开仓 · OI / Skew / Spread",
+            "label": "Spread 调整后执行价",
+            "status": "PASS",
+            "before": "60000000000000000",
+            "after": "59918996137593926",
+            "delta": "-81003862406074 raw (-81003862406074 price raw)",
+            "expected": "59918996137593926",
+            "formula": "方向规则：useMax = (开仓且多头) 或 (平仓且空头) → index.max × (1e18 + spread) 向上取整；否则 index.min × (1e18 − spread) 向下截断——始终取对交易者不利的一侧。本次 isLong=false、开仓 → min 侧 ⌊⌋：executionPrice = 60000000000000000 × (1e18 − 1350064373434557) / 1e18 = 59918996137593926",
+            "basis": {
+              "title": "方向与开/平仓共同决定价格不利侧",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md",
+              "section": "一、下单面板 / 1.5 执行价"
+            },
+            "unit": "price raw",
+            "note": "【恒等式】oracle 价与 dynamicSpread 均取自被核对的同一事件——本行验证合约价格公式（方向/不利侧/取整）自洽，不构成独立重算；dynamicSpread 的独立复算未实现（见 Dynamic Spread 行 NOT_VERIFIED）。",
+            "txStep": "TX2",
+            "verification": "恒等式",
+            "dataSource": "事件",
+            "inputs": [
+              {
+                "name": "oracle（index.min，不利=卖贱）",
+                "value": "60000000000000000",
+                "source": "PositionIncrease/Decrease 事件 indexTokenPrice"
+              },
+              {
+                "name": "dynamicSpread",
+                "value": "1350064373434557",
+                "source": "同一事件；独立复算未实现（见 Dynamic Spread 行）"
+              },
+              {
+                "name": "isLong / 开仓（方向判据）",
+                "value": "false",
+                "source": "事件 bool + 事件类型 → adverseUp=false"
+              },
+              {
+                "name": "executionPrice（对照对象）",
+                "value": "59918996137593926",
+                "source": "同一事件"
+              }
+            ]
+          },
+          {
+            "id": "tx2-execute-open-position-fee",
+            "group": "TX2 · Keeper 执行开仓 · Fee",
+            "label": "Position Fee（链上实际；前端 Fee 对照）",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "25025 raw (0.025025 USDC)",
+            "delta": "+25025 raw (0.025025 USDC)",
+            "expected": "25025 raw (0.025025 USDC)",
+            "formula": "positionFeeAmount = 50000000000000000000000000000000 × 500000000000000000000000000 / 1e30 / 999000000000000000000000 = 25025",
+            "basis": {
+              "title": "基础仓位费",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md",
+              "section": "费用 / Position Fee"
+            },
+            "unit": "USDC 1e6",
+            "note": "参数来自执行区块 #45432568 的 DataStore 实际值。 event.factor=500000000000000000000000000；chain.factor=500000000000000000000000000。",
+            "txStep": "TX2",
+            "verification": "计算复算",
+            "dataSource": "事件",
+            "inputs": [
+              {
+                "name": "tradeSizeUsd",
+                "value": "50000000000000000000000000000000",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              },
+              {
+                "name": "positionFeeFactor（POSITION_FEE_FACTOR(false)）",
+                "value": "500000000000000000000000000",
+                "source": "DataStore @ 执行区块 #45432568；复算采用链上档。选档依据 balanceWasImproved=false（独立复算见「是否改善多空平衡」行）；事件采用值 500000000000000000000000000，应与链上档一致（✓ 一致）"
+              },
+              {
+                "name": "collateralPrice.min",
+                "value": "999000000000000000000000",
+                "source": "PositionFeesCollected 事件（执行回执解码）；Oracle 抵押价随事件 emit"
+              },
+              {
+                "name": "positionFeeAmount（对照对象）",
+                "value": "25025",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              }
+            ]
+          },
+          {
+            "id": "tx2-execute-open-protocol-fee",
+            "group": "TX2 · Keeper 执行开仓 · Fee",
+            "label": "Protocol Fee 及分账守恒",
+            "status": "PASS",
+            "before": "Position Fee=25025 raw (0.025025 USDC)；折扣后 Protocol Fee=25025 raw (0.025025 USDC)",
+            "after": "Protocol Fee 25025 = feeReceiverAmount 12512 + LP Pool 12513",
+            "delta": "25025 = 12512 + 12513",
+            "expected": "Protocol Fee 25025 = 25025 raw",
+            "formula": "protocolFeeAmount = feeReceiverAmount + positionFeeAmountForPool；本次：25025 = 12512 + 12513",
+            "basis": {
+              "title": "协议与 LP 分成",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§7.5 协议与 LP 分成"
+            },
+            "unit": "USDC 1e6",
+            "note": "【恒等式】三个数取自同一 PositionFeesCollected 事件，本行只验证事件内部分账自洽，不构成独立重算；feeReceiverAmount 与 LP 分成的独立复算（用执行区块 positionFeeReceiverFactor）见相邻两行。Position Fee 是用户仓位费总额；扣除 Referral / Pro 等折扣后得到 Protocol Fee，再按 positionFeeReceiverFactor 拆分为协议应收与 LP Pool 分成。",
+            "txStep": "TX2",
+            "verification": "恒等式",
+            "dataSource": "事件",
+            "inputs": [
+              {
+                "name": "protocolFeeAmount",
+                "value": "25025",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              },
+              {
+                "name": "feeReceiverAmount",
+                "value": "12512",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              },
+              {
+                "name": "positionFeeAmountForPool",
+                "value": "12513",
+                "source": "PositionFeesCollected 事件（执行回执解码）；三者同源 → 本行为恒等式"
+              }
+            ]
+          },
+          {
+            "id": "tx2-execute-open-fee-receiver",
+            "group": "TX2 · Keeper 执行开仓 · Fee",
+            "label": "Fee Receiver 分成",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "12512 raw (0.012512 USDC)",
+            "delta": "+12512 raw (0.012512 USDC)",
+            "expected": "12512 raw (0.012512 USDC)",
+            "formula": "feeReceiverAmount = 25025 × 500000000000000000000000000000 / 1e30 = 12512",
+            "basis": {
+              "title": "协议与 LP 分成",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§7.5 协议与 LP 分成"
+            },
+            "unit": "USDC 1e6",
+            "note": "参数来自执行区块 #45432568 的 DataStore 实际值。 event.receiverFactor=500000000000000000000000000000。",
+            "txStep": "TX2",
+            "verification": "计算复算",
+            "dataSource": "事件",
+            "inputs": [
+              {
+                "name": "protocolFeeAmount",
+                "value": "25025",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              },
+              {
+                "name": "positionFeeReceiverFactor",
+                "value": "500000000000000000000000000000",
+                "source": "DataStore @ 执行区块 #45432568；全局键，复算不用事件自带 factor"
+              },
+              {
+                "name": "feeReceiverAmount（对照对象）",
+                "value": "12512",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              }
+            ]
+          },
+          {
+            "id": "tx2-execute-open-pool-fee",
+            "group": "TX2 · Keeper 执行开仓 · Fee",
+            "label": "LP Pool 分成",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "12513 raw (0.012513 USDC)",
+            "delta": "+12513 raw (0.012513 USDC)",
+            "expected": "12513 raw (0.012513 USDC)",
+            "formula": "positionFeeAmountForPool = protocolFeeAmount − feeReceiverAmount；本次：25025 − 12512 = 12513",
+            "basis": {
+              "title": "协议与 LP 分成",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§7.5 协议与 LP 分成"
+            },
+            "unit": "USDC 1e6",
+            "txStep": "TX2",
+            "verification": "计算复算",
+            "dataSource": "事件",
+            "inputs": [
+              {
+                "name": "protocolFeeAmount",
+                "value": "25025",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              },
+              {
+                "name": "expectedReceiver",
+                "value": "12512",
+                "source": "派生值：protocolFee × 链上 positionFeeReceiverFactor / 1e30（见上一行）"
+              },
+              {
+                "name": "positionFeeAmountForPool（对照对象）",
+                "value": "12513",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              }
+            ]
+          },
+          {
+            "id": "tx2-execute-open-negative-funding",
+            "group": "TX2 · Keeper 执行开仓 · Funding",
+            "label": "本仓位应付 Funding",
+            "status": "PASS",
+            "before": "0 raw (0 per-size)",
+            "after": "0 raw (0 per-size)",
+            "delta": "0 raw (0 per-size)",
+            "expected": "0 raw (0 USDC)",
+            "formula": "ceil((latestNegativePerSize − positionNegativePerSize) × sizeInTokens / (1e30 × collateralPrice.min))；本次：ceil((0 − 0) × 0 / (1e30 × 999000000000000000000000)) = 0",
+            "basis": {
+              "title": "单仓负 Funding（支付端向上取整）",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§10.5 单仓 Funding"
+            },
+            "unit": "per-size raw → USDC 1e6",
+            "note": "PositionFeesCollected.negativeFundingFeeAmount=0 raw。Before/After 即\"仓位结算基线 → 市场累计负 per-size 最新值\"的推进（基线=上次结算时的市场累计值，累计值单调不减），市场级累计不再单独成行。",
+            "txStep": "TX2",
+            "verification": "计算复算",
+            "dataSource": "事件",
+            "inputs": [
+              {
+                "name": "positionNegativeFundingFeePerSize（entry 基线）",
+                "value": "0",
+                "source": "仓位 Before 快照（Reader，钉块读数）"
+              },
+              {
+                "name": "latestNegativeFundingFeePerSize（市场级累计）",
+                "value": "0",
+                "source": "PositionFeesCollected 事件（执行回执解码）；对该市场全体同向仓位统一累计，非本仓专属"
+              },
+              {
+                "name": "sizeInTokens（结算用全仓规模）",
+                "value": "0",
+                "source": "仓位 Before 快照（Reader，钉块读数）"
+              },
+              {
+                "name": "collateralPrice.min",
+                "value": "999000000000000000000000",
+                "source": "PositionFeesCollected 事件（执行回执解码）；支付端用 min 价+向上取整"
+              },
+              {
+                "name": "negativeFundingFeeAmount（对照对象）",
+                "value": "0",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              }
+            ]
+          },
+          {
+            "id": "tx2-execute-open-positive-funding",
+            "group": "TX2 · Keeper 执行开仓 · Funding",
+            "label": "本仓位应收 Funding",
+            "status": "PASS",
+            "before": "0 raw (0 per-size)",
+            "after": "0 raw (0 per-size)",
+            "delta": "0 raw (0 per-size)",
+            "expected": "0 raw (0 USDC)",
+            "formula": "(latestPositivePerSize − positionPositivePerSize) × sizeInTokens / (1e30 × collateralPrice.max)；本次：(0 − 0) × 0 / (1e30 × 1001000000000000000000000) = 0（向下取整）",
+            "basis": {
+              "title": "单仓正 Funding（收取端向下取整）",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§10.5 单仓 Funding"
+            },
+            "unit": "per-size raw → USDC 1e6",
+            "note": "PositionFeesCollected.positiveFundingFeeAmount=0 raw。Before/After 即\"仓位结算基线 → 市场累计正 per-size 最新值\"的推进（基线=上次结算时的市场累计值，累计值单调不减），市场级累计不再单独成行。",
+            "txStep": "TX2",
+            "verification": "计算复算",
+            "dataSource": "事件",
+            "inputs": [
+              {
+                "name": "positionPositiveFundingFeePerSize（entry 基线）",
+                "value": "0",
+                "source": "仓位 Before 快照（Reader，钉块读数）"
+              },
+              {
+                "name": "latestPositiveFundingFeePerSize（市场级累计）",
+                "value": "0",
+                "source": "PositionFeesCollected 事件（执行回执解码）；对该市场全体同向仓位统一累计，非本仓专属"
+              },
+              {
+                "name": "sizeInTokens（结算用全仓规模）",
+                "value": "0",
+                "source": "仓位 Before 快照（Reader，钉块读数）"
+              },
+              {
+                "name": "collateralPrice.max",
+                "value": "1001000000000000000000000",
+                "source": "PositionFeesCollected 事件（执行回执解码）；收取端用 max 价+向下取整"
+              },
+              {
+                "name": "positiveFundingFeeAmount（对照对象）",
+                "value": "0",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              }
+            ]
+          },
+          {
+            "id": "tx2-execute-open-net-funding",
+            "group": "TX2 · Keeper 执行开仓 · Funding",
+            "label": "Funding 净额（应收 − 应付）",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "0 raw (0 USDC)",
+            "delta": "0 raw (0 USDC)",
+            "expected": "0 raw (0 USDC)",
+            "formula": "netFunding = positiveFunding − negativeFunding = 0 − 0 = 0",
+            "basis": {
+              "title": "单仓 Funding 净额",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§10.5 单仓 Funding"
+            },
+            "unit": "USDC 1e6",
+            "note": "正数表示仓位应收 Funding，负数表示仓位应付 Funding；应付和应收原始值保留在相邻两行。",
+            "txStep": "TX2",
+            "verification": "计算复算",
+            "dataSource": "事件",
+            "inputs": [
+              {
+                "name": "positiveFundingFeeAmount",
+                "value": "0",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              },
+              {
+                "name": "negativeFundingFeeAmount",
+                "value": "0",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              },
+              {
+                "name": "expected 净额",
+                "value": "0",
+                "source": "派生：相邻两行独立复算值之差（expectedPositive − expectedNegative）"
+              }
+            ]
+          },
+          {
+            "id": "tx2-execute-open-total-cost",
+            "group": "TX2 · Keeper 执行开仓 · Fee",
+            "label": "Total Cost",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "25025 raw (0.025025 USDC)",
+            "delta": "+25025 raw (0.025025 USDC)",
+            "expected": "25025 raw (0.025025 USDC)",
+            "formula": "totalCostAmount = positionFeeAmount + uiFeeAmount + negativeFundingFeeAmount（本用例无清算费/折扣）；本次：25025 + 0 + 0 = 25025",
+            "basis": {
+              "title": "费用总额；正 Funding 单独增加抵押品",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§9 费用总额"
+            },
+            "unit": "USDC 1e6",
+            "note": "【恒等式】各分量取自同一 PositionFeesCollected 事件，本行只验证费用汇总自洽；positionFee 与应付/应收 Funding 已在相邻行用执行区块参数独立复算。",
+            "txStep": "TX2",
+            "verification": "恒等式",
+            "dataSource": "事件"
+          },
+          {
+            "id": "tx2-execute-open-claimable-position-fee",
+            "group": "TX2 · Keeper 执行开仓 · Fee",
+            "label": "Claimable Position Fee 入账",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "12512 raw (0.012512 USDC)",
+            "delta": "+12512 raw (0.012512 USDC)",
+            "expected": "12512 raw (0.012512 USDC)",
+            "formula": "claimablePositionFeeAfter = before + feeReceiverAmount；本次：0 + 12512 = 12512",
+            "basis": {
+              "title": "协议费用入账与快照交叉核对",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§7.5 协议与 LP 分成"
+            },
+            "unit": "USDC 1e6",
+            "note": "【事件对照】期望增量取自 PositionFeesCollected.feeReceiverAmount，与 DataStore claimable 状态交叉核对；该金额的独立复算见「Fee Receiver 分成」行。",
+            "txStep": "TX2",
+            "verification": "事件对照",
+            "dataSource": "合约+事件",
+            "inputs": [
+              {
+                "name": "claimable before",
+                "value": "0",
+                "source": "链上阶段快照（DataStore 钉块读数）"
+              },
+              {
+                "name": "feeReceiverAmount（期望增量）",
+                "value": "12512",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              },
+              {
+                "name": "claimable after（对照对象）",
+                "value": "12512",
+                "source": "链上阶段快照（DataStore 钉块读数）"
+              }
+            ]
+          },
+          {
+            "id": "tx2-execute-open-claimable-funding",
+            "group": "TX2 · Keeper 执行开仓 · Funding",
+            "label": "LP Claimable Funding 入账",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "0 raw (0 USDC)",
+            "delta": "0 raw (0 USDC)",
+            "expected": "0 raw (0 USDC)",
+            "formula": "claimableFundingAfter = before + Σmax(positionPaysLp, 0)（over 1 条 Funding 事件）；< 0 分量由 LPVault 支付 PositionVault；本次：0 + 0 = 0",
+            "basis": {
+              "title": "LP Funding 净额",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§10.6 LP Funding 净额"
+            },
+            "unit": "USDC 1e6",
+            "note": "【事件对照】期望增量取自 Funding 事件 positionPaysLp（floor funding：市场级净流，多头地板费率使均衡时也不为零），与 DataStore claimable 状态交叉核对。",
+            "txStep": "TX2",
+            "verification": "事件对照",
+            "dataSource": "合约+事件",
+            "inputs": [
+              {
+                "name": "claimable funding before",
+                "value": "0",
+                "source": "链上阶段快照（DataStore 钉块读数）"
+              },
+              {
+                "name": "Σmax(positionPaysLp,0)（期望增量，floor funding）",
+                "value": "0",
+                "source": "Funding 事件区间总账（Σ over 1 条；共享市场他单执行也会推进）"
+              },
+              {
+                "name": "claimable funding after（对照对象）",
+                "value": "0",
+                "source": "链上阶段快照（DataStore 钉块读数）"
+              }
+            ]
+          },
+          {
+            "id": "tx2-execute-open-long-funding-factor",
+            "group": "TX2 · Keeper 执行开仓 · Funding",
+            "label": "Long Funding Factor / second",
+            "status": "PASS",
+            "before": "0 raw (0 EMA skew)",
+            "after": "0 raw (0 factor/s)",
+            "expected": "0 raw (0 factor/s)",
+            "formula": "longFactor = totalOpenInterest = 0，Funding 更新为 no-op，因此 longFactor = 0",
+            "basis": {
+              "title": "Long Funding Factor",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md",
+              "section": "五、Funding / 5.2 Funding Factor"
+            },
+            "unit": "factor 1e30 / second",
+            "note": "参数来自执行区块 #45432568 的 DataStore 实际值。口径：市场级费率——emaSkew 是全市场失衡的 EMA（由该市场全部交易活动驱动，非本单专属），得到的费率对该市场所有多头仓位统一生效。",
+            "txStep": "TX2",
+            "verification": "计算复算",
+            "dataSource": "合约+事件"
+          },
+          {
+            "id": "tx2-execute-open-short-funding-factor",
+            "group": "TX2 · Keeper 执行开仓 · Funding",
+            "label": "Short Funding Factor / second",
+            "status": "PASS",
+            "before": "0 raw (0 EMA skew)",
+            "after": "0 raw (0 factor/s)",
+            "expected": "0 raw (0 factor/s)",
+            "formula": "shortFactor = totalOpenInterest = 0，Funding 更新为 no-op，因此 shortFactor = 0",
+            "basis": {
+              "title": "Short Funding Factor",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md",
+              "section": "五、Funding / 5.2 Funding Factor"
+            },
+            "unit": "factor 1e30 / second",
+            "note": "参数来自执行区块 #45432568 的 DataStore 实际值。口径：市场级费率——emaSkew 是全市场失衡的 EMA（由该市场全部交易活动驱动，非本单专属），得到的费率对该市场所有空头仓位统一生效。",
+            "txStep": "TX2",
+            "verification": "计算复算",
+            "dataSource": "合约+事件"
+          },
+          {
+            "id": "tx3-create-close-ledger-traderUsdc",
+            "group": "TX3 · 创建全平订单 · 资金账户",
+            "label": "ΔTrader",
+            "status": "PASS",
+            "before": "999990000000 raw (999990 USDC)",
+            "after": "999990000000 raw (999990 USDC)",
+            "delta": "0 raw (0 USDC)",
+            "expected": "999990000000 raw (999990 USDC)",
+            "formula": "创建减仓订单只支付 ETH execution fee：Expected ΔTrader USDC = 0；Expected After = Before + Expected Δ = 999990000000 + (0) = 999990000000",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterOpen → afterCreateClose"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：账户级——本交易账户的 USDC 钱包余额；Δ 核对隐含窗口内该账户无其他收支。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX3",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx3-create-close-ledger-orderVaultUsdc",
+            "group": "TX3 · 创建全平订单 · 资金账户",
+            "label": "ΔOrderVault",
+            "status": "PASS",
+            "before": "430913615793 raw (430913.615793 USDC)",
+            "after": "430913615793 raw (430913.615793 USDC)",
+            "delta": "0 raw (0 USDC)",
+            "expected": "430913615793 raw (430913.615793 USDC)",
+            "formula": "减仓订单没有 USDC 抵押品存入：Expected ΔOrderVault = 0；Expected After = Before + Expected Δ = 430913615793 + (0) = 430913615793",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterOpen → afterCreateClose"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：合约级——OrderVault 合约 USDC 总余额（所有账户的在途订单资金都在此）；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX3",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx3-create-close-ledger-posVaultUsdc",
+            "group": "TX3 · 创建全平订单 · 资金账户",
+            "label": "ΔPositionVault",
+            "status": "PASS",
+            "before": "12827926664146 raw (12827926.664146 USDC)",
+            "after": "12827926664146 raw (12827926.664146 USDC)",
+            "delta": "0 raw (0 USDC)",
+            "expected": "12827926664146 raw (12827926.664146 USDC)",
+            "formula": "订单尚未执行：Expected ΔPositionVault = 0；Expected After = Before + Expected Δ = 12827926664146 + (0) = 12827926664146",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterOpen → afterCreateClose"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：合约级——PositionVault 合约 USDC 总余额（全体仓位的抵押与未领费用都在此）；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX3",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx3-create-close-ledger-lpVaultAssets",
+            "group": "TX3 · 创建全平订单 · 资金账户",
+            "label": "ΔLPVaultAssets",
+            "status": "PASS",
+            "before": "50261109657664 raw (50261109.657664 USDC)",
+            "after": "50261109657664 raw (50261109.657664 USDC)",
+            "delta": "0 raw (0 USDC)",
+            "expected": "50261109657664 raw (50261109.657664 USDC)",
+            "formula": "订单尚未执行：Expected ΔLPVault = 0；Expected After = Before + Expected Δ = 50261109657664 + (0) = 50261109657664",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterOpen → afterCreateClose"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：池级——LP 金库 totalAssets（整池资产，全体 LP 共有）；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX3",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx3-create-close-ledger-feeReceiverUsdc",
+            "group": "TX3 · 创建全平订单 · 资金账户",
+            "label": "ΔFeeHandler",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "0 raw (0 USDC)",
+            "delta": "0 raw (0 USDC)",
+            "expected": "0 raw (0 USDC)",
+            "formula": "费用尚未结算：Expected ΔFeeHandler balance = 0；Expected After = Before + Expected Δ = 0 + (0) = 0",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterOpen → afterCreateClose"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：协议级——FeeHandler 合约 USDC 总余额（跨市场、跨账户累计）；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX3",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx3-create-close-ledger-claimableFeeAmountPosition",
+            "group": "TX3 · 创建全平订单 · 资金账户",
+            "label": "待领取仓位费",
+            "status": "PASS",
+            "before": "12512 raw (0.012512 USDC)",
+            "after": "12512 raw (0.012512 USDC)",
+            "delta": "0 raw (0 USDC)",
+            "expected": "12512 raw (0.012512 USDC)",
+            "formula": "费用尚未结算：Expected ΔClaimable Position Fee = 0；Expected After = Before + Expected Δ = 12512 + (0) = 12512",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterOpen → afterCreateClose"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：市场级累计——claimableFeeAmount(market, USDC, POSITION)，该市场全体交易者产生的待领取仓位费；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX3",
+            "verification": "计算复算",
+            "dataSource": "合约+事件"
+          },
+          {
+            "id": "tx3-create-close-ledger-claimableFeeAmountFunding",
+            "group": "TX3 · 创建全平订单 · 资金账户",
+            "label": "待领取 Funding",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "0 raw (0 USDC)",
+            "delta": "0 raw (0 USDC)",
+            "expected": "0 raw (0 USDC)",
+            "formula": "Funding 尚未结算：Expected ΔClaimable Funding = 0；Expected After = Before + Expected Δ = 0 + (0) = 0",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterOpen → afterCreateClose"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：市场级累计——claimableFeeAmount(market, USDC, FUNDING)，该市场付给 LP 的待领取 Funding；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX3",
+            "verification": "计算复算",
+            "dataSource": "合约+事件"
+          },
+          {
+            "id": "tx3-create-close-ledger-claimableFeeAmountLiquidation",
+            "group": "TX3 · 创建全平订单 · 资金账户",
+            "label": "待领取清算费",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "0 raw (0 USDC)",
+            "delta": "0 raw (0 USDC)",
+            "expected": "0 raw (0 USDC)",
+            "formula": "非清算订单：Expected ΔClaimable Liquidation Fee = 0；Expected After = Before + Expected Δ = 0 + (0) = 0",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterOpen → afterCreateClose"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：市场级累计——claimableFeeAmount(market, USDC, LIQUIDATION)，该市场清算费 receiver 份额；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX3",
+            "verification": "计算复算",
+            "dataSource": "合约+事件"
+          },
+          {
+            "id": "tx3-create-close-ledger-cumulativeOpenCostsLong",
+            "group": "TX3 · 创建全平订单 · 市场 / OI",
+            "label": "Long 累计开仓成本（USD 成本口径）",
+            "status": "PASS",
+            "before": "0 raw (0 USD)",
+            "after": "0 raw (0 USD)",
+            "delta": "0 raw (0 USD)",
+            "expected": "0 raw (0 USD)",
+            "formula": "减仓订单尚未执行：Expected ΔLong Open Costs = 0；Expected After = Before + Expected Δ = 0 + (0) = 0",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterOpen → afterCreateClose"
+            },
+            "unit": "USD 1e30",
+            "note": "口径：市场级总账——该市场全体交易者的多头开仓成本聚合；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX3",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx3-create-close-ledger-cumulativeOpenCostsShort",
+            "group": "TX3 · 创建全平订单 · 市场 / OI",
+            "label": "Short 累计开仓成本（USD 成本口径）",
+            "status": "PASS",
+            "before": "50000000000000000000000000000000 raw (50 USD)",
+            "after": "50000000000000000000000000000000 raw (50 USD)",
+            "delta": "0 raw (0 USD)",
+            "expected": "50000000000000000000000000000000 raw (50 USD)",
+            "formula": "减仓订单尚未执行：Expected ΔShort Open Costs = 0；Expected After = Before + Expected Δ = 50000000000000000000000000000000 + (0) = 50000000000000000000000000000000",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterOpen → afterCreateClose"
+            },
+            "unit": "USD 1e30",
+            "note": "口径：市场级总账——该市场全体交易者的空头开仓成本聚合；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX3",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx3-create-close-ledger-openInterestInTokensLong",
+            "group": "TX3 · 创建全平订单 · 市场 / OI",
+            "label": "Long OI（Token 口径）",
+            "status": "PASS",
+            "before": "0 raw (0 ETH)",
+            "after": "0 raw (0 ETH)",
+            "delta": "0 raw (0 ETH)",
+            "expected": "0 raw (0 ETH)",
+            "formula": "减仓订单尚未执行：Expected ΔLong OI = 0；Expected After = Before + Expected Δ = 0 + (0) = 0",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterOpen → afterCreateClose"
+            },
+            "unit": "ETH 1e18",
+            "note": "口径：市场级总账——该市场全体交易者的多头 OI（Token）聚合；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX3",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx3-create-close-ledger-openInterestInTokensShort",
+            "group": "TX3 · 创建全平订单 · 市场 / OI",
+            "label": "Short OI（Token 口径）",
+            "status": "PASS",
+            "before": "834459907926084 raw (0.000834459907926084 ETH)",
+            "after": "834459907926084 raw (0.000834459907926084 ETH)",
+            "delta": "0 raw (0 ETH)",
+            "expected": "834459907926084 raw (0.000834459907926084 ETH)",
+            "formula": "减仓订单尚未执行：Expected ΔShort OI = 0；Expected After = Before + Expected Δ = 834459907926084 + (0) = 834459907926084",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterOpen → afterCreateClose"
+            },
+            "unit": "ETH 1e18",
+            "note": "口径：市场级总账——该市场全体交易者的空头 OI（Token）聚合；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX3",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx3-create-close-position-sizeInUsd",
+            "group": "TX3 · 创建全平订单 · 仓位原始字段",
+            "label": "仓位 sizeInUsd",
+            "status": "PASS",
+            "before": "50000000000000000000000000000000 raw (50 USD)",
+            "after": "50000000000000000000000000000000 raw (50 USD)",
+            "delta": "0 raw (0 USD)",
+            "expected": "50000000000000000000000000000000 raw (50 USD)",
+            "formula": "仅创建全平订单，Keeper 尚未执行，仓位原始字段保持不变；本次：Expected sizeInUsd = 50000000000000000000000000000000（Before 50000000000000000000000000000000 → After 50000000000000000000000000000000）",
+            "basis": {
+              "title": "PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "TX3 · 创建全平订单 position"
+            },
+            "unit": "USD 1e30",
+            "txStep": "TX3",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx3-create-close-position-sizeInTokens",
+            "group": "TX3 · 创建全平订单 · 仓位原始字段",
+            "label": "仓位 sizeInTokens",
+            "status": "PASS",
+            "before": "834459907926084 raw (0.000834459907926084 ETH)",
+            "after": "834459907926084 raw (0.000834459907926084 ETH)",
+            "delta": "0 raw (0 ETH)",
+            "expected": "834459907926084 raw (0.000834459907926084 ETH)",
+            "formula": "仅创建全平订单，Keeper 尚未执行，仓位原始字段保持不变；本次：Expected sizeInTokens = 834459907926084（Before 834459907926084 → After 834459907926084）",
+            "basis": {
+              "title": "PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "TX3 · 创建全平订单 position"
+            },
+            "unit": "ETH 1e18",
+            "txStep": "TX3",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx3-create-close-position-collateralAmount",
+            "group": "TX3 · 创建全平订单 · 仓位原始字段",
+            "label": "仓位 Margin / collateralAmount",
+            "status": "PASS",
+            "before": "9974975 raw (9.974975 USDC)",
+            "after": "9974975 raw (9.974975 USDC)",
+            "delta": "0 raw (0 USDC)",
+            "expected": "9974975 raw (9.974975 USDC)",
+            "formula": "仅创建全平订单，Keeper 尚未执行，仓位原始字段保持不变；本次：Expected collateralAmount = 9974975（Before 9974975 → After 9974975）",
+            "basis": {
+              "title": "PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "TX3 · 创建全平订单 position"
+            },
+            "unit": "USDC 1e6",
+            "txStep": "TX3",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx3-create-close-position-negativeFundingFeePerSize",
+            "group": "TX3 · 创建全平订单 · 仓位原始字段",
+            "label": "仓位负 Funding 结算基准 / size",
+            "status": "PASS",
+            "before": "0 raw (0 raw)",
+            "after": "0 raw (0 raw)",
+            "delta": "0 raw (0 raw)",
+            "expected": "0 raw (0 raw)",
+            "formula": "仅创建全平订单，Keeper 尚未执行，仓位原始字段保持不变；本次：Expected negativeFundingFeePerSize = 0（Before 0 → After 0）",
+            "basis": {
+              "title": "PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "TX3 · 创建全平订单 position"
+            },
+            "unit": "funding per-size raw",
+            "txStep": "TX3",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx3-create-close-position-positiveFundingFeePerSize",
+            "group": "TX3 · 创建全平订单 · 仓位原始字段",
+            "label": "仓位正 Funding 结算基准 / size",
+            "status": "PASS",
+            "before": "0 raw (0 raw)",
+            "after": "0 raw (0 raw)",
+            "delta": "0 raw (0 raw)",
+            "expected": "0 raw (0 raw)",
+            "formula": "仅创建全平订单，Keeper 尚未执行，仓位原始字段保持不变；本次：Expected positiveFundingFeePerSize = 0（Before 0 → After 0）",
+            "basis": {
+              "title": "PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "TX3 · 创建全平订单 position"
+            },
+            "unit": "funding per-size raw",
+            "txStep": "TX3",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx4-execute-close-ledger-traderUsdc",
+            "group": "TX4 · Keeper 执行全平 · 资金账户",
+            "label": "ΔTrader",
+            "status": "PASS",
+            "before": "999990000000 raw (999990 USDC)",
+            "after": "999994835362 raw (999994.835362 USDC)",
+            "delta": "+4835362 raw (4.835362 USDC)",
+            "expected": "999994835362 raw (999994.835362 USDC)",
+            "formula": "Expected ΔTrader（processCollateral 瀑布重放，全平）= 4835362；瀑布：output=盈利 0 → 押金=9974975+funding 0 → pay(欠 funding 45) → pay(亏损 5134563) → pay(费用 5005) → 全平退剩余押金 4835362 → output 4835362；Expected After = Before + Expected Δ = 999990000000 + (4835362) = 999994835362",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterCreateClose → afterClose"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：账户级——本交易账户的 USDC 钱包余额；Δ 核对隐含窗口内该账户无其他收支。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=4835362 raw。positivePnl=0；negativePnl=ceil(abs(-5129428277044665544000000000000)/999000000000000000000000)=5134563。瀑布顺序敏感：盈利先进 output、正 funding 先入押金、成本先扣 output 再扣押金（盈利垫费）；全平退还全部剩余押金（偿付型下与线性式等值）。",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "合约",
+            "inputs": [
+              {
+                "name": "oldMargin（全平退还基数）",
+                "value": "9974975",
+                "source": "仓位 Before 快照（Reader，钉块读数）"
+              },
+              {
+                "name": "positiveFundingFeeAmount",
+                "value": "0",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              },
+              {
+                "name": "negativeFundingFeeAmount",
+                "value": "45",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              },
+              {
+                "name": "basePnlUsd（Cap 后，1e30 USD）",
+                "value": "-5129428277044665544000000000000",
+                "source": "PositionDecrease 事件 int 字段；uncapped 版已在 PnL 组独立复算"
+              },
+              {
+                "name": "positivePnl（盈利折 USDC，⌊÷colPrice.max⌋）",
+                "value": "0",
+                "source": "派生：basePnl>0 时 ÷ 1001000000000000000000000（事件 max 价，向下取整）"
+              },
+              {
+                "name": "negativePnl（亏损折 USDC，⌈÷colPrice.min⌉）",
+                "value": "5134563",
+                "source": "派生：basePnl<0 时 ceil(÷999000000000000000000000)（事件 min 价，向上取整）"
+              },
+              {
+                "name": "feeExFunding（费用 excl funding）",
+                "value": "5005",
+                "source": "派生：事件 totalCostAmount − negativeFunding；分量在 Fee 组独立复算"
+              },
+              {
+                "name": "Expected ΔTrader（瀑布结果）",
+                "value": "4835362",
+                "source": "派生：processCollateral 瀑布重放，与链上 Trader 余额 Δ 逐位对照"
+              }
+            ]
+          },
+          {
+            "id": "tx4-execute-close-ledger-orderVaultUsdc",
+            "group": "TX4 · Keeper 执行全平 · 资金账户",
+            "label": "ΔOrderVault",
+            "status": "PASS",
+            "before": "430913615793 raw (430913.615793 USDC)",
+            "after": "430913615793 raw (430913.615793 USDC)",
+            "delta": "0 raw (0 USDC)",
+            "expected": "430913615793 raw (430913.615793 USDC)",
+            "formula": "减仓订单没有抵押品存入：Expected ΔOrderVault = 0；Expected After = Before + Expected Δ = 430913615793 + (0) = 430913615793",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterCreateClose → afterClose"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：合约级——OrderVault 合约 USDC 总余额（所有账户的在途订单资金都在此）；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx4-execute-close-ledger-posVaultUsdc",
+            "group": "TX4 · Keeper 执行全平 · 资金账户",
+            "label": "ΔPositionVault",
+            "status": "PASS",
+            "before": "12827926664146 raw (12827926.664146 USDC)",
+            "after": "12827916691718 raw (12827916.691718 USDC)",
+            "delta": "-9972428 raw (-9.972428 USDC)",
+            "expected": "12827916691718 raw (12827916.691718 USDC)",
+            "formula": "Expected ΔPositionVault = −TraderOutput − ΔLPVault = −4835362 − 5137066 = -9972428；Expected After = Before + Expected Δ = 12827926664146 + (-9972428) = 12827916691718",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterCreateClose → afterClose"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：合约级——PositionVault 合约 USDC 总余额（全体仓位的抵押与未领费用都在此）；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=-9972428 raw。",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "合约",
+            "inputs": [
+              {
+                "name": "TraderOutput",
+                "value": "4835362",
+                "source": "派生：ΔTrader 行的瀑布重放结果"
+              },
+              {
+                "name": "ΔLPVault",
+                "value": "5137066",
+                "source": "派生：ΔLPVaultAssets 行的期望值"
+              },
+              {
+                "name": "Expected ΔPositionVault",
+                "value": "-9972428",
+                "source": "派生：三方内部闭合（PositionVault 是瀑布的出纳方）"
+              }
+            ]
+          },
+          {
+            "id": "tx4-execute-close-ledger-lpVaultAssets",
+            "group": "TX4 · Keeper 执行全平 · 资金账户",
+            "label": "ΔLPVaultAssets",
+            "status": "PASS",
+            "before": "50261109657664 raw (50261109.657664 USDC)",
+            "after": "50261114794730 raw (50261114.79473 USDC)",
+            "delta": "+5137066 raw (5.137066 USDC)",
+            "expected": "50261114794730 raw (50261114.79473 USDC)",
+            "formula": "Expected ΔLPVault = feeForPool + negativePnl − positivePnl − LP→Position Funding = 2503 + 5134563 − 0 − 0 = 5137066；Expected After = Before + Expected Δ = 50261109657664 + (5137066) = 50261114794730",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterCreateClose → afterClose"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：池级——LP 金库 totalAssets（整池资产，全体 LP 共有）；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=5137066 raw。",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "合约",
+            "inputs": [
+              {
+                "name": "feeAmountForPool（LP 费份额）",
+                "value": "2503",
+                "source": "PositionFeesCollected 事件；独立复算见 Fee 组「LP Pool 分成」行"
+              },
+              {
+                "name": "negativePnl（trader 亏损进池）",
+                "value": "5134563",
+                "source": "派生：ceil(|basePnl|÷colPrice.min)"
+              },
+              {
+                "name": "positivePnl（池付 trader 盈利）",
+                "value": "0",
+                "source": "派生：⌊basePnl÷colPrice.max⌋"
+              },
+              {
+                "name": "LP→Position Funding",
+                "value": "0",
+                "source": "Funding 事件：Σmax(−positionPaysLp,0)（Σ over 1 条 Funding 事件），positionPaysLp<0 时 LPVault 实付"
+              }
+            ]
+          },
+          {
+            "id": "tx4-execute-close-ledger-feeReceiverUsdc",
+            "group": "TX4 · Keeper 执行全平 · 资金账户",
+            "label": "ΔFeeHandler",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "0 raw (0 USDC)",
+            "delta": "0 raw (0 USDC)",
+            "expected": "0 raw (0 USDC)",
+            "formula": "协议费只记 Claimable（USDC 物理留在 PositionVault）；claimFees 之前 FeeHandler 余额不变：Expected ΔFeeHandler = 0；Expected After = Before + Expected Δ = 0 + (0) = 0",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterCreateClose → afterClose"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：协议级——FeeHandler 合约 USDC 总余额（跨市场、跨账户累计）；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx4-execute-close-ledger-claimableFeeAmountPosition",
+            "group": "TX4 · Keeper 执行全平 · 资金账户",
+            "label": "待领取仓位费",
+            "status": "PASS",
+            "before": "12512 raw (0.012512 USDC)",
+            "after": "15014 raw (0.015014 USDC)",
+            "delta": "+2502 raw (0.002502 USDC)",
+            "expected": "15014 raw (0.015014 USDC)",
+            "formula": "Expected ΔClaimable Position Fee = feeReceiverAmount = 2502；Expected After = Before + Expected Δ = 12512 + (2502) = 15014",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterCreateClose → afterClose"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：市场级累计——claimableFeeAmount(market, USDC, POSITION)，该市场全体交易者产生的待领取仓位费；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=2502 raw。【事件对照】期望值取自 PositionFeesCollected.feeReceiverAmount，与 DataStore 入账增量交叉核对；该金额的独立复算见 Fee 组「Fee Receiver 分成」行。",
+            "txStep": "TX4",
+            "verification": "事件对照",
+            "dataSource": "合约+事件"
+          },
+          {
+            "id": "tx4-execute-close-ledger-claimableFeeAmountFunding",
+            "group": "TX4 · Keeper 执行全平 · 资金账户",
+            "label": "待领取 Funding",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "44 raw (0.000044 USDC)",
+            "delta": "+44 raw (0.000044 USDC)",
+            "expected": "44 raw (0.000044 USDC)",
+            "formula": "Expected ΔClaimable Funding = Σmax(positionPaysLp, 0)（Σ over 1 条 Funding 事件）= 44；Expected After = Before + Expected Δ = 0 + (44) = 44",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterCreateClose → afterClose"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：市场级累计——claimableFeeAmount(market, USDC, FUNDING)，该市场付给 LP 的待领取 Funding；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=44 raw。【事件对照】期望值对窗口内全部 Funding 事件的 positionPaysLp 做 Σmax(·,0) 聚合（共享市场他单执行也会推进市场 Funding），与 DataStore 入账增量交叉核对。",
+            "txStep": "TX4",
+            "verification": "事件对照",
+            "dataSource": "合约+事件"
+          },
+          {
+            "id": "tx4-execute-close-ledger-claimableFeeAmountLiquidation",
+            "group": "TX4 · Keeper 执行全平 · 资金账户",
+            "label": "待领取清算费",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "0 raw (0 USDC)",
+            "delta": "0 raw (0 USDC)",
+            "expected": "0 raw (0 USDC)",
+            "formula": "非清算订单：Expected ΔClaimable Liquidation Fee = 0；Expected After = Before + Expected Δ = 0 + (0) = 0",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterCreateClose → afterClose"
+            },
+            "unit": "USDC 1e6",
+            "note": "口径：市场级累计——claimableFeeAmount(market, USDC, LIQUIDATION)，该市场清算费 receiver 份额；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "合约+事件"
+          },
+          {
+            "id": "tx4-execute-close-ledger-cumulativeOpenCostsLong",
+            "group": "TX4 · Keeper 执行全平 · 市场 / OI",
+            "label": "Long 累计开仓成本（USD 成本口径）",
+            "status": "PASS",
+            "before": "0 raw (0 USD)",
+            "after": "0 raw (0 USD)",
+            "delta": "0 raw (0 USD)",
+            "expected": "0 raw (0 USD)",
+            "formula": "Expected ΔLong Open Costs：本次 isLong=false（平空）→ Long 侧不动，Expected Δ = 0；Expected After = Before + Expected Δ = 0 + (0) = 0",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterCreateClose → afterClose"
+            },
+            "unit": "USD 1e30",
+            "note": "口径：市场级总账——该市场全体交易者的多头开仓成本聚合；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx4-execute-close-ledger-cumulativeOpenCostsShort",
+            "group": "TX4 · Keeper 执行全平 · 市场 / OI",
+            "label": "Short 累计开仓成本（USD 成本口径）",
+            "status": "PASS",
+            "before": "50000000000000000000000000000000 raw (50 USD)",
+            "after": "0 raw (0 USD)",
+            "delta": "-50000000000000000000000000000000 raw (-50 USD)",
+            "expected": "0 raw (0 USD)",
+            "formula": "Expected ΔShort Open Costs = −sizeDeltaUsd；本次 isLong=false（平空）→ −50000000000000000000000000000000；Expected After = Before + Expected Δ = 50000000000000000000000000000000 + (-50000000000000000000000000000000) = 0",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterCreateClose → afterClose"
+            },
+            "unit": "USD 1e30",
+            "note": "口径：市场级总账——该市场全体交易者的空头开仓成本聚合；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=-50000000000000000000000000000000 raw。",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx4-execute-close-ledger-openInterestInTokensLong",
+            "group": "TX4 · Keeper 执行全平 · 市场 / OI",
+            "label": "Long OI（Token 口径）",
+            "status": "PASS",
+            "before": "0 raw (0 ETH)",
+            "after": "0 raw (0 ETH)",
+            "delta": "0 raw (0 ETH)",
+            "expected": "0 raw (0 ETH)",
+            "formula": "Expected ΔLong OI；本次 isLong=false（平空）→ Long 侧不动，Expected Δ = 0；Expected After = Before + Expected Δ = 0 + (0) = 0",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterCreateClose → afterClose"
+            },
+            "unit": "ETH 1e18",
+            "note": "口径：市场级总账——该市场全体交易者的多头 OI（Token）聚合；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=0 raw。",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx4-execute-close-ledger-openInterestInTokensShort",
+            "group": "TX4 · Keeper 执行全平 · 市场 / OI",
+            "label": "Short OI（Token 口径）",
+            "status": "PASS",
+            "before": "834459907926084 raw (0.000834459907926084 ETH)",
+            "after": "0 raw (0 ETH)",
+            "delta": "-834459907926084 raw (-0.000834459907926084 ETH)",
+            "expected": "0 raw (0 ETH)",
+            "formula": "Expected ΔShort OI = −sizeDeltaInTokens（平空按仓位等比销账，与执行价无关）；全平恒等分支：sizeDeltaUsd == oldSizeUsd → 精确清零 834459907926084 tokens（无取整、无尘埃） → Δ = -834459907926084；Expected After = Before + Expected Δ = 834459907926084 + (-834459907926084) = 0",
+            "basis": {
+              "title": "链上阶段快照与账户增量账本",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "afterCreateClose → afterClose"
+            },
+            "unit": "ETH 1e18",
+            "note": "口径：市场级总账——该市场全体交易者的空头 OI（Token）聚合；本单只体现在 Δ。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=-834459907926084 raw。",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx4-execute-close-position-sizeInUsd",
+            "group": "TX4 · Keeper 执行全平 · 仓位原始字段",
+            "label": "仓位 sizeInUsd",
+            "status": "PASS",
+            "before": "50000000000000000000000000000000 raw (50 USD)",
+            "after": "0 raw (0 USD)",
+            "delta": "-50000000000000000000000000000000 raw (-50 USD)",
+            "expected": "0 raw (0 USD)",
+            "formula": "全平后 sizeInUsd = 0，仓位删除并将原始字段清零；本次：Expected sizeInUsd = 0（Before 50000000000000000000000000000000 → After 0）",
+            "basis": {
+              "title": "PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "TX4 · Keeper 执行全平 position"
+            },
+            "unit": "USD 1e30",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx4-execute-close-position-sizeInTokens",
+            "group": "TX4 · Keeper 执行全平 · 仓位原始字段",
+            "label": "仓位 sizeInTokens",
+            "status": "PASS",
+            "before": "834459907926084 raw (0.000834459907926084 ETH)",
+            "after": "0 raw (0 ETH)",
+            "delta": "-834459907926084 raw (-0.000834459907926084 ETH)",
+            "expected": "0 raw (0 ETH)",
+            "formula": "全平后 sizeInUsd = 0，仓位删除并将原始字段清零；本次：Expected sizeInTokens = 0（Before 834459907926084 → After 0）",
+            "basis": {
+              "title": "PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "TX4 · Keeper 执行全平 position"
+            },
+            "unit": "ETH 1e18",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx4-execute-close-position-collateralAmount",
+            "group": "TX4 · Keeper 执行全平 · 仓位原始字段",
+            "label": "仓位 Margin / collateralAmount",
+            "status": "PASS",
+            "before": "9974975 raw (9.974975 USDC)",
+            "after": "0 raw (0 USDC)",
+            "delta": "-9974975 raw (-9.974975 USDC)",
+            "expected": "0 raw (0 USDC)",
+            "formula": "全平后 sizeInUsd = 0，仓位删除并将原始字段清零；本次：Expected collateralAmount = 0（Before 9974975 → After 0）",
+            "basis": {
+              "title": "PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "TX4 · Keeper 执行全平 position"
+            },
+            "unit": "USDC 1e6",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx4-execute-close-position-negativeFundingFeePerSize",
+            "group": "TX4 · Keeper 执行全平 · 仓位原始字段",
+            "label": "仓位负 Funding 结算基准 / size",
+            "status": "PASS",
+            "before": "0 raw (0 raw)",
+            "after": "0 raw (0 raw)",
+            "delta": "0 raw (0 raw)",
+            "expected": "0 raw (0 raw)",
+            "formula": "全平后 sizeInUsd = 0，仓位删除并将原始字段清零；本次：Expected negativeFundingFeePerSize = 0（Before 0 → After 0）",
+            "basis": {
+              "title": "PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "TX4 · Keeper 执行全平 position"
+            },
+            "unit": "funding per-size raw",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx4-execute-close-position-positiveFundingFeePerSize",
+            "group": "TX4 · Keeper 执行全平 · 仓位原始字段",
+            "label": "仓位正 Funding 结算基准 / size",
+            "status": "PASS",
+            "before": "0 raw (0 raw)",
+            "after": "0 raw (0 raw)",
+            "delta": "0 raw (0 raw)",
+            "expected": "0 raw (0 raw)",
+            "formula": "全平后 sizeInUsd = 0，仓位删除并将原始字段清零；本次：Expected positiveFundingFeePerSize = 0（Before 0 → After 0）",
+            "basis": {
+              "title": "PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "TX4 · Keeper 执行全平 position"
+            },
+            "unit": "funding per-size raw",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx4-execute-close-pricing-oracle-mid",
+            "group": "TX4 · Keeper 执行全平 · OI / Skew / Spread",
+            "label": "Oracle 价格（min / mid / max）",
+            "status": "CALCULATED",
+            "before": "min = 66066000000000000",
+            "after": "max = 66066000000000000",
+            "delta": "mid = (66066000000000000 + 66066000000000000) / 2 = 66066000000000000",
+            "expected": "—（本次执行采用的 Oracle 价格展示行）",
+            "formula": "indexMid = (indexTokenPrice.min + indexTokenPrice.max) / 2；本次：(66066000000000000 + 66066000000000000) / 2 = 66066000000000000",
+            "basis": {
+              "title": "本次执行的 Oracle 价格三元组",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md",
+              "section": "一、下单面板 / Oracle 价格"
+            },
+            "unit": "price raw（USD×1e12 / token）",
+            "note": "min/max 为执行事件携带的 Oracle 双边价（stablePrice 锚参与 min/max 合并）；mid 是 OI 盯市（USD 口径）与多空失衡判定的统一输入。执行价按方向取不利侧：多开/空平用 max、空开/多平用 min。",
+            "txStep": "TX4",
+            "verification": "派生展示",
+            "dataSource": "合约",
+            "inputs": [
+              {
+                "name": "indexTokenPrice.min",
+                "value": "66066000000000000",
+                "source": "PositionIncrease/Decrease 事件（执行回执解码）"
+              },
+              {
+                "name": "indexTokenPrice.max",
+                "value": "66066000000000000",
+                "source": "PositionIncrease/Decrease 事件（执行回执解码）"
+              },
+              {
+                "name": "indexMid（派生）",
+                "value": "66066000000000000",
+                "source": "派生：(min + max) / 2，向下取整"
+              }
+            ]
+          },
+          {
+            "id": "tx4-execute-close-pricing-long-oi-usd",
+            "group": "TX4 · Keeper 执行全平 · OI / Skew / Spread",
+            "label": "Long OI（USD 盯市口径，派生）",
+            "status": "CALCULATED",
+            "before": "0 raw (0 USD)",
+            "after": "0 raw (0 USD)",
+            "delta": "0 raw (0 USD)",
+            "expected": "—（派生展示行，无独立期望值）",
+            "formula": "longOIUsd = longOpenInterestInTokens × indexMidPrice；本次 After：0 × 66066000000000000 = 0（Before：0 × 66066000000000000 = 0）",
+            "basis": {
+              "title": "市场 Open Interest USD",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md",
+              "section": "五、Funding / OI 与 Skew"
+            },
+            "unit": "USD 1e30",
+            "note": "indexMidPrice=(66066000000000000+66066000000000000)/2=66066000000000000。openInterestInTokensLong 取自 DataStore 市场级总账（该市场全体交易者聚合），不是本单的量——本环境只有本账户一笔仓位，总量才恰好等于本单仓位。",
+            "txStep": "TX4",
+            "verification": "派生展示",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx4-execute-close-pricing-short-oi-usd",
+            "group": "TX4 · Keeper 执行全平 · OI / Skew / Spread",
+            "label": "Short OI（USD 盯市口径，派生）",
+            "status": "CALCULATED",
+            "before": "55129428277044665544000000000000 raw (55.129428277044665544 USD)",
+            "after": "0 raw (0 USD)",
+            "delta": "-55129428277044665544000000000000 raw (-55.129428277044665544 USD)",
+            "expected": "—（派生展示行，无独立期望值）",
+            "formula": "shortOIUsd = shortOpenInterestInTokens × indexMidPrice；本次 After：0 × 66066000000000000 = 0（Before：834459907926084 × 66066000000000000 = 55129428277044665544000000000000）",
+            "basis": {
+              "title": "市场 Open Interest USD",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md",
+              "section": "五、Funding / OI 与 Skew"
+            },
+            "unit": "USD 1e30",
+            "note": "openInterestInTokensShort 同为 DataStore 市场级总账（该市场全体交易者聚合），不是本单的量。",
+            "txStep": "TX4",
+            "verification": "派生展示",
+            "dataSource": "合约"
+          },
+          {
+            "id": "tx4-execute-close-pricing-raw-skew",
+            "group": "TX4 · Keeper 执行全平 · OI / Skew / Spread",
+            "label": "实时 Raw Skew（进入 EMA 前）",
+            "status": "CALCULATED",
+            "before": "-1000000000000000000 raw (-1 ratio)",
+            "after": "0 raw (0 ratio)",
+            "delta": "+1000000000000000000 raw (1 ratio)",
+            "expected": "—（派生展示行，无独立期望值）",
+            "formula": "skew = (longOIUsd − shortOIUsd) × 1e18 / (longOIUsd + shortOIUsd)；本次 After：(0 − 0) × 1e18 / (0) = 0",
+            "basis": {
+              "title": "Funding 原始 Skew；实际费率使用 EMA Skew",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md",
+              "section": "五、Funding / 5.1 Raw Skew"
+            },
+            "unit": "ratio 1e18",
+            "note": "longOIUsd / shortOIUsd 是市场级总量（该市场全体交易者的 OI 聚合后盯市），不是本单的量。本环境仅本账户一笔多仓，市场总量恰好等于本单仓位，数值才与本次交易一致；多账户市场此处会包含他人仓位。",
+            "txStep": "TX4",
+            "verification": "派生展示",
+            "dataSource": "合约",
+            "inputs": [
+              {
+                "name": "longOIUsd（全市场 After）",
+                "value": "0",
+                "source": "DataStore openInterestInTokensLong（市场级总账，全体交易者聚合）× indexMid"
+              },
+              {
+                "name": "shortOIUsd（全市场 After）",
+                "value": "0",
+                "source": "DataStore openInterestInTokensShort（市场级总账，全体交易者聚合）× indexMid"
+              }
+            ]
+          },
+          {
+            "id": "tx4-execute-close-pricing-balance-improved",
+            "group": "TX4 · Keeper 执行全平 · OI / Skew / Spread",
+            "label": "是否改善多空平衡",
+            "status": "PASS",
+            "before": "55129428277044665544000000000000 raw (55.129428277044665544 USD)",
+            "after": "0 raw (0 USD)",
+            "delta": "-55129428277044665544000000000000 raw (-55.129428277044665544 USD)",
+            "expected": "true",
+            "formula": "balanceWasImproved = abs(nextLongOI − nextShortOI) < abs(currentLongOI − currentShortOI)（next 用预备 tokenDelta：平仓无预备/最终分裂：sizeDeltaInTokens 834459907926084）；本次：|0| < |55129428277044665544000000000000| = true（事件实际值 true；快照终值失衡 0 仅作对照）",
+            "basis": {
+              "title": "Skew Impact 正负方向",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md",
+              "section": "一、下单面板 / Dynamic Spread"
+            },
+            "unit": "boolean / USD 1e30",
+            "note": "独立推算用前后快照的实测失衡近似合约\"当前失衡 + 本单预备 Δ\"的判定（单账户受控场景等价）；合约口径为盯市 OI（tokens×midPrice）+ 预备 tokenDelta，严格 <，相等算未改善。该布尔决定 Position Fee 用哪一档费率。",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "事件",
+            "inputs": [
+              {
+                "name": "openInterestInTokensLong（before/after）",
+                "value": "0 → 0",
+                "source": "链上阶段快照（钉块读数）"
+              },
+              {
+                "name": "openInterestInTokensShort（before/after）",
+                "value": "834459907926084 → 0",
+                "source": "链上阶段快照（钉块读数）"
+              },
+              {
+                "name": "indexMidPrice = (min+max)/2",
+                "value": "66066000000000000",
+                "source": "PositionIncrease/Decrease 事件 indexTokenPrice"
+              },
+              {
+                "name": "event.balanceWasImproved（对照对象）",
+                "value": "true",
+                "source": "PositionFeesCollected 事件 bool 字段"
+              }
+            ]
+          },
+          {
+            "id": "tx4-execute-close-pricing-skew-impact",
+            "group": "TX4 · Keeper 执行全平 · OI / Skew / Spread",
+            "label": "Skew Impact（参数复算）",
+            "status": "CALCULATED",
+            "before": "skewRef（输入）= 500000000000000000 raw (0.5 ratio)",
+            "after": "skewImpact（分量结果）= -1250000000000000 raw (-0.00125 ratio)",
+            "delta": "-1250000000000000 raw (-0.00125 ratio)",
+            "expected": "—（参数复算展示行，事件未单独给出 Skew 分量，无对照值；总值对照见「Dynamic Spread 总值」行）",
+            "formula": "skewImpact = clamp(−skewImpactFactor × skewRef / 1e18, minSkewImpact, maxSkewImpact)（改善失衡取负后 clamp）；本次：clamp(−2500000000000000 × 500000000000000000 / 1e18, -5000000000000000, 5000000000000000) = -1250000000000000",
+            "basis": {
+              "title": "Skew Impact 参数公式",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md",
+              "section": "一、下单面板 / Dynamic Spread"
+            },
+            "unit": "ratio 1e18",
+            "note": "参数来自执行区块 #45432572 的 DataStore 实际值。 本行独立展示 Skew Impact 分量；Dynamic Spread 还包含 Price Impact。",
+            "txStep": "TX4",
+            "verification": "派生展示",
+            "dataSource": "合约",
+            "inputs": [
+              {
+                "name": "skewImpactFactor",
+                "value": "2500000000000000",
+                "source": "DataStore @ 执行区块 #45432572"
+              },
+              {
+                "name": "skewRef（前后失衡均值，市场级）",
+                "value": "500000000000000000",
+                "source": "派生：(|skewBefore -1000000000000000000| + |skewNext 0|) / 2（next 用预备 tokenDelta 口径，快照终值 skew 0 仅作对照）；skew 为全市场多空失衡比，非本单量"
+              },
+              {
+                "name": "balanceWasImproved（决定正负）",
+                "value": "true",
+                "source": "PositionFeesCollected 事件 bool；独立复算见「是否改善多空平衡」行"
+              },
+              {
+                "name": "min / maxSkewImpact（clamp 边界）",
+                "value": "-5000000000000000 / 5000000000000000",
+                "source": "DataStore @ 执行区块 #45432572"
+              },
+              {
+                "name": "skewImpact（结果）",
+                "value": "-1250000000000000",
+                "source": "派生：进入「Dynamic Spread 总值」行的三分量之一"
+              }
+            ]
+          },
+          {
+            "id": "tx4-execute-close-pricing-dynamic-spread",
+            "group": "TX4 · Keeper 执行全平 · OI / Skew / Spread",
+            "label": "Dynamic Spread 总值",
+            "status": "PASS",
+            "before": "0 raw (0 ratio)",
+            "after": "0 raw (0 ratio)",
+            "delta": "0 raw (0 ratio)",
+            "expected": "0 raw (0 ratio)",
+            "formula": "dynamicSpread = max(0, constantPriceSpread + priceImpactSpread + skewImpact)；本次：max(0, skewImpact -1250000000000000 + constant 100000000000000 + priceImpact 63099753136) = 0。priceImpact 分量：expArg = 50000000000000000000000000000000 × 600000000000000000 / 7923961270000000000000000000000000000 = 3785985188188；max(exp(expArg) − 1e18 = 3785992355038, 线性 50000000000000000000000000000000 × 1e18 / 7923961270000000000000000000000000000 = 6309975313647) / 100 = 63099753136；封顶 min(·, 5000000000000000) = 63099753136",
+            "basis": {
+              "title": "动态点差总公式",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md",
+              "section": "一、下单面板 / Dynamic Spread"
+            },
+            "unit": "ratio 1e18",
+            "note": "参数来自执行区块 #45432572 的 DataStore 实际值。 LogExpMath.exp 已逐句 BigInt 移植（蓝本 src/common/math/LogExpMath.sol，同序截断故可 bit 级）；skew 分量沿用快照失衡近似（skewImpactFactor=0 时精确，非零时预备值口径差异可能假 FAIL——P1 已知）；orderSize 用事件 sizeDeltaUsd（USD 模式=合约预备值；token 模式开仓需按 index 价重算，当前场景均为 USD 模式）。",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "事件",
+            "inputs": [
+              {
+                "name": "orderSizeUsd（预备值，本单量）",
+                "value": "50000000000000000000000000000000",
+                "source": "PositionIncrease/Decrease 事件 sizeDeltaUsd；Spread 输入中唯一的本单量，其余为市场级参数/状态"
+              },
+              {
+                "name": "priceImpactParameter",
+                "value": "600000000000000000",
+                "source": "DataStore @ 执行区块 #45432572"
+              },
+              {
+                "name": "askOrderBookDepth",
+                "value": "7923961270000000000000000000000000000",
+                "source": "DataStore @ 执行区块 #45432572；depth 按不利侧选 ask"
+              },
+              {
+                "name": "MAX_PRICE_IMPACT_SPREAD（全局封顶）",
+                "value": "5000000000000000",
+                "source": "DataStore @ 执行区块 #45432572"
+              },
+              {
+                "name": "constantPriceSpread",
+                "value": "100000000000000",
+                "source": "DataStore @ 执行区块 #45432572"
+              },
+              {
+                "name": "skewImpact（快照近似）",
+                "value": "-1250000000000000",
+                "source": "本组「Skew Impact（参数复算）」行"
+              },
+              {
+                "name": "dynamicSpread（对照对象）",
+                "value": "0",
+                "source": "PositionIncrease/Decrease 事件"
+              }
+            ]
+          },
+          {
+            "id": "tx4-execute-close-pricing-execution-price",
+            "group": "TX4 · Keeper 执行全平 · OI / Skew / Spread",
+            "label": "Spread 调整后执行价",
+            "status": "PASS",
+            "before": "66066000000000000",
+            "after": "66066000000000000",
+            "delta": "0 raw (0 price raw)",
+            "expected": "66066000000000000",
+            "formula": "方向规则：useMax = (开仓且多头) 或 (平仓且空头) → index.max × (1e18 + spread) 向上取整；否则 index.min × (1e18 − spread) 向下截断——始终取对交易者不利的一侧。本次 isLong=false、平仓 → max 侧 ⌈⌉：executionPrice = ceil(66066000000000000 × (1e18 + 0) / 1e18) = 66066000000000000",
+            "basis": {
+              "title": "方向与开/平仓共同决定价格不利侧",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md",
+              "section": "一、下单面板 / 1.5 执行价"
+            },
+            "unit": "price raw",
+            "note": "【恒等式】oracle 价与 dynamicSpread 均取自被核对的同一事件——本行验证合约价格公式（方向/不利侧/取整）自洽，不构成独立重算；dynamicSpread 的独立复算未实现（见 Dynamic Spread 行 NOT_VERIFIED）。",
+            "txStep": "TX4",
+            "verification": "恒等式",
+            "dataSource": "事件",
+            "inputs": [
+              {
+                "name": "oracle（index.max，不利=买贵）",
+                "value": "66066000000000000",
+                "source": "PositionIncrease/Decrease 事件 indexTokenPrice"
+              },
+              {
+                "name": "dynamicSpread",
+                "value": "0",
+                "source": "同一事件；独立复算未实现（见 Dynamic Spread 行）"
+              },
+              {
+                "name": "isLong / 平仓（方向判据）",
+                "value": "false",
+                "source": "事件 bool + 事件类型 → adverseUp=true"
+              },
+              {
+                "name": "executionPrice（对照对象）",
+                "value": "66066000000000000",
+                "source": "同一事件"
+              }
+            ]
+          },
+          {
+            "id": "tx4-execute-close-uncapped-pnl",
+            "group": "TX4 · Keeper 执行全平 · PnL",
+            "label": "Uncapped Base PnL",
+            "status": "PASS",
+            "before": "0 raw (0 USD)",
+            "after": "-5129428277044665544000000000000 raw (-5.129428277044665544 USD)",
+            "delta": "-5129428277044665544000000000000 raw (-5.129428277044665544 USD)",
+            "expected": "-5129428277044665544000000000000 raw (-5.129428277044665544 USD)",
+            "formula": "sizeDeltaUsd − sizeDeltaInTokens × executionPrice；本次：50000000000000000000000000000000 − 834459907926084 × 66066000000000000 = -5129428277044665544000000000000",
+            "basis": {
+              "title": "未裁剪的价格盈亏",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§6 仓位 PnL 与池子 PnL 裁剪"
+            },
+            "unit": "USD 1e30",
+            "note": "PnL 必须用事件执行价（含点差）——用 oracle 原价复算会系统性偏差。",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "事件",
+            "inputs": [
+              {
+                "name": "sizeDeltaInTokens",
+                "value": "834459907926084",
+                "source": "PositionDecrease 事件（执行回执解码）"
+              },
+              {
+                "name": "executionPrice（含 spread）",
+                "value": "66066000000000000",
+                "source": "PositionDecrease 事件；价格公式自洽性由「Spread 调整后执行价」行核对"
+              },
+              {
+                "name": "sizeDeltaUsd",
+                "value": "50000000000000000000000000000000",
+                "source": "PositionDecrease 事件（执行回执解码）"
+              },
+              {
+                "name": "uncappedBasePnlUsd（对照对象）",
+                "value": "-5129428277044665544000000000000",
+                "source": "PositionDecrease 事件 int 字段"
+              }
+            ]
+          },
+          {
+            "id": "tx4-execute-close-base-pnl",
+            "group": "TX4 · Keeper 执行全平 · PnL",
+            "label": "Base PnL（PnL Cap 后）",
+            "status": "NOT_VERIFIED",
+            "before": "-5129428277044665544000000000000 raw (-5.129428277044665544 USD)",
+            "after": "-5129428277044665544000000000000 raw (-5.129428277044665544 USD)",
+            "delta": "0 raw (0 USD)",
+            "expected": "与 uncappedPnl 同方向，且绝对值不超过 uncappedPnl",
+            "formula": "basePnlUsd = applyPnlCap(uncappedBasePnlUsd, poolPnl, maxPnlFactor)；本次：applyPnlCap(-5129428277044665544000000000000, poolPnl=未采集, maxPnlFactor=未采集)；事件 basePnlUsd=-5129428277044665544000000000000",
+            "basis": {
+              "title": "池子 PnL Cap 后的仓位基础盈亏",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md",
+              "section": "仓位 PnL 与池子 PnL 裁剪"
+            },
+            "unit": "USD 1e30",
+            "note": "方向/上限基础检查=true；尚未采集执行区块 poolPnl 与 maxPnlFactor，不能独立复算 Cap。",
+            "txStep": "TX4",
+            "verification": "缺数据",
+            "dataSource": "事件",
+            "inputs": [
+              {
+                "name": "uncappedBasePnlUsd",
+                "value": "-5129428277044665544000000000000",
+                "source": "PositionDecrease 事件；上一行已独立复算"
+              },
+              {
+                "name": "basePnlUsd（对照对象）",
+                "value": "-5129428277044665544000000000000",
+                "source": "PositionDecrease 事件 int 字段"
+              },
+              {
+                "name": "poolPnl / maxPnlFactor",
+                "value": "（未采集）",
+                "source": "缺执行区块池状态与 MAX_PNL_FACTOR——补齐后本行可升级为计算复算"
+              }
+            ]
+          },
+          {
+            "id": "tx4-execute-close-position-fee",
+            "group": "TX4 · Keeper 执行全平 · Fee",
+            "label": "Position Fee（链上实际；前端 Fee 对照）",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "5005 raw (0.005005 USDC)",
+            "delta": "+5005 raw (0.005005 USDC)",
+            "expected": "5005 raw (0.005005 USDC)",
+            "formula": "positionFeeAmount = 50000000000000000000000000000000 × 100000000000000000000000000 / 1e30 / 999000000000000000000000 = 5005",
+            "basis": {
+              "title": "基础仓位费",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md",
+              "section": "费用 / Position Fee"
+            },
+            "unit": "USDC 1e6",
+            "note": "参数来自执行区块 #45432572 的 DataStore 实际值。 event.factor=100000000000000000000000000；chain.factor=100000000000000000000000000。",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "事件",
+            "inputs": [
+              {
+                "name": "tradeSizeUsd",
+                "value": "50000000000000000000000000000000",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              },
+              {
+                "name": "positionFeeFactor（POSITION_FEE_FACTOR(true)）",
+                "value": "100000000000000000000000000",
+                "source": "DataStore @ 执行区块 #45432572；复算采用链上档。选档依据 balanceWasImproved=true（独立复算见「是否改善多空平衡」行）；事件采用值 100000000000000000000000000，应与链上档一致（✓ 一致）"
+              },
+              {
+                "name": "collateralPrice.min",
+                "value": "999000000000000000000000",
+                "source": "PositionFeesCollected 事件（执行回执解码）；Oracle 抵押价随事件 emit"
+              },
+              {
+                "name": "positionFeeAmount（对照对象）",
+                "value": "5005",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              }
+            ]
+          },
+          {
+            "id": "tx4-execute-close-protocol-fee",
+            "group": "TX4 · Keeper 执行全平 · Fee",
+            "label": "Protocol Fee 及分账守恒",
+            "status": "PASS",
+            "before": "Position Fee=5005 raw (0.005005 USDC)；折扣后 Protocol Fee=5005 raw (0.005005 USDC)",
+            "after": "Protocol Fee 5005 = feeReceiverAmount 2502 + LP Pool 2503",
+            "delta": "5005 = 2502 + 2503",
+            "expected": "Protocol Fee 5005 = 5005 raw",
+            "formula": "protocolFeeAmount = feeReceiverAmount + positionFeeAmountForPool；本次：5005 = 2502 + 2503",
+            "basis": {
+              "title": "协议与 LP 分成",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§7.5 协议与 LP 分成"
+            },
+            "unit": "USDC 1e6",
+            "note": "【恒等式】三个数取自同一 PositionFeesCollected 事件，本行只验证事件内部分账自洽，不构成独立重算；feeReceiverAmount 与 LP 分成的独立复算（用执行区块 positionFeeReceiverFactor）见相邻两行。Position Fee 是用户仓位费总额；扣除 Referral / Pro 等折扣后得到 Protocol Fee，再按 positionFeeReceiverFactor 拆分为协议应收与 LP Pool 分成。",
+            "txStep": "TX4",
+            "verification": "恒等式",
+            "dataSource": "事件",
+            "inputs": [
+              {
+                "name": "protocolFeeAmount",
+                "value": "5005",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              },
+              {
+                "name": "feeReceiverAmount",
+                "value": "2502",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              },
+              {
+                "name": "positionFeeAmountForPool",
+                "value": "2503",
+                "source": "PositionFeesCollected 事件（执行回执解码）；三者同源 → 本行为恒等式"
+              }
+            ]
+          },
+          {
+            "id": "tx4-execute-close-fee-receiver",
+            "group": "TX4 · Keeper 执行全平 · Fee",
+            "label": "Fee Receiver 分成",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "2502 raw (0.002502 USDC)",
+            "delta": "+2502 raw (0.002502 USDC)",
+            "expected": "2502 raw (0.002502 USDC)",
+            "formula": "feeReceiverAmount = 5005 × 500000000000000000000000000000 / 1e30 = 2502",
+            "basis": {
+              "title": "协议与 LP 分成",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§7.5 协议与 LP 分成"
+            },
+            "unit": "USDC 1e6",
+            "note": "参数来自执行区块 #45432572 的 DataStore 实际值。 event.receiverFactor=500000000000000000000000000000。",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "事件",
+            "inputs": [
+              {
+                "name": "protocolFeeAmount",
+                "value": "5005",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              },
+              {
+                "name": "positionFeeReceiverFactor",
+                "value": "500000000000000000000000000000",
+                "source": "DataStore @ 执行区块 #45432572；全局键，复算不用事件自带 factor"
+              },
+              {
+                "name": "feeReceiverAmount（对照对象）",
+                "value": "2502",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              }
+            ]
+          },
+          {
+            "id": "tx4-execute-close-pool-fee",
+            "group": "TX4 · Keeper 执行全平 · Fee",
+            "label": "LP Pool 分成",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "2503 raw (0.002503 USDC)",
+            "delta": "+2503 raw (0.002503 USDC)",
+            "expected": "2503 raw (0.002503 USDC)",
+            "formula": "positionFeeAmountForPool = protocolFeeAmount − feeReceiverAmount；本次：5005 − 2502 = 2503",
+            "basis": {
+              "title": "协议与 LP 分成",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§7.5 协议与 LP 分成"
+            },
+            "unit": "USDC 1e6",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "事件",
+            "inputs": [
+              {
+                "name": "protocolFeeAmount",
+                "value": "5005",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              },
+              {
+                "name": "expectedReceiver",
+                "value": "2502",
+                "source": "派生值：protocolFee × 链上 positionFeeReceiverFactor / 1e30（见上一行）"
+              },
+              {
+                "name": "positionFeeAmountForPool（对照对象）",
+                "value": "2503",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              }
+            ]
+          },
+          {
+            "id": "tx4-execute-close-negative-funding",
+            "group": "TX4 · Keeper 执行全平 · Funding",
+            "label": "本仓位应付 Funding",
+            "status": "PASS",
+            "before": "0 raw (0 per-size)",
+            "after": "53670651661719939117198427488486168188968 raw (53670651661719939117198427488486168188968 per-size)",
+            "delta": "+53670651661719939117198427488486168188968 raw (53670651661719939117198427488486168188968 per-size)",
+            "expected": "45 raw (0.000045 USDC)",
+            "formula": "ceil((latestNegativePerSize − positionNegativePerSize) × sizeInTokens / (1e30 × collateralPrice.min))；本次：ceil((53670651661719939117198427488486168188968 − 0) × 834459907926084 / (1e30 × 999000000000000000000000)) = 45",
+            "basis": {
+              "title": "单仓负 Funding（支付端向上取整）",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§10.5 单仓 Funding"
+            },
+            "unit": "per-size raw → USDC 1e6",
+            "note": "PositionFeesCollected.negativeFundingFeeAmount=45 raw。Before/After 即\"仓位结算基线 → 市场累计负 per-size 最新值\"的推进（基线=上次结算时的市场累计值，累计值单调不减），市场级累计不再单独成行。",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "事件",
+            "inputs": [
+              {
+                "name": "positionNegativeFundingFeePerSize（entry 基线）",
+                "value": "0",
+                "source": "仓位 Before 快照（Reader，钉块读数）"
+              },
+              {
+                "name": "latestNegativeFundingFeePerSize（市场级累计）",
+                "value": "53670651661719939117198427488486168188968",
+                "source": "PositionFeesCollected 事件（执行回执解码）；对该市场全体同向仓位统一累计，非本仓专属"
+              },
+              {
+                "name": "sizeInTokens（结算用全仓规模）",
+                "value": "834459907926084",
+                "source": "仓位 Before 快照（Reader，钉块读数）"
+              },
+              {
+                "name": "collateralPrice.min",
+                "value": "999000000000000000000000",
+                "source": "PositionFeesCollected 事件（执行回执解码）；支付端用 min 价+向上取整"
+              },
+              {
+                "name": "negativeFundingFeeAmount（对照对象）",
+                "value": "45",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              }
+            ]
+          },
+          {
+            "id": "tx4-execute-close-positive-funding",
+            "group": "TX4 · Keeper 执行全平 · Funding",
+            "label": "本仓位应收 Funding",
+            "status": "PASS",
+            "before": "0 raw (0 per-size)",
+            "after": "0 raw (0 per-size)",
+            "delta": "0 raw (0 per-size)",
+            "expected": "0 raw (0 USDC)",
+            "formula": "(latestPositivePerSize − positionPositivePerSize) × sizeInTokens / (1e30 × collateralPrice.max)；本次：(0 − 0) × 834459907926084 / (1e30 × 1001000000000000000000000) = 0（向下取整）",
+            "basis": {
+              "title": "单仓正 Funding（收取端向下取整）",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§10.5 单仓 Funding"
+            },
+            "unit": "per-size raw → USDC 1e6",
+            "note": "PositionFeesCollected.positiveFundingFeeAmount=0 raw。Before/After 即\"仓位结算基线 → 市场累计正 per-size 最新值\"的推进（基线=上次结算时的市场累计值，累计值单调不减），市场级累计不再单独成行。",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "事件",
+            "inputs": [
+              {
+                "name": "positionPositiveFundingFeePerSize（entry 基线）",
+                "value": "0",
+                "source": "仓位 Before 快照（Reader，钉块读数）"
+              },
+              {
+                "name": "latestPositiveFundingFeePerSize（市场级累计）",
+                "value": "0",
+                "source": "PositionFeesCollected 事件（执行回执解码）；对该市场全体同向仓位统一累计，非本仓专属"
+              },
+              {
+                "name": "sizeInTokens（结算用全仓规模）",
+                "value": "834459907926084",
+                "source": "仓位 Before 快照（Reader，钉块读数）"
+              },
+              {
+                "name": "collateralPrice.max",
+                "value": "1001000000000000000000000",
+                "source": "PositionFeesCollected 事件（执行回执解码）；收取端用 max 价+向下取整"
+              },
+              {
+                "name": "positiveFundingFeeAmount（对照对象）",
+                "value": "0",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              }
+            ]
+          },
+          {
+            "id": "tx4-execute-close-net-funding",
+            "group": "TX4 · Keeper 执行全平 · Funding",
+            "label": "Funding 净额（应收 − 应付）",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "-45 raw (-0.000045 USDC)",
+            "delta": "-45 raw (-0.000045 USDC)",
+            "expected": "-45 raw (-0.000045 USDC)",
+            "formula": "netFunding = positiveFunding − negativeFunding = 0 − 45 = -45",
+            "basis": {
+              "title": "单仓 Funding 净额",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§10.5 单仓 Funding"
+            },
+            "unit": "USDC 1e6",
+            "note": "正数表示仓位应收 Funding，负数表示仓位应付 Funding；应付和应收原始值保留在相邻两行。",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "事件",
+            "inputs": [
+              {
+                "name": "positiveFundingFeeAmount",
+                "value": "0",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              },
+              {
+                "name": "negativeFundingFeeAmount",
+                "value": "45",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              },
+              {
+                "name": "expected 净额",
+                "value": "-45",
+                "source": "派生：相邻两行独立复算值之差（expectedPositive − expectedNegative）"
+              }
+            ]
+          },
+          {
+            "id": "tx4-execute-close-total-cost",
+            "group": "TX4 · Keeper 执行全平 · Fee",
+            "label": "Total Cost",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "5050 raw (0.00505 USDC)",
+            "delta": "+5050 raw (0.00505 USDC)",
+            "expected": "5050 raw (0.00505 USDC)",
+            "formula": "totalCostAmount = positionFeeAmount + uiFeeAmount + negativeFundingFeeAmount（本用例无清算费/折扣）；本次：5005 + 0 + 45 = 5050",
+            "basis": {
+              "title": "费用总额；正 Funding 单独增加抵押品",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§9 费用总额"
+            },
+            "unit": "USDC 1e6",
+            "note": "【恒等式】各分量取自同一 PositionFeesCollected 事件，本行只验证费用汇总自洽；positionFee 与应付/应收 Funding 已在相邻行用执行区块参数独立复算。",
+            "txStep": "TX4",
+            "verification": "恒等式",
+            "dataSource": "事件"
+          },
+          {
+            "id": "tx4-execute-close-claimable-position-fee",
+            "group": "TX4 · Keeper 执行全平 · Fee",
+            "label": "Claimable Position Fee 入账",
+            "status": "PASS",
+            "before": "12512 raw (0.012512 USDC)",
+            "after": "15014 raw (0.015014 USDC)",
+            "delta": "+2502 raw (0.002502 USDC)",
+            "expected": "15014 raw (0.015014 USDC)",
+            "formula": "claimablePositionFeeAfter = before + feeReceiverAmount；本次：12512 + 2502 = 15014",
+            "basis": {
+              "title": "协议费用入账与快照交叉核对",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§7.5 协议与 LP 分成"
+            },
+            "unit": "USDC 1e6",
+            "note": "【事件对照】期望增量取自 PositionFeesCollected.feeReceiverAmount，与 DataStore claimable 状态交叉核对；该金额的独立复算见「Fee Receiver 分成」行。",
+            "txStep": "TX4",
+            "verification": "事件对照",
+            "dataSource": "合约+事件",
+            "inputs": [
+              {
+                "name": "claimable before",
+                "value": "12512",
+                "source": "链上阶段快照（DataStore 钉块读数）"
+              },
+              {
+                "name": "feeReceiverAmount（期望增量）",
+                "value": "2502",
+                "source": "PositionFeesCollected 事件（执行回执解码）"
+              },
+              {
+                "name": "claimable after（对照对象）",
+                "value": "15014",
+                "source": "链上阶段快照（DataStore 钉块读数）"
+              }
+            ]
+          },
+          {
+            "id": "tx4-execute-close-claimable-funding",
+            "group": "TX4 · Keeper 执行全平 · Funding",
+            "label": "LP Claimable Funding 入账",
+            "status": "PASS",
+            "before": "0 raw (0 USDC)",
+            "after": "44 raw (0.000044 USDC)",
+            "delta": "+44 raw (0.000044 USDC)",
+            "expected": "44 raw (0.000044 USDC)",
+            "formula": "claimableFundingAfter = before + Σmax(positionPaysLp, 0)（over 1 条 Funding 事件）；< 0 分量由 LPVault 支付 PositionVault；本次：0 + 44 = 44",
+            "basis": {
+              "title": "LP Funding 净额",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md",
+              "section": "§10.6 LP Funding 净额"
+            },
+            "unit": "USDC 1e6",
+            "note": "【事件对照】期望增量取自 Funding 事件 positionPaysLp（floor funding：市场级净流，多头地板费率使均衡时也不为零），与 DataStore claimable 状态交叉核对。",
+            "txStep": "TX4",
+            "verification": "事件对照",
+            "dataSource": "合约+事件",
+            "inputs": [
+              {
+                "name": "claimable funding before",
+                "value": "0",
+                "source": "链上阶段快照（DataStore 钉块读数）"
+              },
+              {
+                "name": "Σmax(positionPaysLp,0)（期望增量，floor funding）",
+                "value": "44",
+                "source": "Funding 事件区间总账（Σ over 1 条；共享市场他单执行也会推进）"
+              },
+              {
+                "name": "claimable funding after（对照对象）",
+                "value": "44",
+                "source": "链上阶段快照（DataStore 钉块读数）"
+              }
+            ]
+          },
+          {
+            "id": "tx4-execute-close-long-funding-factor",
+            "group": "TX4 · Keeper 执行全平 · Funding",
+            "label": "Long Funding Factor / second",
+            "status": "PASS",
+            "before": "-1000000000000000000 raw (-1 EMA skew)",
+            "after": "-8722571029934043632673 raw (-0.000000008722571029934043632673 factor/s)",
+            "expected": "-8722571029934043632673 raw (-0.000000008722571029934043632673 factor/s)",
+            "formula": "longFactor = clamp(3472222222222222222222 + 45278306284880771182141 × -1000000000000000000 / 1e18, -8722571029934043632673, 35320839675291730086250) = -8722571029934043632673",
+            "basis": {
+              "title": "Long Funding Factor",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md",
+              "section": "五、Funding / 5.2 Funding Factor"
+            },
+            "unit": "factor 1e30 / second",
+            "note": "参数来自执行区块 #45432572 的 DataStore 实际值。口径：市场级费率——emaSkew 是全市场失衡的 EMA（由该市场全部交易活动驱动，非本单专属），得到的费率对该市场所有多头仓位统一生效。",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "合约+事件"
+          },
+          {
+            "id": "tx4-execute-close-short-funding-factor",
+            "group": "TX4 · Keeper 执行全平 · Funding",
+            "label": "Short Funding Factor / second",
+            "status": "PASS",
+            "before": "-1000000000000000000 raw (-1 EMA skew)",
+            "after": "35320839675291730086250 raw (0.00000003532083967529173008625 factor/s)",
+            "expected": "35320839675291730086250 raw (0.00000003532083967529173008625 factor/s)",
+            "formula": "shortFactor = clamp(−45278306284880771182141 × -1000000000000000000 / 1e18, -8722571029934043632673, 35320839675291730086250) = 35320839675291730086250",
+            "basis": {
+              "title": "Short Funding Factor",
+              "sourcePath": "../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md",
+              "section": "五、Funding / 5.2 Funding Factor"
+            },
+            "unit": "factor 1e30 / second",
+            "note": "参数来自执行区块 #45432572 的 DataStore 实际值。口径：市场级费率——emaSkew 是全市场失衡的 EMA（由该市场全部交易活动驱动，非本单专属），得到的费率对该市场所有空头仓位统一生效。",
+            "txStep": "TX4",
+            "verification": "计算复算",
+            "dataSource": "合约+事件"
+          },
+          {
+            "id": "createOpenConservation",
+            "group": "守恒",
+            "label": "创建开仓订单资金守恒",
+            "status": "PASS",
+            "before": "五方账户 / Vault 的阶段前链上余额",
+            "after": "ΣΔ = ΔTrader(-10000000) + ΔOrderVault(10000000) + ΔPositionVault(0) + ΔLPVaultAssets(0) + ΔFeeHandler(0) = 0 raw (0 USDC)",
+            "delta": "ΣΔ = ΔTrader(-10000000) + ΔOrderVault(10000000) + ΔPositionVault(0) + ΔLPVaultAssets(0) + ΔFeeHandler(0) = 0 raw (0 USDC)",
+            "expected": "ΣΔ = 0 raw (0 USDC)",
+            "formula": "ΣΔ = ΔTrader + ΔOrderVault + ΔPositionVault + ΔLPVaultAssets + ΔFeeHandler；本次：ΔTrader(-10000000) + ΔOrderVault(10000000) + ΔPositionVault(0) + ΔLPVaultAssets(0) + ΔFeeHandler(0) = 0 raw (0 USDC)",
+            "basis": {
+              "title": "USDC 五方封闭账本守恒",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "checkConservation(createOpenConservation)"
+            },
+            "unit": "USDC raw / USDC 1e6",
+            "note": "Position Fee 与 Funding 已分别在 Fee/Funding 行复算；它们在资金守恒式中通过 PositionVault、LPVault、FeeHandler 的实际余额变化体现，不再作为第六、第七项重复相加。Claimable Fee/Funding 属于 DataStore 应收账本，单独核对。第五方是 FeeHandler 合约（claimFees 第一跳收款方，交易执行窗口余额恒不变）；DataStore.FEE_RECEIVER 指向的 RevenuePool 只在 withdrawFees 后才有资金流，不在本守恒圈内。",
+            "txStep": "TX1",
+            "verification": "守恒",
+            "dataSource": "合约"
+          },
+          {
+            "id": "executeOpenConservation",
+            "group": "守恒",
+            "label": "执行开仓资金守恒",
+            "status": "PASS",
+            "before": "五方账户 / Vault 的阶段前链上余额",
+            "after": "ΣΔ = ΔTrader(0) + ΔOrderVault(-10000000) + ΔPositionVault(9987487) + ΔLPVaultAssets(12513) + ΔFeeHandler(0) = 0 raw (0 USDC)",
+            "delta": "ΣΔ = ΔTrader(0) + ΔOrderVault(-10000000) + ΔPositionVault(9987487) + ΔLPVaultAssets(12513) + ΔFeeHandler(0) = 0 raw (0 USDC)",
+            "expected": "ΣΔ = 0 raw (0 USDC)",
+            "formula": "ΣΔ = ΔTrader + ΔOrderVault + ΔPositionVault + ΔLPVaultAssets + ΔFeeHandler；本次：ΔTrader(0) + ΔOrderVault(-10000000) + ΔPositionVault(9987487) + ΔLPVaultAssets(12513) + ΔFeeHandler(0) = 0 raw (0 USDC)",
+            "basis": {
+              "title": "USDC 五方封闭账本守恒",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "checkConservation(executeOpenConservation)"
+            },
+            "unit": "USDC raw / USDC 1e6",
+            "note": "Position Fee 与 Funding 已分别在 Fee/Funding 行复算；它们在资金守恒式中通过 PositionVault、LPVault、FeeHandler 的实际余额变化体现，不再作为第六、第七项重复相加。Claimable Fee/Funding 属于 DataStore 应收账本，单独核对。第五方是 FeeHandler 合约（claimFees 第一跳收款方，交易执行窗口余额恒不变）；DataStore.FEE_RECEIVER 指向的 RevenuePool 只在 withdrawFees 后才有资金流，不在本守恒圈内。",
+            "txStep": "TX2",
+            "verification": "守恒",
+            "dataSource": "合约"
+          },
+          {
+            "id": "createCloseConservation",
+            "group": "守恒",
+            "label": "创建全平订单资金守恒",
+            "status": "PASS",
+            "before": "五方账户 / Vault 的阶段前链上余额",
+            "after": "ΣΔ = ΔTrader(0) + ΔOrderVault(0) + ΔPositionVault(0) + ΔLPVaultAssets(0) + ΔFeeHandler(0) = 0 raw (0 USDC)",
+            "delta": "ΣΔ = ΔTrader(0) + ΔOrderVault(0) + ΔPositionVault(0) + ΔLPVaultAssets(0) + ΔFeeHandler(0) = 0 raw (0 USDC)",
+            "expected": "ΣΔ = 0 raw (0 USDC)",
+            "formula": "ΣΔ = ΔTrader + ΔOrderVault + ΔPositionVault + ΔLPVaultAssets + ΔFeeHandler；本次：ΔTrader(0) + ΔOrderVault(0) + ΔPositionVault(0) + ΔLPVaultAssets(0) + ΔFeeHandler(0) = 0 raw (0 USDC)",
+            "basis": {
+              "title": "USDC 五方封闭账本守恒",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "checkConservation(createCloseConservation)"
+            },
+            "unit": "USDC raw / USDC 1e6",
+            "note": "Position Fee 与 Funding 已分别在 Fee/Funding 行复算；它们在资金守恒式中通过 PositionVault、LPVault、FeeHandler 的实际余额变化体现，不再作为第六、第七项重复相加。Claimable Fee/Funding 属于 DataStore 应收账本，单独核对。第五方是 FeeHandler 合约（claimFees 第一跳收款方，交易执行窗口余额恒不变）；DataStore.FEE_RECEIVER 指向的 RevenuePool 只在 withdrawFees 后才有资金流，不在本守恒圈内。",
+            "txStep": "TX3",
+            "verification": "守恒",
+            "dataSource": "合约"
+          },
+          {
+            "id": "executeCloseConservation",
+            "group": "守恒",
+            "label": "执行全平资金守恒",
+            "status": "PASS",
+            "before": "五方账户 / Vault 的阶段前链上余额",
+            "after": "ΣΔ = ΔTrader(4835362) + ΔOrderVault(0) + ΔPositionVault(-9972428) + ΔLPVaultAssets(5137066) + ΔFeeHandler(0) = 0 raw (0 USDC)",
+            "delta": "ΣΔ = ΔTrader(4835362) + ΔOrderVault(0) + ΔPositionVault(-9972428) + ΔLPVaultAssets(5137066) + ΔFeeHandler(0) = 0 raw (0 USDC)",
+            "expected": "ΣΔ = 0 raw (0 USDC)",
+            "formula": "ΣΔ = ΔTrader + ΔOrderVault + ΔPositionVault + ΔLPVaultAssets + ΔFeeHandler；本次：ΔTrader(4835362) + ΔOrderVault(0) + ΔPositionVault(-9972428) + ΔLPVaultAssets(5137066) + ΔFeeHandler(0) = 0 raw (0 USDC)",
+            "basis": {
+              "title": "USDC 五方封闭账本守恒",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "checkConservation(executeCloseConservation)"
+            },
+            "unit": "USDC raw / USDC 1e6",
+            "note": "Position Fee 与 Funding 已分别在 Fee/Funding 行复算；它们在资金守恒式中通过 PositionVault、LPVault、FeeHandler 的实际余额变化体现，不再作为第六、第七项重复相加。Claimable Fee/Funding 属于 DataStore 应收账本，单独核对。第五方是 FeeHandler 合约（claimFees 第一跳收款方，交易执行窗口余额恒不变）；DataStore.FEE_RECEIVER 指向的 RevenuePool 只在 withdrawFees 后才有资金流，不在本守恒圈内。",
+            "txStep": "TX4",
+            "verification": "守恒",
+            "dataSource": "合约"
+          },
+          {
+            "id": "wholeFlowConservation",
+            "group": "守恒",
+            "label": "全流程资金守恒",
+            "status": "PASS",
+            "before": "五方账户 / Vault 的阶段前链上余额",
+            "after": "ΣΔ = ΔTrader(-5164638) + ΔOrderVault(0) + ΔPositionVault(15059) + ΔLPVaultAssets(5149579) + ΔFeeHandler(0) = 0 raw (0 USDC)",
+            "delta": "ΣΔ = ΔTrader(-5164638) + ΔOrderVault(0) + ΔPositionVault(15059) + ΔLPVaultAssets(5149579) + ΔFeeHandler(0) = 0 raw (0 USDC)",
+            "expected": "ΣΔ = 0 raw (0 USDC)",
+            "formula": "ΣΔ = ΔTrader + ΔOrderVault + ΔPositionVault + ΔLPVaultAssets + ΔFeeHandler；本次：ΔTrader(-5164638) + ΔOrderVault(0) + ΔPositionVault(15059) + ΔLPVaultAssets(5149579) + ΔFeeHandler(0) = 0 raw (0 USDC)",
+            "basis": {
+              "title": "USDC 五方封闭账本守恒",
+              "sourcePath": "src/scenarios/scn-009-runner.ts",
+              "section": "checkConservation(wholeFlowConservation)"
+            },
+            "unit": "USDC raw / USDC 1e6",
+            "note": "Position Fee 与 Funding 已分别在 Fee/Funding 行复算；它们在资金守恒式中通过 PositionVault、LPVault、FeeHandler 的实际余额变化体现，不再作为第六、第七项重复相加。Claimable Fee/Funding 属于 DataStore 应收账本，单独核对。第五方是 FeeHandler 合约（claimFees 第一跳收款方，交易执行窗口余额恒不变）；DataStore.FEE_RECEIVER 指向的 RevenuePool 只在 withdrawFees 后才有资金流，不在本守恒圈内。",
+            "txStep": "TX4",
+            "verification": "守恒",
+            "dataSource": "合约"
+          }
+        ],
+        "transactions": [
+          {
+            "actor": "TRADER",
+            "action": "创建市价开多订单",
+            "txHash": "0x7a4c8c89cd4b5c90ecf59e02bbd6c3f9261efe5d6020d90bd3134bb8c2440d28",
+            "from": "0xeeea43701a49f3d41ef694ddafe2ac74c7c8b119",
+            "to": "0x5f9215dff5c01671e6e77469389d694ac4af2e97",
+            "blockNumber": 45432567,
+            "status": "SUCCESS",
+            "transactionType": "0x2",
+            "nonce": "0x5b",
+            "gasUsed": "0xb4a79",
+            "orderKey": "0x204ac492aec8bbf1328f38dc30ab0acbb3e3c13a4cfe85808f3025737a6949a6",
+            "signatureVerified": true,
+            "stepId": "TX1",
+            "summary": "交易员提交 10 USDC、5x 市价开多订单；USDC 从 Trader 转入 OrderVault，仓位尚未建立。"
+          },
+          {
+            "actor": "KEEPER",
+            "action": "执行市价开多订单",
+            "txHash": "0xb4efc6d38dec9857973a46f3371db95bf839fe67070074ab04300d325ad356ec",
+            "from": "0x542fe841228416f6a3d65eb534a90ebc5cc36354",
+            "to": "0x84162e52063504a701cda5e931d2fd174c10648d",
+            "blockNumber": 45432568,
+            "status": "SUCCESS",
+            "transactionType": "0x2",
+            "nonce": "0x3",
+            "gasUsed": "0x1da08f",
+            "orderKey": "0x204ac492aec8bbf1328f38dc30ab0acbb3e3c13a4cfe85808f3025737a6949a6",
+            "signatureVerified": true,
+            "stepId": "TX2",
+            "summary": "Keeper 执行开仓；抵押品进入 PositionVault，并结算开仓 Fee、Funding、仓位、OI、Skew 与 Spread。"
+          },
+          {
+            "actor": "TRADER",
+            "action": "创建市价全平订单",
+            "txHash": "0x60052ad6bf7fc04ba1e6f4e37b378f9dfc3ff28b697b36277582a2eae26eb79a",
+            "from": "0xeeea43701a49f3d41ef694ddafe2ac74c7c8b119",
+            "to": "0x5f9215dff5c01671e6e77469389d694ac4af2e97",
+            "blockNumber": 45432569,
+            "status": "SUCCESS",
+            "transactionType": "0x2",
+            "nonce": "0x5c",
+            "gasUsed": "0xba8cf",
+            "orderKey": "0x4ec229f9ed4bc360842663229f918e2d30c23490e336f5b4c1aa72bf40321013",
+            "signatureVerified": true,
+            "stepId": "TX3",
+            "summary": "交易员提交全平订单；只创建待执行订单，现有仓位与 USDC 账本暂不结算。"
+          },
+          {
+            "actor": "KEEPER",
+            "action": "执行市价全平订单",
+            "txHash": "0xca2a9c300aa2b0b6fadf9fcc244961036fa33dd29611934a140fbcf127b3a1c6",
+            "from": "0x542fe841228416f6a3d65eb534a90ebc5cc36354",
+            "to": "0x84162e52063504a701cda5e931d2fd174c10648d",
+            "blockNumber": 45432572,
+            "status": "SUCCESS",
+            "transactionType": "0x2",
+            "nonce": "0x4",
+            "gasUsed": "0x190149",
+            "orderKey": "0x4ec229f9ed4bc360842663229f918e2d30c23490e336f5b4c1aa72bf40321013",
+            "signatureVerified": true,
+            "stepId": "TX4",
+            "summary": "Keeper 执行全平；结算 Margin、PnL、Fee、Funding，并回退仓位与 OI。"
+          }
+        ]
+      },
+      "executedAt": "2026-08-14T05:38:09.699Z",
+      "expectedStatus": "passed",
+      "durationMs": 50074,
+      "attempts": [
+        {
+          "retry": 0,
+          "status": "passed",
+          "startedAt": "2026-08-14T05:38:09.699Z",
+          "durationMs": 50074,
+          "attachments": [
+            {
+              "name": "scn-067-evidence.json",
+              "contentType": "application/json",
+              "path": "artifacts/runs/2026-08-14T053809-461Z/attachments/SCN-067-tx-fork-r0-0-scn-067-evidence.json"
+            },
+            {
+              "name": "tx-and-receipt.json",
+              "contentType": "application/json",
+              "path": "artifacts/runs/2026-08-14T053809-461Z/attachments/SCN-067-tx-fork-r0-1-tx-and-receipt.json"
+            },
+            {
+              "name": "reader-ledger-before-after.json",
+              "contentType": "application/json",
+              "path": "artifacts/runs/2026-08-14T053809-461Z/attachments/SCN-067-tx-fork-r0-2-reader-ledger-before-after.json"
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "@p0",
+        "@tx",
+        "@serial"
+      ],
+      "annotations": [
+        {
+          "type": "coverage-gap",
+          "description": "自动化范围是 RPC 签名订单、Inline Keeper 与链上核对；页面加载和浏览器钱包操作由手工核对用例覆盖。"
+        },
+        {
+          "type": "check-result",
+          "description": "链上 38 项核对通过（StopLossDecrease short 上涨止损）；已记录用户签名挂单/平仓、推价触发与 Keeper 执行完整回执。"
+        }
+      ]
+    }
+  ],
+  "qualityIssues": []
+}

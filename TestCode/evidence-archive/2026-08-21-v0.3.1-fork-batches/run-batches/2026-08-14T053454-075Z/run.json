@@ -1,0 +1,36 @@
+{
+  "id": "2026-08-14T053454-075Z",
+  "release": "release-v0.3.1",
+  "description": "由直接 Playwright 执行自动登记。",
+  "scope": "single",
+  "environmentMode": "default",
+  "marketSelection": "default",
+  "keeperMode": "inline",
+  "createdAt": "2026-08-14T05:34:54.075Z",
+  "startedAt": "2026-08-14T05:34:54.075Z",
+  "endedAt": "2026-08-14T05:35:43.655Z",
+  "status": "PASS",
+  "rpcUpdatedEnvironments": [],
+  "cases": [
+    {
+      "id": "SCN-013",
+      "title": "破位追空与 validFrom",
+      "plannedEnvironment": "time-fork",
+      "resolvedEnvironment": "tx-fork",
+      "plannedMarketMode": "mock-market",
+      "resolvedMarketMode": "mock-market",
+      "resolvedOracleMode": "mock-oracle",
+      "resolvedMockResourceAlias": "default-mock",
+      "marketCompatibility": "mock-only",
+      "automated": true,
+      "specPath": "tests/S02/scn-013.spec.ts",
+      "status": "PASS",
+      "resultRunId": "2026-08-14T053454-075Z",
+      "message": "链上 38 项核对通过（StopIncrease short 破位追单链路）；已记录用户签名挂单/平仓、推价触发与 Keeper 执行完整回执；执行详情已展开 125 项 Before / After / Δ / Expected 对账。"
+    }
+  ],
+  "logTail": [
+    "检测到看板外直接执行的 Playwright 结果，已自动登记到最近运行。",
+    "运行结束：PASS。"
+  ]
+}

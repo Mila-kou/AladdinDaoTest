@@ -1,6 +1,11 @@
 # FX100 用户旅程 E2E 执行清单
 
-> 总数：80（自动化 63｜手工核对 17）｜PASS：0｜FAIL：0｜BLOCKED：0｜PENDING：0｜待执行：80  
+> 总数：80（自动化 63｜手工核对 17）｜PASS：14｜FAIL：1｜BLOCKED：0｜PENDING：0｜待执行：65  
+> **回填口径（2026-08-21）**：证据来源 `TestCode/artifacts`（latest 合并规则）与快照归档 `TestCode/evidence-archive/2026-08-21-v0.3.1-fork-batches/manifest.json`（含 sha256）。
+> ① 全部 PASS 的基线是 **release-v0.3.1 部署的 Tenderly fork**（tx-fork 99911 / oracle-fork 99912），**不充当 v0.3.2 回归材料**（v0.3.2 准入见 `Docs/contract-releases/v0.3.2/06-测试影响与准入结论.md`）；
+> ② SCN-010 在 **oracle-fork** 执行（spec 钉死，见 `package.json test:scn010`），tx-fork 批次内为 SKIP 属声明式绑定，不是故障；
+> ③ 自动化 PASS 的 coverage 均为 PARTIAL（页面层/钱包点击未自动化，由 [M] 手工用例覆盖）；SCN-009 三组受控价格（+3%/0/−3%，涨>平>跌）已于 2026-08-21 自动化；
+> ④ fork 上每数据集 evm_snapshot/revert 会使 **txHash 跨运行重复**，证据定位以 run id + 块号 + evidence.json（sha256 见 manifest）为准。
 > 状态：`[ ]` 待执行｜`[x]` PASS｜`[!]` FAIL｜`[B]` BLOCKED｜`[P]` PENDING｜`[S]` SKIP｜`[M]` 手工核对（设计上不写自动化，仍须人工执行并留证）
 
 | 状态 | ID | 套件 / 场景 | P | 证据（截图、tx、区块、Reader） | 实际结果 | 执行人 | 日期 |
@@ -13,23 +18,23 @@
 | [M] | SCN-006 | S01 Flash 同意、连接与首单 | P0 | | | | |
 | [M] | SCN-007 | S01 刷新与重开恢复上下文 | P1 | | | | |
 | [M] | SCN-008 | S01 切账户的数据与授权隔离 | P0 | | | | |
-| [ ] | SCN-009 | S02 市价开多快速退出 | P0 | | | | |
-| [ ] | SCN-010 | S02 现价下方限价开多 | P0 | | | | |
-| [ ] | SCN-011 | S02 现价上方限价开空 | P0 | | | | |
-| [ ] | SCN-012 | S02 突破追多 | P0 | | | | |
-| [ ] | SCN-013 | S02 破位追空与 validFrom | P0 | | | | |
+| [x] | SCN-009 | S02 市价开多快速退出 | P0 | run `2026-08-21T043810-045Z`（tx-fork）· 12 笔 TX 0xfb301e78…a65468…0xb6a2dddf…4c6b19 · 块 45389421–45389426 · `TestCode/evidence-archive/2026-08-21-v0.3.1-fork-batches/runs/2026-08-21T043810-045Z/attachments/SCN-009-tx-fork-r0-0-scn-009-evidence.json` | PASS（376 项对账；三组受控价格 +3%/0/−3% 已自动化，coverage 仍 PARTIAL：缺浏览器钱包点击签名与页面历史核对；release-v0.3.1 基线） | 自动化（Playwright · Inline Keeper · 私钥签名） | 2026-08-21 |
+| [x] | SCN-010 | S02 现价下方限价开多 | P0 | run `2026-08-13T151033-634Z-FX100-202-oracle-fork-mock-market-default-mock`（oracle-fork）· 4 笔 TX 0x72d1e265…f97053…0x5710be6e…78a437 · 块 45432569–45432574 · `TestCode/evidence-archive/2026-08-21-v0.3.1-fork-batches/runs/2026-08-13T151033-634Z-FX100-202-oracle-fork-mock-market-default-mock/attachments/SCN-010-oracle-fork-r0-0-scn-010-evidence.json` | PASS（128 项对账；coverage PARTIAL；**执行环境 oracle-fork**（spec 钉死），release-v0.3.1 基线） | 自动化（Playwright · Inline Keeper · 私钥签名） | 2026-08-13 |
+| [x] | SCN-011 | S02 现价上方限价开空 | P0 | run `2026-08-14T053255-871Z`（tx-fork）· 4 笔 TX 0x82e3b372…9b2c8b…0xabe24c0e…02def9 · 块 45432567–45432572 · `TestCode/evidence-archive/2026-08-21-v0.3.1-fork-batches/runs/2026-08-14T053255-871Z/attachments/SCN-011-tx-fork-r0-0-scn-011-evidence.json` | PASS（125 项对账；coverage PARTIAL；release-v0.3.1 基线） | 自动化（Playwright · Inline Keeper · 私钥签名） | 2026-08-14 |
+| [x] | SCN-012 | S02 突破追多 | P0 | run `2026-08-14T053403-093Z`（tx-fork）· 4 笔 TX 0xaf5cecf6…e68a4c…0xabe24c0e…02def9 · 块 45432567–45432572 · `TestCode/evidence-archive/2026-08-21-v0.3.1-fork-batches/runs/2026-08-14T053403-093Z/attachments/SCN-012-tx-fork-r0-0-scn-012-evidence.json` | PASS（125 项对账；coverage PARTIAL；release-v0.3.1 基线） | 自动化（Playwright · Inline Keeper · 私钥签名） | 2026-08-14 |
+| [x] | SCN-013 | S02 破位追空与 validFrom | P0 | run `2026-08-14T053454-075Z`（tx-fork）· 4 笔 TX 0xedb260a9…9d596d…0xabe24c0e…02def9 · 块 45432567–45432572 · `TestCode/evidence-archive/2026-08-21-v0.3.1-fork-batches/runs/2026-08-14T053454-075Z/attachments/SCN-013-tx-fork-r0-0-scn-013-evidence.json` | PASS（125 项对账；coverage PARTIAL；release-v0.3.1 基线） | 自动化（Playwright · Inline Keeper · 私钥签名） | 2026-08-14 |
 | [ ] | SCN-014 | S02 触发价与成交价差异 | P1 | | | | |
-| [ ] | SCN-015 | S02 括号单 TP 先触发 | P0 | | | | |
-| [ ] | SCN-016 | S02 括号单 SL 先触发 | P0 | | | | |
+| [x] | SCN-015 | S02 括号单 TP 先触发 | P0 | run `2026-08-14T053544-208Z`（tx-fork）· 4 笔 TX 0xf0f2a884…6ce98c…0xca2a9c30…b3a1c6 · 块 45432567–45432572 · `TestCode/evidence-archive/2026-08-21-v0.3.1-fork-batches/runs/2026-08-14T053544-208Z/attachments/SCN-015-tx-fork-r0-0-scn-015-evidence.json` | PASS（125 项对账；coverage PARTIAL；release-v0.3.1 基线） | 自动化（Playwright · Inline Keeper · 私钥签名） | 2026-08-14 |
+| [x] | SCN-016 | S02 括号单 SL 先触发 | P0 | run `2026-08-14T053632-208Z`（tx-fork）· 4 笔 TX 0xf0f2a884…6ce98c…0xca2a9c30…b3a1c6 · 块 45432567–45432572 · `TestCode/evidence-archive/2026-08-21-v0.3.1-fork-batches/runs/2026-08-14T053632-208Z/attachments/SCN-016-tx-fork-r0-0-scn-016-evidence.json` | PASS（125 项对账；coverage PARTIAL；release-v0.3.1 基线） | 自动化（Playwright · Inline Keeper · 私钥签名） | 2026-08-14 |
 | [ ] | SCN-017 | S02 修改触发价与规模 | P1 | | | | |
 | [ ] | SCN-018 | S02 主动撤单与退款 | P0 | | | | |
 | [ ] | SCN-019 | S02 市价滑点取消退款 | P0 | | | | |
 | [ ] | SCN-020 | S02 Freeze 与 Oracle Revert | P0 | | | | |
 | [ ] | SCN-021 | S03 新仓成交与风险核对 | P0 | | | | |
-| [ ] | SCN-022 | S03 PnL 与 Est. Receive | P0 | | | | |
-| [ ] | SCN-023 | S03 分批止盈退出 | P0 | | | | |
-| [ ] | SCN-024 | S03 紧急全部平仓 | P0 | | | | |
-| [ ] | SCN-025 | S03 同方向加仓 | P1 | | | | |
+| [x] | SCN-022 | S03 PnL 与 Est. Receive | P0 | run `2026-08-19T065448-202Z`（tx-fork）· 8 笔 TX 0x2e465ca2…d06036…0xff882203…5b0a2e · 块 45389410–45389415 · `TestCode/evidence-archive/2026-08-21-v0.3.1-fork-batches/runs/2026-08-19T065448-202Z/attachments/SCN-022-tx-fork-r0-2-scn-022-evidence.json` | PASS（260 项对账；coverage PARTIAL；release-v0.3.1 基线） | 自动化（Playwright · Inline Keeper · 私钥签名） | 2026-08-19 |
+| [x] | SCN-023 | S03 分批止盈退出 | P0 | run `2026-08-14T065250-313Z`（tx-fork）· 4 笔 TX 0xf0f2a884…6ce98c…0x52494fa3…a6702f · 块 45432567–45432574 · `TestCode/evidence-archive/2026-08-21-v0.3.1-fork-batches/runs/2026-08-14T065250-313Z/attachments/SCN-023-tx-fork-r0-0-scn-023-evidence.json` | PASS（183 项对账；coverage PARTIAL；release-v0.3.1 基线） | 自动化（Playwright · Inline Keeper · 私钥签名） | 2026-08-14 |
+| [x] | SCN-024 | S03 紧急全部平仓 | P0 | run `2026-08-14T040717-552Z`（tx-fork）· 8 笔 TX 0xf0f2a884…6ce98c…0x28ff39ff…e95ef0 · 块 45432567–45432572 · `TestCode/evidence-archive/2026-08-21-v0.3.1-fork-batches/runs/2026-08-14T040717-552Z/attachments/SCN-024-tx-fork-r0-0-scn-024-evidence.json` | PASS（250 项对账；coverage PARTIAL；release-v0.3.1 基线） | 自动化（Playwright · Inline Keeper · 私钥签名） | 2026-08-14 |
+| [x] | SCN-025 | S03 同方向加仓 | P1 | run `2026-08-14T045211-851Z`（tx-fork）· 8 笔 TX 0xf0f2a884…6ce98c…0x52494fa3…a6702f · 块 45432567–45432572 · `TestCode/evidence-archive/2026-08-21-v0.3.1-fork-batches/runs/2026-08-14T045211-851Z/attachments/SCN-025-tx-fork-r0-0-scn-025-evidence.json` | PASS（362 项对账；coverage PARTIAL；release-v0.3.1 基线） | 自动化（Playwright · Inline Keeper · 私钥签名） | 2026-08-14 |
 | [ ] | SCN-026 | S03 追加保证金降风险 | P0 | | | | |
 | [ ] | SCN-027 | S03 提取部分/全部保证金 | P0 | | | | |
 | [ ] | SCN-028 | S03 调整目标杠杆 | P1 | | | | |
@@ -69,12 +74,12 @@
 | [ ] | SCN-062 | S06 Indexer 最终一致性 | P1 | | | | |
 | [M] | SCN-063 | S06 移动端核心旅程 | P2 | | | | |
 | [M] | SCN-064 | S06 多语言与账户隐私 | P2 | | | | |
-| [ ] | SCN-065 | S07 市价开空与平空 | P0 | | | | |
-| [ ] | SCN-066 | S07 空头止盈 LimitDecrease | P0 | | | | |
-| [ ] | SCN-067 | S07 空头止损 StopLossDecrease | P0 | | | | |
+| [x] | SCN-065 | S07 市价开空与平空 | P0 | run `2026-08-13T155728-390Z`（tx-fork）· 4 笔 TX 0x7a4c8c89…440d28…0xfa62cf99…b190a5 · 块 45432567–45432570 · `TestCode/evidence-archive/2026-08-21-v0.3.1-fork-batches/runs/2026-08-13T155728-390Z/attachments/SCN-065-tx-fork-r0-0-scn-065-evidence.json` | PASS（125 项对账；coverage PARTIAL；release-v0.3.1 基线） | 自动化（Playwright · Inline Keeper · 私钥签名） | 2026-08-13 |
+| [x] | SCN-066 | S07 空头止盈 LimitDecrease | P0 | run `2026-08-14T053720-013Z`（tx-fork）· 4 笔 TX 0x7a4c8c89…440d28…0xca2a9c30…b3a1c6 · 块 45432567–45432572 · `TestCode/evidence-archive/2026-08-21-v0.3.1-fork-batches/runs/2026-08-14T053720-013Z/attachments/SCN-066-tx-fork-r0-0-scn-066-evidence.json` | PASS（125 项对账；coverage PARTIAL；release-v0.3.1 基线） | 自动化（Playwright · Inline Keeper · 私钥签名） | 2026-08-14 |
+| [x] | SCN-067 | S07 空头止损 StopLossDecrease | P0 | run `2026-08-14T053809-461Z`（tx-fork）· 4 笔 TX 0x7a4c8c89…440d28…0xca2a9c30…b3a1c6 · 块 45432567–45432572 · `TestCode/evidence-archive/2026-08-21-v0.3.1-fork-batches/runs/2026-08-14T053809-461Z/attachments/SCN-067-tx-fork-r0-0-scn-067-evidence.json` | PASS（125 项对账；coverage PARTIAL；release-v0.3.1 基线） | 自动化（Playwright · Inline Keeper · 私钥签名） | 2026-08-14 |
 | [ ] | SCN-068 | S07 多空强平与 ADL 区分 | P0 | | | | |
 | [ ] | SCN-069 | S07 四类触发单多空精确边界 | P0 | | | | |
-| [ ] | SCN-070 | S07 市价四象限可接受价 | P0 | | | | |
+| [!] | SCN-070 | S07 市价四象限可接受价 | P0 | latest oracle-fork 2026-08-13T15:31:08（TestCode/artifacts/latest）· 无 executionEvidence | FAIL：Error: SCN-070/open-long-equal 失败：Error: 等号边界恰好一条 OrderExecuted：实际 0，期望 1；原因待排查，见问题记录 #1 | 自动化 | 2026-08-13 |
 | [ ] | SCN-071 | S07 触发单改撤冻结与重试 | P0 | | | | |
 | [ ] | SCN-072 | S07 多空括号单与 autoCancel | P0 | | | | |
 | [ ] | SCN-073 | S08 零 OI 与首仓 Funding 基准 | P0 | | | | |
@@ -101,4 +106,4 @@
 
 | 编号 | 场景 ID | 现象 | 用户影响 | 资金状态 | 证据 | Bug ID | 状态 |
 |---|---|---|---|---|---|---|---|
-| | | | | | | | |
+| 1 | SCN-070 | oracle-fork 批次 `open-long-equal` 数据集：等号边界期望恰好 1 条 OrderExecuted，实际 0（订单未被执行） | 四象限「等号可接受价」边界行为未得到验证 | 无（私有 fork，无真实资金） | `TestCode/artifacts/latest`（oracle-fork 2026-08-13T15:31:08，无 executionEvidence）；抛错点 `TestCode/src/scenarios/scn-070-runner.ts:1279` | 待登记（先排查是否为环境问题：070 基线价硬编码 60000 与 fork STABLE_PRICE 锚不一致会劈开 min/max，见 fx100-testcode-ops run-and-verify §三） | OPEN |

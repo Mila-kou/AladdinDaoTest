@@ -1,0 +1,35 @@
+{
+  "id": "2026-08-03T162814-112Z",
+  "release": "release-v0.3.1",
+  "description": "由直接 Playwright 执行自动登记。",
+  "scope": "single",
+  "environmentMode": "default",
+  "marketSelection": "default",
+  "createdAt": "2026-08-03T16:28:14.112Z",
+  "startedAt": "2026-08-03T16:28:14.112Z",
+  "endedAt": "2026-08-03T16:28:18.776Z",
+  "status": "FAIL",
+  "rpcUpdatedEnvironments": [],
+  "cases": [
+    {
+      "id": "SCN-009",
+      "title": "市价开多快速退出",
+      "plannedEnvironment": "tx-fork",
+      "resolvedEnvironment": "tx-fork",
+      "plannedMarketMode": "mock-market",
+      "resolvedMarketMode": "mock-market",
+      "resolvedOracleMode": "mock-oracle",
+      "resolvedMockResourceAlias": "default-mock",
+      "marketCompatibility": "mock-only",
+      "automated": true,
+      "specPath": "tests/S02/scn-009.spec.ts",
+      "status": "FAIL",
+      "resultRunId": "2026-08-03T162814-112Z",
+      "message": "TypeError: Cannot convert undefined to a BigInt"
+    }
+  ],
+  "logTail": [
+    "检测到看板外直接执行的 Playwright 结果，已自动登记到最近运行。",
+    "运行结束：FAIL。"
+  ]
+}

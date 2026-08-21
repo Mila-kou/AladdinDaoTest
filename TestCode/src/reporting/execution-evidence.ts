@@ -2581,6 +2581,23 @@ function deriveScn009Evidence(
     txOffset += derived.transactions.length;
     coverageNotes.push(`${prefix} ${datasetId}：${derived.executionStatus}`);
   });
+  // 矩阵级对照行（runMarketFlowMatrix crossDatasetChecks）：跨数据集的序关系断言（如 SCN-009 涨 > 平 > 跌）。
+  // Actual = 各数据集 traderUsdcDelta（合约读数 afterClose − before），Expected = 序列关系；FAIL 直接拉低 executionStatus。
+  const matrixRows: Reconciliation[] = arrayValue(raw.matrixAssertions).map(record).map((item, index) => withVerification({
+    id: `matrix-assertion-${index + 1}`,
+    group: 'MATRIX 跨数据集对照',
+    label: stringValue(item.name, `跨数据集断言 ${index + 1}`),
+    status: boolValue(item.passed) ? 'PASS' : 'FAIL',
+    before: '—',
+    after: stringValue(item.actual),
+    expected: stringValue(item.expected),
+    formula: 'traderUsdcDelta(数据集) = traderUsdc(afterClose) − traderUsdc(before)；沿数据集序列逐对比较：前一项 > 后一项',
+    basis: { title: '矩阵级跨数据集对照', sourcePath: LEDGER_SOURCE, section: 'runMarketFlowMatrix() crossDatasetChecks' },
+    unit: 'USDC 1e6',
+    note: '口径：账户级（各数据集独立 evm_snapshot 起点相同，Δ 可直接比较；持久模式下 Δ 仍为各数据集自身 afterClose − before）',
+    dataSource: '合约',
+  }));
+  if (matrixRows.some((row) => row.status === 'FAIL')) allPass = false;
   const coverage = record(raw.coverage);
   const pending = Array.isArray(coverage.pending) ? coverage.pending.map((item) => stringValue(item)) : [];
   return {
@@ -2588,11 +2605,11 @@ function deriveScn009Evidence(
     persistent,
     executionStatus: allPass ? 'PASS' : 'FAIL',
     coverageStatus: 'PARTIAL',
-    coverageNote: `数据集矩阵（${datasets.length} 组）：${coverageNotes.join('；')}${pending.length ? `。尚未自动化：${pending.join('；')}` : ''}`,
+    coverageNote: `数据集矩阵（${datasets.length} 组）：${coverageNotes.join('；')}${matrixRows.length ? `；跨数据集对照 ${matrixRows.length} 项` : ''}${pending.length ? `。尚未自动化：${pending.join('；')}` : ''}`,
     ...(forkDisplayName ? { forkDisplayName } : {}),
     sourcePath,
     formulaSourcePath: ORDER_FLOW_SOURCE,
-    reconciliations: merged,
+    reconciliations: [...merged, ...matrixRows],
     transactions,
   };
 }

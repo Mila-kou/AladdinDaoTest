@@ -1563,6 +1563,23 @@ export interface MarketFlowDataset {
   readonly beforeClose?: MarketFlowBeforeCloseHook;
 }
 
+/** 跨数据集对照断言（矩阵级）：同一指标在多个数据集之间的序关系，如 SCN-009 的「涨 > 平 > 跌」。 */
+export interface MarketFlowCrossDatasetCheck {
+  readonly name: string;
+  /** 指标来源：各数据集 evidence.observations[metric]（bigint 原始值；traderUsdcDelta = 全流程 trader USDC 净变化，1e6） */
+  readonly metric: 'traderUsdcDelta';
+  /** 数据集 ID 序列，要求该指标沿序列严格递减 */
+  readonly strictlyDescending: readonly string[];
+}
+
+export interface MarketFlowMatrixInput {
+  readonly scenarioId: string;
+  readonly datasets: readonly MarketFlowDataset[];
+  /** 覆盖声明覆写：pending 给出则整体替换首数据集的 pending（如三组受控价格已由数据集覆盖时移除该项）；executed 追加在矩阵行之后 */
+  readonly coverage?: { readonly executed?: readonly string[]; readonly pending?: readonly string[] };
+  readonly crossDatasetChecks?: readonly MarketFlowCrossDatasetCheck[];
+}
+
 export interface MarketFlowMatrixEvidence {
   readonly scenarioId: string;
   readonly runMode: Scn009Evidence['runMode'];
@@ -1574,6 +1591,8 @@ export interface MarketFlowMatrixEvidence {
     readonly options: { readonly isLong: boolean; readonly priceMovePercent: number };
     readonly evidence: Scn009Evidence;
   }>;
+  /** 矩阵级断言（crossDatasetChecks 结果）；不通过不抛错，由 spec 断言并在证据中保留 FAIL 记录 */
+  readonly matrixAssertions: Array<{ name: string; passed: boolean; actual: string; expected: string }>;
   readonly summary: { readonly total: number; readonly passed: number; readonly assertions: number };
 }
 
@@ -1592,7 +1611,7 @@ async function adminRawRpc(url: string, method: string, params: readonly unknown
 // 失败带数据集前缀抛出；报告层按数据集独立保留结果（txStep 跨数据集顺延编号）。
 export async function runMarketFlowMatrix(
   runtime: RuntimeConfig,
-  input: { scenarioId: string; datasets: readonly MarketFlowDataset[] },
+  input: MarketFlowMatrixInput,
 ): Promise<MarketFlowMatrixEvidence> {
   const adminUrl = runtime.adminRpcUrl ?? runtime.rpcUrl;
   const persist = process.env.E2E_PERSIST_FORK_STATE === 'true';
@@ -1625,20 +1644,136 @@ export async function runMarketFlowMatrix(
     }
   }
   const first = results[0]?.evidence;
+  // 矩阵级对照：读各数据集 observations[metric]（bigint），按给定顺序检查严格递减。
+  // 与数据集内 check() 不同，这里不抛错：数据集都已跑完，保留 FAIL 记录进证据比丢证据更有诊断价值；
+  // 通过与否由 spec expect 与看板「MATRIX 跨数据集对照」行共同呈现。
+  const matrixAssertions: MarketFlowMatrixEvidence['matrixAssertions'] = [];
+  for (const checkSpec of input.crossDatasetChecks ?? []) {
+    const samples = checkSpec.strictlyDescending.map((datasetId) => {
+      const item = results.find((entry) => entry.datasetId === datasetId);
+      if (!item) throw new Error(`${input.scenarioId}：跨数据集断言「${checkSpec.name}」引用了不存在的数据集 ${datasetId}`);
+      const value = item.evidence.observations[checkSpec.metric];
+      if (typeof value !== 'bigint') throw new Error(`${input.scenarioId}/${datasetId}：observations.${checkSpec.metric} 缺失或非 bigint`);
+      return { datasetId, value };
+    });
+    const passed = samples.every((sample, index) => index === 0 || samples[index - 1]!.value > sample.value);
+    matrixAssertions.push({
+      name: checkSpec.name,
+      passed,
+      actual: samples.map((sample) => `${sample.datasetId}=${sample.value}`).join('，'),
+      expected: `${samples.map((sample) => sample.datasetId).join(' > ')}（${checkSpec.metric} 严格递减）`,
+    });
+    assertionCount += 1;
+  }
   return {
     scenarioId: input.scenarioId,
     runMode: first?.runMode ?? (runtime.signingMode === 'private-key' ? 'tx-fork-private-key' : 'tx-fork-impersonation'),
     coverage: {
       executed: [
         `数据集矩阵：${results.map((item) => item.datasetId).join('、')}`,
+        ...(input.coverage?.executed ?? []),
         ...(first?.coverage.executed ?? []),
       ],
-      pending: first?.coverage.pending ?? [],
+      pending: [...(input.coverage?.pending ?? first?.coverage.pending ?? [])],
       completeScenario: false,
     },
     environment: first?.environment ?? {},
     datasets: results,
+    matrixAssertions,
     summary: { total: results.length, passed: results.length, assertions: assertionCount },
+  };
+}
+
+export interface ResidualPositionCloseResult {
+  readonly closed: boolean;
+  readonly marketIndex: number;
+  readonly sizeInUsd?: string;
+  readonly collateralAmount?: string;
+  readonly createTxHash?: string;
+  readonly createBlock?: number;
+  readonly orderKey?: string;
+  readonly executeTxHash?: string;
+  readonly executeBlock?: number;
+  readonly positionAfter?: boolean;
+}
+
+// 运维工具：清理残仓。数据集矩阵被网络中断等打断时，finally 的 evm_revert 可能未执行，fork 上留下 trader 仓位，
+// 之后 runMarketFlow 的「执行前无多/空仓」前置检查直接失败（2026-08-21 实例：DNS 解析失败中断 SCN-009 第三组）。
+// 这里按 runMarketFlow 的同一路径（刷新 Oracle 时间戳 → 市价全平单 → Inline Keeper 执行 → 确认订单结清）平掉残仓。
+// 仅支持 mock-market + Inline Keeper；无残仓时直接返回 closed=false，不发任何交易。
+export async function closeResidualPosition(
+  runtime: RuntimeConfig,
+  options: { readonly isLong: boolean },
+): Promise<ResidualPositionCloseResult> {
+  const isLong = options.isLong;
+  if (!runtime.testAccount || !runtime.keeperAccount) {
+    throw new Error('closeResidualPosition 需要 E2E_TEST_ACCOUNT 与 E2E_KEEPER_ACCOUNT');
+  }
+  if (runtime.keeperMode !== 'inline') throw new Error('closeResidualPosition 仅支持 Inline Keeper');
+  const deps = await loadLegacyDependencies();
+  const deploymentDir = deploymentPath();
+  const baseDeployment = deps.loadDeployment(deploymentDir);
+  const mockResourceAlias = process.env.E2E_MARKET_RESOURCE_ALIAS ?? 'default-mock';
+  const mockResource = await resolveMockMarketBundle(runtime.environment, mockResourceAlias);
+  if (!mockResource || mockResource.market?.status !== 'registered' || mockResource.market.marketIndex === undefined
+    || !mockResource.collateralToken || !mockResource.token?.address || !mockResource.oracle?.address) {
+    throw new Error(`${runtime.environment}/${mockResourceAlias} 缺少已注册 Mock Market Bundle`);
+  }
+  const marketIndex = mockResource.market.marketIndex;
+  const deployment: LegacyDeployment = {
+    ...baseDeployment,
+    name: `${baseDeployment.name} + ${runtime.environment}/${mockResourceAlias}`,
+    addresses: { ...baseDeployment.addresses, usdc: mockResource.collateralToken.address },
+  };
+  const rpc = new deps.Rpc(runtime.rpcUrl);
+  const ledgerContext = { trader: runtime.testAccount, marketIndex, isLong };
+  const before = await takeSnapshot(deps, rpc, deployment, ledgerContext);
+  const residual = positionOf(before);
+  if (!residual) return { closed: false, marketIndex };
+
+  const broadcaster = runtime.signingMode === 'private-key'
+    ? await signedBroadcaster(runtime, rpc, deps.extractOrderKey)
+    : await deps.impersonateBroadcaster({ rpcUrl: runtime.rpcUrl, deploymentDir });
+  await refreshMockOracleTimestamps(runtime, [
+    { role: 'index', address: mockResource.oracle.address },
+    ...(mockResource.collateralOracle ? [{ role: 'collateral' as const, address: mockResource.collateralOracle.address }] : []),
+  ]);
+  const close = await broadcaster.send({
+    ...deps.buildDecreaseOrder({
+      exchangeRouter: deployment.addresses.exchangeRouter,
+      orderVault: deployment.addresses.orderVault,
+      account: runtime.testAccount,
+      marketIndex,
+      isLong,
+      sizeDeltaUsd: residual.sizeInUsd,
+      collateralDelta: 0n,
+      executionFee: EXECUTION_FEE,
+    }),
+    from: runtime.testAccount,
+  });
+  if (!close.ok) throw new Error(`残仓全平单创建失败：${close.error ?? close.txHash}`);
+  const orderKey = requireValue(close.orderKey, '残仓全平单未解出 orderKey');
+  const providers = await inlineOracleProviders(runtime, deployment, mockResource.token.address);
+  const execution = await sendKeeperExecution(runtime, rpc, buildInlineExecuteOrder(
+    deps, deployment, orderKey, mockResource.token.address, providers,
+  ));
+  if (!execution.ok) throw new Error(`残仓全平 Keeper 执行失败：${execution.txHash}`);
+  const stillPending = await deps.orderIsPending(rpc, {
+    dataStore: deployment.addresses.dataStore, orderListKey: deps.orderListKey, orderKey,
+  });
+  if (stillPending) throw new Error('Inline Keeper 已发送全平执行交易，但残仓订单仍在挂单态');
+  const after = await takeSnapshot(deps, rpc, deployment, ledgerContext);
+  return {
+    closed: true,
+    marketIndex,
+    sizeInUsd: residual.sizeInUsd.toString(),
+    collateralAmount: residual.collateralAmount.toString(),
+    createTxHash: close.txHash,
+    createBlock: close.blockNumber,
+    orderKey,
+    executeTxHash: execution.txHash,
+    executeBlock: execution.blockNumber,
+    positionAfter: Boolean(positionOf(after)),
   };
 }
 

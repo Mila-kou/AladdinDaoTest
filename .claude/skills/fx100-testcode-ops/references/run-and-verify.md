@@ -4,8 +4,14 @@
 
 - **跑批页（推荐）**：选环境 → Market 执行资源（默认 default-mock）→ Keeper 执行方式 → 创建批次。RPC Chain ID 先核对（如 `tx-fork: RPC Chain ID 已核对为 99911`）再执行。
 - **npm scripts 直跑**：
-  - `npm run test:scn009` — `E2E_ENV=tx-fork playwright test tests/S02/scn-009.spec.ts --project=tx-fork`
-  - `npm run test:scn009:signed` — 追加 `E2E_SIGNING_MODE=private-key E2E_PERSIST_FORK_STATE=true`（**保留 fork 状态**，跑完状态不回滚）
+  - `npm run test:scn009` — `E2E_ENV=tx-fork E2E_ENV_PRIORITY_KEYS=E2E_ENV playwright test tests/S02/scn-009.spec.ts --project=tx-fork`（2026-08-21 起为涨/平/跌三数据集矩阵）
+  - `npm run test:scn009:signed` — 追加 `E2E_SIGNING_MODE=private-key E2E_PERSIST_FORK_STATE=true`（**保留 fork 状态**，跑完状态不回滚；矩阵模式下三组顺序累加在同一状态上，跨数据集比较仍用各组自身 Δ）
+
+- **直跑坑位（2026-08-21 实例）**：
+  - 不要给 `playwright test` 传 `--reporter=line` 之类参数——会**整体替换** `playwright.config.ts` 的 reporter 列表，自定义 reporter（`src/reporting/playwright-reporter.ts`，负责写 `artifacts/runs/<run>` 与合并 latest）不再执行，测试 PASS 却没有任何 run 记录。要看实时输出就看 `artifacts/playwright/` 的附件或事后 `npm run report`。
+  - `.env.local` 的 `E2E_ENV` 会覆盖命令行同名变量（dotenv override）；直跑必须带 `E2E_ENV_PRIORITY_KEYS=E2E_ENV`（`test:scn009*` 脚本已内置），否则 spec 的环境守卫 `expect(runtime.environment).toBe(project)` 会直接失败。
+  - 数据集矩阵被网络中断（如 DNS 解析失败）打断时 finally 的 `evm_revert` 可能没执行，fork 上留下 trader 仓位，下次运行在「执行前无多/空仓」前置检查处失败：用 `E2E_ENV=<env> E2E_ENV_PRIORITY_KEYS=E2E_ENV npm run env:close:residual` 按 runner 同路径平掉残仓（`scripts/close-residual-position.ts` → `closeResidualPosition()`），再重跑。
+  - 管道尾接 `| tail` 会吃掉退出码（同 typecheck 的告诫）：直跑请重定向到日志文件后 `echo $?`。
 
 ## 二、Keeper 执行方式
 

@@ -1,0 +1,27 @@
+{
+  "id": "2026-08-04T071541-864Z-FX100-20260804-1512",
+  "release": "FX100-20260804-1512",
+  "description": "",
+  "scope": "single",
+  "environmentMode": "override",
+  "overrideEnvironment": "oracle-fork",
+  "createdAt": "2026-08-04T07:15:41.864Z",
+  "status": "NO_AUTOMATION",
+  "rpcUpdatedEnvironments": [],
+  "cases": [
+    {
+      "id": "SCN-001",
+      "title": "首次进入并判断数据可信",
+      "plannedEnvironment": "dev-readonly",
+      "resolvedEnvironment": "oracle-fork",
+      "automated": false,
+      "status": "NOT_AUTOMATED"
+    }
+  ],
+  "logTail": [
+    "运行批次已创建，等待执行。",
+    "所选用例尚无自动化代码，本次没有发送交易。"
+  ],
+  "startedAt": "2026-08-04T07:15:41.865Z",
+  "endedAt": "2026-08-04T07:15:41.865Z"
+}

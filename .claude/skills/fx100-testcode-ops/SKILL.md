@@ -17,7 +17,7 @@ description: TestCode（fx100 E2E 测试工程）操作手册：三 Fork 环境�
 
 - 编号约定见 `src/server/environment-configuration.ts`（约 162 行起）；环境页建法框按环境动态显示（`src/reporting/render-environments.ts` 的 `forkGuides`）。
 - 能力位定义在 `config/environments/catalog.ts`：三个 fork 都是 `initializesDefaultMockResources: true`（③ 初始化面板都可用），仅 time-fork `permitsTimeTravel: true`。
-- 新 fork 一律建在 Tenderly `aladdindao/test` 项目下，Parent = Base Sepolia (84532)，Custom Chain ID 填固定编号。页面上"创建 Tenderly Fork"按钮走 legacy API、Chain ID 继承 84532，**不符合固定编号约定**——要固定编号必须控制台手建。
+- 新 fork 推荐一键创建：环境页 ① 按钮「创建 Tenderly Virtual TestNet（固定 Chain ID）」或 `npm run env:vnet:create -- --env <env>`（走 Virtual TestNets API，Chain ID 自动取 catalog `fixedChainId`、`eth_chainId` 校验、回填 RPC/WSS/Chain ID、登记 CURRENT.json；需 `E2E_TENDERLY_ACCESS_TOKEN`）。legacy fork API 已停用；控制台手建（Parent Base Sepolia 84532 + Custom Chain ID）仍可作备选。细节见 `references/environments.md` §一。
 
 ## 二、用例-环境绑定（SKIP 不是故障）
 

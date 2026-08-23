@@ -14,17 +14,17 @@ export function renderEnvironmentsHtml(generatedAt: string): string {
   </section>
 
   <section class="panel section-card">
-    <div class="section-heading"><div><h2>① Fork 与 RPC</h2><p id="rpc-step-description">先有可用的 Fork，再谈其他配置。填好 RPC 后点击保存即可生效。</p></div><div class="actions"><button id="create-tenderly-fork" type="button" class="secondary">创建 Tenderly Fork 并回填 RPC / WSS</button><button id="save-rpc" type="button">保存 RPC 配置</button></div></div>
+    <div class="section-heading"><div><h2>① Fork 与 RPC</h2><p id="rpc-step-description">先有可用的 Fork，再谈其他配置。填好 RPC 后点击保存即可生效。</p></div><div class="actions"><button id="create-tenderly-fork" type="button" class="secondary">创建 Tenderly Virtual TestNet（固定 Chain ID）并回填 RPC / WSS</button><button id="save-rpc" type="button">保存 RPC 配置</button></div></div>
     <div id="fork-guide" class="guide">
-      <strong id="fork-guide-title">tx-fork / oracle-fork / time-fork 的建法（Tenderly 控制台）：</strong>
+      <strong id="fork-guide-title">tx-fork / oracle-fork / time-fork 的建法（推荐：页面一键创建）：</strong>
       <div id="fork-guide-body">
         <ol>
-          <li>在 Tenderly 创建 Virtual TestNet，Parent Network 选 <code>Base Sepolia (84532)</code>；</li>
-          <li>Custom Chain ID 按环境固定编号：tx-fork = <code>99911</code> / oracle-fork = <code>99912</code> / time-fork = <code>99913</code>；</li>
-          <li>oracle-fork / time-fork 关闭运行期 State Sync（tx-fork 按需）；</li>
-          <li>建好后把 HTTPS RPC 填到下方 <strong>主 RPC</strong> 与 <strong>Admin RPC</strong>，Chain ID 填固定编号，点击“保存 RPC 配置”。</li>
+          <li>在 ① 区填好 <strong>Tenderly Access Token</strong>（可选：<code>E2E_TENDERLY_ACCOUNT_SLUG</code> / <code>E2E_TENDERLY_PROJECT_SLUG</code>；留空则从已配置的同项目 Fork RPC 推导）；</li>
+          <li>选好环境后点「创建 Tenderly Virtual TestNet」：按本环境<strong>固定 Chain ID</strong>（tx-fork = <code>99911</code> / oracle-fork = <code>99912</code> / time-fork = <code>99913</code>）在 Base Sepolia (84532) 上建 VNet，创建后用 <code>eth_chainId</code> 校验，自动回填主 RPC / Admin RPC / WSS / Chain ID 并登记 <code>Docs/contract-releases/CURRENT.json</code>；</li>
+          <li>需要钉死 fork 区块时在弹窗里填区块号（留空 = latest，响应会回填实际 fork 块）；</li>
+          <li>然后执行 ③ 初始化 Mock Market Bundle → ④ 环境检查。命令行等价：<code>npm run env:vnet:create -- --env &lt;环境&gt;</code>（删除：<code>env:vnet:delete</code>）。</li>
         </ol>
-        <p class="muted">“创建 Tenderly Fork”按钮走 legacy fork API（Chain ID 继承 84532），适合快速起临时 Fork；要固定 Chain ID 请用控制台手建。</p>
+        <p class="muted">走 Tenderly Virtual TestNets API（legacy fork API 已于 2026-03-31 停用）。仍可在 Tenderly 控制台手建（Parent Base Sepolia、Custom Chain ID 填固定编号）后把 RPC 粘到下方保存。</p>
       </div>
     </div>
     <div id="rpc-fields" class="field-grid"></div>
@@ -96,16 +96,15 @@ export function renderEnvironmentsHtml(generatedAt: string): string {
       const guide=forkGuides[environment.value];
       const title=document.getElementById('fork-guide-title'),body=document.getElementById('fork-guide-body');
       if(!guide){title.textContent='tx-fork / oracle-fork / time-fork 的建法（Tenderly 控制台）：';return;}
-      title.textContent=environment.value+' 的建法（Tenderly 控制台）· Chain ID 固定 '+guide.chainId+'：';
+      title.textContent=environment.value+' 的建法（页面一键创建 / 控制台手建）· Chain ID 固定 '+guide.chainId+'：';
       body.innerHTML='<p>定位：'+guide.role+'。</p>'
         +'<ol>'
-        +'<li>在 Tenderly <code>aladdindao/test</code> 项目创建 Virtual TestNet，Parent Network 选 <code>Base Sepolia (84532)</code>；</li>'
-        +'<li>Custom Chain ID 固定填 <code>'+guide.chainId+'</code>（本环境专用编号；tx-fork=99911 / oracle-fork=99912 / time-fork=99913，避免与真链混淆、也便于 Keeper 按 Chain ID 隔离游标）；</li>'
-        +'<li>建好后把 HTTPS RPC 填到下方 <strong>主 RPC</strong> 与 <strong>Admin RPC</strong>，Chain ID 填 <code>'+guide.chainId+'</code>，点击“保存 RPC 配置”。</li>'
+        +'<li>推荐：点上方「创建 Tenderly Virtual TestNet」，自动以 Chain ID <code>'+guide.chainId+'</code>（本环境专用编号；tx-fork=99911 / oracle-fork=99912 / time-fork=99913，避免与真链混淆、也便于 Keeper 按 Chain ID 隔离游标）在 Base Sepolia (84532) 上建 VNet 并回填 RPC / Admin RPC / WSS / Chain ID、登记 CURRENT.json；</li>'
+        +'<li>备选：Tenderly 控制台手建（Parent Base Sepolia，Custom Chain ID 填 <code>'+guide.chainId+'</code>），把 HTTPS RPC 填到下方 <strong>主 RPC</strong> 与 <strong>Admin RPC</strong>，点击“保存 RPC 配置”。</li>'
         +'</ol>'
         +'<p><strong>本环境特殊要求（区别于其他 Fork）：</strong></p>'
         +'<ul>'+guide.special.map(function(item){return '<li>'+item+'</li>';}).join('')+'</ul>'
-        +'<p class="muted">“创建 Tenderly Fork”按钮走 legacy fork API（Chain ID 继承 84532，不符合本环境固定编号），要固定 Chain ID 请在 Tenderly 控制台手建。</p>';
+        +'<p class="muted">按钮走 Virtual TestNets API（legacy fork API 已停用），Chain ID 自动用固定编号并经 eth_chainId 校验；建好后继续 ③ 初始化 Mock Market Bundle。</p>';
     }
     const state={configuration:null,profile:null,marketSources:[],activeInitializationId:null,poll:null};
     const environment=document.getElementById('environment');
@@ -140,7 +139,7 @@ export function renderEnvironmentsHtml(generatedAt: string): string {
     function renderJob(job){const alias=job.bundleAlias||'default-mock';document.getElementById('initialization-status').textContent='['+alias+'] '+(job.message||('初始化状态：'+job.status));document.getElementById('initialization-log').hidden=false;document.getElementById('log-content').textContent=(job.logTail||[]).join('\\n');if(['PASS','FAIL','INTERRUPTED'].includes(job.status)){clearInterval(state.poll);state.poll=null;document.getElementById('run-initialization').disabled=false;if(job.status==='PASS'){load().then(check).catch(function(){});}}}
     async function pollJob(){if(!state.activeInitializationId)return;const result=await requestJson('/api/environment-initializations/'+encodeURIComponent(state.activeInitializationId));renderJob(result.initialization);}
     document.getElementById('reload').addEventListener('click',function(){load().catch(showError);});environment.addEventListener('change',function(){load().catch(showError);});
-    document.getElementById('save-config').addEventListener('click',function(){saveConfiguration().catch(showError);});document.getElementById('save-rpc').addEventListener('click',function(){saveConfiguration().catch(showError);});document.getElementById('save-profile').addEventListener('click',function(){saveProfile().catch(showError);});document.getElementById('check').addEventListener('click',function(){check().catch(showError);});document.getElementById('create-tenderly-fork').addEventListener('click',async function(){const button=this;button.disabled=true;document.getElementById('connection').textContent='正在创建 Tenderly Fork…';try{const result=await requestJson('/api/tenderly-forks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({environment:environment.value})});document.getElementById('connection').textContent='Fork 已创建并回填：Chain ID '+result.fork.chainId+'；HTTP RPC 与 WSS 已保存。';await load();}catch(error){showError(error);}finally{button.disabled=false;}});
+    document.getElementById('save-config').addEventListener('click',function(){saveConfiguration().catch(showError);});document.getElementById('save-rpc').addEventListener('click',function(){saveConfiguration().catch(showError);});document.getElementById('save-profile').addEventListener('click',function(){saveProfile().catch(showError);});document.getElementById('check').addEventListener('click',function(){check().catch(showError);});document.getElementById('create-tenderly-fork').addEventListener('click',async function(){const button=this;const block=window.prompt('可选：钉死 Base Sepolia fork 区块号（十进制；留空 = latest）','');if(block===null){return;}button.disabled=true;document.getElementById('connection').textContent='正在创建 Tenderly Virtual TestNet（固定 Chain ID）…';try{const payload={environment:environment.value};if(block&&block.trim()){payload.blockNumber=block.trim();}const result=await requestJson('/api/tenderly-forks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});document.getElementById('connection').textContent='Virtual TestNet 已创建并回填：Chain ID '+result.fork.chainId+'（已校验）'+(result.fork.forkBlockNumber!==undefined?'，fork 块 '+result.fork.forkBlockNumber:'')+'，Tenderly env '+result.fork.environmentId+'；主 RPC / Admin RPC / WSS 已保存'+(result.fork.baselineRegistryUpdated?'，CURRENT.json 已登记':'')+'。下一步：③ 初始化 Mock Market Bundle。';await load();}catch(error){showError(error);}finally{button.disabled=false;}});
     document.getElementById('reload-market-sources').addEventListener('click',async function(){const button=this;button.disabled=true;document.getElementById('market-source-status').textContent='正在读取链上 Market 数据…';try{await loadMarketSources();}catch(error){state.marketSources=[];renderMarketSources();document.getElementById('market-source-status').textContent='Market 列表读取失败：'+error.message;}finally{button.disabled=false;}});
     document.getElementById('copy-market-source').addEventListener('click',function(){copyMarketSource().catch(showError);});
     document.getElementById('run-initialization').addEventListener('click',async function(){const button=this;const bundleAlias=document.getElementById('bundle-alias').value.trim();if(!/^[a-z0-9][a-z0-9-]{0,47}$/.test(bundleAlias)){showError(new Error('Market Bundle 别名只允许小写字母、数字和连字符，长度 1–48。'));return;}button.disabled=true;try{await saveConfiguration();await saveProfile();const result=await requestJson('/api/environment-initializations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({environment:environment.value,bundleAlias:bundleAlias,force:document.getElementById('force-init').checked,forceSharedCollateral:document.getElementById('force-shared-collateral').checked,reuseRpcForAdmin:false})});state.activeInitializationId=result.initialization.id;renderJob(result.initialization);state.poll=setInterval(function(){pollJob().catch(showError);},1500);}catch(error){button.disabled=false;showError(error);}});

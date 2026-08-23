@@ -1,12 +1,16 @@
 # 环境与 Mock Market Bundle
 
-## 一、Fork 建法（Tenderly 控制台）
+## 一、Fork 建法（推荐：一键创建 Virtual TestNet；控制台手建为备选）
 
-1. `aladdindao/test` 项目 → Create Virtual TestNet，Parent Network = Base Sepolia (84532)。
-2. Custom Chain ID 按环境固定编号：tx-fork=99911 / oracle-fork=99912 / time-fork=99913。
-3. oracle-fork / time-fork **关闭运行期 State Sync**（tx-fork 按需）。
-4. HTTPS RPC 填环境页"主 RPC"与"Admin RPC"（可相同），Chain ID 填固定编号，保存。
-5. 配置落盘 `.env.local`（`src/server/environment-settings.ts` 串行化读改写）；环境变量名按 catalog：`E2E_TX_FORK_RPC_URL` / `E2E_ORACLE_FORK_ADMIN_RPC_URL` 等。
+**一键创建（2026-08 起）**：环境页 ① 按钮「创建 Tenderly Virtual TestNet（固定 Chain ID）」或 `npm run env:vnet:create -- --env <tx-fork|oracle-fork|time-fork> [--block N] [--dry-run]`（`src/server/tenderly-forks.ts`）。
+
+1. 前置：`E2E_TENDERLY_ACCESS_TOKEN`（环境页 ① secret 字段 / `.env.local`）；account/project slug 可选（`E2E_TENDERLY_ACCOUNT_SLUG` / `E2E_TENDERLY_PROJECT_SLUG`，留空从已配置的同项目 VNet RPC 路径推导）。
+2. 走 Tenderly **Virtual TestNets REST API**（`POST /api/public/v1/account/{a}/project/{p}/environments`，`network_configs[].chain_config_overrides.chain_id` = catalog `fixedChainId`：tx-fork 99911 / oracle-fork 99912 / time-fork 99913；Parent = Base Sepolia 84532；`block_number` 可选钉死）。legacy Forks API（`POST .../fork`）已于 2026-03-31 停用。
+3. 创建后自动：`eth_chainId` 校验固定编号 → 回填 `.env.local` 的主 RPC / Admin RPC（同为 Admin RPC）/ WSS / Chain ID → 登记 `config/tenderly-vnets.json`（只存 environment id 与 RPC 主机名，无凭证）→ 回写 `Docs/contract-releases/CURRENT.json` `environments.<env>`（status/chainId/forkBlockNumber/forkOf）。
+4. 然后 ③ 初始化 Mock Market Bundle → ④ 环境检查；oracle-fork / time-fork 关闭运行期 State Sync（tx-fork 按需）。
+5. 清理：`npm run env:vnet:delete -- --env <env>`（或 `--environment-id <uuid>`；看板 `POST /api/tenderly-forks/delete`），CURRENT.json 自动置回 pending。临时/CI 环境务必删，避免配额堆满。
+
+**控制台手建（备选）**：`aladdindao/test` 项目 → Create Virtual TestNet，Parent = Base Sepolia (84532)，Custom Chain ID 填固定编号；HTTPS RPC 填环境页"主 RPC"与"Admin RPC"，Chain ID 填固定编号，保存（落盘 `.env.local`，`src/server/environment-settings.ts` 串行化读改写；变量名按 catalog：`E2E_TX_FORK_RPC_URL` / `E2E_ORACLE_FORK_ADMIN_RPC_URL` 等）。
 
 ## 二、Bundle 分层结构（登记在 `config/mock-resources.json`）
 

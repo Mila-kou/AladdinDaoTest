@@ -116,6 +116,13 @@ MockBTC 参考市场读取、复制并逐项回读，最终一起写入 `config/
 首版标记为 `mock-and-deployed` 的用例共 23 条：`SCN-005/006/008/017/018/021/024/025/027/028/031/032/033/034/040/048/052/053/054/056/059/062/065`。`SCN-001/004/063` 属于 `dev-readonly` 的 `deployed-only` 页面检查。这是一份保守白名单；只有不依赖人为改价、参数注入、精确时间或风险边界的场景才进入该列表。
 
 ```bash
+# 一键创建 Tenderly Virtual TestNet（固定 Chain ID：tx-fork 99911 / oracle-fork 99912 / time-fork 99913）
+# 前置：.env.local 或环境页 ① 配好 E2E_TENDERLY_ACCESS_TOKEN（可选 E2E_TENDERLY_ACCOUNT_SLUG / E2E_TENDERLY_PROJECT_SLUG，留空从已配置的 Fork RPC 推导）
+# 创建后自动：eth_chainId 校验 → 回填 .env.local 的 RPC / Admin RPC / WSS / Chain ID → 登记 config/tenderly-vnets.json 与 Docs/contract-releases/CURRENT.json
+npm run env:vnet:create -- --env time-fork                 # 可加 --block <十进制区块> 钉死 fork 点；--dry-run 只打印请求体
+npm run env:vnet:list                                      # 本地登记（无凭证）
+npm run env:vnet:delete -- --env time-fork                 # 删除该环境最近一次创建的 VNet（CI/临时环境务必清理，避免配额堆满）
+
 # 查看三个私有 Fork 的默认资源状态
 npm run env:show:mock
 

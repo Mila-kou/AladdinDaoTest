@@ -14,6 +14,8 @@ export interface EnvironmentDefinition {
   readonly wssEnvironmentVariable?: string;
   /** 环境/Fork 独立的固定 chainId；允许不同 Fork 使用不同链。 */
   readonly chainIdEnvironmentVariable?: string;
+  /** 本环境约定的固定 Chain ID（Tenderly Virtual TestNet 创建时作为 chain_config_overrides.chain_id；与真链 84532 区分、便于 Keeper 按链隔离游标）。 */
+  readonly fixedChainId?: number;
   readonly adminRpcEnvironmentVariable?: string;
   readonly permitsTransactions: boolean;
   readonly permitsOracleMutation: boolean;
@@ -41,6 +43,7 @@ export const environments: Record<EnvironmentName, EnvironmentDefinition> = {
     rpcEnvironmentVariable: 'E2E_TX_FORK_RPC_URL',
     wssEnvironmentVariable: 'E2E_TX_FORK_WSS_URL',
     chainIdEnvironmentVariable: 'E2E_TX_FORK_CHAIN_ID',
+    fixedChainId: 99911,
     adminRpcEnvironmentVariable: 'E2E_TX_FORK_ADMIN_RPC_URL',
     permitsTransactions: true,
     // Inline Keeper 的普通真实交易；Index 与 USDC 均使用初始化时登记的 Mock Oracle。
@@ -56,6 +59,7 @@ export const environments: Record<EnvironmentName, EnvironmentDefinition> = {
     rpcEnvironmentVariable: 'E2E_ORACLE_FORK_RPC_URL',
     wssEnvironmentVariable: 'E2E_ORACLE_FORK_WSS_URL',
     chainIdEnvironmentVariable: 'E2E_ORACLE_FORK_CHAIN_ID',
+    fixedChainId: 99912,
     adminRpcEnvironmentVariable: 'E2E_ORACLE_FORK_ADMIN_RPC_URL',
     permitsTransactions: true,
     permitsOracleMutation: true,
@@ -70,6 +74,7 @@ export const environments: Record<EnvironmentName, EnvironmentDefinition> = {
     rpcEnvironmentVariable: 'E2E_TIME_FORK_RPC_URL',
     wssEnvironmentVariable: 'E2E_TIME_FORK_WSS_URL',
     chainIdEnvironmentVariable: 'E2E_TIME_FORK_CHAIN_ID',
+    fixedChainId: 99913,
     adminRpcEnvironmentVariable: 'E2E_TIME_FORK_ADMIN_RPC_URL',
     permitsTransactions: true,
     permitsOracleMutation: true,

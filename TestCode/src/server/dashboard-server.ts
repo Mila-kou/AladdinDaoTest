@@ -581,10 +581,22 @@ export async function startDashboardServer(options: DashboardServerOptions) {
         }
       }
 
+      if (url.pathname === '/api/tenderly-forks' && method === 'GET') {
+        sendJson(response, 200, { vnets: await tenderlyForkManager.list() });
+        return;
+      }
+
       if (url.pathname === '/api/tenderly-forks' && method === 'POST') {
-        if (!isSameOriginRequest(request)) { sendJson(response, 403, { error: '仅允许同源看板页面创建 Tenderly Fork。' }); return; }
+        if (!isSameOriginRequest(request)) { sendJson(response, 403, { error: '仅允许同源看板页面创建 Tenderly Virtual TestNet。' }); return; }
         try { sendJson(response, 201, { fork: await tenderlyForkManager.create(await readJsonBody(request)) }); }
-        catch (error) { sendJson(response, 400, { error: 'Tenderly Fork 创建失败', detail: error instanceof Error ? error.message : String(error) }); }
+        catch (error) { sendJson(response, 400, { error: 'Tenderly Virtual TestNet 创建失败', detail: error instanceof Error ? error.message : String(error) }); }
+        return;
+      }
+
+      if (url.pathname === '/api/tenderly-forks/delete' && method === 'POST') {
+        if (!isSameOriginRequest(request)) { sendJson(response, 403, { error: '仅允许同源看板页面删除 Tenderly Virtual TestNet。' }); return; }
+        try { sendJson(response, 200, { removed: await tenderlyForkManager.remove(await readJsonBody(request)) }); }
+        catch (error) { sendJson(response, 400, { error: 'Tenderly Virtual TestNet 删除失败', detail: error instanceof Error ? error.message : String(error) }); }
         return;
       }
 

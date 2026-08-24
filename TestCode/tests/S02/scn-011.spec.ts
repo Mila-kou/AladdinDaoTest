@@ -3,6 +3,7 @@ import { writeFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
 import { loadRuntimeConfig } from '../../src/config/runtime.js';
+import { applyCaseTrader } from '../../src/config/trader-roster.js';
 import { runMarketFlow, stringifyEvidence, type Scn009Evidence } from '../../src/scenarios/scn-009-runner.js';
 import { resolveUiHooks, withUiHooks } from '../../src/ui/ui-collect-hook.js';
 
@@ -24,7 +25,7 @@ test.describe('S02 策略下单与订单管理', () => {
     // 限价开空（P+10% 高抛）：挂单 → 未触发保持挂单 → 推价越过触发 → Keeper 执行 → 全平。
     test.setTimeout(360_000);
     test.skip(testInfo.project.name !== 'tx-fork', 'SCN-011 在 tx-fork 执行（06-策略下单矩阵）');
-    const runtime = loadRuntimeConfig();
+    const runtime = await applyCaseTrader(loadRuntimeConfig(), 'SCN-011');
     const persistForkState = process.env.E2E_PERSIST_FORK_STATE === 'true';
     if (persistForkState) {
       expect(runtime.signingMode, '持久证据运行必须使用私钥签名').toBe('private-key');

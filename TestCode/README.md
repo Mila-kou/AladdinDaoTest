@@ -144,6 +144,15 @@ npm run env:noise:trades -- --plan config/noise-plan.json
 # 可选：--traders 0xA,0xB（或配 E2E_NOISE_TRADER_ACCOUNTS）、--orders N、--close 随即平仓
 npm run env:noise:trades
 
+# 每用例专属 Trader（per-case 档案）：先生成花名册（100 个真实 EOA，24 词助记词 BIP-44 派生；
+# 私钥束仅本机 config/noise-traders.secret.json，0600+gitignore；已存在会拒绝覆盖，确认换批先备份再加 --force），
+# 再按确定性规则（SCN-0NN → Trader NN；SCN-B32-0N → Trader 80+N）生成 config/case-traders.json（88 条，只含地址与编号，入库）。
+npm run traders:generate                                   # 可加 -- --count N（默认 100）
+npm run traders:map
+# 跑批加 E2E_TRADER_ASSIGNMENT=per-case 后，15 条 SCN spec 会在顶部注入该场景专属 trader，
+# 并在任何 evm_snapshot 之前幂等注资（ETH/USDC 金额与环境初始化 funding 口径一致，经 admin RPC cheatcode）。
+# 未设该变量时行为与共享 trader 完全一致；E2E_TRADER_PROFILE=ui（前端观测档案）在场时 per-case 自动让位并 console.warn。
+
 # 独立核对 Bundle、两路 Mock Oracle、Reader Market 和 33 项参数
 E2E_ENV=oracle-fork npm run env:verify:mock
 
@@ -287,6 +296,44 @@ E2E_ENV=tx-fork E2E_TRADER_PROFILE=ui E2E_UI_COLLECT=true E2E_ENV_PRIORITY_KEYS=
 ```
 
 前置：本地前端（`.claude/launch.json` → `fx100-frontend-local`）、`scripts/frontend-fork-patch.ts apply`、`scripts/prepare-ui-trader.ts`。
+
+## pipeline 一键链路
+
+`scripts/pipeline.ts` 把跑批全链路串成一条无头命令（看板跑批之外的 CLI 入口）：
+
+```
+A 环境存在性 ──→ B 环境准备 ──→ C 按例 Trader（可选）──→ D 跑批 ──→ E 回收
+  复用已配置        init:mock         trader-roster           playwright      rebuild-latest
+  或新建 VNet       verify:mock       覆盖检查+批量注资        --project=<env>  + verify + 摘要表（+归档）
+```
+
+示例：
+
+```bash
+# 先看计划（不创建 fork、不发交易、不跑批）
+npm run pipeline -- --env tx-fork --cases SCN-009 --dry-run
+
+# 实跑两条场景并归档证据最小集
+npm run pipeline -- --env tx-fork --cases SCN-009,SCN-022 --archive scn009-scn022-batch
+
+# 全部 spec + 按例专属 Trader
+npm run pipeline -- --env tx-fork --all --per-case-traders
+```
+
+flags 一览：
+
+- `--env <tx-fork|oracle-fork|time-fork>`：必填，目标 Fork 环境（同时作为 Playwright `--project`）；
+- `--cases SCN-009,SCN-022`：逗号分隔场景（与 `--all` 二选一；无关环境的 spec 会自声明 SKIP，属正常）；
+- `--all`：`tests/**/scn-*.spec.ts` 全部；
+- `--fresh`：强制重建——新建 Tenderly VNet 并重新初始化 Mock 资源；
+- `--skip-vnet`：跳过阶段 A 的创建动作（RPC 未配置时中止）；
+- `--skip-init`：跳过阶段 B（不 init 不 verify）；
+- `--force`：`env:verify:mock` 失败时醒目告警后继续；
+- `--per-case-traders`：启用按例专属 Trader（阶段 C 检查 `config/case-traders.json` 覆盖并批量注资，子进程注入 `E2E_TRADER_ASSIGNMENT=per-case`）；
+- `--archive <name>`：阶段 E 末尾调用 `evidence-archive/tools/archive-evidence.py` 归档本批证据最小集（仅 PASS 场景入档）；
+- `--dry-run`：只打印各阶段计划，不触链。
+
+约定：reporter 自动写 `artifacts/runs` 并合并 `latest`，pipeline 不传 `--reporter` 覆盖；摘要表读取 `artifacts/latest/results.json`，当 `run.releaseMismatch` 为真时明确提示「环境基线≠目标基线：本批结果不充当目标版本回归材料」；全程不打印任何 RPC URL / 私钥（环境状态只打印 configured / chainId）。退出码：0 成功，2 参数错误，10/20/30/40/50 对应阶段 A–E 失败。
 
 ## 从看板执行用例
 

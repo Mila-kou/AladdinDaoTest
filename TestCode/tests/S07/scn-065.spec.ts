@@ -3,6 +3,7 @@ import { writeFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
 import { loadRuntimeConfig } from '../../src/config/runtime.js';
+import { applyCaseTrader } from '../../src/config/trader-roster.js';
 import { runMarketFlow, stringifyEvidence, type Scn009Evidence } from '../../src/scenarios/scn-009-runner.js';
 import { resolveUiHooks, withUiHooks } from '../../src/ui/ui-collect-hook.js';
 
@@ -25,7 +26,7 @@ test.describe('S07 订单类型全矩阵', () => {
     // 这是 P1 空头取整守卫（开仓 ⌈⌉、Short OI/开仓成本侧）的首条真实链路实证。
     test.setTimeout(360_000);
     test.skip(testInfo.project.name !== 'tx-fork', 'SCN-065 市价开空在 tx-fork 执行（06-策略下单矩阵）');
-    const runtime = loadRuntimeConfig();
+    const runtime = await applyCaseTrader(loadRuntimeConfig(), 'SCN-065');
     const persistForkState = process.env.E2E_PERSIST_FORK_STATE === 'true';
     if (persistForkState) {
       expect(runtime.signingMode, '持久证据运行必须使用私钥签名').toBe('private-key');

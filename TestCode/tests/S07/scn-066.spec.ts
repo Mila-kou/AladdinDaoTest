@@ -3,6 +3,7 @@ import { writeFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
 import { loadRuntimeConfig } from '../../src/config/runtime.js';
+import { applyCaseTrader } from '../../src/config/trader-roster.js';
 import { runMarketFlow, stringifyEvidence, type Scn009Evidence } from '../../src/scenarios/scn-009-runner.js';
 
 async function rawRpc(url: string, method: string, params: readonly unknown[] = []): Promise<unknown> {
@@ -23,7 +24,7 @@ test.describe('S07 订单类型全矩阵', () => {
     // 市价开空 → 挂 TP（LimitDecrease short，P−10%）→ 推价下穿触发 → Keeper 执行止盈全平。
     test.setTimeout(360_000);
     test.skip(testInfo.project.name !== 'tx-fork', 'SCN-066 在 tx-fork 执行（06-策略下单矩阵）');
-    const runtime = loadRuntimeConfig();
+    const runtime = await applyCaseTrader(loadRuntimeConfig(), 'SCN-066');
     const persistForkState = process.env.E2E_PERSIST_FORK_STATE === 'true';
     if (persistForkState) {
       expect(runtime.signingMode, '持久证据运行必须使用私钥签名').toBe('private-key');

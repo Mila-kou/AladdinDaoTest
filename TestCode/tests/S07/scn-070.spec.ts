@@ -3,6 +3,7 @@ import { writeFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
 import { loadRuntimeConfig } from '../../src/config/runtime.js';
+import { applyCaseTrader } from '../../src/config/trader-roster.js';
 import {
   runScn070,
   stringifyScn070Evidence,
@@ -14,7 +15,7 @@ test.describe('S07 订单类型全矩阵', () => {
     test.setTimeout(1_200_000);
     test.skip(testInfo.project.name !== 'oracle-fork', 'SCN-070 固定在 oracle-fork 使用受控 Mock Oracle');
 
-    const runtime = loadRuntimeConfig();
+    const runtime = await applyCaseTrader(loadRuntimeConfig(), 'SCN-070');
     expect(runtime.signingMode, 'SCN-070 的 Trader 与 Keeper 交易必须使用私钥签名').toBe('private-key');
     expect(runtime.hasPrimaryTestWallet, '缺少 Trader 私钥').toBe(true);
     expect(runtime.hasSecondaryTestWallet, '缺少 ORDER_KEEPER 私钥').toBe(true);

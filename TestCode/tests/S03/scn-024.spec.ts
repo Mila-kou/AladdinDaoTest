@@ -3,6 +3,7 @@ import { writeFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
 import { loadRuntimeConfig } from '../../src/config/runtime.js';
+import { applyCaseTrader } from '../../src/config/trader-roster.js';
 import { runMarketFlowMatrix, stringifyEvidence, type MarketFlowMatrixEvidence } from '../../src/scenarios/scn-009-runner.js';
 import { resolveUiHooks, withUiHooks } from '../../src/ui/ui-collect-hook.js';
 
@@ -14,7 +15,7 @@ test.describe('S03 仓位管理与退出', () => {
     // SCN-070 模式）；报告按数据集独立保留结果，txStep 跨数据集顺延编号。
     test.setTimeout(720_000);
     test.skip(testInfo.project.name !== 'tx-fork', 'SCN-024 在 tx-fork 执行（06-策略下单矩阵）');
-    const runtime = loadRuntimeConfig();
+    const runtime = await applyCaseTrader(loadRuntimeConfig(), 'SCN-024');
     if (process.env.E2E_PERSIST_FORK_STATE === 'true') {
       expect(runtime.signingMode, '持久证据运行必须使用私钥签名').toBe('private-key');
     }

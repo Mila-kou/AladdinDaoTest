@@ -3,6 +3,7 @@ import { writeFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
 import { loadRuntimeConfig } from '../../src/config/runtime.js';
+import { applyCaseTrader } from '../../src/config/trader-roster.js';
 import { runMarketFlowMatrix, stringifyEvidence, type MarketFlowMatrixEvidence } from '../../src/scenarios/scn-009-runner.js';
 import { resolveUiHooks, withUiHooks } from '../../src/ui/ui-collect-hook.js';
 
@@ -15,7 +16,7 @@ test.describe('S02 策略下单与订单管理', () => {
     // 每个数据集 4 笔真实交易 + 全量账本快照，三组合计超出 playwright.config 的 90s 全局上限。
     test.setTimeout(900_000);
     test.skip(testInfo.project.name !== 'tx-fork', 'SCN-009 在 tx-fork 执行（交易账本线）');
-    const runtime = loadRuntimeConfig();
+    const runtime = await applyCaseTrader(loadRuntimeConfig(), 'SCN-009');
     // 环境必须与 Playwright project 一致：.env.local 的 E2E_ENV 曾静默把 tx-fork 批次改跑 oracle-fork（2026-08-14 实例）
     expect(runtime.environment, 'runtime 环境须与 --project 一致（见 src/config/runtime.ts E2E_ENV_PRIORITY_KEYS）').toBe(testInfo.project.name);
     if (process.env.E2E_PERSIST_FORK_STATE === 'true') {

@@ -22,7 +22,7 @@
 | 超时形态 | 无（自己执行） | 300s 等不到执行 → 报错提示换 Inline 或先做就绪检查 |
 | 适用 | default-mock 全部场景 | 验证真实 keeper 服务链路；标准 Market（无 mock oracle）只能走它 |
 
-签名模式：`E2E_KEEPER_MODE`（inline/service）、`E2E_SIGNING_MODE=private-key` 时 SCN-009/010/070 要求 Trader 与 Keeper 私钥齐备（spec 里 expect hasPrimaryTestWallet/hasSecondaryTestWallet）。
+签名模式：`E2E_KEEPER_MODE`（inline/service）、`E2E_SIGNING_MODE=private-key` 时 SCN-009/010/070 要求 Trader 与 Keeper 私钥齐备（spec 里 expect hasPrimaryTestWallet/hasSecondaryTestWallet）。Trader 档案优先级：`E2E_TRADER_PROFILE=ui`（前端观测专用）> `E2E_TRADER_ASSIGNMENT=per-case`（按 `config/case-traders.json` 每用例注入专属 trader，spec 顶部 `applyCaseTrader` 在任何 snapshot 前幂等注资；ui 档案在场时 per-case 让位并 console.warn）> 默认共享 trader（两者都未设时行为与现状完全一致）。
 
 ## 三、spec 状态保护差异（跨环境风险的核心）
 

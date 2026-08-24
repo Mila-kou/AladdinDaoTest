@@ -28,7 +28,7 @@ description: TestCode（fx100 E2E 测试工程）操作手册：三 Fork 环境�
 ## 三、标准工作流
 
 1. **配环境**：环境页 ① Fork 与 RPC → ② Trade/账户 → ③ Mock Market Bundle 初始化 → ④ 环境检查（验收）。细节与决策表见 `references/environments.md`。
-2. **跑用例**：跑批页选环境与 Keeper 模式；或 npm scripts 直跑。模式选择与 spec 保护差异见 `references/run-and-verify.md`。
+2. **跑用例**：跑批页选环境与 Keeper 模式；或 npm scripts 直跑。模式选择与 spec 保护差异见 `references/run-and-verify.md`。一键链路入口：`npm run pipeline -- --env tx-fork --cases SCN-009,SCN-022`（创建 fork→初始化→验收→跑批→看板回收/归档，先 `--dry-run` 看计划；flags 与退出码见 TestCode/README「pipeline 一键链路」）。
 3. **验证改动**（改任何渲染/核对代码后的固定三连）：
 
 ```bash

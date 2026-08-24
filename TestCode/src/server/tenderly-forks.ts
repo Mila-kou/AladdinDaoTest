@@ -262,7 +262,8 @@ export class TenderlyForkManager {
         network_id: String(PARENT_NETWORK_ID),
         ...(input.blockNumber ? { block_number: `0x${BigInt(input.blockNumber).toString(16)}` } : {}),
         chain_config_overrides: { chain_id: String(chainId) },
-        explorer_config: { enabled: false, verification_visibility: 'bytecode' },
+        // explorer 默认关闭；实测 2026-08-24：enabled:false 时携带 verification_visibility 会被 API 拒绝
+        // （explorer_config.contract_verification_visibility is invalid），故整体省略。
       }],
     };
     if (input.dryRun) {

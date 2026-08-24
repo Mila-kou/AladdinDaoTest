@@ -1,4 +1,16 @@
 {
   "schemaVersion": 1,
-  "vnets": []
+  "vnets": [
+    {
+      "environment": "time-fork",
+      "environmentId": "1fbbfdcd-e2ea-4edb-a55d-75cc08b77268",
+      "vnetId": "3848c749-9d05-4f4f-b562-35601491870e",
+      "displayName": "fx100 time-fork · chain 99913 · 2026-08-24 07:19Z",
+      "chainId": 99913,
+      "parentNetworkId": 84532,
+      "forkBlockNumber": 45893847,
+      "rpcHost": "virtual.base-sepolia.eu.rpc.tenderly.co",
+      "createdAt": "2026-08-24T07:19:44.146Z"
+    }
+  ]
 }

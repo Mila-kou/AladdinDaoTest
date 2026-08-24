@@ -4,9 +4,10 @@ import { expect, test } from '@playwright/test';
 
 import { loadRuntimeConfig } from '../../src/config/runtime.js';
 import { runMarketFlowMatrix, stringifyEvidence, type MarketFlowMatrixEvidence } from '../../src/scenarios/scn-009-runner.js';
+import { resolveUiHooks, withUiHooks } from '../../src/ui/ui-collect-hook.js';
 
 test.describe('S03 仓位管理与退出', () => {
-  test('SCN-023 盈利时分批兑现｜部分平 50% 后清仓 @p0 @tx @serial', async ({}, testInfo) => {
+  test('SCN-023 盈利时分批兑现｜部分平 50% 后清仓 @p0 @tx @serial', async ({ page }, testInfo) => {
     // 分批兑现数据集（06-策略下单矩阵 · long-decrease-profit）：
     // 开多 → +10% 推价 → 部分平 50%（中段阶段：多头部分平 ⌈⌉ 取整 + 瀑布部分平分支
     // output=盈利折算、押金留仓）→ 全平剩余 50%。P1 部分平守卫的首条真实链路实证。
@@ -18,16 +19,18 @@ test.describe('S03 仓位管理与退出', () => {
     if (process.env.E2E_PERSIST_FORK_STATE === 'true') {
       expect(runtime.signingMode, '持久证据运行必须使用私钥签名').toBe('private-key');
     }
+    // 前端钩子（docs/07 Phase 2）：E2E_UI_COLLECT=true 全平前停点采平仓弹窗预览；E2E_UI_ORDER_ENTRY=true 市价开仓/全平改由页面点击发起（中段阶段仍走 RPC）
+    const uiHooks = await resolveUiHooks(runtime, page, testInfo);
 
     let evidence: MarketFlowMatrixEvidence | undefined;
     try {
       evidence = await runMarketFlowMatrix(runtime, {
         scenarioId: 'SCN-023',
         datasets: [
-          {
+          withUiHooks({
             datasetId: 'long-decrease-profit', label: '开多 +10% 分批兑现', isLong: true, priceMovePercent: 10,
             middlePhases: [{ kind: 'decrease', label: '分批兑现 50%', percentOfPosition: 50 }],
-          },
+          }, uiHooks),
         ],
       });
     } catch (error) {

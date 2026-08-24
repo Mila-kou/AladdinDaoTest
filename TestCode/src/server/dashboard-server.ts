@@ -214,6 +214,33 @@ export async function startDashboardServer(options: DashboardServerOptions) {
         return;
       }
 
+      // 执行附件静态读取（停点截图 PNG / 证据 JSON）：只允许 attachments/ 目录内的单层文件名，防穿越。
+      if (url.pathname.startsWith('/attachments/') && (method === 'GET' || method === 'HEAD')) {
+        const fileName = decodeURIComponent(url.pathname.slice('/attachments/'.length));
+        if (!fileName || fileName.includes('/') || fileName.includes('\\') || fileName.startsWith('.')) {
+          sendJson(response, 404, { error: '附件不存在' }, headOnly);
+          return;
+        }
+        const attachmentsDir = join(artifactDirectory, 'attachments');
+        const filePath = resolve(attachmentsDir, fileName);
+        if (!filePath.startsWith(resolve(attachmentsDir) + '/')) {
+          sendJson(response, 404, { error: '附件不存在' }, headOnly);
+          return;
+        }
+        let body: Buffer;
+        try {
+          body = await readFile(filePath);
+        } catch {
+          sendJson(response, 404, { error: `附件 ${fileName} 不存在` }, headOnly);
+          return;
+        }
+        const contentType = fileName.endsWith('.png') ? 'image/png'
+          : fileName.endsWith('.json') ? 'application/json; charset=utf-8'
+            : 'application/octet-stream';
+        send(response, 200, contentType, body, headOnly);
+        return;
+      }
+
       if (url.pathname === '/api/test-cases' && (method === 'GET' || method === 'HEAD')) {
         const cases = await readTestCaseViews(artifactDirectory, projectRoot);
         sendJson(response, 200, { cases }, headOnly);

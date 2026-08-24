@@ -4,9 +4,10 @@ import { expect, test } from '@playwright/test';
 
 import { loadRuntimeConfig } from '../../src/config/runtime.js';
 import { runMarketFlowMatrix, stringifyEvidence, type MarketFlowMatrixEvidence } from '../../src/scenarios/scn-009-runner.js';
+import { resolveUiHooks, withUiHooks } from '../../src/ui/ui-collect-hook.js';
 
 test.describe('S02 策略下单与订单管理', () => {
-  test('SCN-009 市价开多快速退出｜涨/平/跌三组受控价格数据集 @p0 @tx @serial', async ({}, testInfo) => {
+  test('SCN-009 市价开多快速退出｜涨/平/跌三组受控价格数据集 @p0 @tx @serial', async ({ page }, testInfo) => {
     // 用例（TestCase/E2E/scenarios/S02 第 18 行）：10 USDC / 5x，价格小涨/平/小跌三组，
     // 核对「三组最终余额方向为涨 > 平 > 跌；Entry/Exit 使用对用户不利侧执行价」。
     // 三组 = 数据集矩阵（+3% / 0 / −3%，推价三件套见 runMarketFlow priceMovePercent），
@@ -20,15 +21,17 @@ test.describe('S02 策略下单与订单管理', () => {
     if (process.env.E2E_PERSIST_FORK_STATE === 'true') {
       expect(runtime.signingMode, '持久证据运行必须使用私钥签名').toBe('private-key');
     }
+    // 前端钩子（docs/07 Phase 2）：E2E_UI_COLLECT=true 每个数据集全平前停点采平仓弹窗预览；E2E_UI_ORDER_ENTRY=true 市价开仓/全平改由页面点击发起（注入钱包 Node 侧签名）
+    const uiHooks = await resolveUiHooks(runtime, page, testInfo);
 
     let evidence: MarketFlowMatrixEvidence | undefined;
     try {
       evidence = await runMarketFlowMatrix(runtime, {
         scenarioId: 'SCN-009',
         datasets: [
-          { datasetId: 'long-quick-exit-up', label: '开多 → +3% 小涨 → 市价全平', isLong: true, priceMovePercent: 3 },
-          { datasetId: 'long-quick-exit-flat', label: '开多 → 价格不动 → 市价全平', isLong: true, priceMovePercent: 0 },
-          { datasetId: 'long-quick-exit-down', label: '开多 → −3% 小跌 → 市价全平', isLong: true, priceMovePercent: -3 },
+          withUiHooks({ datasetId: 'long-quick-exit-up', label: '开多 → +3% 小涨 → 市价全平', isLong: true, priceMovePercent: 3 }, uiHooks),
+          withUiHooks({ datasetId: 'long-quick-exit-flat', label: '开多 → 价格不动 → 市价全平', isLong: true, priceMovePercent: 0 }, uiHooks),
+          withUiHooks({ datasetId: 'long-quick-exit-down', label: '开多 → −3% 小跌 → 市价全平', isLong: true, priceMovePercent: -3 }, uiHooks),
         ],
         crossDatasetChecks: [{
           name: '三组最终余额方向：涨 > 平 > 跌（traderUsdcDelta 严格递减）',

@@ -4,6 +4,7 @@ import { expect, test } from '@playwright/test';
 
 import { loadRuntimeConfig } from '../../src/config/runtime.js';
 import { runMarketFlow, stringifyEvidence, type Scn009Evidence } from '../../src/scenarios/scn-009-runner.js';
+import { resolveUiHooks, withUiHooks } from '../../src/ui/ui-collect-hook.js';
 
 async function rawRpc(url: string, method: string, params: readonly unknown[] = []): Promise<unknown> {
   const body = await fetch(url, {
@@ -19,7 +20,7 @@ async function rawRpc(url: string, method: string, params: readonly unknown[] = 
 }
 
 test.describe('S07 订单类型全矩阵', () => {
-  test('SCN-065 看空交易员立即开空，补齐 MarketIncrease short @p0 @tx @serial', async ({}, testInfo) => {
+  test('SCN-065 看空交易员立即开空，补齐 MarketIncrease short @p0 @tx @serial', async ({ page }, testInfo) => {
     // SCN-009 的方向对偶：市价开空 → 全平，走同一 runMarketFlow（isLong=false）。
     // 这是 P1 空头取整守卫（开仓 ⌈⌉、Short OI/开仓成本侧）的首条真实链路实证。
     test.setTimeout(360_000);
@@ -32,11 +33,13 @@ test.describe('S07 订单类型全矩阵', () => {
     const snapshotId = persistForkState
       ? undefined
       : await rawRpc(runtime.adminRpcUrl ?? runtime.rpcUrl, 'evm_snapshot');
+    // 前端钩子（docs/07 Phase 2）：E2E_UI_COLLECT=true 全平前停点采平仓弹窗预览；E2E_UI_ORDER_ENTRY=true 市价开仓/全平改由页面点击发起（注入钱包 Node 侧签名）
+    const uiHooks = await resolveUiHooks(runtime, page, testInfo);
     let evidence: Scn009Evidence | undefined;
 
     try {
       try {
-        evidence = await runMarketFlow(runtime, { scenarioId: 'SCN-065', isLong: false });
+        evidence = await runMarketFlow(runtime, withUiHooks({ scenarioId: 'SCN-065', isLong: false }, uiHooks));
       } catch (error) {
         if (runtime.keeperMode === 'service') {
           testInfo.annotations.push({

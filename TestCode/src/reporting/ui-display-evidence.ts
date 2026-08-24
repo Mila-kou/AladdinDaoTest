@@ -193,3 +193,92 @@ export function buildUiDisplayRows(input: UiDisplayRowsInput): Reconciliation[] 
   });
   return rows;
 }
+
+/**
+ * "前端下单（页面点击 + 注入钱包签名）"分组（docs/07 附录四 §6）：仅当 runner 的 orderEntry 钩子接管了市价腿时出现。
+ * Before = 用例意图 / 停点仓位，After = 页面实际提交并上链的 OrderCreated 参数；页面提交值与意图的微差不拉低协议状态
+ * （对账层已按实际参数推导），只在 note 标注。
+ */
+export interface UiOrderEntryRowsInput {
+  readonly uiOrderEntry: JsonRecord | undefined;
+  readonly testData: JsonRecord;
+  readonly openCreateTx: string;
+  readonly closeCreateTx: string;
+  /** 停点仓位 sizeInUsd（全平腿对照，1e30） */
+  readonly closeSizeUsdRaw: bigint | undefined;
+}
+
+const ORDER_BASIS = { title: '前端下单核对（页面点击 · 注入钱包 Node 侧签名）', sourcePath: 'docs/07-前端显示值核对与testid契约.md', section: '附录四 §6 Phase 2 进展 / src/ui/order-entry.ts' } as const;
+// FX100 Order.OrderType（tools/fx100-legacy/tool/onchain-tx/lib/flows.mjs ORDER_TYPE；与 GMX 不同，无 swap 类型）
+const ORDER_TYPE_LABEL: Record<string, string> = { '0': 'MarketIncrease', '1': 'LimitIncrease', '2': 'MarketDecrease', '3': 'LimitDecrease', '4': 'StopLossDecrease', '5': 'Liquidation', '6': 'StopIncrease' };
+
+function legRows(leg: 'open' | 'close', entry: JsonRecord, txStep: string, input: UiOrderEntryRowsInput): Reconciliation[] {
+  const order = entry.order && typeof entry.order === 'object' ? (entry.order as JsonRecord) : {};
+  const detail = entry.detail && typeof entry.detail === 'object' ? (entry.detail as JsonRecord) : {};
+  const group = `${txStep} · 前端下单 · ${leg === 'open' ? '开仓表单' : '平仓弹窗 Confirm Close'}`;
+  const txHash = String(entry.txHash ?? '');
+  const orderKey = String(entry.orderKey ?? '');
+  const sizeRaw = BigInt(String(order.sizeDeltaUsd ?? '0'));
+  const collateralRaw = BigInt(String(order.initialCollateralDeltaAmount ?? '0'));
+  const orderType = String(order.orderType ?? '');
+  const form = detail.form && typeof detail.form === 'object' ? (detail.form as JsonRecord) : {};
+  const shots = Array.isArray(detail.screenshots) ? detail.screenshots.length : 0;
+  const rows: Reconciliation[] = [{
+    id: `ui-order-${leg}-tx`, group, txStep, dataSource: '前端', status: 'CALCULATED', verification: '派生展示',
+    label: leg === 'open' ? '页面开仓交易（Standard 模式，eth_sendTransaction → Node 侧私钥签名）' : '页面全平交易（持仓行 Close Position → Max → Confirm Close）',
+    before: leg === 'open'
+      ? `表单：${String(form.side ?? '—')} · Size ${String(form.sizeInput ?? '—')} ${String(form.sizeUnit ?? '')} · 杠杆 ${String(form.leverageInput ?? '—')}`
+      : `弹窗：Max 全平（停点仓位 sizeInUsd=${input.closeSizeUsdRaw?.toString() ?? '—'}）`,
+    after: `tx ${txHash} · block ${String(entry.blockNumber ?? '—')} · orderKey ${orderKey}`,
+    expected: '页面发出的交易恰好产生 1 条 OrderCreated，由 runner 接管后续 Keeper 执行与对账',
+    formula: 'driveOpen/CloseOrderOnPage → signing-wallet.exposeBinding(eth_sendTransaction) → eth_call 预执行 → viem 私钥签名广播 → OrderCreated 解析',
+    basis: ORDER_BASIS, unit: '—',
+    note: `orderType=${orderType}（${ORDER_TYPE_LABEL[orderType] ?? '?'}）；acceptablePrice=${String(order.acceptablePrice ?? '—')}；executionFee=${String(order.executionFee ?? '—')} wei；阶段截图 ${shots} 张；耗时 ${String(detail.durationMs ?? '?')}ms。`,
+  }];
+  if (leg === 'open') {
+    const intent = form.intent && typeof form.intent === 'object' ? (form.intent as JsonRecord) : {};
+    const intentSize = BigInt(String(intent.sizeUsd ?? input.testData.sizeUsd ?? '50').split('.')[0] ?? '50') * 10n ** 30n;
+    const intentCollateral = BigInt(String(intent.collateralUsdc ?? '10').split('.')[0] ?? '10') * 10n ** 6n;
+    const sizeOk = sizeRaw === intentSize;
+    const colOk = collateralRaw === intentCollateral;
+    rows.push({
+      id: 'ui-order-open-size', group, txStep, dataSource: '前端', status: sizeOk ? 'PASS' : 'CALCULATED', verification: '事件对照',
+      label: '页面提交 sizeDeltaUsd vs 用例意图 Size（USD）',
+      before: `意图 ${intentSize} (1e30)`, after: `OrderCreated.sizeDeltaUsd ${sizeRaw}`, expected: `= ${intentSize}`,
+      delta: `${sizeRaw - intentSize >= 0n ? '+' : ''}${(sizeRaw - intentSize).toString()}`,
+      formula: 'Size 单位切 USD 后填入意图值；FE-W3：USD 模式提交 sizeDeltaUsd = 输入值（resolveSubmittedSizeDeltaUsd）',
+      basis: ORDER_BASIS, unit: 'USD 1e30',
+      note: sizeOk ? '页面提交与意图一致。' : '页面提交与意图不一致：对账层已按实际 sizeDeltaUsd 推导期望值（testData.sizeUsd 取自 OrderCreated），此处仅记录偏差。',
+    });
+    rows.push({
+      id: 'ui-order-open-collateral', group, txStep, dataSource: '前端', status: colOk ? 'PASS' : 'CALCULATED', verification: '事件对照',
+      label: '页面提交 initialCollateralDeltaAmount vs 意图抵押（Size ÷ 杠杆）',
+      before: `意图 ${intentCollateral} (USDC 1e6)`, after: `OrderCreated.initialCollateralDeltaAmount ${collateralRaw}`, expected: `= ${intentCollateral}`,
+      delta: `${collateralRaw - intentCollateral >= 0n ? '+' : ''}${(collateralRaw - intentCollateral).toString()}`,
+      formula: '前端按 Size / 杠杆换算抵押（可能含费用预留与取整）；链上以提交值为准',
+      basis: ORDER_BASIS, unit: 'USDC 1e6',
+      note: colOk ? '页面提交与意图一致。' : '页面换算的抵押与意图不同（前端口径，如费用预留/取整）；对账层已按实际 initialCollateralDeltaAmount 推导。',
+    });
+  } else if (input.closeSizeUsdRaw !== undefined) {
+    const ok = sizeRaw === input.closeSizeUsdRaw;
+    rows.push({
+      id: 'ui-order-close-size', group, txStep, dataSource: '前端', status: ok ? 'PASS' : 'CALCULATED', verification: '事件对照',
+      label: '页面 Max 全平提交 sizeDeltaUsd vs 停点仓位 sizeInUsd',
+      before: `仓位 ${input.closeSizeUsdRaw}`, after: `OrderCreated.sizeDeltaUsd ${sizeRaw}`, expected: `= ${input.closeSizeUsdRaw}`,
+      delta: `${sizeRaw - input.closeSizeUsdRaw >= 0n ? '+' : ''}${(sizeRaw - input.closeSizeUsdRaw).toString()}`,
+      formula: 'ClosePositionDialog Max → isFullClose → sizeDeltaUsd = 仓位 sizeInUsdExact',
+      basis: ORDER_BASIS, unit: 'USD 1e30',
+      note: ok ? 'Max 全平提交值等于停点仓位规模。' : 'Max 全平提交值与停点仓位不同（前端口径）；合约按 USD 减仓 ceil 归一规则处理。',
+    });
+  }
+  return rows;
+}
+
+export function buildUiOrderEntryRows(input: UiOrderEntryRowsInput): Reconciliation[] {
+  const ui = input.uiOrderEntry;
+  if (!ui) return [];
+  const rows: Reconciliation[] = [];
+  if (ui.open && typeof ui.open === 'object') rows.push(...legRows('open', ui.open as JsonRecord, input.openCreateTx, input));
+  if (ui.close && typeof ui.close === 'object') rows.push(...legRows('close', ui.close as JsonRecord, input.closeCreateTx, input));
+  return rows;
+}

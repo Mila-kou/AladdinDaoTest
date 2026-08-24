@@ -19,6 +19,7 @@ export interface CloseDialogCollectOptions {
   readonly indexSymbol: string;
   /** 已打开的会话可复用（矩阵多数据集共用一页） */
   readonly session?: TradeSession;
+  /** 停点截图基名（.png）；各阶段截图派生为 `<base>-<stage>.png`，最终预览仍写到该路径 */
   readonly screenshotPath?: string;
   readonly rowWaitMs?: number;
   readonly previewWaitMs?: number;
@@ -34,6 +35,8 @@ export interface CloseDialogCollectResult {
   readonly closeDialog?: readonly CollectedDisplayValue[];
   readonly dialogText?: string;
   readonly screenshotPath?: string;
+  /** 逐阶段截图（持仓行可见 / 弹窗打开 / Max 预览稳定 / 失败现场），按采集顺序 */
+  readonly screenshots?: ReadonlyArray<{ readonly stage: string; readonly path: string }>;
   /** 采集时前端 tickers 用的链上价格（route 缓存中的最近一次读数） */
   readonly priceBasis?: ReadonlyArray<{ symbol: string; minUsd: string; maxUsd: string; block: string }>;
   readonly session: TradeSession;
@@ -55,11 +58,24 @@ export async function collectCloseDialogAtStopPoint(
     tokens: options.tokens,
     marketSymbol: options.marketSymbol,
   });
+  const screenshots: Array<{ stage: string; path: string }> = [];
+  const snap = async (stageName: string, path?: string): Promise<string | undefined> => {
+    if (!options.screenshotPath) return undefined;
+    const target = path ?? options.screenshotPath.replace(/\.png$/, `-${stageName}.png`);
+    try {
+      await page.screenshot({ path: target, fullPage: false });
+      screenshots.push({ stage: stageName, path: target });
+      return target;
+    } catch {
+      return undefined;
+    }
+  };
   const partial = (error: unknown, extra: Partial<CloseDialogCollectResult> = {}): CloseDialogCollectResult => ({
     collected: false,
     stage,
     error: error instanceof Error ? error.message.split('\n')[0]! : String(error),
     session,
+    ...(screenshots.length ? { screenshots: [...screenshots] } : {}),
     ...extra,
   });
   try {
@@ -86,15 +102,18 @@ export async function collectCloseDialogAtStopPoint(
       const bodyText = await page.locator('body').innerText().catch(() => '');
       return partial(new Error(`持仓行未渲染（${options.indexSymbol} ${sideText}），等待 ${options.rowWaitMs ?? 45_000}ms`), { dialogText: bodyText });
     }
+    await snap('position-row');
     const positionRowText = (await row.innerText()).trim();
     const positionRowCells = positionRowText.split('\t').map((c) => c.trim()).filter(Boolean);
     const positionRowFields = await collectDisplayValues(row, POSITION_ROW_FIELDS, 1_500);
 
     // —— 打开平仓弹窗
     stage = 'open-dialog';
-    await row.getByRole('button', { name: 'Close', exact: true }).first().click();
+    // 文案兼容：Phase 1 时为 "Close"，develop 现用 orderRecords.closePosition = "Close Position"（行作用域内不会误中其它按钮）
+    await row.getByRole('button', { name: /^close( position)?$/i }).first().click();
     const dialog = page.getByRole('dialog').filter({ hasText: /close position/i }).first();
     await dialog.waitFor({ state: 'visible', timeout: 10_000 });
+    await snap('dialog-open');
 
     // —— Max（全平）
     stage = 'max';
@@ -116,11 +135,7 @@ export async function collectCloseDialogAtStopPoint(
     }
     const closeDialog = await collectDisplayValues(dialog, CLOSE_DIALOG_FIELDS, 2_000);
     const dialogText = (await dialog.innerText()).trim();
-    let screenshotPath: string | undefined;
-    if (options.screenshotPath) {
-      await page.screenshot({ path: options.screenshotPath, fullPage: false });
-      screenshotPath = options.screenshotPath;
-    }
+    const screenshotPath = await snap('preview', options.screenshotPath);
     // 关闭弹窗（不确认）
     await page.keyboard.press('Escape');
     await dialog.waitFor({ state: 'hidden', timeout: 5_000 }).catch(() => undefined);
@@ -135,13 +150,15 @@ export async function collectCloseDialogAtStopPoint(
       closeDialog,
       dialogText,
       ...(screenshotPath ? { screenshotPath } : {}),
+      ...(screenshots.length ? { screenshots: [...screenshots] } : {}),
       ...(stable ? {} : { error: 'Est. Receive 预览在等待窗口内未稳定（已按最后读数采集）' }),
       priceBasis: prices.map((p) => ({ symbol: p.symbol, minUsd: p.minUsd, maxUsd: p.maxUsd, block: p.blockNumber.toString() })),
       session,
     };
   } catch (error) {
-    if (options.screenshotPath) await page.screenshot({ path: options.screenshotPath.replace(/\.png$/, '-error.png') }).catch(() => undefined);
+    // 失败现场截图也随证据附上（如门禁模态、持仓行未渲染），便于不开 headed 也能看到停点页面
+    const errorScreenshot = await snap('error');
     await page.keyboard.press('Escape').catch(() => undefined);
-    return partial(error);
+    return partial(error, errorScreenshot ? { screenshotPath: errorScreenshot } : {});
   }
 }

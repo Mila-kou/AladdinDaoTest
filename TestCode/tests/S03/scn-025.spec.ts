@@ -4,9 +4,10 @@ import { expect, test } from '@playwright/test';
 
 import { loadRuntimeConfig } from '../../src/config/runtime.js';
 import { runMarketFlowMatrix, stringifyEvidence, type MarketFlowMatrixEvidence } from '../../src/scenarios/scn-009-runner.js';
+import { resolveUiHooks, withUiHooks } from '../../src/ui/ui-collect-hook.js';
 
 test.describe('S03 仓位管理与退出', () => {
-  test('SCN-025 趋势确认后同方向加仓｜加仓双向数据集 @p1 @tx @serial', async ({}, testInfo) => {
+  test('SCN-025 趋势确认后同方向加仓｜加仓双向数据集 @p1 @tx @serial', async ({ page }, testInfo) => {
     // 加仓双向数据集（06-策略下单矩阵 · long/short-increase）：
     // 开仓 50 USD → 同方向加仓 50 USD（中段阶段）→ 全平 100 USD。
     // 中段阶段走完整 创建→执行→钉块快照→纯净度→守恒 链路，加仓期望为在仓位基础上的增量模型。
@@ -18,20 +19,22 @@ test.describe('S03 仓位管理与退出', () => {
     if (process.env.E2E_PERSIST_FORK_STATE === 'true') {
       expect(runtime.signingMode, '持久证据运行必须使用私钥签名').toBe('private-key');
     }
+    // 前端钩子（docs/07 Phase 2）：E2E_UI_COLLECT=true 全平前停点采平仓弹窗预览；E2E_UI_ORDER_ENTRY=true 市价开仓/全平改由页面点击发起（中段阶段仍走 RPC）
+    const uiHooks = await resolveUiHooks(runtime, page, testInfo);
 
     let evidence: MarketFlowMatrixEvidence | undefined;
     try {
       evidence = await runMarketFlowMatrix(runtime, {
         scenarioId: 'SCN-025',
         datasets: [
-          {
+          withUiHooks({
             datasetId: 'long-increase', label: '开多后同方向加仓', isLong: true,
             middlePhases: [{ kind: 'increase', label: '同方向加仓 50 USD', collateralUsdc: '10' }],
-          },
-          {
+          }, uiHooks),
+          withUiHooks({
             datasetId: 'short-increase', label: '开空后同方向加仓', isLong: false,
             middlePhases: [{ kind: 'increase', label: '同方向加仓 50 USD', collateralUsdc: '10' }],
-          },
+          }, uiHooks),
         ],
       });
     } catch (error) {

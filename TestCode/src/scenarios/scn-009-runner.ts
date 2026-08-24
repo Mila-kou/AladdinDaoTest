@@ -1,7 +1,7 @@
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 
-import { createPublicClient, createWalletClient, defineChain, encodeAbiParameters, getAddress, http, keccak256, parseAbi, parseAbiParameters, toHex } from 'viem';
+import { createPublicClient, createWalletClient, defineChain, encodeAbiParameters, formatUnits, getAddress, http, keccak256, parseAbi, parseAbiParameters, toHex } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 
 import type { RuntimeConfig } from '../config/runtime.js';
@@ -184,6 +184,31 @@ export interface Scn009Evidence {
   readonly parameters: Record<string, unknown>;
   /** 全平前停点的前端显示值采集（beforeClose 回调返回值；采集失败为 {error}）；无回调时缺省 */
   readonly uiDisplay?: Record<string, unknown>;
+  /** 页面下单（orderEntry 钩子）：开仓/全平各自的页面交易、OrderCreated 解析参数与驱动器细节；未用钩子时缺省 */
+  readonly uiOrderEntry?: {
+    readonly open?: UiOrderEntryRecord;
+    readonly close?: UiOrderEntryRecord;
+  };
+}
+
+/** 页面下单一条腿的记录（docs/07 附录四 §6 钱包签名走页面） */
+export interface UiOrderEntryRecord {
+  readonly txHash: `0x${string}`;
+  readonly blockNumber: number;
+  readonly orderKey: `0x${string}`;
+  /** OrderCreated 事件解析（字符串化 bigint） */
+  readonly order: {
+    readonly orderType: string;
+    readonly isLong: boolean;
+    readonly sizeDeltaUsd: string;
+    readonly initialCollateralDeltaAmount: string;
+    readonly acceptablePrice: string;
+    readonly executionFee: string;
+    readonly triggerPrice?: string;
+    readonly isSizeDeltaUsd?: boolean;
+  };
+  /** 驱动器返回的细节（表单输入、截图路径、耗时等），原样落证据 */
+  readonly detail?: Record<string, unknown>;
 }
 
 const DEPLOYED_MARKET_INDEX = 2;
@@ -353,6 +378,60 @@ async function sendKeeperExecution(
   const txHash = await wallet.sendTransaction({ account, chain, to, data, value });
   const txReceipt = await publicClient.waitForTransactionReceipt({ hash: txHash, timeout: 120_000 });
   return { ok: txReceipt.status === 'success', txHash, blockNumber: Number(txReceipt.blockNumber), gasUsed: txReceipt.gasUsed.toString() };
+}
+
+/** 页面下单收口：等回执 → 同块 OrderCreated（按 txHash 匹配）→ SentOrder + 订单参数 */
+async function finalizeUiOrder(
+  deps: Pick<LegacyDependencies, 'fetchEmitterEvents'>,
+  rpc: LegacyRpc,
+  runtime: RuntimeConfig,
+  deployment: LegacyDeployment,
+  txHash: `0x${string}`,
+  label: string,
+): Promise<{ sent: SentOrder; order: UiOrderEntryRecord['order'] }> {
+  const chain = defineChain({
+    id: runtime.chainId,
+    name: 'FX100 E2E Fork',
+    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+    rpcUrls: { default: { http: [runtime.rpcUrl] } },
+  });
+  const publicClient = createPublicClient({ chain, transport: http(runtime.rpcUrl, { timeout: runtime.requestTimeoutMs }), pollingInterval: 1_000 });
+  const txReceipt = await publicClient.waitForTransactionReceipt({ hash: txHash, timeout: 120_000 });
+  const blockNumber = Number(txReceipt.blockNumber);
+  const created = (await deps.fetchEmitterEvents(rpc, {
+    emitter: deployment.addresses.eventEmitter,
+    fromBlock: blockNumber,
+    toBlock: blockNumber,
+    eventName: 'OrderCreated',
+  })).filter((event) => event.txHash.toLowerCase() === txHash.toLowerCase());
+  if (txReceipt.status !== 'success') {
+    return {
+      sent: { ok: false, error: `${label}：页面交易回执 reverted`, txHash, blockNumber, gasUsed: txReceipt.gasUsed.toString(), orderKey: null },
+      order: { orderType: '', isLong: false, sizeDeltaUsd: '0', initialCollateralDeltaAmount: '0', acceptablePrice: '0', executionFee: '0' },
+    };
+  }
+  if (created.length !== 1) {
+    throw new Error(`${label}：页面交易 ${txHash} 在块 ${blockNumber} 应恰好产生 1 条 OrderCreated，实际 ${created.length}`);
+  }
+  const event = created[0]!;
+  const key = eventKey(event);
+  if (!key) throw new Error(`${label}：OrderCreated 事件缺少 key`);
+  const uint = event.uint ?? {};
+  const bool = (event as { bool?: Record<string, boolean> }).bool ?? {};
+  return {
+    sent: { ok: true, txHash, blockNumber, gasUsed: txReceipt.gasUsed.toString(), orderKey: key as `0x${string}` },
+    // FX100 OrderEventUtils.emitOrderCreated：uint 项名为 sizeDelta（配 bool.isSizeDeltaUsd），非 GMX 的 sizeDeltaUsd
+    order: {
+      orderType: String(uint.orderType ?? ''),
+      isLong: Boolean(bool.isLong),
+      sizeDeltaUsd: String(uint.sizeDeltaUsd ?? uint.sizeDelta ?? 0n),
+      initialCollateralDeltaAmount: String(uint.initialCollateralDeltaAmount ?? 0n),
+      acceptablePrice: String(uint.acceptablePrice ?? 0n),
+      executionFee: String(uint.executionFee ?? 0n),
+      ...(uint.triggerPrice !== undefined ? { triggerPrice: String(uint.triggerPrice) } : {}),
+      ...(bool.isSizeDeltaUsd !== undefined ? { isSizeDeltaUsd: Boolean(bool.isSizeDeltaUsd) } : {}),
+    },
+  };
 }
 
 function decimalToRawUsdc(value: string): bigint {
@@ -643,6 +722,46 @@ export interface MarketFlowBeforeCloseContext {
 
 export type MarketFlowBeforeCloseHook = (context: MarketFlowBeforeCloseContext) => Promise<Record<string, unknown> | void>;
 
+/**
+ * 页面下单上下文（docs/07 附录四 §6）：runner 把"这一腿要下什么单"交给页面驱动器，驱动器在前端表单/弹窗里
+ * 点出同一笔订单，由注入的签名钱包（Node 侧私钥）签名广播，返回 txHash；runner 再等回执、从 OrderCreated 解析
+ * orderKey 与订单参数，后续 Keeper 执行 / 快照 / 对账与 RPC 下单完全相同。
+ */
+export interface MarketFlowOrderEntryContext {
+  readonly scenarioId: string;
+  readonly datasetId?: string;
+  readonly leg: 'open' | 'close';
+  readonly isLong: boolean;
+  readonly marketIndex: number;
+  readonly chainId: number;
+  readonly trader: `0x${string}`;
+  readonly collateralToken: string;
+  readonly exchangeRouter: string;
+  readonly dataStore: string;
+  readonly oracle: string;
+  readonly rpcUrl: string;
+  readonly appBaseUrl: string;
+  readonly indexToken?: string;
+  readonly indexOracle?: string;
+  /** 开仓腿：runner 期望的输入（页面应填同样的值）；平仓腿为全平（Max） */
+  readonly intent: {
+    readonly collateralUsdc: string;
+    readonly leverage: number;
+    readonly sizeUsd: string;
+  };
+  /** 平仓腿：停点时仓位原始字段（bigint → string） */
+  readonly position?: { readonly sizeInUsd: string; readonly sizeInTokens: string; readonly collateralAmount: string };
+  /** 调用前最后一次链上快照块 */
+  readonly snapshotBlock: string;
+}
+
+export interface MarketFlowOrderEntryResult {
+  readonly txHash: `0x${string}`;
+  readonly detail?: Record<string, unknown>;
+}
+
+export type MarketFlowOrderEntryHook = (context: MarketFlowOrderEntryContext) => Promise<MarketFlowOrderEntryResult>;
+
 export interface MarketFlowOptions {
   readonly scenarioId: string;
   readonly isLong: boolean;
@@ -656,6 +775,11 @@ export interface MarketFlowOptions {
   readonly closeTrigger?: TriggerSpec;
   /** 全平前停点回调（前端显示值采集）；返回值原样落证据 uiDisplay，抛错记为 uiDisplay.error 不中断。 */
   readonly beforeClose?: MarketFlowBeforeCloseHook;
+  /**
+   * 页面下单钩子：市价开仓 / 市价全平两腿改由前端页面点击发起（Standard 模式，注入钱包 Node 侧签名）。
+   * 触发式腿（openTrigger/closeTrigger）与中段阶段仍走 RPC。驱动器抛错 = 该腿创建失败 → 用例 FAIL。
+   */
+  readonly orderEntry?: MarketFlowOrderEntryHook;
   /** 矩阵模式透传，仅用于停点上下文标注 */
   readonly datasetId?: string;
 }
@@ -760,7 +884,36 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
     const internal = feedRaw * 10n ** BigInt(12 - state.decimals);
     openTriggerContext = { feedRaw, internal, feedDecimals: state.decimals };
   }
-  const open = await broadcaster.send({
+  // 页面下单（仅市价腿）：驱动器在前端点出同一笔订单 → 注入钱包签名 → 返回 txHash；触发式开仓仍走 RPC。
+  const uiOrderEntryRecords: { open?: UiOrderEntryRecord; close?: UiOrderEntryRecord } = {};
+  const orderEntryContextBase = {
+    scenarioId: flow.scenarioId,
+    ...(flow.datasetId !== undefined ? { datasetId: flow.datasetId } : {}),
+    isLong,
+    marketIndex,
+    chainId: runtime.chainId,
+    trader: getAddress(runtime.testAccount) as `0x${string}`,
+    collateralToken: deployment.addresses.usdc,
+    exchangeRouter: deployment.addresses.exchangeRouter,
+    dataStore: deployment.addresses.dataStore,
+    oracle: deployment.addresses.oracle,
+    rpcUrl: runtime.rpcUrl,
+    appBaseUrl: runtime.appBaseUrl,
+    ...(mockResource?.token?.address ? { indexToken: mockResource.token.address } : {}),
+    ...(mockResource?.oracle?.address ? { indexOracle: mockResource.oracle.address } : {}),
+    intent: { collateralUsdc: '10', leverage: 5, sizeUsd: '50' },
+  } as const;
+  const useUiOpen = Boolean(flow.orderEntry) && !flow.openTrigger;
+  let open: SentOrder;
+  if (useUiOpen && flow.orderEntry) {
+    const entry = await flow.orderEntry({ ...orderEntryContextBase, leg: 'open', snapshotBlock: before.blockNumber.toString() });
+    const finalized = await finalizeUiOrder(deps, rpc, runtime, deployment, entry.txHash, '页面开仓');
+    open = finalized.sent;
+    if (open.ok && open.orderKey) {
+      uiOrderEntryRecords.open = { txHash: entry.txHash, blockNumber: open.blockNumber, orderKey: open.orderKey, order: finalized.order, ...(entry.detail ? { detail: entry.detail } : {}) };
+    }
+  } else {
+  open = await broadcaster.send({
     ...(flow.openTrigger && openTriggerContext
       ? buildTriggerOrderMulticall(deps, {
         exchangeRouter: deployment.addresses.exchangeRouter,
@@ -789,7 +942,8 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
       })),
     from: runtime.testAccount,
   });
-  check(assertions, '开仓创建交易成功', open.ok, open.error ?? open.txHash, 'success');
+  }
+  check(assertions, useUiOpen ? '开仓创建交易成功（页面下单 · 注入钱包签名）' : '开仓创建交易成功', open.ok, open.error ?? open.txHash, 'success');
   const openOrderKey = requireValue(open.orderKey, '开仓交易未解出 orderKey');
   // 固定读取创建交易所在区块，避免 Service Keeper 紧接着执行后丢失 TX1 的挂单态。
   const afterCreateOpen = await takeSnapshot(deps, rpc, deployment, ledgerContext, open.blockNumber);
@@ -892,7 +1046,14 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
     tierMultiplier: graceParameters.tierMultiplier,
   });
   check(assertions, `开仓后方向为${directionLabel}头`, openedPosition.isLong === isLong, openedPosition.isLong, isLong);
-  check(assertions, '开仓规模为 50 USD', openedPosition.sizeInUsd === SIZE_USD, openedPosition.sizeInUsd, SIZE_USD);
+  const expectedOpenSizeUsd = uiOrderEntryRecords.open ? BigInt(uiOrderEntryRecords.open.order.sizeDeltaUsd) : SIZE_USD;
+  check(
+    assertions,
+    uiOrderEntryRecords.open ? '开仓规模 = 页面提交的 sizeDeltaUsd' : '开仓规模为 50 USD',
+    openedPosition.sizeInUsd === expectedOpenSizeUsd,
+    openedPosition.sizeInUsd,
+    expectedOpenSizeUsd,
+  );
   check(
     assertions,
     '首次开仓 Grace 按执行区块当前参数复算',
@@ -1168,7 +1329,26 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
     const internal = feedRaw * 10n ** BigInt(12 - state.decimals);
     closeTriggerContext = { feedRaw, internal, feedDecimals: state.decimals };
   }
-  const close = await broadcaster.send({
+  const useUiClose = Boolean(flow.orderEntry) && !flow.closeTrigger;
+  let close: SentOrder;
+  if (useUiClose && flow.orderEntry) {
+    const entry = await flow.orderEntry({
+      ...orderEntryContextBase,
+      leg: 'close',
+      position: {
+        sizeInUsd: currentPosition.sizeInUsd.toString(),
+        sizeInTokens: currentPosition.sizeInTokens.toString(),
+        collateralAmount: currentPosition.collateralAmount.toString(),
+      },
+      snapshotBlock: flowCursor.blockNumber.toString(),
+    });
+    const finalized = await finalizeUiOrder(deps, rpc, runtime, deployment, entry.txHash, '页面全平');
+    close = finalized.sent;
+    if (close.ok && close.orderKey) {
+      uiOrderEntryRecords.close = { txHash: entry.txHash, blockNumber: close.blockNumber, orderKey: close.orderKey, order: finalized.order, ...(entry.detail ? { detail: entry.detail } : {}) };
+    }
+  } else {
+  close = await broadcaster.send({
     ...(flow.closeTrigger && closeTriggerContext
       ? buildTriggerOrderMulticall(deps, {
         exchangeRouter: deployment.addresses.exchangeRouter,
@@ -1196,7 +1376,8 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
       })),
     from: runtime.testAccount,
   });
-  check(assertions, '全平创建交易成功', close.ok, close.error ?? close.txHash, 'success');
+  }
+  check(assertions, useUiClose ? '全平创建交易成功（页面下单 · 注入钱包签名）' : '全平创建交易成功', close.ok, close.error ?? close.txHash, 'success');
   const closeOrderKey = requireValue(close.orderKey, '全平交易未解出 orderKey');
   const afterCreateClose = await takeSnapshot(deps, rpc, deployment, ledgerContext, close.blockNumber);
   check(assertions, 'afterCreateClose 账本无缺失读数', afterCreateClose.errors.length === 0, afterCreateClose.errors, []);
@@ -1465,10 +1646,13 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
           : 'Service Keeper：producer + ord-worker 异步执行',
         runtime.signingMode === 'private-key' ? '用户私钥签名市价全平' : '账户模拟市价全平',
         'Reader/账本/事件/余额证据',
+        ...(uiOrderEntryRecords.open || uiOrderEntryRecords.close
+          ? [`页面点击下单（Standard 模式）并由注入钱包在 Node 侧用 trader 私钥签名：${[uiOrderEntryRecords.open ? '开仓' : '', uiOrderEntryRecords.close ? '全平' : ''].filter(Boolean).join('/')}`]
+          : []),
       ],
       pending: [
         '涨/平/跌三组可控价格对照',
-        '浏览器钱包内从页面点击并签名',
+        ...(uiOrderEntryRecords.open && uiOrderEntryRecords.close ? [] : ['浏览器钱包内从页面点击并签名']),
         '页面历史与链上事件逐条核对',
       ],
       completeScenario: false,
@@ -1495,10 +1679,17 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
         : runtime.forkResetMode,
     },
     testData: {
-      collateralUsdc: '10',
-      leverage: '5x',
-      sizeUsd: '50',
-      executionFeeEth: '0.00002',
+      // 页面下单时以 OrderCreated 实际参数为准（前端按 Size/杠杆换算后提交，可能与 10/5x/50 有微差）；
+      // 仅当 collateral×5 恰好等于 size 才保留 leverage 字段（reporter 以 collateral×leverage 推导期望规模）。
+      ...(uiOrderEntryRecords.open
+        ? {
+          collateralUsdc: formatUnits(BigInt(uiOrderEntryRecords.open.order.initialCollateralDeltaAmount), 6),
+          sizeUsd: formatUnits(BigInt(uiOrderEntryRecords.open.order.sizeDeltaUsd), 30),
+          ...(BigInt(uiOrderEntryRecords.open.order.initialCollateralDeltaAmount) * 5n * 10n ** 24n === BigInt(uiOrderEntryRecords.open.order.sizeDeltaUsd) ? { leverage: '5x' } : {}),
+          executionFeeEth: formatUnits(BigInt(uiOrderEntryRecords.open.order.executionFee), 18),
+          orderEntry: 'ui',
+        }
+        : { collateralUsdc: '10', leverage: '5x', sizeUsd: '50', executionFeeEth: '0.00002' }),
       isLong,
       closeSizeUsdRaw: currentPosition.sizeInUsd.toString(),
       ...(flow.openTrigger && openTriggerContext ? {
@@ -1549,6 +1740,7 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
       wholeFlowConservation: conservation.wholeFlow,
     },
     ...(uiDisplay !== undefined ? { uiDisplay } : {}),
+    ...(uiOrderEntryRecords.open || uiOrderEntryRecords.close ? { uiOrderEntry: uiOrderEntryRecords } : {}),
   };
 }
 
@@ -1561,6 +1753,8 @@ export interface MarketFlowDataset {
   readonly middlePhases?: readonly MarketFlowMiddlePhase[];
   /** 全平前停点回调（前端显示值采集），见 MarketFlowOptions.beforeClose */
   readonly beforeClose?: MarketFlowBeforeCloseHook;
+  /** 页面下单钩子，见 MarketFlowOptions.orderEntry */
+  readonly orderEntry?: MarketFlowOrderEntryHook;
 }
 
 /** 跨数据集对照断言（矩阵级）：同一指标在多个数据集之间的序关系，如 SCN-009 的「涨 > 平 > 跌」。 */
@@ -1626,6 +1820,7 @@ export async function runMarketFlowMatrix(
         ...(dataset.priceMovePercent !== undefined ? { priceMovePercent: dataset.priceMovePercent } : {}),
         ...(dataset.middlePhases !== undefined ? { middlePhases: dataset.middlePhases } : {}),
         ...(dataset.beforeClose !== undefined ? { beforeClose: dataset.beforeClose, datasetId: dataset.datasetId } : {}),
+        ...(dataset.orderEntry !== undefined ? { orderEntry: dataset.orderEntry, datasetId: dataset.datasetId } : {}),
       });
       assertionCount += evidence.assertions.length;
       results.push({

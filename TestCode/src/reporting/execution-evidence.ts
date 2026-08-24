@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { relative, resolve } from 'node:path';
 
 import { normalizeForkDisplayName } from '../domain/fork-display.js';
-import { buildUiDisplayRows } from './ui-display-evidence.js';
+import { buildUiDisplayRows, buildUiOrderEntryRows } from './ui-display-evidence.js';
 import {
   calculateExecutionPrice,
   calculateFundingFactors,
@@ -720,6 +720,8 @@ function buildPricingRows(input: {
   readonly positionEvent: JsonRecord;
   readonly balanceWasImproved: unknown;
   readonly parameters: JsonRecord;
+  /** 减仓执行前的仓位原始字段（Uncapped PnL 按 token 比例复算需要 sizeInUsd/sizeInTokens） */
+  readonly positionBefore?: JsonRecord;
 }): Reconciliation[] {
   const uint = record(input.positionEvent.uint);
   if (Object.keys(uint).length === 0) return [];
@@ -922,9 +924,27 @@ function buildPricingRows(input: {
     const eventInt = record(input.positionEvent.int);
     const sizeTokens = bigintValue(uint.sizeDeltaInTokens);
     const sizeUsd = bigintValue(uint.sizeDeltaUsd);
-    const expectedUncappedPnl = isLong
-      ? sizeTokens * executionPrice - sizeUsd
-      : sizeUsd - sizeTokens * executionPrice;
+    // 合约口径（PositionUtils._getPositionPnlUsd）：整仓 totalPnl 按 token 比例分摊——
+    //   totalPnl = 多 ? posTokens×execPrice − posSizeUsd : posSizeUsd − posTokens×execPrice
+    //   uncapped = mulDiv(totalPnl, sizeDeltaInTokens, posTokens, roundUpMagnitude = totalPnl<0)
+    // 全平（sizeDeltaInTokens==posTokens）退化为恒等式 sizeDeltaInTokens×execPrice−sizeDeltaUsd；
+    // 部分平在除不尽时两式相差 <1 token-wei×price（2026-08-24 SCN-023 中段实证），必须按合约式复算。
+    const positionBefore = record(input.positionBefore);
+    const posTokens = bigintValue(positionBefore.sizeInTokens);
+    const posSizeUsd = bigintValue(positionBefore.sizeInUsd);
+    const mulDivSigned = (value: bigint, numerator: bigint, denominator: bigint, roundUpMagnitude: boolean): bigint => {
+      const negative = value < 0n;
+      const magnitude = negative ? -value : value;
+      let result = (magnitude * numerator) / denominator;
+      if (roundUpMagnitude && (magnitude * numerator) % denominator !== 0n) result += 1n;
+      return negative ? -result : result;
+    };
+    const totalPnl = posTokens > 0n
+      ? (isLong ? posTokens * executionPrice - posSizeUsd : posSizeUsd - posTokens * executionPrice)
+      : undefined;
+    const expectedUncappedPnl = totalPnl !== undefined && posTokens > 0n
+      ? mulDivSigned(totalPnl, sizeTokens, posTokens, totalPnl < 0n)
+      : (isLong ? sizeTokens * executionPrice - sizeUsd : sizeUsd - sizeTokens * executionPrice);
     const uncappedPnl = bigintValue(eventInt.uncappedBasePnlUsd);
     const basePnl = bigintValue(eventInt.basePnlUsd);
     const capDirectionValid = (basePnl === 0n || uncappedPnl === 0n || (basePnl > 0n) === (uncappedPnl > 0n))
@@ -934,12 +954,17 @@ function buildPricingRows(input: {
         id: `${input.phaseId}-uncapped-pnl`, group: `${input.phaseLabel} · PnL`, label: 'Uncapped Base PnL',
         status: pass(uncappedPnl, expectedUncappedPnl), before: rawAndUnit(0n, 30, 'USD'), after: rawAndUnit(uncappedPnl, 30, 'USD'),
         delta: deltaAndUnit(uncappedPnl, 30, 'USD'), expected: rawAndUnit(expectedUncappedPnl, 30, 'USD'),
-        formula: isLong
-          ? `sizeDeltaInTokens × executionPrice − sizeDeltaUsd；本次：${sizeTokens} × ${executionPrice} − ${sizeUsd} = ${expectedUncappedPnl}`
-          : `sizeDeltaUsd − sizeDeltaInTokens × executionPrice；本次：${sizeUsd} − ${sizeTokens} × ${executionPrice} = ${expectedUncappedPnl}`,
+        formula: totalPnl !== undefined
+          ? `uncapped = mulDiv(totalPnl, sizeDeltaInTokens, posTokens, totalPnl<0)；totalPnl = ${isLong ? 'posTokens × execPrice − posSizeUsd' : 'posSizeUsd − posTokens × execPrice'} = ${totalPnl}；本次：mulDiv(${totalPnl}, ${sizeTokens}, ${posTokens}) = ${expectedUncappedPnl}`
+          : (isLong
+            ? `（缺执行前仓位快照，退回恒等式）sizeDeltaInTokens × executionPrice − sizeDeltaUsd；本次：${sizeTokens} × ${executionPrice} − ${sizeUsd} = ${expectedUncappedPnl}`
+            : `（缺执行前仓位快照，退回恒等式）sizeDeltaUsd − sizeDeltaInTokens × executionPrice；本次：${sizeUsd} − ${sizeTokens} × ${executionPrice} = ${expectedUncappedPnl}`),
         basis: { title: '未裁剪的价格盈亏', sourcePath: FORMULA_SOURCE, section: '§6 仓位 PnL 与池子 PnL 裁剪' }, unit: 'USD 1e30',
-        note: 'PnL 必须用事件执行价（含点差）——用 oracle 原价复算会系统性偏差。',
+        note: 'PnL 必须用事件执行价（含点差）；部分平按 token 比例 mulDiv 截断（负值幅度向上取整），恒等式只在全平成立（PositionUtils._getPositionPnlUsd）。',
         inputs: [
+          ...(totalPnl !== undefined ? [
+            { name: 'posTokens / posSizeUsd（执行前仓位）', value: `${posTokens} / ${posSizeUsd}`, source: '执行前仓位快照（afterCreate/上一阶段）' },
+          ] : []),
           { name: 'sizeDeltaInTokens', value: sizeTokens.toString(), source: 'PositionDecrease 事件（执行回执解码）' },
           { name: 'executionPrice（含 spread）', value: executionPrice.toString(), source: 'PositionDecrease 事件；价格公式自洽性由「Spread 调整后执行价」行核对' },
           { name: 'sizeDeltaUsd', value: sizeUsd.toString(), source: 'PositionDecrease 事件（执行回执解码）' },
@@ -1331,6 +1356,7 @@ function buildTradePhaseRows(input: TradePhaseEvidenceInput): Reconciliation[] {
       positionEvent: input.positionEvent,
       balanceWasImproved: record(record(input.events.feesCollected).bool).balanceWasImproved,
       parameters: input.parameters,
+      positionBefore: input.positionBefore,
     }));
   }
   if (input.checks.includes('fee-funding')) {
@@ -1732,7 +1758,15 @@ function deriveMarketFlowSingle(
     executionPriceRaw: optionalBigint(closeDecreaseUint.executionPrice),
     indexDecimals: 18,
   });
-  const reconciliations = [...baseReconciliations, ...uiDisplayRows].map((row) => row.txStep
+  // 前端下单（页面点击 + 注入钱包签名）：仅当 runner orderEntry 钩子接管了市价腿时出现
+  const uiOrderEntryRows = buildUiOrderEntryRows({
+    uiOrderEntry: raw.uiOrderEntry && typeof raw.uiOrderEntry === 'object' ? record(raw.uiOrderEntry) : undefined,
+    testData,
+    openCreateTx: 'TX1',
+    closeCreateTx,
+    closeSizeUsdRaw: optionalBigint(testData.closeSizeUsdRaw),
+  });
+  const reconciliations = [...baseReconciliations, ...uiDisplayRows, ...uiOrderEntryRows].map((row) => row.txStep
     ? row
     : { ...row, txStep: openOverviewIds.has(row.id) ? 'TX2' : closeExecTx }).map(withVerification);
 

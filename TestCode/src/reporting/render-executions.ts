@@ -187,6 +187,35 @@ export function renderExecutionsHtml(
       // 数据来源分层（合约/事件/合约+事件/前端）说明 Actual 值读的是哪一层；与验证方式正交。
       return item.dataSource || '—';
     }
+    function attachmentHref(attachment) {
+      // 附件随 run 目录一起落在同级 attachments/（write-outputs.ts）；latest 与 runs/<id> 目录结构一致，
+      // 看板服务也按 /attachments/<文件名> 提供静态读取。
+      const file = String(attachment.path || '').split('/').pop();
+      return file ? 'attachments/' + encodeURIComponent(file) : '';
+    }
+    function renderScreenshots(result) {
+      const shots = (result.attempts || []).flatMap(function (attempt) { return attempt.attachments || []; })
+        .filter(function (a) { return a.contentType === 'image/png' && a.path; });
+      if (!shots.length) return '';
+      // 名称形如 SCN-022_long-close-profit-close-dialog-position-row.png / SCN-065-order-open-form-filled.png：
+      // <场景>[_<数据集>]-<钩子 close-dialog|order-open|order-close>-<阶段>.png
+      const stageLabel = {
+        'position-row': '持仓行可见', 'dialog-open': '平仓弹窗打开', 'preview': 'Max 预览稳定（采集点）', 'error': '失败现场',
+        'form-filled': '下单表单已填', 'submitted': '已点击提交', 'tx-confirmed': '交易已上链', 'submit-disabled': '提交按钮未可用',
+        'dialog-max': '平仓弹窗 Max', 'confirmed': '已点击 Confirm Close', 'position-row-missing': '持仓行未渲染',
+      };
+      const hookLabel = { 'close-dialog': '停点采集', 'order-open': '页面开仓', 'order-close': '页面全平' };
+      const cards = shots.map(function (a) {
+        const href = attachmentHref(a);
+        const match = String(a.name).match(/^(SCN-\\d{3})(?:_(.+?))?-(close-dialog|order-open|order-close)-([a-z-]+)\\.png$/);
+        const dataset = match && match[2] ? match[2] : '';
+        const hook = match ? (hookLabel[match[3]] || match[3]) : '';
+        const stage = match ? match[4] : '';
+        return '<figure class="shot"><a href="' + href + '" target="_blank" rel="noopener"><img loading="lazy" src="' + href + '" alt="' + esc(a.name) + '"></a>'
+          + '<figcaption><strong>' + esc((hook ? hook + ' · ' : '') + (stageLabel[stage] || stage || '截图')) + '</strong><br><small class="muted">' + esc((dataset ? dataset + ' · ' : '') + a.name) + '</small></figcaption></figure>';
+      }).join('');
+      return '<section class="panel section screenshots"><div class="section-head"><div><h2>前端截图</h2><p class="muted">页面下单（E2E_UI_ORDER_ENTRY：表单已填 → 提交 → 上链；持仓行 → Max → Confirm Close → 上链）与停点采集（E2E_UI_COLLECT：持仓行 → 平仓弹窗 → Max 预览稳定）的逐阶段截图；点击放大。</p></div><strong>' + shots.length + ' 张</strong></div><div class="shot-grid">' + cards + '</div></section>';
+    }
     function renderChecks(rowsForScope, title) {
       const categoryCounts = rowsForScope.reduce(function (counts, item) {
         const category = checkCategory(item); counts[category] = (counts[category] || 0) + 1; return counts;
@@ -268,7 +297,7 @@ export function renderExecutionsHtml(
       content.innerHTML = '<section class="hero panel"><div><span class="eyebrow">' + esc(result.id) + ' · ' + esc(result.project) + '</span><h2>' + esc(result.scenarioTitle) + '</h2><p>' + esc(result.checkResult) + '</p></div>'
         + '<div class="hero-meta"><span>执行结果 ' + status(executionStatus) + '</span><span>自动化覆盖 ' + status(coverageStatus) + '</span><span class="fork-label">Project / 环境 <strong>' + esc(result.project) + ' / ' + esc(e.forkDisplayName || result.environment) + '</strong></span><span>模式 <strong>' + esc(e.mode) + '</strong></span><span>保留 Fork <strong>' + (e.persistent ? '是' : '否') + '</strong></span></div>'
         + (e.coverageNote ? '<p class="coverage-note"><strong>覆盖说明：</strong>' + esc(e.coverageNote) + '</p>' : '') + '</section>'
-        + renderCaseOverview(result) + renderExecutionSteps(e)
+        + renderCaseOverview(result) + renderScreenshots(result) + renderExecutionSteps(e)
         + '<section class="panel provenance"><h2>证据来源</h2><dl><dt>执行证据</dt><dd><code>' + esc(e.sourcePath) + '</code></dd><dt>公式总表</dt><dd><a href="./formulas.html">合约核心公式页面</a><br><code>' + esc(e.formulaSourcePath) + '</code></dd></dl></section>';
       bindExecutionSteps(e);
     }
@@ -314,6 +343,10 @@ export function renderExecutionsHtml(
     script,
     extraStyles: `
       .controls { display:grid; grid-template-columns:minmax(260px,2fr) 1fr 1.4fr auto; gap:14px; align-items:end; margin-bottom:14px; }
+      .screenshots .shot-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; margin-top:10px; }
+      .screenshots .shot { margin:0; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:#0b1220; }
+      .screenshots .shot img { display:block; width:100%; height:auto; aspect-ratio:16/9; object-fit:cover; object-position:top; }
+      .screenshots .shot figcaption { padding:8px 10px; font-size:12px; line-height:1.4; overflow-wrap:anywhere; }
       #delete-record { min-height:40px; border:1px solid #8b3a3a; border-radius:9px; background:#2b1118; color:#ff9a9a; padding:8px 12px; cursor:pointer; }
       #delete-record:hover { background:#3a1520; }
       #delete-record:disabled { opacity:.5; cursor:not-allowed; }

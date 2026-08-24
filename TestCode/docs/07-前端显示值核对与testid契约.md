@@ -229,3 +229,42 @@ E2E_ENV_PRIORITY_KEYS=E2E_ENV,E2E_TRADER_PROFILE npx playwright test tests/S03/s
 - 前端 `positionRowFields` 全部 `not found`(生产持仓表 testid 为零),持仓行仅留 innerText 原文;需求 A/B 落地后 `selectors.ts` 直接切换、脚本零改动。
 - Est. Receive 偏差与 Fee 取整方向需要 data-raw(需求 B)才能从"显示级"升到"raw 级"定位。
 - Phase 2:采集器泛化到其他 SCN(挂 `beforeClose` 即可)、看板给"前端"分组独立汇总徽章、`playwright.config.ts` webServer 纳入跑批。
+
+### 6. Phase 2 进展（2026-08-23）：采集器泛化到 market-flow 用例
+
+- 公共装配：`src/ui/ui-collect-hook.ts` 新增 `resolveBeforeCloseHook(runtime, page, testInfo)`（`E2E_UI_COLLECT` 未开返回 `undefined`，已开则 `prepareUiCollect + makeCloseDialogHook` 并写 `ui-collect` annotation）与 `withBeforeClose(options, hook)`；spec 只需改用 `{ page }` fixture 并把钩子并入 flow / dataset 选项。
+- 已接线（6 条，均以市价全平收尾）：SCN-009（三数据集）、011、012、013、065、022（统一改用公共装配）。**未接**：TP/SL 触发全平的 015/016/066/067（停点在推价前，市价平仓预览与触发成交价基不同，需另写采集器）；010/070 为独立 runner，无停点。
+- 真实验证：SCN-065 @tx-fork run `2026-08-23T145846-324Z`，`uiDisplay.collected=true`，前端 5 行：Est. Receive 9.70 vs 链上 9.697874（Δ −0.002126，容差 ±0.005 内 PASS）、Fee −$0.01 vs 0.009999、Est. P&L −$0.27 vs −0.266845、执行价 $2,348.13 vs 2,348.1282 全部 PASS；持仓行原文 CALCULATED。停点截图 `attachments/SCN-065-tx-fork-r0-0-SCN-065-close-dialog.png`。
+- 本次前端 develop（HEAD `c670d007`）变化带来的适配（已落代码）：
+  1. **测试网门禁**（`src/lib/access-gate/`，2026-08-19 后新增）：连接后未验证 referral code 弹 "Access Required" 模态挡住持仓行按钮。`useAccessGate` 以 `isAddressVerified(address)` 短路 → `frontend-session.ts` init script 预置 `localStorage['fx100:access-gate:verified:<trader 小写>']='1'`（营销门禁、非交易逻辑，只读观测会话预置合理）。前端侧的 kill switch 是 `NEXT_PUBLIC_GATE_ENABLED=false`，未采用（不改前端 env）。
+  2. **持仓行按钮文案** `orderRecords.closePosition = "Close Position"`：采集器选择器改为 `/^close( position)?$/i`（行作用域）。
+  3. 采集失败的 `-error.png` 现在也随证据附上（之前只落盘），看板/HTML 报告可直接看到失败现场。
+  4. 前端依赖：develop 新增 `@next/bundle-analyzer` 等，拉取后须在 `Github/fx100-apps@develop` 执行 `yarn install`，否则 `next.config.mjs` 加载失败；`/api/prices/*` 缺 `DATABASE_URL` 的 500 不影响采集（tickers/tokens/24h 已由 Playwright 路由接管，candles 仅 K 线）。
+- 观看与截图：`--headed` 可看到停点页面动作（Positions → Close Position → Max → Esc，每数据集一次；其余步骤为 RPC 驱动，页面无动作）；`--trace on` 可得逐动作截图与 DOM 快照（trace viewer）。当前每数据集 1 张停点 PNG（成功=预览稳定后、失败=出错现场），看板仅列附件名，Playwright HTML 报告内嵌显示。
+- ~~仍待：看板附件图片预览；钱包签名走页面~~ → 2026-08-23 同日完成，见 §7。仍待：看板"前端"分组独立汇总徽章；`playwright.config.ts` webServer 纳入跑批。
+
+### 7. Phase 2 进展（2026-08-23 下午）：逐阶段截图 + 看板预览 + 页面下单（注入钱包签名）
+
+**(a) 逐阶段截图与看板预览**
+
+- 采集器 `close-dialog-collector.ts` 在 持仓行可见 / 平仓弹窗打开 / Max 预览稳定（采集点）/ 失败现场 四个阶段各截一张（`<base>-<stage>.png`），全部 `testInfo.attach`；`evidence.uiDisplay.screenshots[]` 记阶段与路径。
+- 执行详情页（`render-executions.ts`）新增「前端截图」画廊（按附件名解析 场景/数据集/钩子/阶段，点击放大）；主看板明细表附件名改为可点链接；看板服务新增 `GET /attachments/<文件名>` 静态读取（单层文件名、禁穿越、PNG/JSON）。`artifacts/runs/<run>/` 与 `artifacts/latest/` 目录结构一致，直接打开 HTML 或经 `dashboard:serve` 都能看图。
+
+**(b) 页面下单（钱包签名走页面）**
+
+- 新模块：`src/ui/signing-wallet.ts`（可签名 EIP-1193 注入：`eth_sendTransaction` 经 `page.exposeBinding` 交给 Node，viem 用 runtime 的 trader 私钥 eth_call 预执行 → 签名广播 → 后台等回执；**私钥不进页面**；`personal_sign`/`eth_signTypedData_v4` 仍抛 4200，只支持 Standard）、`src/ui/order-entry.ts`（驱动器：开仓腿 Market → 方向 → Size 单位切 USD → 填 Size/杠杆 → `Open Long|Short` → 等 ExchangeRouter 交易上链；全平腿 持仓行 Close Position → Max → Confirm Close → 上链；逐阶段截图）。
+- `frontend-session.ts` 新增 `wallet: { mode: 'signing' }`（signing 会话预置 `fx100:flash:mode='standard'`，否则 1ct 缺省会走 EIP-712 relay）；`ui-collect-hook.ts` 新增 `E2E_UI_ORDER_ENTRY=true` 开关、`resolveUiHooks()`/`withUiHooks()` 一次装配两个钩子、`UiSessionHolder` 让采集与下单共用同一页面会话。
+- runner（`scn-009-runner.ts`）新增 `MarketFlowOptions.orderEntry` 钩子：**只接管市价腿**（开仓无 openTrigger / 全平无 closeTrigger），触发式腿与中段阶段仍走 RPC；页面交易由 `finalizeUiOrder` 等回执并从同块 `OrderCreated`（按 txHash）解析 orderKey 与参数（注意 FX100 事件字段是 `sizeDelta`+`isSizeDeltaUsd`，非 GMX 的 `sizeDeltaUsd`；OrderType 枚举 0=MarketIncrease/2=MarketDecrease），其后 Keeper 执行、快照、对账与 RPC 下单完全相同。`testData` 在页面下单时以 OrderCreated 实际参数为准（前端按 Size/杠杆换算的抵押含费用预留，如 10.035035 USDC；`leverage` 仅在 collateral×5==size 时保留），`开仓规模` 断言改为对照页面提交的 sizeDeltaUsd；coverage 把「浏览器钱包内从页面点击并签名」移入 executed。证据新增 `uiOrderEntry.{open,close}`（txHash/orderKey/order/detail），报告层新增「前端下单」分组（`buildUiOrderEntryRows`：交易派生展示 + 页面提交 size/抵押 vs 意图、Max 全平 size vs 停点仓位）。
+- 接入 spec：009/011/012/013/022/065 统一改用 `resolveUiHooks` + `withUiHooks`（011/012/013 的触发式开仓腿自动保持 RPC，只有全平腿走页面）。
+- 真实验证 SCN-065 @tx-fork run `2026-08-23T153912-658Z`（两开关同开）：页面开仓 tx `0x5e31545a…`（Sell/Short · 50 USD · 5x；OrderCreated sizeDelta=50e30、collateral=10035035、executionFee=0——小单执行费豁免）→ Keeper 执行 → 停点采集 4 行 PASS（Est. Receive 9.73 vs 9.732908）→ 页面全平 tx `0xa75487ca…`（Max 全平 sizeDelta=50e30）→ Keeper 执行；35 条 runner 断言全过（含「两笔用户交易均由测试用户地址签名」「四笔交易均包含非零签名字段」），报告 135 行 PASS，附件 13 个（10 张阶段截图）。默认路径（不开开关）复跑 125 行不变。
+- 本次前端适配：SDK `getExecutionFee` 缺 native ETH 价会直接 undefined → 前端报 "Failed to calculate execution fee" 不发交易；fork 上 WETH provider 为 datastream 类（`getOraclePrice` revert）→ `prepareUiCollect` 把 WETH 列为候选，读不到时走 `installForkPriceRoutes.staticPrices` 静态兜底（`E2E_UI_NATIVE_USD`，缺省 3000；只进 tickers，仅影响前端执行费 USD 估算，链上 executionFee=gasLimit×gasPrice 不受影响，`priceBasis` 可见）。提交按钮文案是 `Open Long|Short`（右下 "Trade now" 属 Liquidation Protection 组件）；Size 单位 Select 选项可访问名含 TokenIcon（按 hasText 过滤）。
+- 矩阵验证 SCN-009 @tx-fork run `2026-08-23T154646-445Z`（两开关同开，三数据集 +3%/0/−3%）：每个数据集页面开仓（long 50 USD / 抵押 10.020020 USDC）→ Keeper → 推价 → 停点采集 → 页面 Max 全平 → Keeper，3/3 PASS、108 条 runner 断言、跨数据集 traderUsdcDelta 1177273 > −313437 > −1806593 成立；报告 406 行（前端 30 行，对照行全 PASS，派生展示 CALCULATED）、30 张阶段截图；同一页面会话跨数据集复用（reload）。
+- 运行：在 §3 命令上再加 `E2E_UI_ORDER_ENTRY=true`（需 `E2E_TRADER_PROFILE=ui` + private-key 模式）。两开关独立：只开采集 = 只读观测；只开下单 = 页面下单但不采预览；都不开 = 纯链上。
+- 边界：页面下单不支持 Flash/1ct（EIP-712）与触发单（Limit/Stop 表单）；前端 approve（allowance 不足时）会被签名钱包一并签发但不计入订单交易（`waitForNext` 按 to=ExchangeRouter 过滤）。
+
+**(c) 2026-08-24 续：S03 全接入 + 冷启动加固 + Uncapped PnL 公式修正**
+
+- 023/024/025 也接入 `resolveUiHooks`/`withUiHooks`（至此 market-flow 9 条全接：009/011/012/013/022/023/024/025/065）；中段阶段（023 部分平 50%、025 加仓）保持 RPC，只有市价开仓/最终全平走页面。四条 S03 实跑：022+023 run `2026-08-24T000624-045Z`（2 passed）、024 run（1 passed 3.5m）、025 run `2026-08-24T001529-691Z`（1 passed 3.7m，页面 Max 全平 100 USD 含加仓部分）。
+- 冷启动加固（dev server 刚起的首屏重渲染会让驱动器超时）：`connectWallet` 的 ConnectKit 选项点击改为轮询重试（容忍元素不稳定/分离，每轮先探测是否已连接）；`driveOpenOrderOnPage` 的 `Open Long|Short` 就绪等待改为轮询 45s（Enter Amount → 就绪的水合窗口），超时报表单原文。
+- **报告层 Uncapped PnL 期望公式修正**（`execution-evidence.ts buildPricingRows`）：原恒等式 `sizeDeltaInTokens×execPrice−sizeDeltaUsd` 只在全平成立；合约实际是 `uncapped = mulDiv(totalPnl, sizeDeltaInTokens, position.sizeInTokens, totalPnl<0)`（`PositionUtils._getPositionPnlUsd`，按 token 比例截断、负值幅度向上取整）。部分平在除不尽时两式差 <1 token-wei×price——SCN-023 中段（UI 开仓改变了 sizeInTokens 整除性）首次实证暴露并逐位复核 MATCH；已改按合约式复算（缺执行前仓位快照时退回恒等式，全平语义不变），`dashboard:rebuild-latest` 后 15 条全 PASS、`dashboard:verify` PASSED。
+

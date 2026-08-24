@@ -4,6 +4,7 @@ import { expect, test } from '@playwright/test';
 
 import { loadRuntimeConfig } from '../../src/config/runtime.js';
 import { runMarketFlow, stringifyEvidence, type Scn009Evidence } from '../../src/scenarios/scn-009-runner.js';
+import { resolveUiHooks, withUiHooks } from '../../src/ui/ui-collect-hook.js';
 
 async function rawRpc(url: string, method: string, params: readonly unknown[] = []): Promise<unknown> {
   const body = await fetch(url, {
@@ -19,7 +20,7 @@ async function rawRpc(url: string, method: string, params: readonly unknown[] = 
 }
 
 test.describe('S02 策略下单与订单管理', () => {
-  test('SCN-013 趋势交易员破位追空｜StopIncrease short @p0 @tx @serial', async ({}, testInfo) => {
+  test('SCN-013 趋势交易员破位追空｜StopIncrease short @p0 @tx @serial', async ({ page }, testInfo) => {
     // 破位追空（P−10% 下破）：StopIncrease short 挂单 → 推价下破触发 → Keeper 执行 → 全平（validFrom 生效时间维度留 S07 边界矩阵）。
     test.setTimeout(360_000);
     test.skip(testInfo.project.name !== 'tx-fork', 'SCN-013 在 tx-fork 执行（06-策略下单矩阵）');
@@ -31,11 +32,13 @@ test.describe('S02 策略下单与订单管理', () => {
     const snapshotId = persistForkState
       ? undefined
       : await rawRpc(runtime.adminRpcUrl ?? runtime.rpcUrl, 'evm_snapshot');
+    // 前端钩子（docs/07 Phase 2）：E2E_UI_COLLECT=true 全平前停点采平仓弹窗预览；E2E_UI_ORDER_ENTRY=true 市价开仓/全平改由页面点击发起（注入钱包 Node 侧签名）
+    const uiHooks = await resolveUiHooks(runtime, page, testInfo);
     let evidence: Scn009Evidence | undefined;
 
     try {
       try {
-        evidence = await runMarketFlow(runtime, { scenarioId: 'SCN-013', isLong: false, openTrigger: { orderType: 6, offsetPercent: -10 } });
+        evidence = await runMarketFlow(runtime, withUiHooks({ scenarioId: 'SCN-013', isLong: false, openTrigger: { orderType: 6, offsetPercent: -10 } }, uiHooks));
       } catch (error) {
         if (runtime.keeperMode === 'service') {
           testInfo.annotations.push({

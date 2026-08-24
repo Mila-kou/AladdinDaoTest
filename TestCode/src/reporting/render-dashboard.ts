@@ -414,7 +414,11 @@ export function renderDashboardHtml(artifact: TestRunArtifact, baseline?: Baseli
     document.getElementById('detail-count').textContent = rows.length + ' 行';
     document.getElementById('detail-table').innerHTML = rows.map(function (item) {
       const attachments = (item.attempts || []).flatMap(function (attempt) { return attempt.attachments || []; });
-      const evidence = attachments.length ? attachments.map(function (a) { return escapeHtml(a.name); }).join(', ') : '-';
+      // 附件名可点击（同级 attachments/ 目录；看板服务亦提供 /attachments/<文件名>），PNG 新窗口预览
+      const evidence = attachments.length ? attachments.map(function (a) {
+        const file = String(a.path || '').split('/').pop();
+        return file ? '<a href="attachments/' + encodeURIComponent(file) + '" target="_blank" rel="noopener">' + escapeHtml(a.name) + '</a>' : escapeHtml(a.name);
+      }).join(', ') : '-';
       return '<tr data-scenario-id="' + escapeHtml(item.id) + '"><td>' + scenarioIdHtml(item) + '</td><td>' + escapeHtml(suiteLabel(item.suite)) + '</td><td>' + item.priority + '</td>'
         + '<td>' + escapeHtml(item.scenarioTitle) + '</td><td>' + escapeHtml(item.project + ' / ' + (item.executionEvidence?.forkDisplayName || item.environment)) + '</td>'
         + '<td>' + statusChip(item.status) + (item.manualCase ? '<span class="status-chip status-MANUAL">手工核对</span>' : '')

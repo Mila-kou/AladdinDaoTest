@@ -112,9 +112,19 @@ export function buildTokensPayload(chainId: number, tokens: readonly ForkPriceTo
   };
 }
 
+/** 链上读不到（datastream 类 provider 需 report 数据）时的静态兜底价：只进 tickers，不进 tokens 表 */
+export interface StaticForkPrice extends ForkPriceToken {
+  /** USD 十进制字符串，min=max */
+  readonly usd: string;
+  /** 说明（证据 priceBasis 用） */
+  readonly reason: string;
+}
+
 export interface ForkRouteOptions extends ReadForkOraclePricesInput {
   /** 前端认为的链 ID（借用槽位，通常 84532） */
   readonly appChainId: number;
+  /** 静态兜底价（如 WETH→native ETH：前端执行费 USD 估算需要 native 价；链上 executionFee=gasLimit×gasPrice 不受影响） */
+  readonly staticPrices?: readonly StaticForkPrice[];
   /** 浏览器里 wagmi transport 硬打的公共 RPC，改写到 fork RPC；默认 https://sepolia.base.org */
   readonly publicRpcToRewrite?: string;
   /** tickers 读链缓存（前端 1s 轮询） */
@@ -143,11 +153,21 @@ export async function installForkPriceRoutes(page: Page, options: ForkRouteOptio
   let inflight: Promise<ForkTokenPrice[]> | undefined;
   let rewritten = 0;
   // 前端每秒轮询 + SDK 并发拉取：同一时刻只发一组链上读（in-flight 去重），否则请求堆积触发前端 5s 超时
+  const staticEntries: ForkTokenPrice[] = (options.staticPrices ?? []).map((item) => {
+    const scale = 10n ** BigInt(30 - item.decimals);
+    const [whole = '0', frac = ''] = item.usd.split('.');
+    const internal = BigInt(whole) * scale + BigInt((frac + '0'.repeat(30 - item.decimals)).slice(0, 30 - item.decimals) || '0');
+    return {
+      symbol: item.symbol, address: item.address, decimals: item.decimals,
+      provider: '0x0000000000000000000000000000000000000000',
+      minInternal: internal, maxInternal: internal, minUsd: item.usd, maxUsd: item.usd, blockNumber: 0n,
+    };
+  });
   const readPrices = async () => {
     if (cached && Date.now() - cached.at < cacheMs) return cached.prices;
     if (!inflight) {
       inflight = readForkOraclePrices(options)
-        .then((prices) => { cached = { at: Date.now(), prices }; return prices; })
+        .then((prices) => { cached = { at: Date.now(), prices: [...prices, ...staticEntries] }; return cached.prices; })
         .finally(() => { inflight = undefined; });
     }
     return inflight;

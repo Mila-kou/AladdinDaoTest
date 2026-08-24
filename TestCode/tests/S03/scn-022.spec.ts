@@ -4,7 +4,7 @@ import { expect, test } from '@playwright/test';
 
 import { loadRuntimeConfig } from '../../src/config/runtime.js';
 import { runMarketFlowMatrix, stringifyEvidence, type MarketFlowMatrixEvidence } from '../../src/scenarios/scn-009-runner.js';
-import { makeCloseDialogHook, prepareUiCollect, uiCollectEnabled } from '../../src/ui/ui-collect-hook.js';
+import { resolveUiHooks, withUiHooks } from '../../src/ui/ui-collect-hook.js';
 
 test.describe('S03 仓位管理与退出', () => {
   test('SCN-022 交易员观察纯价格 PnL 与实际可得差异｜盈利全平双向数据集 @p0 @tx @serial', async ({ page }, testInfo) => {
@@ -20,16 +20,16 @@ test.describe('S03 仓位管理与退出', () => {
     if (process.env.E2E_PERSIST_FORK_STATE === 'true') {
       expect(runtime.signingMode, '持久证据运行必须使用私钥签名').toBe('private-key');
     }
-    // 前端显示值采集（docs/07 Phase 1-D）：E2E_UI_COLLECT=true 时在每个数据集全平前停点打开平仓弹窗采 Est.Receive/Fee/Est.P&L
-    const uiHook = uiCollectEnabled() ? makeCloseDialogHook(page, testInfo, await prepareUiCollect(runtime)) : undefined;
+    // 前端钩子（docs/07 Phase 1-D / Phase 2）：E2E_UI_COLLECT=true 每个数据集全平前停点采平仓弹窗预览；E2E_UI_ORDER_ENTRY=true 市价开仓/全平改由页面点击发起（注入钱包 Node 侧签名）
+    const uiHooks = await resolveUiHooks(runtime, page, testInfo);
 
     let evidence: MarketFlowMatrixEvidence | undefined;
     try {
       evidence = await runMarketFlowMatrix(runtime, {
         scenarioId: 'SCN-022',
         datasets: [
-          { datasetId: 'long-close-profit', label: '开多 +10% 盈利全平', isLong: true, priceMovePercent: 10, ...(uiHook ? { beforeClose: uiHook } : {}) },
-          { datasetId: 'short-close-profit', label: '开空 −10% 盈利全平', isLong: false, priceMovePercent: -10, ...(uiHook ? { beforeClose: uiHook } : {}) },
+          withUiHooks({ datasetId: 'long-close-profit', label: '开多 +10% 盈利全平', isLong: true, priceMovePercent: 10 }, uiHooks),
+          withUiHooks({ datasetId: 'short-close-profit', label: '开空 −10% 盈利全平', isLong: false, priceMovePercent: -10 }, uiHooks),
         ],
       });
     } catch (error) {

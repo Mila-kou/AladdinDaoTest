@@ -318,6 +318,9 @@ npm run pipeline -- --env tx-fork --cases SCN-009,SCN-022 --archive scn009-scn02
 
 # 全部 spec + 按例专属 Trader
 npm run pipeline -- --env tx-fork --all --per-case-traders
+
+# 前端通道（页面下单 + 平仓弹窗三方核对；需先起本地前端并打 fork 补丁）
+npm run pipeline -- --env tx-fork --all --ui
 ```
 
 flags 一览：
@@ -330,6 +333,8 @@ flags 一览：
 - `--skip-init`：跳过阶段 B（不 init 不 verify）；
 - `--force`：`env:verify:mock` 失败时醒目告警后继续；
 - `--per-case-traders`：启用按例专属 Trader（阶段 C 检查 `config/case-traders.json` 覆盖并批量注资，子进程注入 `E2E_TRADER_ASSIGNMENT=per-case`）；
+- `--ui`：前端通道一键化（**与 `--per-case-traders` 互斥、仅 tx-fork**）：阶段 C-UI 依次检查 本地前端可达（`UI_APP_BASE_URL`，默认 :3010）→ `frontend-fork-patch status` 全 PATCHED → `.env.local` ui 档案齐备（只查有无）→ `prepare-ui-trader` 幂等注资授权（`--skip-ui-prepare` 跳过）；跑批注入 `E2E_TRADER_PROFILE=ui E2E_UI_COLLECT=true E2E_UI_ORDER_ENTRY=true`，`--all` 自动过滤为支持前端钩子的 spec（现 9 条）；`--headed` 实时看浏览器。前置搭建见 docs/07 §3/§7；
+
 - `--archive <name>`：阶段 E 末尾调用 `evidence-archive/tools/archive-evidence.py` 归档本批证据最小集（仅 PASS 场景入档）；
 - `--dry-run`：只打印各阶段计划，不触链。
 

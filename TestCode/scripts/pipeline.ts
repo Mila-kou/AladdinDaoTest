@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import dotenv from 'dotenv';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -40,6 +41,7 @@ type ForkEnvironment = (typeof FORK_ENVIRONMENTS)[number];
 const USAGE = [
   '用法：npm run pipeline -- --env <tx-fork|oracle-fork|time-fork> (--cases SCN-009,SCN-022 | --all)',
   '      [--fresh] [--skip-vnet] [--skip-init] [--force] [--per-case-traders] [--archive <name>] [--dry-run]',
+  '      [--ui [--headed] [--skip-ui-prepare]]   前端通道：ui 档案 + E2E_UI_COLLECT + E2E_UI_ORDER_ENTRY（仅 tx-fork，9 条支持 spec，与 --per-case-traders 互斥）',
 ].join('\n');
 
 class PipelineError extends Error {
@@ -58,6 +60,10 @@ interface PipelineOptions {
   readonly skipInit: boolean;
   readonly force: boolean;
   readonly perCaseTraders: boolean;
+  /** 前端通道：ui 档案 + 页面采集/页面下单（仅 tx-fork；与 perCaseTraders 互斥） */
+  readonly ui: boolean;
+  readonly headed: boolean;
+  readonly skipUiPrepare: boolean;
   readonly archiveName?: string;
   readonly dryRun: boolean;
 }
@@ -128,6 +134,26 @@ function discoverSpecFiles(): Map<string, string> {
   return map;
 }
 
+/** spec 是否支持前端钩子：以是否引用 src/ui/ui-collect-hook 为准（随未来 spec 接线自动生效）。 */
+function uiCapableSpec(relativeSpecPath: string): boolean {
+  try {
+    return readFileSync(join(rootDir, relativeSpecPath), 'utf8').includes('ui-collect-hook');
+  } catch {
+    return false;
+  }
+}
+
+/** 运行命令并捕获 stdout+stderr（不透传流），用于 status 类探测。 */
+function execCapture(command: string, args: readonly string[], env: NodeJS.ProcessEnv): Promise<{ code: number; output: string }> {
+  return new Promise((resolvePromise) => {
+    const child = spawn(command, args, { cwd: rootDir, env, stdio: ['ignore', 'pipe', 'pipe'] });
+    let output = '';
+    child.stdout.on('data', (chunk: Buffer) => { output += chunk.toString(); });
+    child.stderr.on('data', (chunk: Buffer) => { output += chunk.toString(); });
+    child.on('close', (code) => resolvePromise({ code: code ?? 1, output }));
+  });
+}
+
 function parseOptions(): PipelineOptions {
   const environment = argumentValue('--env');
   if (!environment || !(FORK_ENVIRONMENTS as readonly string[]).includes(environment)) {
@@ -159,7 +185,34 @@ function parseOptions(): PipelineOptions {
       ].join('\n'));
     }
   }
-  const specFiles = caseIds.map((id) => specs.get(id)!);
+  let specFiles = caseIds.map((id) => specs.get(id)!);
+
+  const ui = process.argv.includes('--ui');
+  const headed = process.argv.includes('--headed');
+  const skipUiPrepare = process.argv.includes('--skip-ui-prepare');
+  if (!ui && (headed || skipUiPrepare)) throw new PipelineError(2, '--headed / --skip-ui-prepare 只在 --ui 下有效。');
+  if (ui) {
+    if (process.argv.includes('--per-case-traders')) {
+      throw new PipelineError(2, '--ui 与 --per-case-traders 互斥：前端观测必须用 ui 档案（零历史地址，共享 trader 的遗留仓位会让前端持仓整体为空），per-case 档案会自动让位。分两批跑。');
+    }
+    if (environment !== 'tx-fork') {
+      throw new PipelineError(2, '--ui 目前仅支持 tx-fork（本地前端 fork 补丁与注入钱包按 tx-fork 设计）。');
+    }
+    const capable = caseIds.filter((id) => uiCapableSpec(specs.get(id)!));
+    if (all) {
+      const dropped = caseIds.filter((id) => !capable.includes(id));
+      if (dropped.length) log(`--ui + --all：过滤掉不支持前端钩子的 ${dropped.length} 条（${dropped.join(', ')}），保留 ${capable.length} 条。`);
+      caseIds = capable;
+    } else {
+      const incapable = caseIds.filter((id) => !capable.includes(id));
+      if (incapable.length) {
+        const allCapable = [...specs.entries()].filter(([, file]) => uiCapableSpec(file)).map(([id]) => id).sort();
+        throw new PipelineError(2, `以下场景的 spec 不支持前端钩子：${incapable.join(', ')}\n支持 --ui 的场景：${allCapable.join(', ')}`);
+      }
+    }
+    if (caseIds.length === 0) throw new PipelineError(2, '--ui 过滤后没有可跑的场景。');
+    specFiles = caseIds.map((id) => specs.get(id)!);
+  }
 
   const archiveName = argumentValue('--archive');
   if (archiveName !== undefined && !/^[A-Za-z0-9._-]+$/.test(archiveName)) {
@@ -178,18 +231,26 @@ function parseOptions(): PipelineOptions {
     skipInit: process.argv.includes('--skip-init'),
     force: process.argv.includes('--force'),
     perCaseTraders: process.argv.includes('--per-case-traders'),
+    ui,
+    headed,
+    skipUiPrepare,
     ...(archiveName !== undefined ? { archiveName } : {}),
     dryRun: process.argv.includes('--dry-run'),
   };
 }
 
 function childEnvironment(options: PipelineOptions): NodeJS.ProcessEnv {
-  const priorityKeys = ['E2E_ENV', ...(options.perCaseTraders ? ['E2E_TRADER_ASSIGNMENT'] : [])];
+  const priorityKeys = [
+    'E2E_ENV',
+    ...(options.perCaseTraders ? ['E2E_TRADER_ASSIGNMENT'] : []),
+    ...(options.ui ? ['E2E_TRADER_PROFILE'] : []),
+  ];
   return {
     ...process.env,
     E2E_ENV: options.environment,
     E2E_ENV_PRIORITY_KEYS: priorityKeys.join(','),
     ...(options.perCaseTraders ? { E2E_TRADER_ASSIGNMENT: 'per-case' } : {}),
+    ...(options.ui ? { E2E_TRADER_PROFILE: 'ui', E2E_UI_COLLECT: 'true', E2E_UI_ORDER_ENTRY: 'true' } : {}),
   };
 }
 
@@ -319,6 +380,54 @@ async function stagePerCaseTraders(options: PipelineOptions): Promise<void> {
   log(`批量注资完成：funded=${funding.funded} skipped=${funding.skipped}。`);
 }
 
+/** 阶段 C-UI（--ui）：前端通道前置检查——本地前端可达、fork 补丁已应用、ui 档案齐备、注资授权。 */
+async function stageUiPreflight(options: PipelineOptions): Promise<void> {
+  if (!options.ui) return;
+  banner('阶段 C-UI：前端通道前置检查');
+  const appBaseUrl = process.env.UI_APP_BASE_URL ?? 'http://localhost:3010';
+  if (options.dryRun) {
+    log(`[dry-run] 计划：① 探测本地前端 ${appBaseUrl}（未启动则退出码 35，提示起 .claude/launch.json 的 fx100-frontend-local）`);
+    log('[dry-run] 计划：② npx tsx scripts/frontend-fork-patch.ts status（存在 clean 文件则退出码 35，提示先 apply）');
+    log('[dry-run] 计划：③ 检查 .env.local 的 E2E_UI_TEST_ACCOUNT（private-key 模式还需 E2E_UI_TEST_PRIVATE_KEY，只查有无不读值）');
+    log(`[dry-run] 计划：④ ${options.skipUiPrepare ? '（--skip-ui-prepare）跳过' : 'npx tsx scripts/prepare-ui-trader.ts 幂等注资/授权'}`);
+    log('[dry-run] 跑批将注入 E2E_TRADER_PROFILE=ui E2E_UI_COLLECT=true E2E_UI_ORDER_ENTRY=true');
+    return;
+  }
+  // ① 本地前端可达
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5_000);
+    await fetch(appBaseUrl, { signal: controller.signal });
+    clearTimeout(timer);
+    log(`本地前端可达：${appBaseUrl}`);
+  } catch {
+    throw new PipelineError(35, `本地前端未启动或不可达：${appBaseUrl}。请先启动 .claude/launch.json 的 fx100-frontend-local（:3010；见 TestCode/docs/07 §3），或设 UI_APP_BASE_URL。`);
+  }
+  // ② fork 补丁状态
+  const patch = await execCapture('npx', ['tsx', 'scripts/frontend-fork-patch.ts', 'status'], process.env);
+  patch.output.trim().split('\n').forEach((line) => log(`  ${line}`));
+  if (patch.code !== 0) throw new PipelineError(35, 'frontend-fork-patch status 执行失败（输出见上）。');
+  if (/^clean/m.test(patch.output)) {
+    throw new PipelineError(35, `前端 fork 补丁未完全应用（存在 clean 文件）。先执行：npx tsx scripts/frontend-fork-patch.ts apply --env ${options.environment}`);
+  }
+  // ③ ui 档案配置（只查有无，不读取/打印值）
+  const local = dotenv.parse(readFileSync(join(rootDir, '.env.local'), 'utf8').toString());
+  const signingMode = local.E2E_SIGNING_MODE ?? process.env.E2E_SIGNING_MODE;
+  const hasAccount = Boolean(local.E2E_UI_TEST_ACCOUNT);
+  const hasKey = Boolean(local.E2E_UI_TEST_PRIVATE_KEY);
+  log(`ui 档案：E2E_UI_TEST_ACCOUNT=${hasAccount ? '已配置' : '缺失'}；E2E_UI_TEST_PRIVATE_KEY=${hasKey ? '已配置' : '缺失'}（签名模式 ${signingMode ?? '未知'}）`);
+  if (!hasAccount || (signingMode === 'private-key' && !hasKey)) {
+    throw new PipelineError(35, 'ui 档案未配置齐：.env.local 需要 E2E_UI_TEST_ACCOUNT（private-key 模式还需 E2E_UI_TEST_PRIVATE_KEY）；生成与注资见 scripts/prepare-ui-trader.ts 与 TestCode/docs/07 §3。');
+  }
+  // ④ 幂等注资/授权
+  if (options.skipUiPrepare) {
+    log('（--skip-ui-prepare）跳过 prepare-ui-trader。');
+  } else {
+    const prepare = await runCommand('npx', ['tsx', 'scripts/prepare-ui-trader.ts'], { ...process.env, E2E_ENV: options.environment, E2E_ENV_PRIORITY_KEYS: 'E2E_ENV' });
+    if (prepare !== 0) throw new PipelineError(35, `prepare-ui-trader 失败（退出码 ${prepare}）。`);
+  }
+}
+
 /** 阶段 D：选例跑批（reporter 自动写 artifacts/runs 并合并 latest；禁止传 --reporter 覆盖）。 */
 async function stageRunBatch(options: PipelineOptions): Promise<number> {
   banner(`阶段 D：跑批（${options.caseIds.length} 条场景 → --project=${options.environment}）`);
@@ -326,10 +435,10 @@ async function stageRunBatch(options: PipelineOptions): Promise<number> {
     log(`  ${id} → ${options.specFiles[index]}`);
   }
   log('提示：与环境无关的 spec 会自声明 SKIP，属正常。');
-  const args = ['playwright', 'test', ...options.specFiles, `--project=${options.environment}`];
+  const args = ['playwright', 'test', ...options.specFiles, `--project=${options.environment}`, ...(options.headed ? ['--headed'] : [])];
   if (options.dryRun) {
     log(`[dry-run] 计划：npx ${args.join(' ')}`);
-    log(`[dry-run]       注入 E2E_ENV=${options.environment} E2E_ENV_PRIORITY_KEYS=${options.perCaseTraders ? 'E2E_ENV,E2E_TRADER_ASSIGNMENT' : 'E2E_ENV'}${options.perCaseTraders ? ' E2E_TRADER_ASSIGNMENT=per-case' : ''}`);
+    log(`[dry-run]       注入 E2E_ENV=${options.environment} E2E_ENV_PRIORITY_KEYS=${options.perCaseTraders ? 'E2E_ENV,E2E_TRADER_ASSIGNMENT' : options.ui ? 'E2E_ENV,E2E_TRADER_PROFILE' : 'E2E_ENV'}${options.perCaseTraders ? ' E2E_TRADER_ASSIGNMENT=per-case' : ''}${options.ui ? ' E2E_TRADER_PROFILE=ui E2E_UI_COLLECT=true E2E_UI_ORDER_ENTRY=true' : ''}`);
     return 0;
   }
   const code = await runCommand('npx', args, childEnvironment(options));
@@ -402,14 +511,16 @@ async function main(): Promise<void> {
   const options = parseOptions();
   // 本进程内后续动态 import 会触发 runtime.ts 的 dotenv 加载；先登记优先键，防止 .env.local 的 E2E_ENV 覆盖批次环境。
   process.env.E2E_ENV = options.environment;
-  process.env.E2E_ENV_PRIORITY_KEYS = ['E2E_ENV', ...(options.perCaseTraders ? ['E2E_TRADER_ASSIGNMENT'] : [])].join(',');
+  process.env.E2E_ENV_PRIORITY_KEYS = ['E2E_ENV', ...(options.perCaseTraders ? ['E2E_TRADER_ASSIGNMENT'] : []), ...(options.ui ? ['E2E_TRADER_PROFILE'] : [])].join(',');
   if (options.perCaseTraders) process.env.E2E_TRADER_ASSIGNMENT = 'per-case';
+  if (options.ui) process.env.E2E_TRADER_PROFILE = 'ui';
 
   log(`环境=${options.environment} 场景=${options.all ? `--all（${options.caseIds.length} 条）` : options.caseIds.join(', ')}${options.dryRun ? '（dry-run：只打印计划）' : ''}`);
 
   await stageEnvironmentExistence(options);
   await stageEnvironmentPreparation(options);
   await stagePerCaseTraders(options);
+  await stageUiPreflight(options);
   const testExitCode = await stageRunBatch(options);
   await stageCollectResults(options);
 

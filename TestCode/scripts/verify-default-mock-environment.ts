@@ -225,7 +225,15 @@ if (resource.oracle.minPrice === undefined || resource.oracle.maxPrice === undef
   || indexPrice.min !== BigInt(resource.oracle.minPrice)
   || indexPrice.max !== BigInt(resource.oracle.maxPrice)
   || indexPrice.min >= indexPrice.max) {
-  throw new Error(`Mock Token Oracle min/max 不一致：min=${indexPrice.min}，max=${indexPrice.max}。`);
+  // tx-fork 是交易账本线：运行推价（±3%/±10%）、持久模式与前端联调都会让 index 价格
+  // 偏离初始化登记快照（60000/60060），漂移是常态且核对逻辑相对当前价推导、不受影响，
+  // 故降级为告警不拦路；oracle-fork / time-fork 是受控价格线，锚不一致会劈开 min/max
+  // 直接破坏边界数学（SCN-070 2026-08-13 FAIL 教训），保持硬校验。
+  if (runtime.environment === 'tx-fork') {
+    console.warn(`⚠ [verify] tx-fork Mock Token Oracle 价格已偏离初始化登记（链上 min=${indexPrice.min} max=${indexPrice.max}，登记 min=${resource.oracle.minPrice} max=${resource.oracle.maxPrice}）——交易线价格漂移属常态，降级为告警；如需回到 60000 基线请重建 fork 或经参数页价格面板重锚。`);
+  } else {
+    throw new Error(`Mock Token Oracle min/max 不一致：min=${indexPrice.min}，max=${indexPrice.max}。`);
+  }
 }
 if (getAddress(collateralFeedAddress) !== collateralOracle) throw new Error('USDC PriceFeed 地址不一致。');
 if (collateralMultiplier !== expectedCollateralMultiplier) throw new Error('USDC PriceFeed multiplier 不一致。');

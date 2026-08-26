@@ -29,6 +29,10 @@ schema 见 `src/config/mock-resources.ts`。每个 fork 环境一个 registry �
 
 流程：填 Mock Token/Oracle 参数 → 资金与授权 → （可选）复制某个已配置 Market 的 33 项参数 → 保存并初始化。实现：`scripts/init-mock-resources.ts`，服务端排队 `src/server/environment-initializations.ts`。
 
+### 价格一致性校验的环境差异（2026-08-24）
+
+`env:verify:mock` 的 index Oracle min/max「等于初始化登记快照（60000/60060）」检查：**tx-fork 降级为告警**（交易线推价/持久运行/前端联调致漂移属常态，核对相对当前价推导不受影响）；**oracle-fork / time-fork 保持硬校验**（受控价格线，锚不一致劈开 min/max 会破坏边界数学——SCN-070 2026-08-13 FAIL 教训）。USDC 价格校验各环境均保持硬性。
+
 ### "同时重建共享 USDC Oracle（影响本 Fork 全部 Market）"决策表
 
 默认（不勾）行为：**先验收再复用**现存共享 USDC——registry ready、`inlineKeeperReady`、地址一致、链上 `PRICE_FEED` / `ORACLE_PROVIDER_FOR_TOKEN` 接线核对通过（`scripts/init-mock-resources.ts` `reuseSharedCollateral`）；任一条不满足自动新建。

@@ -170,7 +170,7 @@
         "maxPrice": "1.001",
         "heartbeatDuration": "86400"
       },
-      "referenceMarketIndex": 1,
+      "referenceMarketIndex": 2,
       "parameterOverrides": {},
       "funding": {
         "nativeBalanceEth": "10",
@@ -210,7 +210,7 @@
         "maxPrice": "1.001",
         "heartbeatDuration": "86400"
       },
-      "referenceMarketIndex": 1,
+      "referenceMarketIndex": 2,
       "parameterOverrides": {},
       "funding": {
         "nativeBalanceEth": "10",
@@ -250,7 +250,7 @@
         "maxPrice": "1.001",
         "heartbeatDuration": "86400"
       },
-      "referenceMarketIndex": 1,
+      "referenceMarketIndex": 2,
       "parameterOverrides": {},
       "funding": {
         "nativeBalanceEth": "10",

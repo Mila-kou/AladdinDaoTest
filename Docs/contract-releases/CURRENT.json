@@ -1,6 +1,6 @@
 {
   "$comment": "FX100 测试基线唯一登记（单一事实源）。切换测试版本只改本文件（并执行 TestCode: npm run baseline:lint 校验全工作区引用）。文档不得复述版本号，只能引用本文件；必须写死版本的快照须标注「@vX.Y.Z 快照」。",
-  "updatedAt": "2026-08-24",
+  "updatedAt": "2026-08-26",
   "primary": {
     "version": "v0.3.2",
     "branch": "release/v0.3.2",
@@ -46,9 +46,9 @@
       "chainId": 99913,
       "forkOf": "base-sepolia@v0.3.1",
       "status": "ready",
-      "note": "2026-08-24 由 TestCode 通过 Tenderly Virtual TestNet API 自动创建（chain 99913，fork Base Sepolia @45893847）",
-      "forkBlockNumber": 45893847,
-      "tenderlyEnvironmentId": "1fbbfdcd-e2ea-4edb-a55d-75cc08b77268"
+      "note": "2026-08-26 由 TestCode 通过 Tenderly Virtual TestNet API 自动创建（chain 99913，fork Base Sepolia @45983870）",
+      "forkBlockNumber": 45983870,
+      "tenderlyEnvironmentId": "f52ec017-3b60-42ad-bbb0-50a495de565a"
     }
   },
   "excluded": [
@@ -69,6 +69,14 @@
     {
       "date": "2026-08-24",
       "change": "time-fork：2026-08-24 由 TestCode 通过 Tenderly Virtual TestNet API 自动创建（chain 99913，fork Base Sepolia @45893847）"
+    },
+    {
+      "date": "2026-08-26",
+      "change": "time-fork：2026-08-26 Virtual TestNet 1fbbfdcd-e2ea-4edb-a55d-75cc08b77268 已删除；需重新创建后再初始化"
+    },
+    {
+      "date": "2026-08-26",
+      "change": "time-fork：2026-08-26 由 TestCode 通过 Tenderly Virtual TestNet API 自动创建（chain 99913，fork Base Sepolia @45983870）"
     }
   ]
 }

@@ -23,6 +23,17 @@
       "forkBlockNumber": 45983870,
       "rpcHost": "virtual.base-sepolia.eu.rpc.tenderly.co",
       "createdAt": "2026-08-26T09:20:30.217Z"
+    },
+    {
+      "environment": "tx-fork",
+      "environmentId": "68807b10-2067-4750-9d53-d02942f023b8",
+      "vnetId": "29de7e7c-12c0-4813-89e0-376016e38522",
+      "displayName": "fx100 tx-fork · chain 99911 · 2026-09-01 10:02Z",
+      "chainId": 99911,
+      "parentNetworkId": 84532,
+      "forkBlockNumber": 46244328,
+      "rpcHost": "virtual.base-sepolia.eu.rpc.tenderly.co",
+      "createdAt": "2026-09-01T10:02:25.183Z"
     }
   ]
 }

@@ -10,6 +10,8 @@ import { renderContractFormulasHtml, renderPageFormulasHtml } from './render-for
 import { renderMarkdownSummary } from './render-markdown.js';
 import { metricDefinitions } from './metric-definitions.js';
 import { renderParametersHtml } from './render-parameters.js';
+import { renderReconciliationConsoleHtml } from './render-reconciliation-console.js';
+import { loadReconciliationLedger } from './reconciliation-fields.js';
 import { renderRunBuilderHtml } from './render-run-builder.js';
 import { renderTestCasesHtml } from './render-test-cases.js';
 import { buildBaselineView } from '../config/baseline.js';
@@ -32,6 +34,7 @@ export interface OutputReceipt {
   readonly runsHtml: string;
   readonly environmentsHtml: string;
   readonly faucetHtml: string;
+  readonly reconciliationConsoleHtml: string;
 }
 
 function safeFilePart(value: string): string {
@@ -86,10 +89,12 @@ export async function writeRunOutputs(
   }));
   const artifact = validateTestRunArtifact(await preserveAttachments(withEvidence, outputDirectory));
   const catalogPath = resolve(process.cwd(), artifact.source.catalogPath);
-  const [references, testCases, scenarioSpecs] = await Promise.all([
+  const [references, testCases, scenarioSpecs, reconciliationLedger] = await Promise.all([
     loadReferenceSources(),
     loadTestCases(artifact.catalog, catalogPath),
     discoverScenarioSpecs(process.cwd()),
+    // 字段台账未生成（seed 未跑）时页面渲染引导文案，不视为重建失败。
+    loadReconciliationLedger(process.cwd()).catch(() => null),
   ]);
   await mkdir(outputDirectory, { recursive: true });
   // 基线视图在渲染时实时读取 CURRENT.json（目标基线随登记切换），run.release 仍取产物记录的环境实际部署版本。
@@ -106,6 +111,7 @@ export async function writeRunOutputs(
   const runsHtml = join(outputDirectory, 'runs.html');
   const environmentsHtml = join(outputDirectory, 'environments.html');
   const faucetHtml = join(outputDirectory, 'faucet.html');
+  const reconciliationConsoleHtml = join(outputDirectory, 'reconciliation-console.html');
 
   await Promise.all([
     writeFile(resultsJson, `${JSON.stringify(artifact, null, 2)}\n`, 'utf8'),
@@ -128,6 +134,11 @@ export async function writeRunOutputs(
     ),
     writeFile(environmentsHtml, renderEnvironmentsHtml(artifact.source.generatedAt), 'utf8'),
     writeFile(faucetHtml, renderFaucetHtml(), 'utf8'),
+    writeFile(
+      reconciliationConsoleHtml,
+      renderReconciliationConsoleHtml(reconciliationLedger, artifact.source.generatedAt),
+      'utf8',
+    ),
   ]);
 
   return {
@@ -143,5 +154,6 @@ export async function writeRunOutputs(
     runsHtml,
     environmentsHtml,
     faucetHtml,
+    reconciliationConsoleHtml,
   };
 }

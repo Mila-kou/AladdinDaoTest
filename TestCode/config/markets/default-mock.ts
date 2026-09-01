@@ -63,6 +63,13 @@ export const defaultMockMarketProfile = {
     { baseKey: 'PRICE_IMPACT_PARAMETER', valueType: 'uint', arguments: [market()] },
     { baseKey: 'POSITION_FEE_FACTOR', valueType: 'uint', arguments: [market(), side(true)] },
     { baseKey: 'POSITION_FEE_FACTOR', valueType: 'uint', arguments: [market(), side(false)] },
+    // v0.3.2 起动态点差按市场×方向做 clamp（src/pricing/PositionPricingUtils.sol::getDynamicSpread）；
+    // 新市场不写这两键（缺省 0,0）会把 dynamicSpread 直接钳成 0（2026-09-01 SCN-009 实测）。
+    // 无覆盖值时从参考市场复制：v0.3.2 部署的 ETH 市场为 −0.02e18 / 1e18；v0.3.1 部署读回 0，无消费者、无副作用。
+    { baseKey: 'MIN_DYNAMIC_SPREAD', valueType: 'int', arguments: [market(), side(true)] },
+    { baseKey: 'MIN_DYNAMIC_SPREAD', valueType: 'int', arguments: [market(), side(false)] },
+    { baseKey: 'MAX_DYNAMIC_SPREAD', valueType: 'int', arguments: [market(), side(true)] },
+    { baseKey: 'MAX_DYNAMIC_SPREAD', valueType: 'int', arguments: [market(), side(false)] },
     { baseKey: 'SKEW_IMPACT_FACTOR', valueType: 'int', arguments: [market()] },
     { baseKey: 'MIN_SKEW_IMPACT', valueType: 'int', arguments: [market()] },
     { baseKey: 'MAX_SKEW_IMPACT', valueType: 'int', arguments: [market()] },

@@ -76,9 +76,26 @@ interface VerificationResult {
   readonly pageFormulaSections: number;
   readonly pageFormulaHasOrderPanel: boolean;
   readonly pageFormulaHasPositionSizes: boolean;
+  readonly consoleTitle: string | null;
+  readonly consoleNavHref: string | null;
+  readonly consoleCoverageTotal: string;
+  readonly consoleCoverageContract: string;
+  readonly consoleCoverageFrontend: string;
+  readonly consoleCoveragePairing: string;
+  readonly consoleFieldRows: number;
+  readonly consoleImplementedRows: number;
+  readonly consoleFilteredRows: number;
+  readonly environmentsTitle: string | null;
+  readonly deploySectionTitle: string;
+  readonly deployBranchDisabled: boolean;
+  readonly deployDryRunDisabled: boolean;
+  readonly deployRunDisabled: boolean;
+  readonly deployStatusText: string;
+  readonly environmentsMobileBodyWidth: number;
   readonly mobileBodyWidth: number;
   readonly executionMobileBodyWidth: number;
   readonly runsMobileBodyWidth: number;
+  readonly consoleMobileBodyWidth: number;
 }
 
 async function verifyDashboard(page: Page, url: string) {
@@ -167,6 +184,16 @@ async function verifyParameters(page: Page, url: string) {
   await page.waitForSelector('#parameters-page[data-page-ready="true"]');
   const title = await page.locator('h1').textContent();
   const parameterRows = Number(await page.locator('#row-count').textContent());
+  // Market 选项来自 config-dump 快照的 markets；来源退化成设计文档 CSV 时下拉只剩「全部/仅全局」，
+  // 直接 selectOption 只会得到 30s 超时——先断言选项存在，把原因说清楚。
+  const marketOptionValues = await page.locator('#market-index option')
+    .evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value));
+  if (!marketOptionValues.includes('1')) {
+    throw new Error(
+      `参数页 Market 范围下拉缺少 market#1 选项（现有：${marketOptionValues.map((value) => value || '(全部)').join(', ')}）。`
+      + '系统参数来源没有 config-dump 快照：检查 E2E_SYSTEM_PARAMETERS_SOURCE 是否指向 <deployment>.params-by-module.csv。',
+    );
+  }
   await page.locator('#market-index').selectOption('1');
   const marketFilteredParameterRows = Number(await page.locator('#row-count').textContent());
   const marketScopeSummary = (await page.locator('#scope-summary').textContent()) ?? '';
@@ -340,6 +367,57 @@ async function verifyFormulas(page: Page, url: string, readyId: string) {
   };
 }
 
+// 测试环境页：「② 部署合约」section 存在；静态打开时分支下拉与两个部署按钮降级禁用并提示 dashboard:serve。
+async function verifyEnvironments(page: Page, url: string) {
+  await page.goto(url);
+  await page.waitForSelector('#environment-page[data-page-ready="true"]');
+  const environmentsTitle = await page.locator('h1').textContent();
+  const deploySectionTitle = (await page.locator('#deploy-panel h2').textContent()) ?? '';
+  const deployBranchDisabled = await page.locator('#deploy-branch').isDisabled();
+  const deployDryRunDisabled = await page.locator('#deploy-dry-run').isDisabled();
+  const deployRunDisabled = await page.locator('#deploy-run').isDisabled();
+  const deployStatusText = (await page.locator('#deploy-status').textContent()) ?? '';
+  return {
+    environmentsTitle,
+    deploySectionTitle,
+    deployBranchDisabled,
+    deployDryRunDisabled,
+    deployRunDisabled,
+    deployStatusText,
+  };
+}
+
+// 核对数据控制台：字段台账页面存在、覆盖率数字可读、状态筛选生效。
+async function verifyReconciliationConsole(page: Page, url: string) {
+  await page.goto(url);
+  await page.waitForSelector('#reconciliation-console-page[data-page-ready="true"]');
+  const consoleTitle = await page.locator('h1').textContent();
+  const consoleNavHref = await page
+    .locator('.top-nav a[href="./reconciliation-console.html"]')
+    .getAttribute('href');
+  const consoleCoverageTotal = (await page.locator('#coverage-total').textContent()) ?? '';
+  const consoleCoverageContract = (await page.locator('#coverage-contract').textContent()) ?? '';
+  const consoleCoverageFrontend = (await page.locator('#coverage-frontend').textContent()) ?? '';
+  const consoleCoveragePairing = (await page.locator('#coverage-pairing').textContent()) ?? '';
+  const consoleFieldRows = await page.locator('.field-row').count();
+  await page.locator('#filter-status').selectOption('implemented');
+  const consoleImplementedRows = await page.locator('.field-row').count();
+  await page.locator('#filter-status').selectOption('');
+  await page.locator('#filter-search').fill('Funding');
+  const consoleFilteredRows = await page.locator('.field-row').count();
+  return {
+    consoleTitle,
+    consoleNavHref,
+    consoleCoverageTotal,
+    consoleCoverageContract,
+    consoleCoverageFrontend,
+    consoleCoveragePairing,
+    consoleFieldRows,
+    consoleImplementedRows,
+    consoleFilteredRows,
+  };
+}
+
 const input = process.argv[2];
 if (!input) {
   console.error('Usage: npm run dashboard:verify -- <dashboard.html|http://localhost:4173/>');
@@ -357,6 +435,8 @@ if (!input) {
       access(join(dirname(dashboardPath), 'test-cases.html')),
       access(join(dirname(dashboardPath), 'runs.html')),
       access(join(dirname(dashboardPath), 'faucet.html')),
+      access(join(dirname(dashboardPath), 'environments.html')),
+      access(join(dirname(dashboardPath), 'reconciliation-console.html')),
     ]);
   }
 
@@ -382,6 +462,12 @@ if (!input) {
   const faucetUrl = isHttp
     ? new URL('./faucet.html', dashboardUrl).href
     : pathToFileURL(join(dirname(dashboardPath!), 'faucet.html')).href;
+  const environmentsUrl = isHttp
+    ? new URL('./environments.html', dashboardUrl).href
+    : pathToFileURL(join(dirname(dashboardPath!), 'environments.html')).href;
+  const reconciliationConsoleUrl = isHttp
+    ? new URL('./reconciliation-console.html', dashboardUrl).href
+    : pathToFileURL(join(dirname(dashboardPath!), 'reconciliation-console.html')).href;
   const allowedOrigin = new URL(dashboardUrl).origin;
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
@@ -406,8 +492,16 @@ if (!input) {
   const parameters = await verifyParameters(page, parametersUrl);
   const formulas = await verifyFormulas(page, formulasUrl, 'contract-formulas-page');
   const pageFormulas = await verifyFormulas(page, pageFormulasUrl, 'page-formulas-page');
+  const environmentsPage = await verifyEnvironments(page, environmentsUrl);
+  const reconciliationConsole = await verifyReconciliationConsole(page, reconciliationConsoleUrl);
 
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(environmentsUrl);
+  await page.waitForSelector('#environment-page[data-page-ready="true"]');
+  const environmentsMobileBodyWidth = await page.evaluate(() => document.body.scrollWidth);
+  await page.goto(reconciliationConsoleUrl);
+  await page.waitForSelector('#reconciliation-console-page[data-page-ready="true"]');
+  const consoleMobileBodyWidth = await page.evaluate(() => document.body.scrollWidth);
   await page.goto(executionsUrl);
   await page.waitForSelector('#executions-page[data-page-ready="true"]');
   const executionMobileBodyWidth = await page.evaluate(() => document.body.scrollWidth);
@@ -458,9 +552,13 @@ if (!input) {
     pageFormulaSections: pageFormulas.formulaSections,
     pageFormulaHasOrderPanel: pageFormulas.formulaHasOrderPanel,
     pageFormulaHasPositionSizes: pageFormulas.formulaHasPositionSizes,
+    ...reconciliationConsole,
+    ...environmentsPage,
+    environmentsMobileBodyWidth,
     mobileBodyWidth,
     executionMobileBodyWidth,
     runsMobileBodyWidth,
+    consoleMobileBodyWidth,
   };
   const expectedHeaders = ['核对结果', '执行链接', '执行时间'];
   const expectedReconciliationHeaders = ['Before（链上）', 'After（链上 Actual）', 'Expected Δ（订单 / 公式）', 'Expected After = Before + Δ', '公式与依据'];
@@ -468,7 +566,7 @@ if (!input) {
   const failed = dashboard.title !== 'FX100 E2E 测试看板'
     || dashboard.dashboardNavLabel !== '测试看板'
     || dashboard.testRunNavHref !== './runs.html'
-    || faucet.faucetTitle !== 'FX100 Faucet & 交易'
+    || faucet.faucetTitle !== 'FX100 Faucet USDC'
     || !faucet.fundingPanelExists
     || !faucet.faucetMonitorExists
     || faucet.faucetMonitorAccount !== '0x6E2Df1a8d0366ac1e55fF1dC23523299613902e5'
@@ -562,11 +660,30 @@ if (!input) {
     || result.pageFormulaSections < 9
     || !result.pageFormulaHasOrderPanel
     || !result.pageFormulaHasPositionSizes
+    || result.consoleTitle !== 'FX100 核对数据控制台'
+    || result.consoleNavHref !== './reconciliation-console.html'
+    // 覆盖率必须是「已生效 / 总数」的数字对；台账种子后总数应至少有几十行。
+    || !/^\d+ \/ \d+$/.test(result.consoleCoverageTotal)
+    || !/^\d+ \/ \d+$/.test(result.consoleCoverageContract)
+    || !/^\d+ \/ \d+$/.test(result.consoleCoverageFrontend)
+    || !/^\d+ \/ \d+$/.test(result.consoleCoveragePairing)
+    || result.consoleFieldRows < 10
+    || result.consoleImplementedRows < 1
+    || result.consoleImplementedRows >= result.consoleFieldRows
+    || result.consoleFilteredRows < 1
+    || result.consoleFilteredRows >= result.consoleFieldRows
+    || result.environmentsTitle !== '测试环境'
+    || !result.deploySectionTitle.includes('② 部署合约')
+    // 静态打开时部署入口必须降级：下拉与两按钮禁用，并提示需 dashboard:serve。
+    || (!isHttp && !(result.deployBranchDisabled && result.deployDryRunDisabled && result.deployRunDisabled))
+    || (!isHttp && !result.deployStatusText.includes('dashboard:serve'))
+    || result.environmentsMobileBodyWidth > 410
     || errors.length > 0
     || externalRequests.length > 0
     || mobileBodyWidth > 410
     || executionMobileBodyWidth > 410
-    || runsMobileBodyWidth > 410;
+    || runsMobileBodyWidth > 410
+    || consoleMobileBodyWidth > 410;
 
   if (failed) {
     console.error({ status: 'FAILED', ...result, errors, externalRequests });

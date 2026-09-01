@@ -391,5 +391,15 @@ export async function loadReferenceSources(): Promise<ReferenceSources> {
     loadFormulas(contractFormulasPath),
     loadFormulas(pageFormulasPath),
   ]);
+  // 只有 config-dump 原生产物（params-by-module.csv + 同名 params.json）才带链上快照；
+  // 指向设计文档 CSV 时参数页会静默退化成无链上值、无 Market 过滤的清单——必须显式告警，
+  // 否则只会在 dashboard:verify 里表现为 #market-index 选不到选项的超时。
+  if (!parameters.snapshot) {
+    console.warn(
+      `[reference-sources] 系统参数来源不是 config-dump 原生快照：${parameters.sourcePath}\n`
+      + '  参数页将缺少链上当前值、Market 范围过滤与 DataStore 直写；'
+      + '请把 E2E_SYSTEM_PARAMETERS_SOURCE 指向 <deployment>.params-by-module.csv。',
+    );
+  }
   return { parameters, contractFormulas, pageFormulas };
 }

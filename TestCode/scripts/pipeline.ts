@@ -463,13 +463,14 @@ async function stageCollectResults(options: PipelineOptions): Promise<void> {
     }
     return;
   }
-  // 参数页快照在 rebuild 时实时查 tx-fork（fd85e7b 钉 tx-fork）；fork 忙/限流会静默回退设计 CSV
-  // 导致 dashboard:verify 参数区断言失败——因此 rebuild+verify 整体允许重试一次（间隔 30s）。
+  // rebuild 只读本地资料源（不查链），因此参数区断言失败通常是配置问题而非抖动：
+  // E2E_SYSTEM_PARAMETERS_SOURCE 必须指向 config-dump 原生 params-by-module.csv，否则参数页无快照。
+  // 保留一次重试只为兜浏览器渲染抖动（间隔 30s），配置错误重试也不会变绿。
   const rebuildCode = await runCommand('npm', ['run', 'dashboard:rebuild-latest'], process.env);
   if (rebuildCode !== 0) throw new PipelineError(50, `dashboard:rebuild-latest 失败（退出码 ${rebuildCode}）。`);
   let verifyCode = await runCommand('npm', ['run', 'dashboard:verify', '--', 'artifacts/latest/dashboard.html'], process.env);
   if (verifyCode !== 0) {
-    log('dashboard:verify 失败，30s 后重建并重试一次（参数页 tx-fork 快照查询可能因 fork 忙/限流瞬时回退）…');
+    log('dashboard:verify 失败，30s 后重建并重试一次（仅兜浏览器渲染抖动；若报参数页 Market 选项缺失，请检查 E2E_SYSTEM_PARAMETERS_SOURCE）…');
     await new Promise((resolveWait) => setTimeout(resolveWait, 30_000));
     const retryRebuild = await runCommand('npm', ['run', 'dashboard:rebuild-latest'], process.env);
     if (retryRebuild !== 0) throw new PipelineError(50, `dashboard:rebuild-latest 重试失败（退出码 ${retryRebuild}）。`);

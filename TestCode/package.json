@@ -19,6 +19,7 @@
     "env:vnet:create": "tsx scripts/create-tenderly-vnet.ts",
     "env:vnet:delete": "tsx scripts/create-tenderly-vnet.ts --delete",
     "env:vnet:list": "tsx scripts/create-tenderly-vnet.ts --list",
+    "deploy:contracts": "tsx scripts/deploy-contracts.ts",
     "traders:generate": "tsx scripts/generate-trader-roster.ts",
     "traders:map": "tsx scripts/generate-case-traders.ts",
     "pipeline": "tsx scripts/pipeline.ts",

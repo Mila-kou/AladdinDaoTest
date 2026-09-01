@@ -7,6 +7,12 @@ import {
   deletedRecordsPath,
   readDeletedRecords,
 } from '../reporting/latest-snapshot.js';
+import {
+  confirmableStatuses,
+  loadReconciliationLedger,
+  saveReconciliationLedger,
+  type ReconciliationFieldStatus,
+} from '../reporting/reconciliation-fields.js';
 import { writeRunOutputs } from '../reporting/write-outputs.js';
 import { baselineRegistryDisplayPath, targetRelease } from '../config/baseline.js';
 import { validateTestRunArtifact, type TestRunArtifact } from '../reporting/schema.js';
@@ -16,6 +22,10 @@ import { listParameterEnvironments, queryParameters } from './parameter-query.js
 import { RunBatchManager } from './run-batches.js';
 import { KeeperServiceManager } from './keeper-service.js';
 import { TenderlyForkManager } from './tenderly-forks.js';
+import {
+  ContractDeploymentConflictError,
+  ContractDeploymentManager,
+} from './contract-deployments.js';
 import { DefaultMarketSourceManager } from './default-market-source.js';
 import { UsdcFundingManager } from './usdc-funding.js';
 import { FaucetBalanceMonitor } from './faucet-monitor.js';
@@ -54,10 +64,10 @@ interface PackageMetadata {
 const SECURITY_HEADERS = {
   'Cache-Control': 'no-store',
   'Content-Security-Policy':
-    "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
+    "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; base-uri 'none'; frame-ancestors 'self'; form-action 'none'",
   'Referrer-Policy': 'no-referrer',
   'X-Content-Type-Options': 'nosniff',
-  'X-Frame-Options': 'DENY',
+  'X-Frame-Options': 'SAMEORIGIN',
 } as const;
 
 function send(
@@ -159,6 +169,7 @@ export async function startDashboardServer(options: DashboardServerOptions) {
   });
   const keeperServiceManager = new KeeperServiceManager(projectRoot);
   const tenderlyForkManager = new TenderlyForkManager(projectRoot);
+  const contractDeploymentManager = new ContractDeploymentManager(projectRoot);
   const defaultMarketSourceManager = new DefaultMarketSourceManager(projectRoot);
   const usdcFundingManager = new UsdcFundingManager(projectRoot);
   const faucetBalanceMonitor = new FaucetBalanceMonitor(projectRoot);
@@ -202,6 +213,8 @@ export async function startDashboardServer(options: DashboardServerOptions) {
         '/formulas.html': 'formulas.html',
         '/page-formulas': 'page-formulas.html',
         '/page-formulas.html': 'page-formulas.html',
+        '/reconciliation-console': 'reconciliation-console.html',
+        '/reconciliation-console.html': 'reconciliation-console.html',
       };
       const pageFile = pageFiles[url.pathname];
       if (pageFile) {
@@ -627,6 +640,61 @@ export async function startDashboardServer(options: DashboardServerOptions) {
         return;
       }
 
+      // ② 部署合约：长任务模式照抄 environment-initializations（spawn 子进程 + 内存日志），
+      // branches 是精确路径，必须放在 /:id 匹配之前。
+      if (url.pathname === '/api/contract-deployments/branches' && (method === 'GET' || method === 'HEAD')) {
+        try {
+          sendJson(response, 200, { branches: await contractDeploymentManager.listBranches() }, headOnly);
+        } catch (error) {
+          sendJson(response, 400, {
+            error: '合约分支列表读取失败',
+            detail: error instanceof Error ? error.message : String(error),
+          }, headOnly);
+        }
+        return;
+      }
+
+      if (url.pathname === '/api/contract-deployments') {
+        if (method === 'GET' || method === 'HEAD') {
+          sendJson(response, 200, { deployments: contractDeploymentManager.list() }, headOnly);
+          return;
+        }
+        if (method === 'POST') {
+          if (!isSameOriginRequest(request)) {
+            sendJson(response, 403, { error: '仅允许同源看板页面发起合约部署。' });
+            return;
+          }
+          try {
+            const job = await contractDeploymentManager.create(await readJsonBody(request));
+            sendJson(response, 202, { jobId: job.id, job });
+          } catch (error) {
+            if (error instanceof ContractDeploymentConflictError) {
+              sendJson(response, 409, { error: '合约部署任务冲突', detail: error.message });
+            } else {
+              sendJson(response, 400, {
+                error: '合约部署任务创建失败',
+                detail: error instanceof Error ? error.message : String(error),
+              });
+            }
+          }
+          return;
+        }
+        sendJson(response, 405, { error: 'Method Not Allowed' }, headOnly);
+        return;
+      }
+
+      const contractDeploymentMatch =
+        /^\/api\/contract-deployments\/([a-zA-Z0-9._-]+)$/.exec(url.pathname);
+      if (contractDeploymentMatch && (method === 'GET' || method === 'HEAD')) {
+        const deployment = contractDeploymentManager.get(contractDeploymentMatch[1]!);
+        if (!deployment) {
+          sendJson(response, 404, { error: '合约部署任务不存在。' }, headOnly);
+          return;
+        }
+        sendJson(response, 200, deployment, headOnly);
+        return;
+      }
+
       const environmentInitializationMatch =
         /^\/api\/environment-initializations\/([a-zA-Z0-9._-]+)$/.exec(url.pathname);
       if (environmentInitializationMatch && (method === 'GET' || method === 'HEAD')) {
@@ -774,6 +842,86 @@ export async function startDashboardServer(options: DashboardServerOptions) {
         return;
       }
 
+      if (url.pathname === '/api/reconciliation-fields' && (method === 'GET' || method === 'HEAD')) {
+        const ledger = await loadReconciliationLedger(projectRoot);
+        if (!ledger) {
+          sendJson(response, 404, {
+            error: '核对字段台账不存在',
+            detail: '先运行 npx tsx scripts/seed-reconciliation-fields.ts 生成 config/reconciliation-fields.json。',
+          }, headOnly);
+          return;
+        }
+        sendJson(response, 200, { ledger }, headOnly);
+        return;
+      }
+
+      if (url.pathname === '/api/reconciliation-fields/confirm' && method === 'POST') {
+        if (!isSameOriginRequest(request)) {
+          sendJson(response, 403, { error: '仅允许同源测试看板写回核对字段台账。' });
+          return;
+        }
+        try {
+          const body = (await readJsonBody(request) ?? {}) as {
+            id?: unknown;
+            status?: unknown;
+            note?: unknown;
+          };
+          const id = typeof body.id === 'string' ? body.id : '';
+          const status = typeof body.status === 'string' ? body.status : '';
+          const note = typeof body.note === 'string' ? body.note : undefined;
+          if (!/^[A-Za-z0-9._-]{1,80}$/.test(id)) {
+            sendJson(response, 400, { error: '需要有效的台账行 id。' });
+            return;
+          }
+          if (!confirmableStatuses.includes(status as ReconciliationFieldStatus)) {
+            sendJson(response, 400, {
+              error: `status 只允许 ${confirmableStatuses.join(' / ')}（implemented 由 seed 依据 results.json 覆盖判定）。`,
+            });
+            return;
+          }
+          if (note !== undefined && note.length > 500) {
+            sendJson(response, 400, { error: 'note 最长 500 字符。' });
+            return;
+          }
+          const ledger = await loadReconciliationLedger(projectRoot);
+          if (!ledger) {
+            sendJson(response, 404, {
+              error: '核对字段台账不存在',
+              detail: '先运行 npx tsx scripts/seed-reconciliation-fields.ts 生成 config/reconciliation-fields.json。',
+            });
+            return;
+          }
+          const target = ledger.rows.find((row) => row.id === id);
+          if (!target) {
+            sendJson(response, 404, { error: `台账中没有 id 为 ${id} 的字段行。` });
+            return;
+          }
+          if (target.status === 'implemented') {
+            sendJson(response, 409, {
+              error: '该字段已由自动化核对覆盖（implemented），不接受手工改状态；如覆盖失效请重跑 seed。',
+            });
+            return;
+          }
+          const updated = {
+            ...target,
+            status: status as ReconciliationFieldStatus,
+            note: note ?? target.note,
+            updatedAt: new Date().toISOString(),
+          };
+          await saveReconciliationLedger(projectRoot, {
+            ...ledger,
+            rows: ledger.rows.map((row) => (row.id === id ? updated : row)),
+          });
+          sendJson(response, 200, { ok: true, row: updated });
+        } catch (error) {
+          sendJson(response, 400, {
+            error: '核对字段台账写回失败',
+            detail: error instanceof Error ? error.message : String(error),
+          });
+        }
+        return;
+      }
+
       if (url.pathname === '/api/execution-records/delete' && method === 'POST') {
         const body = (await readJsonBody(request) ?? {}) as { id?: unknown; project?: unknown };
         const id = typeof body.id === 'string' ? body.id : '';
@@ -860,11 +1008,13 @@ export async function startDashboardServer(options: DashboardServerOptions) {
             generatedAt: artifact.source.generatedAt,
             catalogSize: artifact.catalog.length,
             resultCount: artifact.results.length,
-            pages: ['/', '/executions', '/test-cases', '/runs', '/environments', '/faucet', '/parameters', '/formulas', '/page-formulas'],
+            pages: ['/', '/executions', '/test-cases', '/runs', '/environments', '/faucet', '/parameters', '/formulas', '/page-formulas', '/reconciliation-console'],
             parameterApis: ['/api/parameter-environments', '/api/parameters?environment=tx-fork'],
             runApis: [
               '/api/environments',
               '/api/environment-initializations',
+              '/api/contract-deployments',
+              '/api/contract-deployments/branches',
               '/api/run-batches',
               '/api/run-batches/:id/manual-result',
               '/api/run-batches/:id/manual-start',
@@ -879,10 +1029,13 @@ export async function startDashboardServer(options: DashboardServerOptions) {
               '/api/noise-plan',
               '/api/noise-traders',
               '/api/manual-check-target',
+              '/api/reconciliation-fields',
+              '/api/reconciliation-fields/confirm',
             ],
             capabilities: {
               environmentInitialization: true,
               environmentConfiguration: true,
+              contractDeployment: true,
               completeDefaultMockMarket: true,
               manualVerdictRecording: true,
               manualFrontendLink: true,

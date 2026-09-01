@@ -1,6 +1,6 @@
 {
   "$comment": "FX100 测试基线唯一登记（单一事实源）。切换测试版本只改本文件（并执行 TestCode: npm run baseline:lint 校验全工作区引用）。文档不得复述版本号，只能引用本文件；必须写死版本的快照须标注「@vX.Y.Z 快照」。",
-  "updatedAt": "2026-08-26",
+  "updatedAt": "2026-09-01",
   "primary": {
     "version": "v0.3.2",
     "branch": "release/v0.3.2",
@@ -29,13 +29,26 @@
       "releaseLabel": "release-v0.3.1",
       "paramsExport": "TestCase/project/fx100/config/base_sepolia_v0.3.1_260729.params.json",
       "note": "唯一已知部署；v0.3.2 截至 updatedAt 无部署记录（04-参数目录 全部「待部署确认」）"
+    },
+    {
+      "id": "tx-fork@v0.3.2",
+      "network": "tenderly-vnet(tx-fork)",
+      "chainId": 99911,
+      "version": "v0.3.2",
+      "releaseLabel": "release-v0.3.2",
+      "paramsExport": "TestCode/artifacts/parameter-cache/tx-fork/tx-fork-v0.3.2-260901.params.json",
+      "manifest": "TestCode/config/deployments/tx-fork-v0.3.2-260901.json",
+      "note": "2026-09-01 由 deploy:contracts 在 tx-fork（chain 99911）全新部署 release/v0.3.2@13880f2（Ignition Fx100Core + configure 三脚本 + 双市场 + 角色授权 + 读回校验通过）"
     }
   ],
   "environments": {
     "tx-fork": {
       "chainId": 99911,
-      "forkOf": "base-sepolia@v0.3.1",
-      "status": "ready"
+      "forkOf": "tx-fork@v0.3.2",
+      "status": "ready",
+      "forkBlockNumber": 46244328,
+      "tenderlyEnvironmentId": "68807b10-2067-4750-9d53-d02942f023b8",
+      "note": "2026-09-01 由 TestCode 通过 Tenderly Virtual TestNet API 自动创建（chain 99911，fork Base Sepolia @46244328）"
     },
     "oracle-fork": {
       "chainId": 99912,
@@ -77,6 +90,14 @@
     {
       "date": "2026-08-26",
       "change": "time-fork：2026-08-26 由 TestCode 通过 Tenderly Virtual TestNet API 自动创建（chain 99913，fork Base Sepolia @45983870）"
+    },
+    {
+      "date": "2026-09-01",
+      "change": "tx-fork：2026-09-01 由 TestCode 通过 Tenderly Virtual TestNet API 自动创建（chain 99911，fork Base Sepolia @46244328）"
+    },
+    {
+      "date": "2026-09-01",
+      "change": "tx-fork：2026-09-01 由 deploy:contracts 在 tx-fork（chain 99911）全新部署 release/v0.3.2@13880f2（Ignition Fx100Core + configure 三脚本 + 双市场 + 角色授权 + 读回校验通过）"
     }
   ]
 }

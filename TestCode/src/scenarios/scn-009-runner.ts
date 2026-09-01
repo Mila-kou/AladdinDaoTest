@@ -1,4 +1,5 @@
 import { pathToFileURL } from 'node:url';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { createPublicClient, createWalletClient, defineChain, encodeAbiParameters, formatUnits, getAddress, http, keccak256, parseAbi, parseAbiParameters, toHex } from 'viem';
@@ -223,6 +224,22 @@ function legacyPath(...parts: string[]): string {
 }
 
 function deploymentPath(): string {
+  // 部署产物目录：优先当前 deployment manifest 的 source.deploymentDirectory
+  // （tx-fork 自 2026-09-01 起是 deploy:contracts 在 fork 上生成的 v0.3.2 Ignition 产物）；
+  // manifest 无 source 时回退 v0.3.1 dev 导出（oracle-fork / time-fork 仍是 v0.3.1 部署镜像）。
+  const manifestPath = process.env.E2E_DEPLOYMENT_MANIFEST;
+  if (manifestPath) {
+    try {
+      const manifest = JSON.parse(readFileSync(resolve(process.cwd(), manifestPath), 'utf8')) as {
+        source?: { deploymentDirectory?: string };
+      };
+      if (manifest.source?.deploymentDirectory) {
+        return resolve(process.cwd(), manifest.source.deploymentDirectory);
+      }
+    } catch {
+      // manifest 读取失败按无 source 处理，走硬编码回退
+    }
+  }
   return resolve(process.cwd(), '../Github/fx100-contracts@release-v0.3.1/base_sepolia_v0.3.1_260729');
 }
 

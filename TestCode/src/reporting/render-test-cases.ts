@@ -1,10 +1,123 @@
-import { renderPageShell, serializeForHtml } from './render-page-shell.js';
+import { escapeHtml, renderPageShell, serializeForHtml } from './render-page-shell.js';
 import type { TestCaseView } from './test-cases.js';
+import type {
+  AdmissionView,
+  VersionCasesData,
+  VersionCasesView,
+  VersionFunctionalCase,
+} from './version-cases.js';
 
-export function renderTestCasesHtml(cases: TestCaseView[], generatedAt: string): string {
+function admissionChipClass(status: string): string {
+  if (/^READY/.test(status)) return 'admission-ready';
+  if (/NOT_READY/.test(status)) return 'admission-blocked';
+  return 'admission-unknown';
+}
+
+// 准入横幅：admission 总开关 + admissionScope 逐项（来源 CURRENT.json，容错读取）。
+function renderAdmissionBannerHtml(admission: AdmissionView): string {
+  const scopeChips = admission.scope.map((item) =>
+    `<span class="admission-chip ${admissionChipClass(item.status)}">${escapeHtml(item.key)}：${escapeHtml(item.status)}</span>`,
+  ).join('');
+  return `
+  <section class="panel admission-banner" id="admission-banner" aria-label="版本准入状态">
+    <strong>准入</strong>
+    <span class="admission-chip ${admissionChipClass(admission.admission)}">admission（总开关）：${escapeHtml(admission.admission)}</span>
+    ${scopeChips || '<span class="admission-chip admission-unknown">admissionScope：未登记</span>'}
+    <span class="admission-source">来源：${escapeHtml(admission.source)}</span>
+  </section>`;
+}
+
+// 共享 SCN 分区仅加这一行：指向当前版本 applicability / expectation-overrides 的来源链接，不展开差异内容。
+function renderScnVersionSourcesHtml(data: VersionCasesData): string {
+  const view = data.versions.find((item) => item.release === data.defaultRelease);
+  const body = view
+    ? `共享场景用例在当前版本（${escapeHtml(view.release)}）的适用性与期望差异见来源：`
+      + `<a href="../../../${escapeHtml(view.applicabilityPath)}">applicability.md</a> · `
+      + `<a href="../../../${escapeHtml(view.overridesPath)}">expectation-overrides.md</a>（仅来源链接，不展开）。`
+    : `共享场景用例的版本适用性来源缺失：${escapeHtml(data.noVersionsReason ?? '未找到版本目录。')}`;
+  return `
+  <section class="scn-version-sources" id="scn-version-sources">${body}</section>`;
+}
+
+function renderVersionCaseRowHtml(item: VersionFunctionalCase): string {
+  const layerCell = (status: string): string =>
+    `<td><span class="layer layer-${escapeHtml(status)}">${escapeHtml(status)}</span></td>`;
+  return `<tr class="vc-row" data-kind="${item.kind}" data-id="${escapeHtml(item.id)}">`
+    + `<td class="vc-id">${escapeHtml(item.id)}</td>`
+    + `<td class="vc-p">${escapeHtml(item.priority)}</td>`
+    + `<td class="vc-title">${escapeHtml(item.title)}</td>`
+    + `<td class="vc-entry">${escapeHtml(item.entry)}</td>`
+    + `<td class="vc-trader">${escapeHtml(item.trader)}</td>`
+    + layerCell(item.layers.contract)
+    + layerCell(item.layers.frontend)
+    + layerCell(item.layers.parity)
+    + '</tr>';
+}
+
+function renderVersionBlockHtml(view: VersionCasesView, hidden: boolean): string {
+  const body = view.hasMatrix
+    ? `<p class="vc-block-note">数据源：<code>${escapeHtml(view.matrixPath)}</code> · 执行状态：<code>${escapeHtml(view.resultsPath)}</code>（无记录 = NOT_RUN；FT 未走页面时前端层 = GAP）· 带地址列（A/B 节）${view.coreCount} 条 + 其余节 ${view.otherCount} 条</p>`
+      + view.sections.map((section) =>
+        `<h3>${escapeHtml(section.name)}</h3>`
+        + '<div class="scroll"><table class="vc-table"><thead><tr><th>ID</th><th>P</th><th>标题</th><th>本轮入口</th><th>Trader / 地址</th><th>合约层</th><th>前端层</th><th>交叉一致</th></tr></thead><tbody>'
+        + section.cases.map(renderVersionCaseRowHtml).join('')
+        + '</tbody></table></div>',
+      ).join('')
+    : `<p class="vc-empty">${escapeHtml(view.emptyReason ?? '该版本暂无版本级功能用例。')}</p>`;
+  return `<div class="version-case-block" data-release="${escapeHtml(view.release)}"${hidden ? ' hidden' : ''}>${body}</div>`;
+}
+
+// 版本功能用例分区（CT/XT/FT）：与共享 SCN 分区分开展示，按矩阵节分组；本分区不出现任何 SCN 编号。
+function renderVersionCasesSectionHtml(data: VersionCasesData): string {
+  const picker = data.releases.length > 0
+    ? `<label class="vc-release-picker">版本<select id="version-case-release">${data.releases.map((release) =>
+      `<option${release === data.defaultRelease ? ' selected' : ''}>${escapeHtml(release)}</option>`,
+    ).join('')}</select></label>`
+    : '';
+  const blockedBadge = data.admission.txForkContractReady
+    ? ''
+    : '<span class="vc-blocked" id="version-cases-blocked">当前环境不可开跑（tx-fork:contract 非 READY）</span>';
+  const blocks = data.versions.length > 0
+    ? data.versions.map((view) => renderVersionBlockHtml(view, view.release !== data.defaultRelease)).join('')
+    : `<p class="vc-empty">${escapeHtml(data.noVersionsReason ?? '暂无版本级功能用例。')}</p>`;
+  return `
+  <section class="panel version-cases" id="version-cases" aria-label="版本功能用例">
+    <div class="panel-head"><h2>版本功能用例（CT / XT / FT）</h2>${blockedBadge}${picker}</div>
+    <div id="version-case-blocks">${blocks}</div>
+  </section>`;
+}
+
+export function renderTestCasesHtml(
+  cases: TestCaseView[],
+  generatedAt: string,
+  versionCases: VersionCasesData,
+): string {
   const payload = serializeForHtml({ cases, generatedAt });
+  const versionPayload = serializeForHtml({
+    defaultRelease: versionCases.defaultRelease,
+    releases: versionCases.releases,
+    admission: versionCases.admission,
+    versions: versionCases.versions.map((view) => ({
+      release: view.release,
+      hasMatrix: view.hasMatrix,
+      coreCount: view.coreCount,
+      otherCount: view.otherCount,
+      parseIssues: view.parseIssues,
+      statusCounts: view.sections.flatMap((section) => section.cases).reduce<Record<string, Record<string, number>>>(
+        (acc, item) => {
+          for (const [layer, status] of Object.entries(item.layers)) {
+            acc[layer] = acc[layer] ?? {};
+            acc[layer][status] = (acc[layer][status] ?? 0) + 1;
+          }
+          return acc;
+        },
+        {},
+      ),
+    })),
+    ...(versionCases.noVersionsReason ? { noVersionsReason: versionCases.noVersionsReason } : {}),
+  });
   const content = `
-  <section class="notice" id="editor-notice">通过 Node 看板服务打开时可编辑；直接打开离线 HTML 时为只读模式。</section>
+  <section class="notice" id="editor-notice">通过 Node 看板服务打开时可编辑；直接打开离线 HTML 时为只读模式。</section>${renderAdmissionBannerHtml(versionCases.admission)}${renderScnVersionSourcesHtml(versionCases)}
   <section class="metric-grid" id="case-metrics"></section>
   <section class="filters panel" aria-label="测试用例筛选">
     <label>套件<select id="case-suite"><option value="">全部</option></select></label>
@@ -53,11 +166,13 @@ export function renderTestCasesHtml(cases: TestCaseView[], generatedAt: string):
         <div class="editor-actions"><button id="save-case" type="submit">保存修改</button><button id="run-current" type="button">仅执行当前用例</button></div>
       </form>
     </article>
-  </section>
-  <script id="test-case-data" type="application/json">${payload}</script>`;
+  </section>${renderVersionCasesSectionHtml(versionCases)}
+  <script id="test-case-data" type="application/json">${payload}</script>
+  <script id="version-case-data" type="application/json">${versionPayload}</script>`;
 
   const script = `(async function(){
     'use strict';
+    (function(){var select=document.getElementById('version-case-release');if(!select)return;select.addEventListener('change',function(){document.querySelectorAll('.version-case-block').forEach(function(block){block.hidden=block.getAttribute('data-release')!==select.value;});});}());
     const initial=JSON.parse(document.getElementById('test-case-data').textContent);
     const requestedCaseId=new URLSearchParams(location.search).get('scenario');
     const initialSelectedId=initial.cases.some(function(item){return item.id===requestedCaseId;})?requestedCaseId:(initial.cases[0]&&initial.cases[0].id);
@@ -111,8 +226,25 @@ export function renderTestCasesHtml(cases: TestCaseView[], generatedAt: string):
       .project-chip,.compatibility{display:inline-flex;border:1px solid #3978bd;border-radius:999px;padding:2px 7px;color:#93c5fd;white-space:nowrap}.compatibility-mock-and-deployed{border-color:#2f8f72;color:#6ee7b7}.compatibility-mock-only{border-color:#7c5cb8;color:#c4b5fd}.compatibility-deployed-only{border-color:#64748b;color:#cbd5e1}.resource-alias{display:block;color:#c4b5fd;margin-top:3px}.env-heading{display:flex;align-items:baseline;gap:10px;border-top:1px solid var(--line);padding-top:12px;margin-top:4px}.env-heading span{color:var(--muted);font-size:11px}
       .form-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; } .wide { grid-column:1/-1; } .source { display:grid; grid-template-columns:90px 1fr; gap:6px 10px; margin:14px 0; font-size:12px; } .source dt { color:var(--muted); } .source dd { margin:0; overflow-wrap:anywhere; }
       .editor-actions{display:flex;gap:8px}#save-case { border:1px solid #3978bd; border-radius:9px; background:#14569a; color:white; padding:9px 16px; cursor:pointer; } #save-case:disabled { opacity:.45; cursor:not-allowed; } .save-status { color:#93c5fd; font-size:12px; } .empty { color:var(--muted); }.case-check,#select-visible-toggle{width:auto;min-height:auto;accent-color:#5ea7ff}
+      .workspace>.panel{min-width:0}
+      .admission-banner{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:14px;font-size:12px}
+      .admission-chip{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px 9px;white-space:nowrap;font-weight:700}
+      .admission-ready{color:#36d399;border-color:#1f7a55;background:#0b2a1e}.admission-blocked{color:#fde68a;border-color:#d97706;background:#3a2405}.admission-unknown{color:#93a4bd}
+      .admission-source{color:var(--muted);overflow-wrap:anywhere}
+      .scn-version-sources{border:1px solid var(--line);background:#0c1424;border-radius:12px;padding:9px 14px;margin-bottom:14px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
+      .version-cases{margin-top:14px}.version-cases .panel-head{flex-wrap:wrap;align-items:center}
+      .vc-release-picker{min-width:130px}.vc-release-picker select{min-height:34px}
+      .version-cases h3{margin:16px 0 8px;font-size:15px}
+      .vc-block-note{color:var(--muted);font-size:12px;overflow-wrap:anywhere;margin:0 0 6px}
+      .vc-empty{color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:12px}
+      .vc-blocked{display:inline-flex;border:1px solid #d97706;background:#3a2405;color:#fde68a;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:700;white-space:nowrap}
+      .version-cases .scroll{max-height:560px}
+      .vc-table td.vc-title{min-width:260px}.vc-table td.vc-id,.vc-table td.vc-entry{white-space:nowrap}
+      .vc-table td.vc-trader{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;overflow-wrap:anywhere;min-width:200px}
+      .layer{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:2px 6px;white-space:nowrap;font-size:10px}
+      .layer-PASS{color:#36d399}.layer-FAIL{color:#fb7185}.layer-BLOCKED{color:#a78bfa}.layer-GAP{color:#fbbf24}.layer-NOT_RUN{color:#94a3b8}
       @media(max-width:1150px){.workspace{grid-template-columns:1fr}.filters{grid-template-columns:1fr 1fr}.list-panel .scroll{max-height:520px}}
-      @media(max-width:650px){.metric-grid,.filters,.form-grid{grid-template-columns:1fr}.wide{grid-column:auto}.editor-panel,.list-panel{padding:11px}.selection-toolbar{align-items:stretch;flex-direction:column}}
+      @media(max-width:650px){.metric-grid,.filters,.form-grid{grid-template-columns:1fr}.wide{grid-column:auto}.editor-panel,.list-panel{padding:11px}.selection-toolbar{align-items:stretch;flex-direction:column}.version-cases .scroll{max-height:420px}}
     `,
   });
 }

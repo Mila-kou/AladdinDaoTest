@@ -42,6 +42,24 @@ interface VerificationResult {
   readonly feeFilteredRows: number;
   readonly allFilteredRows: number;
   readonly testCaseRows: number;
+  readonly scnCatalogCount: number;
+  readonly scnCatalogAllScn: boolean;
+  readonly scnVersionSourcesText: string;
+  readonly versionSectionExists: boolean;
+  readonly admissionBannerExists: boolean;
+  readonly admissionBannerText: string;
+  readonly versionDefaultBlockCount: number;
+  readonly versionDefaultRelease: string | null;
+  readonly versionPayloadDefaultRelease: string;
+  readonly versionTxForkContractReady: boolean;
+  readonly versionParseIssueCount: number;
+  readonly versionCoreRows: number;
+  readonly versionCoreAddressMissing: number;
+  readonly versionOtherRows: number;
+  readonly versionOtherIncomplete: number;
+  readonly versionSwitchRelease: string | null;
+  readonly versionSwitchBlockText: string;
+  readonly versionSectionText: string;
   readonly testCaseEditorEnabled: boolean;
   readonly selectedTestCaseId: string;
   readonly selectedPlannedProject: string;
@@ -101,6 +119,7 @@ interface VerificationResult {
   readonly deployRunDisabled: boolean;
   readonly deployStatusText: string;
   readonly environmentsMobileBodyWidth: number;
+  readonly testCasesMobileBodyWidth: number;
   readonly mobileBodyWidth: number;
   readonly executionMobileBodyWidth: number;
   readonly runsMobileBodyWidth: number;
@@ -200,7 +219,7 @@ async function verifyParameters(page: Page, url: string) {
   if (!marketOptionValues.includes('1')) {
     throw new Error(
       `参数页 Market 范围下拉缺少 market#1 选项（现有：${marketOptionValues.map((value) => value || '(全部)').join(', ')}）。`
-      + '系统参数来源没有 config-dump 快照：检查 E2E_SYSTEM_PARAMETERS_SOURCE 是否指向 <deployment>.params-by-module.csv。',
+      + '系统参数来源没有 config-dump 快照：刷新当前环境参数，并检查绑定 manifest 的 source.parametersFile。',
     );
   }
   await page.locator('#market-index').selectOption('1');
@@ -288,6 +307,72 @@ async function verifyTestCases(page: Page, url: string) {
   await page.waitForSelector('#test-cases-page[data-page-ready="true"]');
   const title = await page.locator('h1').textContent();
   const testCaseRows = await page.locator('#case-rows tr').count();
+
+  // —— 共享 SCN 分区不变性：行数与目录一致、只含 SCN 编号；仅新增一行版本来源链接。 ——
+  const scnCatalog = await page.locator('#test-case-data').evaluate((node) => {
+    const parsed = JSON.parse(node.textContent ?? '{}') as { cases?: Array<{ id?: string }> };
+    const ids = (parsed.cases ?? []).map((item) => String(item.id ?? ''));
+    return { count: ids.length, allScn: ids.every((id) => /^SCN-\d{3}$/.test(id)) };
+  });
+  const scnVersionSourcesText = (await page.locator('#scn-version-sources').textContent().catch(() => '')) ?? '';
+
+  // —— 版本功能用例（CT/XT/FT）分区：准入横幅、45/55 条、8/9 列混排零报错、无 SCN 泄漏。 ——
+  const versionSectionExists = await page.locator('#version-cases').count() === 1;
+  const admissionBannerExists = await page.locator('#admission-banner').count() === 1;
+  const admissionBannerText = admissionBannerExists
+    ? (await page.locator('#admission-banner').textContent()) ?? ''
+    : '';
+  const versionSummary = await page.locator('#version-case-data').evaluate((node) => {
+    const parsed = JSON.parse(node.textContent ?? '{}') as {
+      defaultRelease?: string;
+      admission?: { txForkContractReady?: boolean };
+      versions?: Array<{ release?: string; parseIssues?: string[] }>;
+    };
+    return {
+      defaultRelease: parsed.defaultRelease ?? '',
+      txForkContractReady: parsed.admission?.txForkContractReady === true,
+      parseIssueCount: (parsed.versions ?? []).reduce((sum, view) => sum + (view.parseIssues?.length ?? 0), 0),
+      releases: (parsed.versions ?? []).map((view) => String(view.release ?? '')),
+    };
+  }).catch(() => ({ defaultRelease: '', txForkContractReady: false, parseIssueCount: -1, releases: [] as string[] }));
+  const defaultBlock = page.locator('.version-case-block:not([hidden])');
+  const versionDefaultBlockCount = await defaultBlock.count();
+  const versionDefaultRelease = versionDefaultBlockCount === 1
+    ? await defaultBlock.getAttribute('data-release')
+    : null;
+  const versionCoreRows = await defaultBlock.locator('tr.vc-row[data-kind="core"]').count();
+  const versionCoreAddressMissing = versionCoreRows > 0
+    ? await defaultBlock.locator('tr.vc-row[data-kind="core"] td.vc-trader').evaluateAll((cells) =>
+      cells.filter((cell) => {
+        const text = (cell.textContent ?? '').trim();
+        return !text || text.includes('待分配');
+      }).length)
+    : -1;
+  const versionOtherRows = await defaultBlock.locator('tr.vc-row[data-kind="other"]').count();
+  const versionOtherIncomplete = versionOtherRows > 0
+    ? await defaultBlock.locator('tr.vc-row[data-kind="other"]').evaluateAll((rows) =>
+      rows.filter((row) => {
+        const id = (row.querySelector('.vc-id')?.textContent ?? '').trim();
+        const priority = (row.querySelector('.vc-p')?.textContent ?? '').trim();
+        const caseTitle = (row.querySelector('.vc-title')?.textContent ?? '').trim();
+        return !id || !/^P[0-2]$/.test(priority) || !caseTitle;
+      }).length)
+    : -1;
+  const versionSectionText = versionSectionExists
+    ? (await page.locator('#version-cases').textContent()) ?? ''
+    : '';
+  // 版本切换：切到另一版本（如 v0.3.1，无矩阵 → 空块 + 原因说明）后再切回默认。
+  let versionSwitchRelease: string | null = null;
+  let versionSwitchBlockText = '';
+  const otherRelease = versionSummary.releases.find((release) => release && release !== versionSummary.defaultRelease);
+  if (otherRelease && await page.locator('#version-case-release').count() === 1) {
+    await page.locator('#version-case-release').selectOption(otherRelease);
+    const switched = page.locator('.version-case-block:not([hidden])');
+    versionSwitchRelease = await switched.count() === 1 ? await switched.getAttribute('data-release') : null;
+    versionSwitchBlockText = await switched.count() === 1 ? (await switched.textContent()) ?? '' : '';
+    await page.locator('#version-case-release').selectOption(versionSummary.defaultRelease);
+  }
+
   const testCaseEditorEnabled = await page.locator('#save-case').isEnabled();
   const selectedTestCaseId = await page.locator('#case-editor input[name="id"]').inputValue();
   const selectedPlannedProject = await page.locator('#case-editor select[name="targetProject"]').inputValue();
@@ -325,6 +410,24 @@ async function verifyTestCases(page: Page, url: string) {
     projectFilterOptions, projectFilteredRows, scn010Environment, scn005Environment,
     selectedMarketCompatibility, compatibilityFilteredRows, selectedForRunCount,
     runSelectionEnabled, filteredRows,
+    scnCatalogCount: scnCatalog.count,
+    scnCatalogAllScn: scnCatalog.allScn,
+    scnVersionSourcesText,
+    versionSectionExists,
+    admissionBannerExists,
+    admissionBannerText,
+    versionDefaultBlockCount,
+    versionDefaultRelease,
+    versionPayloadDefaultRelease: versionSummary.defaultRelease,
+    versionTxForkContractReady: versionSummary.txForkContractReady,
+    versionParseIssueCount: versionSummary.parseIssueCount,
+    versionCoreRows,
+    versionCoreAddressMissing,
+    versionOtherRows,
+    versionOtherIncomplete,
+    versionSectionText,
+    versionSwitchRelease,
+    versionSwitchBlockText,
   };
 }
 
@@ -532,6 +635,9 @@ if (!input) {
   await page.goto(reconciliationConsoleUrl);
   await page.waitForSelector('#reconciliation-console-page[data-page-ready="true"]');
   const consoleMobileBodyWidth = await page.evaluate(() => document.body.scrollWidth);
+  await page.goto(testCasesUrl);
+  await page.waitForSelector('#test-cases-page[data-page-ready="true"]');
+  const testCasesMobileBodyWidth = await page.evaluate(() => document.body.scrollWidth);
   await page.goto(executionsUrl);
   await page.waitForSelector('#executions-page[data-page-ready="true"]');
   const executionMobileBodyWidth = await page.evaluate(() => document.body.scrollWidth);
@@ -548,6 +654,24 @@ if (!input) {
     ...faucet,
     ...executions,
     testCaseRows: testCases.testCaseRows,
+    scnCatalogCount: testCases.scnCatalogCount,
+    scnCatalogAllScn: testCases.scnCatalogAllScn,
+    scnVersionSourcesText: testCases.scnVersionSourcesText,
+    versionSectionExists: testCases.versionSectionExists,
+    admissionBannerExists: testCases.admissionBannerExists,
+    admissionBannerText: testCases.admissionBannerText,
+    versionDefaultBlockCount: testCases.versionDefaultBlockCount,
+    versionDefaultRelease: testCases.versionDefaultRelease,
+    versionPayloadDefaultRelease: testCases.versionPayloadDefaultRelease,
+    versionTxForkContractReady: testCases.versionTxForkContractReady,
+    versionParseIssueCount: testCases.versionParseIssueCount,
+    versionCoreRows: testCases.versionCoreRows,
+    versionCoreAddressMissing: testCases.versionCoreAddressMissing,
+    versionOtherRows: testCases.versionOtherRows,
+    versionOtherIncomplete: testCases.versionOtherIncomplete,
+    versionSwitchRelease: testCases.versionSwitchRelease,
+    versionSwitchBlockText: testCases.versionSwitchBlockText,
+    versionSectionText: testCases.versionSectionText,
     testCaseEditorEnabled: testCases.testCaseEditorEnabled,
     selectedTestCaseId: testCases.selectedTestCaseId,
     selectedPlannedProject: testCases.selectedPlannedProject,
@@ -586,6 +710,7 @@ if (!input) {
     ...environmentsPage,
     envMobileTabCount,
     environmentsMobileBodyWidth,
+    testCasesMobileBodyWidth,
     mobileBodyWidth,
     executionMobileBodyWidth,
     runsMobileBodyWidth,
@@ -644,6 +769,32 @@ if (!input) {
     || (requiresExecutionEvidence && result.executionHeroText.includes('9f3df3-7d0923'))
     // 用例目录会持续增长；验证看板行为，不把当前目录条数误当成页面契约。
     || result.testCaseRows < 80
+    // —— 共享 SCN 分区不变性：行数 = 目录数、全部为 SCN 编号；来源链接行存在（唯一新增行）。 ——
+    || result.testCaseRows !== result.scnCatalogCount
+    || !result.scnCatalogAllScn
+    || !result.scnVersionSourcesText.includes('applicability.md')
+    || !result.scnVersionSourcesText.includes('expectation-overrides.md')
+    // —— 版本功能用例（CT/XT/FT）分区：存在、准入横幅、45/55 条、地址非空、混排零报错、无 SCN 泄漏。 ——
+    || !result.versionSectionExists
+    || !result.admissionBannerExists
+    || !result.admissionBannerText.includes('admission（总开关）')
+    || !result.admissionBannerText.includes('tx-fork:contract')
+    || result.versionDefaultBlockCount !== 1
+    || !result.versionDefaultRelease
+    || result.versionDefaultRelease !== result.versionPayloadDefaultRelease
+    || result.versionCoreRows !== 45
+    || result.versionCoreAddressMissing !== 0
+    || result.versionOtherRows !== 55
+    || result.versionOtherIncomplete !== 0
+    || result.versionParseIssueCount !== 0
+    || /SCN-\d/.test(result.versionSectionText)
+    || result.versionSectionText.includes('scenarios/')
+    // tx-fork:contract 非 READY 时功能用例区必须标「当前环境不可开跑」。
+    || (!result.versionTxForkContractReady && !result.versionSectionText.includes('当前环境不可开跑'))
+    // 版本切换：存在第二个版本时必须能切换；无矩阵版本给出空块原因（含「暂无版本级功能用例」）。
+    || (result.versionSwitchRelease !== null
+      && (result.versionSwitchRelease === result.versionPayloadDefaultRelease
+        || result.versionSwitchBlockText.trim().length === 0))
     || result.selectedTestCaseId !== 'SCN-009'
     || result.selectedPlannedProject !== 'tx-fork'
     || result.projectFilterOptions !== 6
@@ -721,6 +872,7 @@ if (!input) {
     || (!isHttp && !(result.deployBranchDisabled && result.deployDryRunDisabled && result.deployRunDisabled))
     || (!isHttp && !result.deployStatusText.includes('dashboard:serve'))
     || result.environmentsMobileBodyWidth > 410
+    || result.testCasesMobileBodyWidth > 410
     || errors.length > 0
     || externalRequests.length > 0
     || mobileBodyWidth > 410

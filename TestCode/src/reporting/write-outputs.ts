@@ -20,6 +20,7 @@ import { loadReferenceSources } from './reference-sources.js';
 import { validateTestRunArtifact, type TestRunArtifact } from './schema.js';
 import { applyCatalogExecutionModes } from './test-case-overrides.js';
 import { attachExecutions, loadTestCases } from './test-cases.js';
+import { loadVersionCases } from './version-cases.js';
 
 export interface OutputReceipt {
   readonly outputDirectory: string;
@@ -89,12 +90,14 @@ export async function writeRunOutputs(
   }));
   const artifact = validateTestRunArtifact(await preserveAttachments(withEvidence, outputDirectory));
   const catalogPath = resolve(process.cwd(), artifact.source.catalogPath);
-  const [references, testCases, scenarioSpecs, reconciliationLedger] = await Promise.all([
+  const [references, testCases, scenarioSpecs, reconciliationLedger, versionCases] = await Promise.all([
     loadReferenceSources(),
     loadTestCases(artifact.catalog, catalogPath),
     discoverScenarioSpecs(process.cwd()),
     // 字段台账未生成（seed 未跑）时页面渲染引导文案，不视为重建失败。
     loadReconciliationLedger(process.cwd()).catch(() => null),
+    // 版本功能用例（CT/XT/FT）：versions/<release>/ 矩阵 + results.md，与 SCN 目录解析互不影响。
+    loadVersionCases(process.cwd()),
   ]);
   await mkdir(outputDirectory, { recursive: true });
   // 基线视图在渲染时实时读取 CURRENT.json（目标基线随登记切换），run.release 仍取产物记录的环境实际部署版本。
@@ -121,7 +124,7 @@ export async function writeRunOutputs(
     writeFile(parametersHtml, renderParametersHtml(references.parameters, artifact.source.generatedAt), 'utf8'),
     writeFile(formulasHtml, renderContractFormulasHtml(references.contractFormulas, artifact.source.generatedAt), 'utf8'),
     writeFile(pageFormulasHtml, renderPageFormulasHtml(references.pageFormulas, artifact.source.generatedAt), 'utf8'),
-    writeFile(testCasesHtml, renderTestCasesHtml(attachExecutions(testCases, artifact.results), artifact.source.generatedAt), 'utf8'),
+    writeFile(testCasesHtml, renderTestCasesHtml(attachExecutions(testCases, artifact.results), artifact.source.generatedAt, versionCases), 'utf8'),
     writeFile(
       runsHtml,
       renderRunBuilderHtml(

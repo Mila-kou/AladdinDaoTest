@@ -10,7 +10,7 @@
     "admission": "NOT_READY",
     "admissionSource": "Docs/contract-releases/v0.3.2/06-测试影响与准入结论.md",
     "admissionScope": {
-      "tx-fork:contract": "READY_FOR_SYSTEM_TEST",
+      "tx-fork:contract": "NOT_READY",
       "tx-fork:frontend": "NOT_READY",
       "oracle-fork": "NOT_READY",
       "time-fork": "NOT_READY"
@@ -141,6 +141,10 @@
     {
       "date": "2026-09-02",
       "change": "admissionScope.tx-fork:contract 恢复 READY_FOR_SYSTEM_TEST：15:05 页面部署（内置 02 §18.1 读回校验全过，exit 0）+ init:mock（--force --force-shared-collateral，Market #3）+ verify:mock 全 verified"
+    },
+    {
+      "date": "2026-09-02",
+      "change": "admissionScope.tx-fork:contract 回退 NOT_READY：团队裁定以 tests/A CT-BASE-001~008 正式批次全 PASS 作为 02 §18.1 读检的准入证据（当前 004/005/007 FAIL：004=WBTC decimals 登记缺陷已修、005=共享 USDC 已重初始化对齐、007=断言口径由用例侧修）"
     }
   ]
 }

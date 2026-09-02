@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { chmod, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
 
 import {
@@ -21,6 +21,7 @@ import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 
 import { environments, type EnvironmentName } from '../config/environments/catalog.js';
 import { deploymentManifestSchema, type DeploymentManifest } from '../src/config/deployment.js';
+import { updateEnvironmentBinding } from '../src/config/environment-binding.js';
 import { readEnvironmentSettings } from '../src/server/environment-settings.js';
 
 /**
@@ -28,7 +29,8 @@ import { readEnvironmentSettings } from '../src/server/environment-settings.js';
  * 一键执行到指定 Tenderly fork（Admin RPC），随后自动登记 TestCode/工作区基线。
  *
  *   npm run deploy:contracts -- --env tx-fork --branch release/v0.3.2 \
- *     [--repo <合约仓路径>] [--dry-run] [--skip-compile] [--skip-install] [--deployment-id <id>]
+ *     [--repo <合约仓路径>] [--dry-run] [--skip-compile] [--skip-install]
+ *     [--deployment-id <id>] [--snapshot-id <YYMMDD或唯一标识>]
  *
  * 流程（对应 Docs/contract-releases/v0.3.2/02-部署与升级手册.md）：
  *   1. 校验合约仓分支/HEAD（只读 git 状态）
@@ -40,7 +42,7 @@ import { readEnvironmentSettings } from '../src/server/environment-settings.js';
  *   7. configure 三脚本（General/Oracle/Market×2，参数用仓库 scripts/parameters 预设）
  *   8. 角色授权（ORDER_KEEPER→keeper；CONTROLLER/CONFIG_KEEPER/MARKET_KEEPER→admin）
  *   9. 读回校验（02 §18.1 + 06 §5 A-2：COLLATERAL_TOKEN=USDC=vault.asset()；MIN/MAX_DYNAMIC_SPREAD 读回=写入）
- *  10. 自动登记：deployment manifest + .env.local E2E_DEPLOYMENT_MANIFEST + CURRENT.json + 参数快照(config-dump)
+ *  10. 自动登记：deployment manifest + config/environment-bindings.json + CURRENT.json + 参数快照(config-dump)
  *
  * 纪律：全程不打印任何 RPC URL / 私钥；私钥只经环境变量传给 hardhat 子进程；
  *       hardhat.fork.config.ts / fx100.fork.*.json / oracle.fork.*.json 保留在合约仓但绝不 commit。
@@ -57,6 +59,7 @@ interface CliOptions {
   readonly skipCompile: boolean;
   readonly skipInstall: boolean;
   readonly deploymentId: string;
+  readonly snapshotId: string;
   readonly version: string;
 }
 
@@ -188,29 +191,6 @@ function addressOf(addresses: DeployedAddresses, id: string): Address {
   return getAddress(hit[1]);
 }
 
-/* ---------------------------------------------------------------- env 文件更新 */
-
-async function updateEnvLocal(projectRoot: string, entries: Readonly<Record<string, string>>): Promise<void> {
-  const path = join(projectRoot, '.env.local');
-  let source = '';
-  try {
-    source = await readFile(path, 'utf8');
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-  }
-  for (const [key, value] of Object.entries(entries)) {
-    const line = `${key}=${JSON.stringify(value)}`;
-    const expression = new RegExp(`^${key}=.*$`, 'm');
-    source = expression.test(source)
-      ? source.replace(expression, line)
-      : `${source.length === 0 || source.endsWith('\n') ? source : `${source}\n`}${line}\n`;
-  }
-  const temporaryPath = `${path}.${process.pid}-${Date.now()}.tmp`;
-  await writeFile(temporaryPath, source, { encoding: 'utf8', mode: 0o600 });
-  await chmod(temporaryPath, 0o600);
-  await rename(temporaryPath, path);
-}
-
 /* ---------------------------------------------------------------- CURRENT.json 登记 */
 
 async function updateBaselineRegistry(input: {
@@ -274,6 +254,8 @@ async function main(): Promise<void> {
   const repoPath = resolve(argumentValue('--repo')
     ?? join(workspaceRoot, 'Github', `fx100-contracts@${branch.replaceAll('/', '-')}`));
   const dateStamp = new Date().toISOString().slice(2, 10).replaceAll('-', '');
+  const snapshotId = argumentValue('--snapshot-id') ?? dateStamp;
+  if (!/^[A-Za-z0-9_-]+$/.test(snapshotId)) fail(`--snapshot-id ${snapshotId} 只允许字母数字、-、_。`);
   // Ignition deployment-id 只允许字母数字、- 与 _（实测 0.15.16 拒绝点号），版本号去点后拼入。
   const deploymentId = argumentValue('--deployment-id') ?? `${environmentName}-${version.replaceAll('.', '')}-${dateStamp}`;
   if (!/^[A-Za-z0-9_-]+$/.test(deploymentId)) fail(`--deployment-id ${deploymentId} 含 Ignition 不允许的字符（仅限字母数字/-/_）。`);
@@ -285,9 +267,21 @@ async function main(): Promise<void> {
     skipCompile: process.argv.includes('--skip-compile'),
     skipInstall: process.argv.includes('--skip-install'),
     deploymentId,
+    snapshotId,
     version,
   };
-  const manifestName = `${environmentName}-${version}-${dateStamp}`;
+  const manifestName = `${environmentName}-${version}-${snapshotId}`;
+  const snapshotArchiveDirectory = join(
+    workspaceRoot,
+    'TestCase',
+    'config',
+    options.version,
+    options.environment,
+    options.snapshotId,
+  );
+  if (!options.dryRun && existsSync(snapshotArchiveDirectory)) {
+    fail(`部署快照目录已存在，拒绝覆盖：${snapshotArchiveDirectory}；请使用新的 --snapshot-id。`);
+  }
 
   banner('1/10 合约仓与分支核对（只读）');
   if (!existsSync(join(options.repoPath, 'hardhat.config.ts'))) fail(`合约仓不存在或不完整：${options.repoPath}`);
@@ -734,7 +728,9 @@ export default config;
     }
     // 合成市场的 index token 允许是无代码的占位地址（如 Base Sepolia 合成 BTC 0x0555E…），
     // 不能对它读 decimals()；已知 symbol 用登记值（对齐 v0.3.1 manifest），读取失败回退 18。
-    const knownDecimals: Record<string, number> = { WBTC: 8, ETH: 18 };
+    // WBTC 合成 index token 实际按 18 位部署（合约仓 configureOracle.ts 与前端 SDK tokens.ts 口径一致；
+    // 链上 PRICE_FEED_MULTIPLIER=1e34 即 18 位——2026-09-02 CT-BASE-004 链上证据裁决，勿再登记 8 位）。
+    const knownDecimals: Record<string, number> = { WBTC: 18, ETH: 18 };
     const indexTokenDecimals = knownDecimals[market.symbol]
       ?? await publicClient.readContract({ address: indexToken, abi: erc20Abi, functionName: 'decimals' })
         .then((value) => Number(value))
@@ -772,7 +768,7 @@ export default config;
   }
   if (failures.length > 0) fail(`读回校验未全部通过（${failures.length} 项）：\n- ${failures.join('\n- ')}`);
 
-  banner('10/10 自动登记（manifest / .env.local / CURRENT.json / 参数快照）');
+  banner('10/10 自动登记（manifest / 环境绑定 / CURRENT.json / 参数快照）');
   const forkRecord = await (async (): Promise<{ forkBlockNumber?: number }> => {
     try {
       const registry = JSON.parse(await readFile(join(workspaceRoot, 'Docs', 'contract-releases', 'CURRENT.json'), 'utf8')) as {
@@ -791,6 +787,8 @@ export default config;
   const parameterCachePrefix = `./artifacts/parameter-cache/${options.environment}`;
   const parameterCacheDirectoryEarly = join(projectRoot, 'artifacts', 'parameter-cache', options.environment);
   await mkdir(parameterCacheDirectoryEarly, { recursive: true });
+  await mkdir(snapshotArchiveDirectory, { recursive: true });
+  const snapshotArchiveRelative = relative(projectRoot, snapshotArchiveDirectory).replaceAll('\\', '/');
   const rolesExport = {
     generatedAt: new Date().toISOString(),
     deploymentId: options.deploymentId,
@@ -809,7 +807,7 @@ export default config;
       ...marketSample.markets.map((market) => ({
         symbol: market.symbol,
         address: getAddress(market.token),
-        decimals: market.symbol === 'WBTC' ? 8 : 18,
+        decimals: 18, // 全部 mock index token 按 18 位（同 knownDecimals 裁决注释）
         oracle: indexOracles[market.symbol] ?? ZERO_ADDRESS,
         oracleDecimals: 8,
         kind: market.symbol === 'ETH' ? 'wnt-index' : 'synthetic-index',
@@ -818,6 +816,9 @@ export default config;
   };
   await writeFile(join(parameterCacheDirectoryEarly, `${manifestName}.roles.json`), `${JSON.stringify(rolesExport, null, 2)}\n`, 'utf8');
   await writeFile(join(parameterCacheDirectoryEarly, `${manifestName}.tokens.json`), `${JSON.stringify(tokensExport, null, 2)}\n`, 'utf8');
+  await writeFile(join(snapshotArchiveDirectory, 'roles.json'), `${JSON.stringify(rolesExport, null, 2)}\n`, 'utf8');
+  await writeFile(join(snapshotArchiveDirectory, 'tokens.json'), `${JSON.stringify(tokensExport, null, 2)}\n`, 'utf8');
+  await writeFile(join(snapshotArchiveDirectory, 'deployed-addresses.json'), `${JSON.stringify(deployedAddresses, null, 2)}\n`, 'utf8');
 
   const ignitionDeploymentDirectory = join(options.repoPath, 'ignition', 'deployments', options.deploymentId);
   const manifest: DeploymentManifest = deploymentManifestSchema.parse({
@@ -879,9 +880,9 @@ export default config;
       deploymentDirectory: relative(projectRoot, ignitionDeploymentDirectory),
       addressesFile: relative(projectRoot, deployedAddressesPath),
       abiDirectory: relative(projectRoot, join(options.repoPath, 'artifacts')),
-      parametersFile: `${parameterCachePrefix}/${manifestName}.params.json`,
-      rolesFile: `${parameterCachePrefix}/${manifestName}.roles.json`,
-      tokensFile: `${parameterCachePrefix}/${manifestName}.tokens.json`,
+      parametersFile: `${snapshotArchiveRelative}/parameters.json`,
+      rolesFile: `${snapshotArchiveRelative}/roles.json`,
+      tokensFile: `${snapshotArchiveRelative}/tokens.json`,
     },
     initialization: {
       nativeEth: { trader: '10', keeper: '10', admin: '10' },
@@ -896,27 +897,65 @@ export default config;
   await writeFile(manifestAbsolutePath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
   log(`deployment manifest 写入 ${manifestAbsolutePath}（schema 校验通过）`);
 
-  await updateEnvLocal(projectRoot, { E2E_DEPLOYMENT_MANIFEST: manifestRelativePath });
-  log(`.env.local E2E_DEPLOYMENT_MANIFEST → ${manifestRelativePath}`);
-
   const parameterCacheDirectory = join(projectRoot, 'artifacts', 'parameter-cache', options.environment);
   // dump-config 用 deployment 路径的父目录名作为快照名；复制一份 addresses 到带版本号的目录，让快照命名为 <manifestName>.params.*
   const snapshotDeploymentDirectory = join(parameterCacheDirectory, manifestName);
   await mkdir(snapshotDeploymentDirectory, { recursive: true });
   await writeFile(join(snapshotDeploymentDirectory, 'deployed_addresses.json'), `${JSON.stringify(deployedAddresses, null, 2)}\n`, 'utf8');
-  const registryOutPath = join(parameterCacheDirectory, `registry-${options.version}.json`);
+  const parameterRegistryDirectory = join(projectRoot, 'config', 'parameter-registries');
+  await mkdir(parameterRegistryDirectory, { recursive: true });
+  const registryOutPath = join(parameterRegistryDirectory, `${options.version}@${head.slice(0, 7)}.json`);
   await runCommand('config-dump build-registry（v0.3.2 keys）', 'node',
     ['tools/config-dump/build-registry.mjs', '--contracts', options.repoPath, '--out', registryOutPath],
     { cwd: projectRoot });
   await runCommand('config-dump 参数快照', 'node',
     ['tools/config-dump/dump-config.mjs',
       '--deployment', join(snapshotDeploymentDirectory, 'deployed_addresses.json'),
+      '--deployment-name', manifestName,
       '--registry', registryOutPath,
       '--out', parameterCacheDirectory,
       '--expected-chain-id', String(expectedChainId),
       '--rpc-label', `${options.environment} admin RPC`],
     { cwd: projectRoot, env: { FX100_RPC_URL: adminRpcUrl } });
-  const paramsExportWorkspacePath = `TestCode/artifacts/parameter-cache/${options.environment}/${manifestName}.params.json`;
+  await runCommand('config-dump 按模块生成 CSV', 'node',
+    ['tools/config-dump/group-by-module.mjs',
+      '--snapshot', join(parameterCacheDirectory, `${manifestName}.params.json`),
+      '--out', join(parameterCacheDirectory, `${manifestName}.params-by-module.csv`)],
+    { cwd: projectRoot });
+  const generatedParameterJson = join(parameterCacheDirectory, `${manifestName}.params.json`);
+  await Promise.all([
+    copyFile(generatedParameterJson, join(snapshotArchiveDirectory, 'parameters.json')),
+    copyFile(join(parameterCacheDirectory, `${manifestName}.params.md`), join(snapshotArchiveDirectory, 'parameters.md')),
+    copyFile(join(parameterCacheDirectory, `${manifestName}.params-by-module.csv`), join(snapshotArchiveDirectory, 'parameters-by-module.csv')),
+  ]);
+  const parameterSnapshot = JSON.parse(await readFile(generatedParameterJson, 'utf8')) as {
+    meta?: { blockNumber?: number; generatedAt?: string; counts?: { entries?: number; set?: number; errors?: number } };
+  };
+  const snapshotMeta = parameterSnapshot.meta ?? {};
+  await writeFile(join(snapshotArchiveDirectory, 'README.md'), `# ${options.environment} ${options.version} 部署快照（${options.snapshotId}）
+
+> \`${manifestName}\` / chainId \`${expectedChainId}\` / 参数 block \`${snapshotMeta.blockNumber ?? 'unknown'}\` / 合约 \`${options.branch}\` @ \`${head}\`。
+
+本目录遵循“合约版本 / 环境 / 部署快照”三层结构，保存 deployed addresses、角色、Token、完整参数 JSON 及其 Markdown/CSV 派生文件。参数生成时间：\`${snapshotMeta.generatedAt ?? 'unknown'}\`；条目：\`${snapshotMeta.counts?.entries ?? 'unknown'}\`，已设置：\`${snapshotMeta.counts?.set ?? 'unknown'}\`，错误：\`${snapshotMeta.counts?.errors ?? 'unknown'}\`。
+`, 'utf8');
+  const paramsExportWorkspacePath = relative(
+    workspaceRoot,
+    join(snapshotArchiveDirectory, 'parameters.json'),
+  ).replaceAll('\\', '/');
+  log(`正式三层快照已归档 ${paramsExportWorkspacePath}`);
+
+  await updateEnvironmentBinding(projectRoot, options.environment, {
+    deploymentId: `${options.environment}@${options.version}`,
+    manifest: manifestRelativePath,
+    manifestName,
+    release: options.version,
+    contractCommit: head,
+    environmentChainId: expectedChainId,
+    deploymentChainId: expectedChainId,
+    parameterRegistry: `./${relative(projectRoot, registryOutPath).replaceAll('\\', '/')}`,
+    artifactDirectory: relative(projectRoot, join(options.repoPath, 'artifacts')).replaceAll('\\', '/'),
+  });
+  log(`config/environment-bindings.json 已把 ${options.environment} 绑定到 ${manifestName}`);
 
   await updateBaselineRegistry({
     registryPath: join(workspaceRoot, 'Docs', 'contract-releases', 'CURRENT.json'),

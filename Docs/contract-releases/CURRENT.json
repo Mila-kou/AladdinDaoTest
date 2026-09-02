@@ -1,6 +1,6 @@
 {
   "$comment": "FX100 测试基线唯一登记（单一事实源）。切换测试版本只改本文件（并执行 TestCode: npm run baseline:lint 校验全工作区引用）。文档不得复述版本号，只能引用本文件；必须写死版本的快照须标注「@vX.Y.Z 快照」。",
-  "updatedAt": "2026-09-02",
+  "updatedAt": "2026-09-03",
   "primary": {
     "version": "v0.3.2",
     "branch": "release/v0.3.2",
@@ -10,7 +10,7 @@
     "admission": "NOT_READY",
     "admissionSource": "Docs/contract-releases/v0.3.2/06-测试影响与准入结论.md",
     "admissionScope": {
-      "tx-fork:contract": "NOT_READY",
+      "tx-fork:contract": "READY_FOR_SYSTEM_TEST",
       "tx-fork:frontend": "NOT_READY",
       "oracle-fork": "NOT_READY",
       "time-fork": "NOT_READY"
@@ -145,6 +145,10 @@
     {
       "date": "2026-09-02",
       "change": "admissionScope.tx-fork:contract 回退 NOT_READY：团队裁定以 tests/A CT-BASE-001~008 正式批次全 PASS 作为 02 §18.1 读检的准入证据（当前 004/005/007 FAIL：004=WBTC decimals 登记缺陷已修、005=共享 USDC 已重初始化对齐、007=断言口径由用例侧修）"
+    },
+    {
+      "date": "2026-09-03",
+      "change": "admissionScope.tx-fork:contract 恢复 READY_FOR_SYSTEM_TEST：tests/A CT-BASE-001~008 正式批次全 PASS（run 2026-09-02T161000-175Z，release-v0.3.2，部署 tx-fork-v0.3.2-260902-2305）——02 §18.1 读检自动化版通过；用户 2026-09-03 确认恢复"
     }
   ]
 }

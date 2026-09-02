@@ -86,6 +86,10 @@ interface VerificationResult {
   readonly consoleImplementedRows: number;
   readonly consoleFilteredRows: number;
   readonly environmentsTitle: string | null;
+  readonly wizardSectionTitle: string;
+  readonly wizardStepRows: number;
+  readonly wizardRunDisabled: boolean;
+  readonly wizardStatusText: string;
   readonly deploySectionTitle: string;
   readonly deployBranchDisabled: boolean;
   readonly deployDryRunDisabled: boolean;
@@ -367,11 +371,16 @@ async function verifyFormulas(page: Page, url: string, readyId: string) {
   };
 }
 
-// 测试环境页：「② 部署合约」section 存在；静态打开时分支下拉与两个部署按钮降级禁用并提示 dashboard:serve。
+// 测试环境页：「⓪ 一键搭建向导」四步行齐全、「② 部署合约」section 存在；
+// 静态打开时向导一键按钮、分支下拉与两个部署按钮降级禁用并提示 dashboard:serve。
 async function verifyEnvironments(page: Page, url: string) {
   await page.goto(url);
   await page.waitForSelector('#environment-page[data-page-ready="true"]');
   const environmentsTitle = await page.locator('h1').textContent();
+  const wizardSectionTitle = (await page.locator('#wizard-panel h2').textContent()) ?? '';
+  const wizardStepRows = await page.locator('#wizard-panel .wizard-step').count();
+  const wizardRunDisabled = await page.locator('#wizard-run').isDisabled();
+  const wizardStatusText = (await page.locator('#wizard-status').textContent()) ?? '';
   const deploySectionTitle = (await page.locator('#deploy-panel h2').textContent()) ?? '';
   const deployBranchDisabled = await page.locator('#deploy-branch').isDisabled();
   const deployDryRunDisabled = await page.locator('#deploy-dry-run').isDisabled();
@@ -379,6 +388,10 @@ async function verifyEnvironments(page: Page, url: string) {
   const deployStatusText = (await page.locator('#deploy-status').textContent()) ?? '';
   return {
     environmentsTitle,
+    wizardSectionTitle,
+    wizardStepRows,
+    wizardRunDisabled,
+    wizardStatusText,
     deploySectionTitle,
     deployBranchDisabled,
     deployDryRunDisabled,
@@ -673,6 +686,11 @@ if (!input) {
     || result.consoleFilteredRows < 1
     || result.consoleFilteredRows >= result.consoleFieldRows
     || result.environmentsTitle !== '测试环境'
+    // ⓪ 一键搭建向导：面板存在、四步行齐全；静态打开时一键按钮禁用并提示 dashboard:serve。
+    || !result.wizardSectionTitle.includes('⓪ 一键搭建向导')
+    || result.wizardStepRows !== 4
+    || (!isHttp && !result.wizardRunDisabled)
+    || (!isHttp && !result.wizardStatusText.includes('dashboard:serve'))
     || !result.deploySectionTitle.includes('② 部署合约')
     // 静态打开时部署入口必须降级：下拉与两按钮禁用，并提示需 dashboard:serve。
     || (!isHttp && !(result.deployBranchDisabled && result.deployDryRunDisabled && result.deployRunDisabled))

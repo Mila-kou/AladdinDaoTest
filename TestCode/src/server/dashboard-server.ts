@@ -26,6 +26,10 @@ import {
   ContractDeploymentConflictError,
   ContractDeploymentManager,
 } from './contract-deployments.js';
+import {
+  EnvironmentSetupConflictError,
+  EnvironmentSetupOrchestrator,
+} from './environment-setup.js';
 import { DefaultMarketSourceManager } from './default-market-source.js';
 import { UsdcFundingManager } from './usdc-funding.js';
 import { FaucetBalanceMonitor } from './faucet-monitor.js';
@@ -170,6 +174,12 @@ export async function startDashboardServer(options: DashboardServerOptions) {
   const keeperServiceManager = new KeeperServiceManager(projectRoot);
   const tenderlyForkManager = new TenderlyForkManager(projectRoot);
   const contractDeploymentManager = new ContractDeploymentManager(projectRoot);
+  const environmentSetupOrchestrator = new EnvironmentSetupOrchestrator({
+    projectRoot,
+    tenderlyForkManager,
+    contractDeploymentManager,
+    runManager,
+  });
   const defaultMarketSourceManager = new DefaultMarketSourceManager(projectRoot);
   const usdcFundingManager = new UsdcFundingManager(projectRoot);
   const faucetBalanceMonitor = new FaucetBalanceMonitor(projectRoot);
@@ -683,6 +693,49 @@ export async function startDashboardServer(options: DashboardServerOptions) {
         return;
       }
 
+      // ⓪ 一键搭建向导：createFork → deploy → init → check 固定顺序编排现有管理器；
+      // 任务内存态（与部署任务一致），/:id 精确路径放在通配匹配之前。
+      if (url.pathname === '/api/environment-setup') {
+        if (method === 'GET' || method === 'HEAD') {
+          sendJson(response, 200, { setups: environmentSetupOrchestrator.list() }, headOnly);
+          return;
+        }
+        if (method === 'POST') {
+          if (!isSameOriginRequest(request)) {
+            sendJson(response, 403, { error: '仅允许同源看板页面发起一键环境搭建。' });
+            return;
+          }
+          try {
+            const job = await environmentSetupOrchestrator.create(await readJsonBody(request));
+            sendJson(response, 202, { jobId: job.id, job });
+          } catch (error) {
+            if (error instanceof EnvironmentSetupConflictError) {
+              sendJson(response, 409, { error: '一键搭建任务冲突', detail: error.message });
+            } else {
+              sendJson(response, 400, {
+                error: '一键搭建任务创建失败',
+                detail: error instanceof Error ? error.message : String(error),
+              });
+            }
+          }
+          return;
+        }
+        sendJson(response, 405, { error: 'Method Not Allowed' }, headOnly);
+        return;
+      }
+
+      const environmentSetupMatch =
+        /^\/api\/environment-setup\/([a-zA-Z0-9._-]+)$/.exec(url.pathname);
+      if (environmentSetupMatch && (method === 'GET' || method === 'HEAD')) {
+        const setup = environmentSetupOrchestrator.get(environmentSetupMatch[1]!);
+        if (!setup) {
+          sendJson(response, 404, { error: '一键搭建任务不存在。' }, headOnly);
+          return;
+        }
+        sendJson(response, 200, setup, headOnly);
+        return;
+      }
+
       const contractDeploymentMatch =
         /^\/api\/contract-deployments\/([a-zA-Z0-9._-]+)$/.exec(url.pathname);
       if (contractDeploymentMatch && (method === 'GET' || method === 'HEAD')) {
@@ -1015,6 +1068,7 @@ export async function startDashboardServer(options: DashboardServerOptions) {
               '/api/environment-initializations',
               '/api/contract-deployments',
               '/api/contract-deployments/branches',
+              '/api/environment-setup',
               '/api/run-batches',
               '/api/run-batches/:id/manual-result',
               '/api/run-batches/:id/manual-start',
@@ -1036,6 +1090,7 @@ export async function startDashboardServer(options: DashboardServerOptions) {
               environmentInitialization: true,
               environmentConfiguration: true,
               contractDeployment: true,
+              environmentSetupWizard: true,
               completeDefaultMockMarket: true,
               manualVerdictRecording: true,
               manualFrontendLink: true,

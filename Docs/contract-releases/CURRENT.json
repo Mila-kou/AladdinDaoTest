@@ -8,7 +8,14 @@
     "head": "13880f2416918f4fed3fea86d7f1023084a3ce0d",
     "deliverables": "Docs/contract-releases/v0.3.2/",
     "admission": "NOT_READY",
-    "admissionSource": "Docs/contract-releases/v0.3.2/06-测试影响与准入结论.md"
+    "admissionSource": "Docs/contract-releases/v0.3.2/06-测试影响与准入结论.md",
+    "admissionScope": {
+      "tx-fork:contract": "READY_FOR_SYSTEM_TEST",
+      "tx-fork:frontend": "NOT_READY",
+      "oracle-fork": "NOT_READY",
+      "time-fork": "NOT_READY"
+    },
+    "admissionScopeNote": "2026-09-02 起准入按环境/层分开判（06 §0 分环境表、§5）：admission 是全环境全层的总开关。tx-fork:contract 曾于 2026-09-02 依据 tx-fork@v0.3.2（vnet 64aa3163，block 46282993）的 A-1～A-3 证据判 READY_FOR_SYSTEM_TEST；同日 22:30 tx-fork 被重建为 base-sepolia@v0.3.1 fork（vnet 7bef3d7d），该证据不再对应当前环境，故回退 NOT_READY。恢复条件：在当前 tx-fork 重新部署 v0.3.2 并按 02 §18.1 重做七项读检（A-2），A-3 参数对账在输入文件不变时复核后可沿用。tx-fork:frontend = FT/XT 与 Relay/Flash，等 C-2；oracle-fork/time-fork 仍为 base-sepolia@v0.3.1。"
   },
   "comparison": {
     "version": "v0.3.1",
@@ -27,8 +34,8 @@
       "chainId": 84532,
       "version": "v0.3.1",
       "releaseLabel": "release-v0.3.1",
-      "paramsExport": "TestCase/project/fx100/config/base_sepolia_v0.3.1_260729.params.json",
-      "note": "唯一已知部署；v0.3.2 截至 updatedAt 无部署记录（04-参数目录 全部「待部署确认」）"
+      "paramsExport": "TestCase/config/v0.3.1/base-sepolia/260729/parameters.json",
+      "note": "Base Sepolia 已知 v0.3.1 部署；与 tx-fork@v0.3.2 私有测试部署并存"
     },
     {
       "id": "tx-fork@v0.3.2",
@@ -36,8 +43,8 @@
       "chainId": 99911,
       "version": "v0.3.2",
       "releaseLabel": "release-v0.3.2",
-      "paramsExport": "TestCode/artifacts/parameter-cache/tx-fork/tx-fork-v0.3.2-260902.params.json",
-      "manifest": "TestCode/config/deployments/tx-fork-v0.3.2-260902.json",
+      "paramsExport": "TestCase/config/v0.3.2/tx-fork/260902-2305/parameters.json",
+      "manifest": "TestCode/config/deployments/tx-fork-v0.3.2-260902-2305.json",
       "note": "2026-09-02 由 deploy:contracts 在 tx-fork（chain 99911）全新部署 release/v0.3.2@13880f2（Ignition Fx100Core + configure 三脚本 + 双市场 + 角色授权 + 读回校验通过）"
     }
   ],
@@ -46,9 +53,9 @@
       "chainId": 99911,
       "forkOf": "tx-fork@v0.3.2",
       "status": "ready",
-      "forkBlockNumber": 46282748,
-      "tenderlyEnvironmentId": "64aa3163-de9b-437c-9338-8600c7eb5628",
-      "note": "2026-09-02 由 TestCode 通过 Tenderly Virtual TestNet API 自动创建（chain 99911，fork Base Sepolia @46282748）"
+      "forkBlockNumber": 46296406,
+      "tenderlyEnvironmentId": "5bd030ca-bd2b-4a8a-908c-60ab8f7d4f44",
+      "note": "2026-09-02 由 TestCode 通过 Tenderly Virtual TestNet API 自动创建（chain 99911，fork Base Sepolia @46296406）"
     },
     "oracle-fork": {
       "chainId": 99912,
@@ -110,6 +117,30 @@
     {
       "date": "2026-09-02",
       "change": "tx-fork：2026-09-02 由 deploy:contracts 在 tx-fork（chain 99911）全新部署 release/v0.3.2@13880f2（Ignition Fx100Core + configure 三脚本 + 双市场 + 角色授权 + 读回校验通过）"
+    },
+    {
+      "date": "2026-09-02",
+      "change": "同步发布事实文档：tx-fork 已切换为 v0.3.2 私有测试部署；oracle-fork/time-fork 仍为 base-sepolia@v0.3.1；v0.3.1/v0.3.2 参数快照入口迁移到版本化目录"
+    },
+    {
+      "date": "2026-09-02",
+      "change": "准入按环境/层分开判：新增 primary.admissionScope，tx-fork:contract = READY_FOR_SYSTEM_TEST（06 §5 A-1～A-3 勾销；读检与对账证据归档 TestCase/config/v0.3.2/tx-fork/260902/read-checks-*.md 与 verification/）；其余 NOT_READY；总开关 admission 不变"
+    },
+    {
+      "date": "2026-09-02",
+      "change": "tx-fork：2026-09-02 由 TestCode 通过 Tenderly Virtual TestNet API 自动创建（chain 99911，fork Base Sepolia @46295582）"
+    },
+    {
+      "date": "2026-09-02",
+      "change": "tx-fork 重建为 base-sepolia@v0.3.1 fork 后，admissionScope.tx-fork:contract 由 READY_FOR_SYSTEM_TEST 回退 NOT_READY；tx-fork@v0.3.2 的读检/对账证据（TestCase/config/v0.3.2/tx-fork/260902/）绑定旧 vnet 64aa3163 与 block 46282993，重部署后须重做 A-2"
+    },
+    {
+      "date": "2026-09-02",
+      "change": "tx-fork：2026-09-02 由 TestCode 通过 Tenderly Virtual TestNet API 自动创建（chain 99911，fork Base Sepolia @46296406）"
+    },
+    {
+      "date": "2026-09-02",
+      "change": "admissionScope.tx-fork:contract 恢复 READY_FOR_SYSTEM_TEST：15:05 页面部署（内置 02 §18.1 读回校验全过，exit 0）+ init:mock（--force --force-shared-collateral，Market #3）+ verify:mock 全 verified"
     }
   ]
 }

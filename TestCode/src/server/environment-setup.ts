@@ -293,11 +293,18 @@ export class EnvironmentSetupOrchestrator {
       }
       case 'init': {
         const options = input.steps.init!;
+        // 同一向导里刚新建过 Fork：共享 USDC 登记必然指向旧 fork 的死地址，不强制重建共享层会在
+        // 参数回读阶段踩脏状态（2026-09-02 实例：SKEW_IMPACT_FACTOR 回读不一致，带 --force-shared-collateral 重跑即过）。
+        const forkJustCreated = job.steps.some((item) => item.step === 'createFork' && item.status === 'succeeded');
+        const forceSharedCollateral = (options.forceSharedCollateral ?? false) || forkJustCreated;
+        if (forkJustCreated && !(options.forceSharedCollateral ?? false)) {
+          record(step, '本向导刚新建 Fork：自动启用 force-shared-collateral（新 fork 上旧共享 USDC 登记已失效，必须重建共享层）。');
+        }
         const created = await this.deps.runManager.initializeEnvironment({
           environment: job.environment,
           bundleAlias: 'default-mock',
           force: options.force ?? false,
-          forceSharedCollateral: options.forceSharedCollateral ?? false,
+          forceSharedCollateral,
         });
         record(step, `初始化任务 ${created.id} 已创建（串行队列），跟随其日志至终态…`);
         const final = await this.waitFor(

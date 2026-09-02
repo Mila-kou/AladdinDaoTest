@@ -1,6 +1,6 @@
 {
   "$comment": "FX100 测试基线唯一登记（单一事实源）。切换测试版本只改本文件（并执行 TestCode: npm run baseline:lint 校验全工作区引用）。文档不得复述版本号，只能引用本文件；必须写死版本的快照须标注「@vX.Y.Z 快照」。",
-  "updatedAt": "2026-09-01",
+  "updatedAt": "2026-09-02",
   "primary": {
     "version": "v0.3.2",
     "branch": "release/v0.3.2",
@@ -36,9 +36,9 @@
       "chainId": 99911,
       "version": "v0.3.2",
       "releaseLabel": "release-v0.3.2",
-      "paramsExport": "TestCode/artifacts/parameter-cache/tx-fork/tx-fork-v0.3.2-260901.params.json",
-      "manifest": "TestCode/config/deployments/tx-fork-v0.3.2-260901.json",
-      "note": "2026-09-01 由 deploy:contracts 在 tx-fork（chain 99911）全新部署 release/v0.3.2@13880f2（Ignition Fx100Core + configure 三脚本 + 双市场 + 角色授权 + 读回校验通过）"
+      "paramsExport": "TestCode/artifacts/parameter-cache/tx-fork/tx-fork-v0.3.2-260902.params.json",
+      "manifest": "TestCode/config/deployments/tx-fork-v0.3.2-260902.json",
+      "note": "2026-09-02 由 deploy:contracts 在 tx-fork（chain 99911）全新部署 release/v0.3.2@13880f2（Ignition Fx100Core + configure 三脚本 + 双市场 + 角色授权 + 读回校验通过）"
     }
   ],
   "environments": {
@@ -46,9 +46,9 @@
       "chainId": 99911,
       "forkOf": "tx-fork@v0.3.2",
       "status": "ready",
-      "forkBlockNumber": 46244328,
-      "tenderlyEnvironmentId": "68807b10-2067-4750-9d53-d02942f023b8",
-      "note": "2026-09-01 由 TestCode 通过 Tenderly Virtual TestNet API 自动创建（chain 99911，fork Base Sepolia @46244328）"
+      "forkBlockNumber": 46282748,
+      "tenderlyEnvironmentId": "64aa3163-de9b-437c-9338-8600c7eb5628",
+      "note": "2026-09-02 由 TestCode 通过 Tenderly Virtual TestNet API 自动创建（chain 99911，fork Base Sepolia @46282748）"
     },
     "oracle-fork": {
       "chainId": 99912,
@@ -98,6 +98,18 @@
     {
       "date": "2026-09-01",
       "change": "tx-fork：2026-09-01 由 deploy:contracts 在 tx-fork（chain 99911）全新部署 release/v0.3.2@13880f2（Ignition Fx100Core + configure 三脚本 + 双市场 + 角色授权 + 读回校验通过）"
+    },
+    {
+      "date": "2026-09-02",
+      "change": "tx-fork：2026-09-02 由 TestCode 通过 Tenderly Virtual TestNet API 自动创建（chain 99911，fork Base Sepolia @46282187）"
+    },
+    {
+      "date": "2026-09-02",
+      "change": "tx-fork：2026-09-02 由 TestCode 通过 Tenderly Virtual TestNet API 自动创建（chain 99911，fork Base Sepolia @46282748）"
+    },
+    {
+      "date": "2026-09-02",
+      "change": "tx-fork：2026-09-02 由 deploy:contracts 在 tx-fork（chain 99911）全新部署 release/v0.3.2@13880f2（Ignition Fx100Core + configure 三脚本 + 双市场 + 角色授权 + 读回校验通过）"
     }
   ]
 }

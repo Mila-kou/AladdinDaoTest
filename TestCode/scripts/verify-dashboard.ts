@@ -60,6 +60,21 @@ interface VerificationResult {
   readonly versionSwitchRelease: string | null;
   readonly versionSwitchBlockText: string;
   readonly versionSectionText: string;
+  readonly versionPayloadCoreCount: number;
+  readonly versionPayloadOtherCount: number;
+  readonly vcFilterBarExists: boolean;
+  readonly vcRowsTotal: number;
+  readonly vcNotRunExpected: number;
+  readonly vcNotRunFiltered: number;
+  readonly vcDrawerCount: number;
+  readonly vcRecordButtons: number;
+  readonly vcRecordDisabled: number;
+  readonly vcStartBatchDisabled: boolean;
+  readonly vcManualHint: string;
+  readonly vcDrawerOpens: boolean;
+  readonly vcCrossLockedForRpc: boolean;
+  readonly vcPassOptionGuarded: boolean;
+  readonly vcDateAuto: boolean;
   readonly testCaseEditorEnabled: boolean;
   readonly selectedTestCaseId: string;
   readonly selectedPlannedProject: string;
@@ -326,15 +341,22 @@ async function verifyTestCases(page: Page, url: string) {
     const parsed = JSON.parse(node.textContent ?? '{}') as {
       defaultRelease?: string;
       admission?: { txForkContractReady?: boolean };
-      versions?: Array<{ release?: string; parseIssues?: string[] }>;
+      versions?: Array<{ release?: string; parseIssues?: string[]; coreCount?: number; otherCount?: number }>;
     };
+    const defaultRelease = parsed.defaultRelease ?? '';
+    const defaultView = (parsed.versions ?? []).find((view) => view.release === defaultRelease);
     return {
-      defaultRelease: parsed.defaultRelease ?? '',
+      defaultRelease,
       txForkContractReady: parsed.admission?.txForkContractReady === true,
       parseIssueCount: (parsed.versions ?? []).reduce((sum, view) => sum + (view.parseIssues?.length ?? 0), 0),
       releases: (parsed.versions ?? []).map((view) => String(view.release ?? '')),
+      coreCount: defaultView?.coreCount ?? -1,
+      otherCount: defaultView?.otherCount ?? -1,
     };
-  }).catch(() => ({ defaultRelease: '', txForkContractReady: false, parseIssueCount: -1, releases: [] as string[] }));
+  }).catch(() => ({
+    defaultRelease: '', txForkContractReady: false, parseIssueCount: -1,
+    releases: [] as string[], coreCount: -1, otherCount: -1,
+  }));
   const defaultBlock = page.locator('.version-case-block:not([hidden])');
   const versionDefaultBlockCount = await defaultBlock.count();
   const versionDefaultRelease = versionDefaultBlockCount === 1
@@ -371,6 +393,49 @@ async function verifyTestCases(page: Page, url: string) {
     versionSwitchRelease = await switched.count() === 1 ? await switched.getAttribute('data-release') : null;
     versionSwitchBlockText = await switched.count() === 1 ? (await switched.textContent()) ?? '' : '';
     await page.locator('#version-case-release').selectOption(versionSummary.defaultRelease);
+  }
+
+  // —— 手工测试工作台：筛选栏存在且生效、记录结果抽屉、静态模式编辑控件禁用。 ——
+  const isHttpMode = /^https?:\/\//.test(url);
+  const vcControlSelectors = ['#vc-filter-status', '#vc-filter-layer', '#vc-filter-priority',
+    '#vc-filter-section', '#vc-filter-entry', '#vc-filter-trader', '#vc-filter-search', '#vc-filter-pending'];
+  let vcFilterBarExists = true;
+  for (const selector of vcControlSelectors) {
+    if (await page.locator(selector).count() !== 1) vcFilterBarExists = false;
+  }
+  const vcRowsTotal = await defaultBlock.locator('tr.vc-row').count();
+  // 期望值按行 data 属性重算：状态筛选是「任一层匹配」，NOT_RUN 计数必须与筛选后可见行数一致。
+  const vcNotRunExpected = await defaultBlock.locator('tr.vc-row').evaluateAll((rows) =>
+    rows.filter((row) => [row.getAttribute('data-c'), row.getAttribute('data-f'), row.getAttribute('data-x')]
+      .includes('NOT_RUN')).length);
+  await page.locator('#vc-filter-status').selectOption('NOT_RUN');
+  const vcNotRunFiltered = await defaultBlock.locator('tr.vc-row:not([hidden])').count();
+  await page.locator('#vc-filter-status').selectOption('');
+  const vcDrawerCount = await page.locator('#vc-drawer').count();
+  const vcRecordButtons = await defaultBlock.locator('.vc-record').count();
+  const vcRecordDisabled = await defaultBlock.locator('.vc-record:disabled').count();
+  const vcStartBatchDisabled = await page.locator('#vc-start-batch').isDisabled();
+  const vcManualHint = (await page.locator('#vc-manual-hint').textContent()) ?? '';
+  let vcDrawerOpens = !isHttpMode;
+  let vcCrossLockedForRpc = !isHttpMode;
+  let vcPassOptionGuarded = !isHttpMode;
+  let vcDateAuto = !isHttpMode;
+  if (isHttpMode) {
+    // 首行（CT-BASE-001，RPC 只读入口）打开抽屉：交叉一致锁定为 —；admission 非 READY 时 PASS 选项禁用。
+    await defaultBlock.locator('.vc-record').first().click();
+    vcDrawerOpens = await page.locator('#vc-drawer:not([hidden])').count() === 1;
+    if (vcDrawerOpens) {
+      vcCrossLockedForRpc = await page.locator('#vc-f-cross').isDisabled()
+        && await page.locator('#vc-f-cross').inputValue() === '—';
+      const passDisabled = await page.locator('#vc-f-contract').evaluate((node) => {
+        const option = Array.from((node as HTMLSelectElement).options).find((item) => item.value === 'PASS');
+        return option ? option.disabled : null;
+      });
+      vcPassOptionGuarded = passDisabled !== null
+        && (versionSummary.txForkContractReady ? !passDisabled : passDisabled);
+      vcDateAuto = /^\d{4}-\d{2}-\d{2}$/.test(await page.locator('#vc-f-date').inputValue());
+      await page.locator('#vc-drawer-close').click();
+    }
   }
 
   const testCaseEditorEnabled = await page.locator('#save-case').isEnabled();
@@ -428,6 +493,21 @@ async function verifyTestCases(page: Page, url: string) {
     versionSectionText,
     versionSwitchRelease,
     versionSwitchBlockText,
+    versionPayloadCoreCount: versionSummary.coreCount,
+    versionPayloadOtherCount: versionSummary.otherCount,
+    vcFilterBarExists,
+    vcRowsTotal,
+    vcNotRunExpected,
+    vcNotRunFiltered,
+    vcDrawerCount,
+    vcRecordButtons,
+    vcRecordDisabled,
+    vcStartBatchDisabled,
+    vcManualHint,
+    vcDrawerOpens,
+    vcCrossLockedForRpc,
+    vcPassOptionGuarded,
+    vcDateAuto,
   };
 }
 
@@ -672,6 +752,21 @@ if (!input) {
     versionSwitchRelease: testCases.versionSwitchRelease,
     versionSwitchBlockText: testCases.versionSwitchBlockText,
     versionSectionText: testCases.versionSectionText,
+    versionPayloadCoreCount: testCases.versionPayloadCoreCount,
+    versionPayloadOtherCount: testCases.versionPayloadOtherCount,
+    vcFilterBarExists: testCases.vcFilterBarExists,
+    vcRowsTotal: testCases.vcRowsTotal,
+    vcNotRunExpected: testCases.vcNotRunExpected,
+    vcNotRunFiltered: testCases.vcNotRunFiltered,
+    vcDrawerCount: testCases.vcDrawerCount,
+    vcRecordButtons: testCases.vcRecordButtons,
+    vcRecordDisabled: testCases.vcRecordDisabled,
+    vcStartBatchDisabled: testCases.vcStartBatchDisabled,
+    vcManualHint: testCases.vcManualHint,
+    vcDrawerOpens: testCases.vcDrawerOpens,
+    vcCrossLockedForRpc: testCases.vcCrossLockedForRpc,
+    vcPassOptionGuarded: testCases.vcPassOptionGuarded,
+    vcDateAuto: testCases.vcDateAuto,
     testCaseEditorEnabled: testCases.testCaseEditorEnabled,
     selectedTestCaseId: testCases.selectedTestCaseId,
     selectedPlannedProject: testCases.selectedPlannedProject,
@@ -774,7 +869,8 @@ if (!input) {
     || !result.scnCatalogAllScn
     || !result.scnVersionSourcesText.includes('applicability.md')
     || !result.scnVersionSourcesText.includes('expectation-overrides.md')
-    // —— 版本功能用例（CT/XT/FT）分区：存在、准入横幅、45/55 条、地址非空、混排零报错、无 SCN 泄漏。 ——
+    // —— 版本功能用例（CT/XT/FT）分区：存在、准入横幅、行数与解析产物一致（矩阵在持续扩充，
+    //     只锁 45/55 下限 + DOM 行数必须等于 payload coreCount/otherCount）、地址非空、混排零报错、无 SCN 泄漏。 ——
     || !result.versionSectionExists
     || !result.admissionBannerExists
     || !result.admissionBannerText.includes('admission（总开关）')
@@ -782,9 +878,11 @@ if (!input) {
     || result.versionDefaultBlockCount !== 1
     || !result.versionDefaultRelease
     || result.versionDefaultRelease !== result.versionPayloadDefaultRelease
-    || result.versionCoreRows !== 45
+    || result.versionCoreRows < 45
+    || result.versionCoreRows !== result.versionPayloadCoreCount
     || result.versionCoreAddressMissing !== 0
-    || result.versionOtherRows !== 55
+    || result.versionOtherRows < 55
+    || result.versionOtherRows !== result.versionPayloadOtherCount
     || result.versionOtherIncomplete !== 0
     || result.versionParseIssueCount !== 0
     || /SCN-\d/.test(result.versionSectionText)
@@ -795,6 +893,21 @@ if (!input) {
     || (result.versionSwitchRelease !== null
       && (result.versionSwitchRelease === result.versionPayloadDefaultRelease
         || result.versionSwitchBlockText.trim().length === 0))
+    // —— 手工测试工作台：筛选栏存在且生效（状态=NOT_RUN 任一层计数）、抽屉存在、静态模式编辑控件禁用。 ——
+    || !result.vcFilterBarExists
+    || result.vcRowsTotal !== result.versionCoreRows + result.versionOtherRows
+    || result.vcNotRunFiltered < 1
+    || result.vcNotRunFiltered !== result.vcNotRunExpected
+    || result.vcDrawerCount !== 1
+    || result.vcRecordButtons !== result.vcRowsTotal
+    || (!isHttp && result.vcRecordDisabled !== result.vcRecordButtons)
+    || (!isHttp && !result.vcStartBatchDisabled)
+    || (!isHttp && !result.vcManualHint.includes('dashboard:serve'))
+    || (isHttp && result.vcRecordDisabled !== 0)
+    || !result.vcDrawerOpens
+    || !result.vcCrossLockedForRpc
+    || !result.vcPassOptionGuarded
+    || !result.vcDateAuto
     || result.selectedTestCaseId !== 'SCN-009'
     || result.selectedPlannedProject !== 'tx-fork'
     || result.projectFilterOptions !== 6

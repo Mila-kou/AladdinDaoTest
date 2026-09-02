@@ -52,6 +52,13 @@ import {
   environmentNames,
   type EnvironmentName,
 } from '../../config/environments/catalog.js';
+import {
+  appendVersionResults,
+  createManualBatch,
+  readVersionResults,
+  VersionResultsError,
+  writeManualBatchSummary,
+} from './version-results.js';
 
 export interface DashboardServerOptions {
   readonly host: string;
@@ -895,6 +902,84 @@ export async function startDashboardServer(options: DashboardServerOptions) {
         return;
       }
 
+      // —— 版本功能用例结果台账（results.md 标记区）与手工批次归档 ——
+      // 错误映射统一走 VersionResultsError.status（400 校验 / 404 缺失 / 409 冲突 / 422 admission 门槛）。
+      if (url.pathname === '/api/version-results' && (method === 'GET' || method === 'HEAD')) {
+        try {
+          sendJson(
+            response,
+            200,
+            await readVersionResults(projectRoot, url.searchParams.get('release')),
+            headOnly,
+          );
+        } catch (error) {
+          const status = error instanceof VersionResultsError ? error.status : 400;
+          sendJson(response, status, {
+            error: '版本功能用例结果读取失败',
+            detail: error instanceof Error ? error.message : String(error),
+          }, headOnly);
+        }
+        return;
+      }
+
+      if (url.pathname === '/api/version-results/append' && method === 'POST') {
+        if (!isSameOriginRequest(request)) {
+          sendJson(response, 403, { error: '仅允许同源测试看板写回版本功能用例结果。' });
+          return;
+        }
+        try {
+          sendJson(response, 200, await appendVersionResults(projectRoot, await readJsonBody(request)));
+        } catch (error) {
+          const status = error instanceof VersionResultsError ? error.status : 400;
+          sendJson(response, status, {
+            error: status === 422 ? '版本功能用例结果被 admission 门槛拒绝' : '版本功能用例结果写回失败',
+            detail: error instanceof Error ? error.message : String(error),
+          });
+        }
+        return;
+      }
+
+      if (url.pathname === '/api/manual-batches' && method === 'POST') {
+        if (!isSameOriginRequest(request)) {
+          sendJson(response, 403, { error: '仅允许同源测试看板创建手工批次。' });
+          return;
+        }
+        try {
+          sendJson(response, 201, { batch: await createManualBatch(projectRoot, await readJsonBody(request)) });
+        } catch (error) {
+          const status = error instanceof VersionResultsError ? error.status : 400;
+          sendJson(response, status, {
+            error: '手工批次创建失败',
+            detail: error instanceof Error ? error.message : String(error),
+          });
+        }
+        return;
+      }
+
+      const manualBatchSummaryMatch = /^\/api\/manual-batches\/([^/]+)\/summary$/.exec(url.pathname);
+      if (manualBatchSummaryMatch && method === 'POST') {
+        if (!isSameOriginRequest(request)) {
+          sendJson(response, 403, { error: '仅允许同源测试看板归档手工批次小结。' });
+          return;
+        }
+        try {
+          sendJson(response, 200, {
+            summary: await writeManualBatchSummary(
+              projectRoot,
+              decodeURIComponent(manualBatchSummaryMatch[1]!),
+              await readJsonBody(request),
+            ),
+          });
+        } catch (error) {
+          const status = error instanceof VersionResultsError ? error.status : 400;
+          sendJson(response, status, {
+            error: '手工批次小结归档失败',
+            detail: error instanceof Error ? error.message : String(error),
+          });
+        }
+        return;
+      }
+
       if (url.pathname === '/api/reconciliation-fields' && (method === 'GET' || method === 'HEAD')) {
         const ledger = await loadReconciliationLedger(projectRoot);
         if (!ledger) {
@@ -1085,6 +1170,10 @@ export async function startDashboardServer(options: DashboardServerOptions) {
               '/api/manual-check-target',
               '/api/reconciliation-fields',
               '/api/reconciliation-fields/confirm',
+              '/api/version-results',
+              '/api/version-results/append',
+              '/api/manual-batches',
+              '/api/manual-batches/:id/summary',
             ],
             capabilities: {
               environmentInitialization: true,
@@ -1102,6 +1191,7 @@ export async function startDashboardServer(options: DashboardServerOptions) {
               parameterWrite: true,
               noiseTrades: true,
               telegramNotifications: true,
+              versionResultWorkbench: true,
             },
           },
           headOnly,

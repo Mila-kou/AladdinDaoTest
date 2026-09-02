@@ -39,18 +39,23 @@ function renderScnVersionSourcesHtml(data: VersionCasesData): string {
   <section class="scn-version-sources" id="scn-version-sources">${body}</section>`;
 }
 
-function renderVersionCaseRowHtml(item: VersionFunctionalCase): string {
-  const layerCell = (status: string): string =>
-    `<td><span class="layer layer-${escapeHtml(status)}">${escapeHtml(status)}</span></td>`;
-  return `<tr class="vc-row" data-kind="${item.kind}" data-id="${escapeHtml(item.id)}">`
+function renderVersionCaseRowHtml(item: VersionFunctionalCase, section: string): string {
+  const layerCell = (role: string, status: string): string =>
+    `<td><span class="layer layer-${escapeHtml(status)}" data-layer="${role}">${escapeHtml(status)}</span></td>`;
+  return `<tr class="vc-row" data-kind="${item.kind}" data-id="${escapeHtml(item.id)}"`
+    + ` data-section="${escapeHtml(section)}" data-priority="${escapeHtml(item.priority)}"`
+    + ` data-entry="${escapeHtml(item.entry)}" data-trader="${escapeHtml(item.trader)}"`
+    + ` data-c="${escapeHtml(item.layers.contract)}" data-f="${escapeHtml(item.layers.frontend)}" data-x="${escapeHtml(item.layers.parity)}">`
+    + `<td class="vc-check-cell"><input type="checkbox" class="vc-check" data-id="${escapeHtml(item.id)}" aria-label="选择 ${escapeHtml(item.id)}"></td>`
     + `<td class="vc-id">${escapeHtml(item.id)}</td>`
     + `<td class="vc-p">${escapeHtml(item.priority)}</td>`
     + `<td class="vc-title">${escapeHtml(item.title)}</td>`
     + `<td class="vc-entry">${escapeHtml(item.entry)}</td>`
     + `<td class="vc-trader">${escapeHtml(item.trader)}</td>`
-    + layerCell(item.layers.contract)
-    + layerCell(item.layers.frontend)
-    + layerCell(item.layers.parity)
+    + layerCell('c', item.layers.contract)
+    + layerCell('f', item.layers.frontend)
+    + layerCell('x', item.layers.parity)
+    + `<td class="vc-act"><button type="button" class="vc-record" data-id="${escapeHtml(item.id)}" disabled title="需通过 npm run dashboard:serve 打开本页">记录结果</button></td>`
     + '</tr>';
 }
 
@@ -58,13 +63,68 @@ function renderVersionBlockHtml(view: VersionCasesView, hidden: boolean): string
   const body = view.hasMatrix
     ? `<p class="vc-block-note">数据源：<code>${escapeHtml(view.matrixPath)}</code> · 执行状态：<code>${escapeHtml(view.resultsPath)}</code>（无记录 = NOT_RUN；FT 未走页面时前端层 = GAP）· 带地址列（A/B 节）${view.coreCount} 条 + 其余节 ${view.otherCount} 条</p>`
       + view.sections.map((section) =>
-        `<h3>${escapeHtml(section.name)}</h3>`
-        + '<div class="scroll"><table class="vc-table"><thead><tr><th>ID</th><th>P</th><th>标题</th><th>本轮入口</th><th>Trader / 地址</th><th>合约层</th><th>前端层</th><th>交叉一致</th></tr></thead><tbody>'
-        + section.cases.map(renderVersionCaseRowHtml).join('')
+        `<h3 class="vc-section-head" data-section="${escapeHtml(section.name)}">${escapeHtml(section.name)}</h3>`
+        + `<div class="scroll vc-section-scroll" data-section="${escapeHtml(section.name)}"><table class="vc-table"><thead><tr><th class="vc-check-cell"><span class="visually-hidden">选择</span></th><th>ID</th><th>P</th><th>标题</th><th>本轮入口</th><th>Trader / 地址</th><th>合约层</th><th>前端层</th><th>交叉一致</th><th>操作</th></tr></thead><tbody>`
+        + section.cases.map((item) => renderVersionCaseRowHtml(item, section.name)).join('')
         + '</tbody></table></div>',
       ).join('')
     : `<p class="vc-empty">${escapeHtml(view.emptyReason ?? '该版本暂无版本级功能用例。')}</p>`;
   return `<div class="version-case-block" data-release="${escapeHtml(view.release)}"${hidden ? ' hidden' : ''}>${body}</div>`;
+}
+
+// 手工测试工作台侧边抽屉 + 逐条引导模式（放在 #version-cases 外，功能用例分区文本保持只含矩阵内容）。
+function renderVersionDrawerHtml(): string {
+  const statusSelect = (id: string, label: string): string =>
+    `<label>${label}<select id="${id}"><option>NOT_RUN</option><option>PASS</option><option>FAIL</option><option>BLOCKED</option><option>GAP</option></select></label>`;
+  return `
+  <aside class="panel vc-drawer" id="vc-drawer" hidden aria-label="记录功能用例结果">
+    <div class="vc-drawer-head">
+      <h2 id="vc-drawer-title">记录结果</h2>
+      <div class="vc-guide-nav" id="vc-guide-nav" hidden>
+        <span id="vc-guide-progress"></span>
+        <button type="button" id="vc-guide-prev">上一条</button>
+        <button type="button" id="vc-guide-skip">跳过</button>
+        <button type="button" id="vc-guide-next">下一条</button>
+      </div>
+      <button type="button" id="vc-drawer-close" aria-label="关闭">×</button>
+    </div>
+    <div class="vc-drawer-body" id="vc-drawer-main">
+      <dl class="vc-readonly">
+        <dt>ID</dt><dd id="vc-r-id"></dd>
+        <dt>优先级</dt><dd id="vc-r-priority"></dd>
+        <dt>标题</dt><dd id="vc-r-title"></dd>
+        <dt>本轮入口</dt><dd id="vc-r-entry"></dd>
+        <dt>Trader / 地址</dt><dd id="vc-r-trader"></dd>
+        <dt>当前状态</dt><dd id="vc-r-status"></dd>
+      </dl>
+      <p class="vc-admission-hint" id="vc-admission-hint" hidden></p>
+      <form id="vc-drawer-form">
+        <div class="vc-form-grid">
+          ${statusSelect('vc-f-contract', '合约层')}
+          ${statusSelect('vc-f-frontend', '前端层')}
+          <label>交叉一致<select id="vc-f-cross"><option>—</option><option>NOT_RUN</option><option>PASS</option><option>FAIL</option><option>BLOCKED</option><option>GAP</option></select></label>
+          <label>数据集（可选）<input id="vc-f-dataset" maxlength="60" placeholder="如 组A"></label>
+          <label class="vc-wide">实际结果<textarea id="vc-f-actual" required maxlength="2000" placeholder="关键读数 / 差分 / 结论"></textarea></label>
+          <label class="vc-wide">证据链接（每行一条，工作区相对路径）<textarea id="vc-f-evidence" required placeholder="TestCase/E2E/manual-runs/…"></textarea></label>
+          <label>执行人<input id="vc-f-executor" required maxlength="60"></label>
+          <label>日期（自动）<input id="vc-f-date" readonly></label>
+        </div>
+        <div class="vc-drawer-actions">
+          <button type="submit" id="vc-drawer-save">保存并追加到 results.md</button>
+          <span id="vc-drawer-status" class="save-status"></span>
+        </div>
+      </form>
+    </div>
+    <div class="vc-drawer-body" id="vc-guide-end" hidden>
+      <h3>批次执行完成</h3>
+      <p id="vc-guide-stats"></p>
+      <div class="vc-drawer-actions">
+        <button type="button" id="vc-guide-archive">归档 ROUND 小结</button>
+        <button type="button" id="vc-guide-finish">完成并关闭</button>
+        <span id="vc-guide-archive-status" class="save-status"></span>
+      </div>
+    </div>
+  </aside>`;
 }
 
 // 版本功能用例分区（CT/XT/FT）：与共享 SCN 分区分开展示，按矩阵节分组；本分区不出现任何 SCN 编号。
@@ -83,6 +143,30 @@ function renderVersionCasesSectionHtml(data: VersionCasesData): string {
   return `
   <section class="panel version-cases" id="version-cases" aria-label="版本功能用例">
     <div class="panel-head"><h2>版本功能用例（CT / XT / FT）</h2>${blockedBadge}${picker}</div>
+    <div class="vc-filters" id="vc-filters" aria-label="功能用例筛选">
+      <label>状态<select id="vc-filter-status"><option value="">全部</option><option>NOT_RUN</option><option>PASS</option><option>FAIL</option><option>BLOCKED</option><option>GAP</option></select></label>
+      <label>层<select id="vc-filter-layer"><option value="">任一层</option><option value="c">合约层</option><option value="f">前端层</option><option value="x">交叉一致</option></select></label>
+      <label>优先级<select id="vc-filter-priority"><option value="">全部</option><option>P0</option><option>P1</option><option>P2</option></select></label>
+      <label>节<select id="vc-filter-section"><option value="">全部</option></select></label>
+      <label>入口<select id="vc-filter-entry"><option value="">全部</option></select></label>
+      <label>Trader<input id="vc-filter-trader" type="search" placeholder="地址 / 编号"></label>
+      <label>关键字<input id="vc-filter-search" type="search" placeholder="ID、标题……"></label>
+      <div class="vc-filter-actions"><button type="button" id="vc-filter-pending">只看待执行</button><button type="button" id="vc-filter-reset">清除筛选</button><span class="muted" id="vc-filter-count"></span></div>
+    </div>
+    <div class="vc-batch-bar" id="vc-batch-bar">
+      <strong id="vc-selected-count">已选 0 条</strong>
+      <button type="button" id="vc-select-visible-cases">选择当前筛选</button>
+      <button type="button" id="vc-clear-selected">清空</button>
+      <button type="button" id="vc-start-batch" class="primary" disabled>开始手工执行（0 条）</button>
+      <span class="muted" id="vc-manual-hint"></span>
+    </div>
+    <div class="vc-batch-setup" id="vc-batch-setup" hidden>
+      <label>批次名<input id="vc-batch-name" maxlength="40" placeholder="如 功能回归-合约层"></label>
+      <label>执行人<input id="vc-batch-executor" maxlength="60"></label>
+      <button type="button" id="vc-batch-create">创建批次并开始</button>
+      <button type="button" id="vc-batch-cancel">取消</button>
+      <span class="save-status" id="vc-batch-status"></span>
+    </div>
     <div id="version-case-blocks">${blocks}</div>
   </section>`;
 }
@@ -166,13 +250,12 @@ export function renderTestCasesHtml(
         <div class="editor-actions"><button id="save-case" type="submit">保存修改</button><button id="run-current" type="button">仅执行当前用例</button></div>
       </form>
     </article>
-  </section>${renderVersionCasesSectionHtml(versionCases)}
+  </section>${renderVersionCasesSectionHtml(versionCases)}${renderVersionDrawerHtml()}
   <script id="test-case-data" type="application/json">${payload}</script>
   <script id="version-case-data" type="application/json">${versionPayload}</script>`;
 
   const script = `(async function(){
     'use strict';
-    (function(){var select=document.getElementById('version-case-release');if(!select)return;select.addEventListener('change',function(){document.querySelectorAll('.version-case-block').forEach(function(block){block.hidden=block.getAttribute('data-release')!==select.value;});});}());
     const initial=JSON.parse(document.getElementById('test-case-data').textContent);
     const requestedCaseId=new URLSearchParams(location.search).get('scenario');
     const initialSelectedId=initial.cases.some(function(item){return item.id===requestedCaseId;})?requestedCaseId:(initial.cases[0]&&initial.cases[0].id);
@@ -204,6 +287,136 @@ export function renderTestCasesHtml(
     field('marketMode').addEventListener('change',function(){field('mockResourceAlias').value=field('marketMode').value==='mock-market'?'default-mock':'none';});
     form.addEventListener('submit',async function(event){event.preventDefault();if(!state.editable)return;const id=field('id').value;const body={suite:field('suite').value,priority:field('priority').value,executionMode:field('executionMode').value,targetProject:field('targetProject').value,marketMode:field('marketMode').value,oracleMode:field('oracleMode').value,marketCompatibility:field('marketCompatibility').value,timeMode:field('timeMode').value,signingMode:field('signingMode').value,mockResourceAlias:field('mockResourceAlias').value,environmentSetup:field('environmentSetup').value,title:field('title').value,roleIntent:field('roleIntent').value,preconditions:field('preconditions').value,testData:field('testData').value,steps:field('steps').value,expected:field('expected').value,cleanup:field('cleanup').value};saveButton.disabled=true;saveStatus.textContent='保存中…';try{const response=await fetch('/api/test-cases/'+id,{method:'PUT',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(body)});const result=await response.json();if(!response.ok)throw new Error(result.detail||result.error||'保存失败');state.cases=state.cases.map(function(item){return item.id===id?result.case:item;});saveStatus.textContent='已保存 '+new Date(result.case.updatedAt).toLocaleString('zh-CN',{hour12:false});fillFilters();renderMetrics();selectCase(id);}catch(error){saveStatus.textContent='保存失败：'+error.message;}finally{saveButton.disabled=false;}});
     try{await loadLiveCases();document.getElementById('editor-notice').textContent='编辑内容保存到 TestCode/config/test-case-overrides.json；原始场景 Markdown 保持为可追溯基线。';}catch(error){document.getElementById('editor-notice').textContent='当前为只读模式：'+error.message;}
+    // —— 版本功能用例分区：手工测试工作台（筛选 / 记录结果抽屉 / 手工批次逐条引导） ——
+    async function initVersionCases(){
+      var section=document.getElementById('version-cases');if(!section)return;
+      var vcData=JSON.parse(document.getElementById('version-case-data').textContent);
+      var releaseSelect=document.getElementById('version-case-release');
+      var drawer=document.getElementById('vc-drawer');
+      var FILTER_KEY='fx100.vc.filters';var EXECUTOR_KEY='fx100.vc.executor';
+      var live=false;var deployLabel='待确认';var activeRow=null;
+      var guide={active:false,batchId:'',ids:[],index:0,saved:0,skipped:0,executor:''};
+      var controls={status:document.getElementById('vc-filter-status'),layer:document.getElementById('vc-filter-layer'),priority:document.getElementById('vc-filter-priority'),section:document.getElementById('vc-filter-section'),entry:document.getElementById('vc-filter-entry'),trader:document.getElementById('vc-filter-trader'),search:document.getElementById('vc-filter-search')};
+      var fields={contract:document.getElementById('vc-f-contract'),frontend:document.getElementById('vc-f-frontend'),cross:document.getElementById('vc-f-cross'),dataset:document.getElementById('vc-f-dataset'),actual:document.getElementById('vc-f-actual'),evidence:document.getElementById('vc-f-evidence'),executor:document.getElementById('vc-f-executor'),date:document.getElementById('vc-f-date')};
+      function currentRelease(){return releaseSelect?releaseSelect.value:(vcData.defaultRelease||'');}
+      function visibleBlock(){return document.querySelector('.version-case-block:not([hidden])');}
+      function allRows(){var block=visibleBlock();return block?Array.prototype.slice.call(block.querySelectorAll('tr.vc-row')):[];}
+      function rowById(id){var rows=allRows();for(var i=0;i<rows.length;i++){if(rows[i].dataset.id===id)return rows[i];}return null;}
+      function scopeStatus(key){var scope=(vcData.admission&&vcData.admission.scope)||[];for(var i=0;i<scope.length;i++){if(scope[i].key===key)return scope[i].status;}return '未登记';}
+      function layerReady(layer){return /^READY/.test(scopeStatus(layer==='contract'?'tx-fork:contract':'tx-fork:frontend'));}
+      function todayText(){var now=new Date();return now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');}
+      // —— 筛选（组合条件存 localStorage，读写都 try/catch） ——
+      function filterState(){return {status:controls.status.value,layer:controls.layer.value,priority:controls.priority.value,section:controls.section.value,entry:controls.entry.value,trader:controls.trader.value,search:controls.search.value};}
+      function persistFilters(){try{localStorage.setItem(FILTER_KEY,JSON.stringify(filterState()));}catch(error){}}
+      function restoreFilters(){try{var raw=localStorage.getItem(FILTER_KEY);if(!raw)return;var saved=JSON.parse(raw);['status','layer','priority','section','entry','trader','search'].forEach(function(key){if(typeof saved[key]==='string')controls[key].value=saved[key];});}catch(error){}}
+      function populateOptions(){var sections=[];var entries=[];allRows().forEach(function(row){if(sections.indexOf(row.dataset.section)<0)sections.push(row.dataset.section);if(entries.indexOf(row.dataset.entry)<0)entries.push(row.dataset.entry);});
+        var keepSection=controls.section.value;controls.section.innerHTML='<option value="">全部</option>'+sections.map(function(name){return '<option>'+escapeHtml(name)+'</option>';}).join('');controls.section.value=sections.indexOf(keepSection)>=0?keepSection:'';
+        var keepEntry=controls.entry.value;controls.entry.innerHTML='<option value="">全部</option>'+entries.map(function(name){return '<option>'+escapeHtml(name)+'</option>';}).join('');controls.entry.value=entries.indexOf(keepEntry)>=0?keepEntry:'';}
+      function rowMatches(row,f){var byLayer=f.layer==='c'?row.dataset.c:f.layer==='f'?row.dataset.f:f.layer==='x'?row.dataset.x:'';
+        var okStatus=!f.status||(f.layer?byLayer===f.status:[row.dataset.c,row.dataset.f,row.dataset.x].indexOf(f.status)>=0);
+        var okPriority=!f.priority||row.dataset.priority===f.priority;
+        var okSection=!f.section||row.dataset.section===f.section;
+        var okEntry=!f.entry||row.dataset.entry===f.entry;
+        var okTrader=!f.trader||(row.dataset.trader||'').toLowerCase().indexOf(f.trader.toLowerCase())>=0;
+        var okSearch=!f.search||(row.textContent||'').toLowerCase().indexOf(f.search.toLowerCase())>=0;
+        return okStatus&&okPriority&&okSection&&okEntry&&okTrader&&okSearch;}
+      function applyFilters(){var f=filterState();var rows=allRows();var shown=0;rows.forEach(function(row){var ok=rowMatches(row,f);row.hidden=!ok;if(ok)shown++;});
+        var block=visibleBlock();if(block){var heads=block.querySelectorAll('.vc-section-head');var wraps=block.querySelectorAll('.vc-section-scroll');for(var i=0;i<wraps.length;i++){var any=wraps[i].querySelector('tr.vc-row:not([hidden])');wraps[i].hidden=!any;if(heads[i])heads[i].hidden=!any;}}
+        var counter=document.getElementById('vc-filter-count');if(counter)counter.textContent='匹配 '+shown+' / '+rows.length+' 条';
+        persistFilters();updateSelectedCount();}
+      Object.keys(controls).forEach(function(key){var control=controls[key];control.addEventListener(control.tagName==='INPUT'?'input':'change',applyFilters);});
+      document.getElementById('vc-filter-pending').addEventListener('click',function(){controls.status.value='NOT_RUN';controls.layer.value='';applyFilters();});
+      document.getElementById('vc-filter-reset').addEventListener('click',function(){Object.keys(controls).forEach(function(key){controls[key].value='';});applyFilters();});
+      // —— 选择与批次 ——
+      function selectedIds(){var ids=[];allRows().forEach(function(row){var check=row.querySelector('.vc-check');if(check&&check.checked)ids.push(row.dataset.id);});return ids;}
+      function updateSelectedCount(){var count=selectedIds().length;document.getElementById('vc-selected-count').textContent='已选 '+count+' 条';var startButton=document.getElementById('vc-start-batch');startButton.textContent='开始手工执行（'+count+' 条）';startButton.disabled=!live||count===0;}
+      section.addEventListener('change',function(event){if(event.target&&event.target.classList&&event.target.classList.contains('vc-check'))updateSelectedCount();});
+      document.getElementById('vc-select-visible-cases').addEventListener('click',function(){allRows().forEach(function(row){if(!row.hidden){var check=row.querySelector('.vc-check');if(check)check.checked=true;}});updateSelectedCount();});
+      document.getElementById('vc-clear-selected').addEventListener('click',function(){allRows().forEach(function(row){var check=row.querySelector('.vc-check');if(check)check.checked=false;});updateSelectedCount();});
+      // —— 抽屉 ——
+      var statusText=document.getElementById('vc-drawer-status');
+      function setStatusOptionGuards(select,layer){Array.prototype.forEach.call(select.options,function(option){if(option.value==='PASS'||option.value==='FAIL'){var ready=layerReady(layer);option.disabled=!ready;option.title=ready?'':'admissionScope['+(layer==='contract'?'tx-fork:contract':'tx-fork:frontend')+'] 非 READY_FOR_SYSTEM_TEST，只能记 BLOCKED / NOT_RUN';}});}
+      function setBadge(row,role,status){if(!status)return;row.dataset[role]=status;var span=row.querySelector('span[data-layer="'+role+'"]');if(span){span.textContent=status;span.className='layer layer-'+(status==='—'?'NONE':status);}}
+      function openDrawer(row){activeRow=row;
+        document.getElementById('vc-r-id').textContent=row.dataset.id;
+        document.getElementById('vc-r-priority').textContent=row.dataset.priority;
+        document.getElementById('vc-r-title').textContent=(row.querySelector('.vc-title')||{}).textContent||'';
+        document.getElementById('vc-r-entry').textContent=row.dataset.entry;
+        document.getElementById('vc-r-trader').textContent=row.dataset.trader;
+        document.getElementById('vc-r-status').textContent='合约层 '+row.dataset.c+' · 前端层 '+row.dataset.f+' · 交叉一致 '+row.dataset.x;
+        function preset(select,value){var has=false;Array.prototype.forEach.call(select.options,function(option){if(option.value===value)has=true;});select.value=has?value:'NOT_RUN';}
+        preset(fields.contract,row.dataset.c);preset(fields.frontend,row.dataset.f);
+        var pageEntry=(row.dataset.entry||'').indexOf('页面')>=0;
+        fields.cross.disabled=!pageEntry;fields.cross.title=pageEntry?'':'交叉一致仅页面入口判，RPC 入口固定为 —';
+        if(pageEntry){preset(fields.cross,row.dataset.x==='—'?'—':row.dataset.x);}else{fields.cross.value='—';}
+        setStatusOptionGuards(fields.contract,'contract');setStatusOptionGuards(fields.frontend,'frontend');setStatusOptionGuards(fields.cross,'frontend');
+        var hints=[];if(!layerReady('contract'))hints.push('tx-fork:contract='+scopeStatus('tx-fork:contract'));if(!layerReady('frontend'))hints.push('tx-fork:frontend='+scopeStatus('tx-fork:frontend'));
+        var hint=document.getElementById('vc-admission-hint');hint.hidden=hints.length===0;hint.textContent=hints.length?('admission 门槛：'+hints.join('；')+' —— 对应层 PASS / FAIL 已禁用，只能记 BLOCKED / NOT_RUN。'):'';
+        fields.dataset.value='';fields.actual.value='';
+        fields.evidence.value=guide.active&&guide.batchId?('TestCase/E2E/manual-runs/'+guide.batchId+'/'):'';
+        var storedExecutor='';try{storedExecutor=localStorage.getItem(EXECUTOR_KEY)||'';}catch(error){}
+        fields.executor.value=guide.executor||storedExecutor;
+        fields.date.value=todayText();
+        statusText.textContent='';
+        var nav=document.getElementById('vc-guide-nav');nav.hidden=!guide.active;
+        if(guide.active)document.getElementById('vc-guide-progress').textContent='第 '+(guide.index+1)+' / '+guide.ids.length+' 条';
+        document.getElementById('vc-drawer-main').hidden=false;document.getElementById('vc-guide-end').hidden=true;
+        drawer.hidden=false;}
+      function closeDrawer(){drawer.hidden=true;activeRow=null;guide.active=false;document.getElementById('vc-guide-nav').hidden=true;}
+      document.getElementById('vc-drawer-close').addEventListener('click',closeDrawer);
+      section.addEventListener('click',function(event){var target=event.target;var button=target&&target.closest?target.closest('.vc-record'):null;if(!button||button.disabled)return;guide.active=false;var row=button.closest('tr.vc-row');if(row)openDrawer(row);});
+      async function refreshRelease(){if(!live)return;try{var response=await fetch('/api/version-results?release='+encodeURIComponent(currentRelease()),{headers:{Accept:'application/json'}});if(!response.ok)return;var data=await response.json();if(data.available===false)return;deployLabel=data.deploy||deployLabel;var latest={};(data.rows||[]).forEach(function(row){latest[row.caseId]=row;});
+        allRows().forEach(function(row){var record=latest[row.dataset.id];if(!record)return;setBadge(row,'c',record.contract);setBadge(row,'f',record.frontend);setBadge(row,'x',record.cross);});applyFilters();}catch(error){}}
+      document.getElementById('vc-drawer-form').addEventListener('submit',async function(event){event.preventDefault();if(!live||!activeRow)return;
+        var saveButton2=document.getElementById('vc-drawer-save');
+        var evidence=fields.evidence.value.split('\\n').map(function(line){return line.trim();}).filter(function(line){return line.length>0;});
+        var row={id:activeRow.dataset.id,entry:activeRow.dataset.entry||'',layers:{contract:fields.contract.value,frontend:fields.frontend.value,cross:fields.cross.disabled?'—':fields.cross.value},actualResult:fields.actual.value,evidence:evidence,executor:fields.executor.value};
+        if(fields.dataset.value.trim())row.dataset=fields.dataset.value.trim();
+        saveButton2.disabled=true;statusText.textContent='写回中…';
+        try{var response=await fetch('/api/version-results/append',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({release:currentRelease(),rows:[row]})});
+          var result=await response.json();if(!response.ok)throw new Error(result.detail||result.error||('HTTP '+response.status));
+          try{localStorage.setItem(EXECUTOR_KEY,fields.executor.value);}catch(error){}
+          await refreshRelease();
+          statusText.textContent='已追加：'+result.deploy+' · '+result.date;
+          if(guide.active){guide.saved++;openGuideAt(guide.index+1);}
+        }catch(error){statusText.textContent='写回失败：'+error.message;}
+        finally{saveButton2.disabled=false;}});
+      // —— 手工批次：创建 → 逐条引导 → 小结归档 ——
+      document.getElementById('vc-start-batch').addEventListener('click',function(){if(!live||selectedIds().length===0)return;var setup=document.getElementById('vc-batch-setup');setup.hidden=false;var executorInput=document.getElementById('vc-batch-executor');if(!executorInput.value){try{executorInput.value=localStorage.getItem(EXECUTOR_KEY)||'';}catch(error){}}});
+      document.getElementById('vc-batch-cancel').addEventListener('click',function(){document.getElementById('vc-batch-setup').hidden=true;document.getElementById('vc-batch-status').textContent='';});
+      document.getElementById('vc-batch-create').addEventListener('click',async function(){var ids=selectedIds();var name=document.getElementById('vc-batch-name').value.trim();var executor=document.getElementById('vc-batch-executor').value.trim();var batchStatus=document.getElementById('vc-batch-status');
+        if(!ids.length){batchStatus.textContent='请先勾选要执行的用例。';return;}
+        if(!name||!executor){batchStatus.textContent='批次名与执行人必填。';return;}
+        batchStatus.textContent='创建批次中…';
+        try{var response=await fetch('/api/manual-batches',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({release:currentRelease(),name:name,caseIds:ids,executor:executor})});
+          var result=await response.json();if(!response.ok)throw new Error(result.detail||result.error||('HTTP '+response.status));
+          guide={active:true,batchId:result.batch.id,ids:ids,index:0,saved:0,skipped:0,executor:executor};
+          batchStatus.textContent='已创建 '+result.batch.directory;
+          document.getElementById('vc-batch-setup').hidden=true;
+          openGuideAt(0);
+        }catch(error){batchStatus.textContent='批次创建失败：'+error.message;}});
+      function openGuideAt(index){guide.index=index;if(index>=guide.ids.length){showGuideEnd();return;}var row=rowById(guide.ids[index]);if(!row){openGuideAt(index+1);return;}openDrawer(row);}
+      function showGuideEnd(){document.getElementById('vc-drawer-main').hidden=true;var end=document.getElementById('vc-guide-end');end.hidden=false;document.getElementById('vc-guide-nav').hidden=true;
+        document.getElementById('vc-guide-stats').textContent='批次 '+guide.batchId+'：共 '+guide.ids.length+' 条，已保存 '+guide.saved+' 条，跳过 '+guide.skipped+' 条。结果已追加到 results.md 标记区。';
+        document.getElementById('vc-guide-archive-status').textContent='';drawer.hidden=false;}
+      document.getElementById('vc-guide-prev').addEventListener('click',function(){if(guide.active)openGuideAt(Math.max(0,guide.index-1));});
+      document.getElementById('vc-guide-skip').addEventListener('click',function(){if(guide.active){guide.skipped++;openGuideAt(guide.index+1);}});
+      document.getElementById('vc-guide-next').addEventListener('click',function(){if(guide.active)openGuideAt(guide.index+1);});
+      document.getElementById('vc-guide-archive').addEventListener('click',async function(){var archiveStatus=document.getElementById('vc-guide-archive-status');archiveStatus.textContent='归档中…';
+        try{var response=await fetch('/api/manual-batches/'+encodeURIComponent(guide.batchId)+'/summary',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({release:currentRelease(),caseIds:guide.ids,executor:guide.executor})});
+          var result=await response.json();if(!response.ok)throw new Error(result.detail||result.error||('HTTP '+response.status));
+          archiveStatus.textContent='已归档 '+result.summary.file;
+        }catch(error){archiveStatus.textContent='归档失败：'+error.message;}});
+      document.getElementById('vc-guide-finish').addEventListener('click',closeDrawer);
+      // —— 版本切换与静态守卫 ——
+      if(releaseSelect)releaseSelect.addEventListener('change',function(){document.querySelectorAll('.version-case-block').forEach(function(block){block.hidden=block.getAttribute('data-release')!==releaseSelect.value;});populateOptions();applyFilters();refreshRelease();});
+      if(['http:','https:'].indexOf(location.protocol)>=0){try{var probe=await fetch('/api/version-results?release='+encodeURIComponent(currentRelease()),{headers:{Accept:'application/json'}});if(probe.ok){live=true;var probeData=await probe.json();deployLabel=probeData.deploy||deployLabel;var latest={};(probeData.rows||[]).forEach(function(row){latest[row.caseId]=row;});allRows().forEach(function(row){var record=latest[row.dataset.id];if(!record)return;setBadge(row,'c',record.contract);setBadge(row,'f',record.frontend);setBadge(row,'x',record.cross);});}}catch(error){}}
+      var manualHint=document.getElementById('vc-manual-hint');
+      if(live){document.querySelectorAll('.vc-record').forEach(function(button){button.disabled=false;button.title='';});manualHint.textContent='结果写回 results.md 标记区（追加行，不覆盖）；批次归档到 TestCase/E2E/manual-runs/。';}
+      else{manualHint.textContent='静态模式：记录结果与手工批次需通过 npm run dashboard:serve 打开本页（按钮已禁用）。';}
+      restoreFilters();populateOptions();applyFilters();
+    }
+    try{await initVersionCases();}catch(error){var vcHint=document.getElementById('vc-manual-hint');if(vcHint)vcHint.textContent='手工测试工作台初始化失败：'+error.message;}
     saveButton.disabled=!state.editable;fillFilters();renderMetrics();renderRows();if(state.selectedId)selectCase(state.selectedId);document.getElementById('test-cases-page').dataset.pageReady='true';
   }());`;
 
@@ -242,9 +455,35 @@ export function renderTestCasesHtml(
       .vc-table td.vc-title{min-width:260px}.vc-table td.vc-id,.vc-table td.vc-entry{white-space:nowrap}
       .vc-table td.vc-trader{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;overflow-wrap:anywhere;min-width:200px}
       .layer{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:2px 6px;white-space:nowrap;font-size:10px}
-      .layer-PASS{color:#36d399}.layer-FAIL{color:#fb7185}.layer-BLOCKED{color:#a78bfa}.layer-GAP{color:#fbbf24}.layer-NOT_RUN{color:#94a3b8}
+      .layer-PASS{color:#36d399}.layer-FAIL{color:#fb7185}.layer-BLOCKED{color:#a78bfa}.layer-GAP{color:#fbbf24}.layer-NOT_RUN{color:#94a3b8}.layer-NONE{color:#64748b}
+      .visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+      .vc-filters{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px}
+      .vc-filter-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;grid-column:1/-1}
+      .vc-filter-actions button,.vc-batch-bar button,.vc-batch-setup button,.vc-guide-nav button{border:1px solid #365274;border-radius:8px;background:#0b2038;color:#cfe4ff;padding:6px 10px;cursor:pointer}
+      .vc-batch-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+      .vc-batch-bar button.primary{background:#14569a;border-color:#3978bd;color:white}
+      .vc-batch-bar button:disabled,.vc-record:disabled{opacity:.4;cursor:not-allowed}
+      .vc-batch-setup{display:flex;align-items:end;gap:10px;flex-wrap:wrap;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px}
+      .vc-batch-setup[hidden]{display:none!important}
+      .vc-batch-setup label{min-width:180px;flex:1}
+      .vc-check{width:auto;min-height:auto;accent-color:#5ea7ff}
+      .vc-record{border:1px solid #365274;border-radius:8px;background:#0b2038;color:#cfe4ff;padding:4px 8px;cursor:pointer;white-space:nowrap;font-size:11px}
+      #vc-drawer{position:fixed;top:0;right:0;height:100vh;width:min(520px,100vw);z-index:50;overflow:auto;margin:0;border-radius:0;border-left:1px solid var(--line);box-shadow:-12px 0 30px rgba(0,0,0,.45)}
+      #vc-drawer[hidden]{display:none!important}
+      .vc-drawer-head{display:flex;align-items:center;gap:10px;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap}
+      #vc-drawer-close{border:1px solid var(--line);background:transparent;color:var(--text);border-radius:8px;width:30px;height:30px;cursor:pointer}
+      .vc-guide-nav{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+      .vc-readonly{display:grid;grid-template-columns:96px 1fr;gap:6px 10px;font-size:12px;margin:0 0 10px}
+      .vc-readonly dt{color:var(--muted)}.vc-readonly dd{margin:0;overflow-wrap:anywhere}
+      .vc-admission-hint{border:1px solid #d97706;background:#3a2405;color:#fde68a;border-radius:10px;padding:8px 10px;font-size:12px;margin:0 0 10px}
+      .vc-admission-hint[hidden]{display:none!important}
+      .vc-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      .vc-wide{grid-column:1/-1}
+      .vc-drawer-actions{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+      .vc-drawer-actions button{border:1px solid #3978bd;border-radius:9px;background:#14569a;color:white;padding:8px 12px;cursor:pointer}
+      .vc-drawer-actions button:disabled{opacity:.45;cursor:not-allowed}
       @media(max-width:1150px){.workspace{grid-template-columns:1fr}.filters{grid-template-columns:1fr 1fr}.list-panel .scroll{max-height:520px}}
-      @media(max-width:650px){.metric-grid,.filters,.form-grid{grid-template-columns:1fr}.wide{grid-column:auto}.editor-panel,.list-panel{padding:11px}.selection-toolbar{align-items:stretch;flex-direction:column}.version-cases .scroll{max-height:420px}}
+      @media(max-width:650px){.metric-grid,.filters,.form-grid{grid-template-columns:1fr}.wide{grid-column:auto}.editor-panel,.list-panel{padding:11px}.selection-toolbar{align-items:stretch;flex-direction:column}.version-cases .scroll{max-height:420px}.vc-filters,.vc-form-grid{grid-template-columns:1fr}.vc-wide{grid-column:auto}#vc-drawer{width:100vw}}
     `,
   });
 }

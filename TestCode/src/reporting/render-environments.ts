@@ -8,7 +8,11 @@ import { renderPageShell } from './render-page-shell.js';
 export function renderEnvironmentsHtml(generatedAt: string): string {
   const content = `
   <section class="toolbar panel">
-    <label>测试环境<select id="environment"></select></label>
+    <div class="env-picker">
+      <span class="env-picker-label muted">测试环境（默认 tx-fork；可用 <code>?env=</code> 分享指定环境）</span>
+      <div id="env-tabs" class="env-tabs" role="tablist" aria-label="测试环境"></div>
+      <label class="visually-hidden">测试环境<select id="environment"></select></label>
+    </div>
     <div class="actions">
       <button id="reload" type="button" class="secondary">重新读取</button>
     </div>
@@ -109,7 +113,17 @@ export function renderEnvironmentsHtml(generatedAt: string): string {
   <footer>页面生成：${generatedAt}</footer>`;
 
   const styles = `
-    [hidden]{display:none!important}.toolbar,.section-heading,.init-actions{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}.toolbar label{min-width:min(420px,100%)}
+    [hidden]{display:none!important}.toolbar,.section-heading,.init-actions{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+    .env-picker{display:grid;gap:7px;flex:1;min-width:min(320px,100%)}.env-picker-label{font-size:12px}
+    .env-tabs{display:flex;flex-wrap:wrap;gap:8px;max-width:100%;overflow-x:auto;padding-bottom:2px}
+    .env-tab{display:flex;flex-direction:column;align-items:flex-start;gap:5px;border:1px solid var(--line);border-radius:11px;background:#0d1627;color:var(--muted);padding:8px 12px;cursor:pointer;text-align:left}
+    .env-tab .env-tab-name{font-weight:700;color:var(--text)}
+    .env-tab[data-env="tx-fork"] .env-tab-name{color:var(--accent)}
+    .env-tab[aria-selected="true"]{border-color:#3978bd;background:#102a4d;box-shadow:0 0 0 2px rgba(94,167,255,.28)}
+    .env-badges{display:flex;flex-wrap:wrap;gap:4px;max-width:230px}
+    .env-badge{border:1px solid var(--line);border-radius:999px;padding:1px 7px;font-size:11px;line-height:1.5;color:var(--muted);background:#101b2d;white-space:nowrap}
+    .env-badge.ok{color:#76e3aa;border-color:#1f7a55}.env-badge.warn{color:#f6c85f;border-color:#8b6227}
+    .visually-hidden{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;border:0;clip:rect(0 0 0 0);clip-path:inset(50%);overflow:hidden;white-space:nowrap}
     label{display:grid;gap:6px;color:var(--muted)}select,input,button{font:inherit}select,input{width:100%;border:1px solid var(--line);border-radius:9px;background:#0a1322;color:var(--text);padding:9px 11px}input[type=checkbox]{width:auto;accent-color:var(--accent)}button{border:1px solid #367dc6;border-radius:9px;background:#1764aa;color:white;padding:9px 14px;cursor:pointer}button.secondary{background:#101b2d;border-color:var(--line);color:var(--text)}button:disabled{opacity:.5;cursor:not-allowed}
     .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.notice{width:100%;margin:2px 0 0;color:#f6c85f}.section-card{margin-top:16px}.section-heading h2,.subsection h3{margin:0}.section-heading p,.subsection p{margin:4px 0 0;color:var(--muted)}
     .guide{border:1px solid var(--line);border-left:4px solid #367dc6;border-radius:9px;background:#0d1627;padding:12px 16px;margin-top:14px}.guide ol,.guide ul{margin:8px 0 0;padding-left:20px;display:grid;gap:4px}.guide p{margin:8px 0 0}
@@ -156,9 +170,55 @@ export function renderEnvironmentsHtml(generatedAt: string): string {
         +'<ul>'+guide.special.map(function(item){return '<li>'+item+'</li>';}).join('')+'</ul>'
         +'<p class="muted">按钮走 Virtual TestNets API（legacy fork API 已停用），Chain ID 自动用固定编号并经 eth_chainId 校验；建好后按需 ② 部署合约，再 ④ 初始化 Mock Market Bundle。</p>';
     }
-    const state={configuration:null,profile:null,marketSources:[],activeInitializationId:null,poll:null,deployBranches:[],deployBranchesLoaded:false,activeDeploymentId:null,deployPoll:null,activeWizardId:null,wizardPoll:null};
+    const state={configuration:null,profile:null,profiles:null,marketSources:[],activeInitializationId:null,poll:null,deployBranches:[],deployBranchesLoaded:false,activeDeploymentId:null,deployPoll:null,activeWizardId:null,wizardPoll:null};
     const environment=document.getElementById('environment');
     environment.innerHTML=environmentNames.map(function(name){return '<option value="'+name+'">'+name+'</option>';}).join('');
+    // 环境标签条：三条 Fork 放前面、tx-fork 最前且为默认；select 保留但视觉隐藏，environment.value 仍是全部联动的单一事实源。
+    const environmentTabOrder=['tx-fork','oracle-fork','time-fork','dev-readonly','base-sepolia'];
+    const fixedChainIds={'tx-fork':99911,'oracle-fork':99912,'time-fork':99913,'base-sepolia':84532};
+    const forkEnvironmentNames=['tx-fork','oracle-fork','time-fork'];
+    const ENVIRONMENT_STORAGE_KEY='fx100-environments-selected';
+    function readStoredEnvironment(){try{return localStorage.getItem(ENVIRONMENT_STORAGE_KEY);}catch(error){return null;}}
+    function persistEnvironment(name){try{localStorage.setItem(ENVIRONMENT_STORAGE_KEY,name);}catch(error){/* 无痕/禁存储时静默回退，不影响切换 */}}
+    (function initializeEnvironmentSelection(){
+      let initial='tx-fork';
+      let urlEnvironment=null;
+      try{urlEnvironment=new URLSearchParams(location.search).get('env');}catch(error){urlEnvironment=null;}
+      if(urlEnvironment&&environmentNames.includes(urlEnvironment)){initial=urlEnvironment;}
+      else{const stored=readStoredEnvironment();if(stored&&environmentNames.includes(stored))initial=stored;}
+      environment.value=initial;
+    })();
+    function environmentBadges(name){
+      const isFork=forkEnvironmentNames.includes(name);
+      const profile=state.profiles?state.profiles.find(function(item){return item.name===name;}):null;
+      const badges=[];
+      const chainId=profile?(profile.fixedChainId||profile.configuredChainId):fixedChainIds[name];
+      if(chainId)badges.push('<span class="env-badge">Chain '+esc(chainId)+'</span>');
+      if(profile){
+        badges.push('<span class="env-badge '+(profile.rpcConfigured?'ok':'warn')+'">RPC '+(profile.rpcConfigured?'已配':'未配')+'</span>');
+        if(profile.initializesDefaultMockResources)badges.push('<span class="env-badge '+(profile.defaultMockStatus==='ready'?'ok">mock ready':'warn">mock pending')+'</span>');
+        if(isFork&&profile.forkOfVersion)badges.push('<span class="env-badge">'+esc(profile.forkOfVersion)+'</span>');
+      }else if(isFork){
+        badges.push('<span class="env-badge">需 serve 读取</span>');
+      }
+      return badges.join('');
+    }
+    function renderEnvironmentTabs(){
+      document.getElementById('env-tabs').innerHTML=environmentTabOrder.map(function(name){
+        return '<button type="button" class="env-tab" role="tab" data-env="'+name+'" aria-selected="'+(name===environment.value)+'">'
+          +'<span class="env-tab-name">'+name+'</span><span class="env-badges">'+environmentBadges(name)+'</span></button>';
+      }).join('');
+    }
+    function syncEnvironmentTabs(){
+      document.querySelectorAll('#env-tabs .env-tab').forEach(function(tab){tab.setAttribute('aria-selected',String(tab.dataset.env===environment.value));});
+    }
+    document.getElementById('env-tabs').addEventListener('click',function(event){
+      const tab=event.target.closest('.env-tab');
+      if(!tab||tab.dataset.env===environment.value)return;
+      environment.value=tab.dataset.env;
+      environment.dispatchEvent(new Event('change'));
+    });
+    renderEnvironmentTabs();
     function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(char){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char];});}
     function fieldInput(field){const id='config-'+field.key;const value=field.value||'';if(field.type==='checkbox')return '<input id="'+id+'" data-key="'+field.key+'" type="checkbox" '+(value==='true'?'checked':'')+'>';
       if(field.type==='select')return '<select id="'+id+'" data-key="'+field.key+'">'+(field.options||[]).map(function(option){return '<option '+(option===value?'selected':'')+'>'+esc(option)+'</option>';}).join('')+'</select>';
@@ -192,7 +252,7 @@ export function renderEnvironmentsHtml(generatedAt: string): string {
         ['save-rpc','save-config','save-profile','run-initialization','check','create-tenderly-fork','reload-market-sources','deploy-branch','reload-deploy-branches','deploy-dry-run','deploy-run','wizard-run','wizard-solo-createFork','wizard-solo-deploy','wizard-solo-init','wizard-solo-check','wizard-deploy-branch'].forEach(function(id){document.getElementById(id).disabled=true;});
         return;
       }
-      document.getElementById('connection').textContent='正在读取 '+environment.value+'…';const query=encodeURIComponent(environment.value);const configurationResult=await requestJson('/api/environment-configuration?environment='+query);state.configuration=configurationResult.configuration;state.profile=null;state.marketSources=[];renderConfiguration();renderEnvironmentMode();if(!state.deployBranchesLoaded){state.deployBranchesLoaded=true;await loadDeployBranches();}if(state.configuration.capabilities.initializesDefaultMockResources){state.profile=await requestJson('/api/environment-initialization-profile?environment='+query);renderProfile();try{await loadMarketSources();}catch(error){state.marketSources=[];renderMarketSources();document.getElementById('market-source-status').textContent='Market 列表读取失败：'+error.message;}}document.getElementById('connection').textContent=environment.value==='base-sepolia'?'已连接 Base Sepolia 配置；该环境不会加载或执行 Mock/Market/Keeper 初始化。':'已连接本机服务；RPC 显示完整地址，私钥和 Token 只显示配置状态。按 ①→⑤ 顺序完成配置（② 部署合约仅在需要全新部署时执行）。';}
+      document.getElementById('connection').textContent='正在读取 '+environment.value+'…';const query=encodeURIComponent(environment.value);const configurationResult=await requestJson('/api/environment-configuration?environment='+query);state.configuration=configurationResult.configuration;state.profile=null;state.marketSources=[];try{state.profiles=(await requestJson('/api/environments')).environments;}catch(error){state.profiles=null;}renderEnvironmentTabs();renderConfiguration();renderEnvironmentMode();if(!state.deployBranchesLoaded){state.deployBranchesLoaded=true;await loadDeployBranches();}if(state.configuration.capabilities.initializesDefaultMockResources){state.profile=await requestJson('/api/environment-initialization-profile?environment='+query);renderProfile();try{await loadMarketSources();}catch(error){state.marketSources=[];renderMarketSources();document.getElementById('market-source-status').textContent='Market 列表读取失败：'+error.message;}}document.getElementById('connection').textContent=environment.value==='base-sepolia'?'已连接 Base Sepolia 配置；该环境不会加载或执行 Mock/Market/Keeper 初始化。':'已连接本机服务；RPC 显示完整地址，私钥和 Token 只显示配置状态。按 ①→⑤ 顺序完成配置（② 部署合约仅在需要全新部署时执行）。';}
     async function saveConfiguration(){const values={};state.configuration.fields.forEach(function(field){const input=document.getElementById('config-'+field.key);if(field.type==='checkbox')values[field.key]=String(input.checked);else if(!field.secret||input.value.trim())values[field.key]=input.value;});const clearKeys=Array.from(document.querySelectorAll('[data-clear]:checked')).map(function(input){return input.dataset.clear;});const result=await requestJson('/api/environment-configuration',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({environment:environment.value,values:values,clearKeys:clearKeys})});state.configuration=result.configuration;renderConfiguration();document.getElementById('save-status').textContent='配置已保存到本机 .env.local。';}
     async function saveProfile(){const result=await requestJson('/api/environment-initialization-profile',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({environment:environment.value,profile:collectProfile()})});state.profile=result;renderProfile();document.getElementById('initialization-status').textContent='初始化配置已保存。';return result;}
     async function check(){document.getElementById('check-summary').textContent='检查中…';const result=await requestJson('/api/environment-check?environment='+encodeURIComponent(environment.value));const check=result.result;document.getElementById('check-summary').textContent=check.status;document.getElementById('check-summary').className='status '+check.status;document.getElementById('check-results').innerHTML=check.checks.map(function(item){return '<article class="check-result '+item.status+'"><strong>'+esc(item.label)+' · '+item.status+'</strong><small>'+esc(item.detail)+'</small></article>';}).join('');}
@@ -270,7 +330,7 @@ export function renderEnvironmentsHtml(generatedAt: string): string {
     document.getElementById('wizard-solo-deploy').addEventListener('click',function(){const branch=document.getElementById('wizard-deploy-branch').value;if(branch)document.getElementById('deploy-branch').value=branch;startDeployment(document.getElementById('wizard-deploy-dry-run').checked);});
     document.getElementById('wizard-solo-init').addEventListener('click',function(){document.getElementById('force-init').checked=document.getElementById('wizard-init-force').checked;document.getElementById('force-shared-collateral').checked=document.getElementById('wizard-init-force-shared').checked;document.getElementById('run-initialization').click();});
     document.getElementById('wizard-solo-check').addEventListener('click',function(){document.getElementById('check').click();});
-    document.getElementById('reload').addEventListener('click',function(){load().catch(showError);});environment.addEventListener('change',function(){load().catch(showError);});
+    document.getElementById('reload').addEventListener('click',function(){load().catch(showError);});environment.addEventListener('change',function(){persistEnvironment(environment.value);syncEnvironmentTabs();load().catch(showError);});
     document.getElementById('save-config').addEventListener('click',function(){saveConfiguration().catch(showError);});document.getElementById('save-rpc').addEventListener('click',function(){saveConfiguration().catch(showError);});document.getElementById('save-profile').addEventListener('click',function(){saveProfile().catch(showError);});document.getElementById('check').addEventListener('click',function(){check().catch(showError);});document.getElementById('create-tenderly-fork').addEventListener('click',async function(){const button=this;const block=window.prompt('可选：钉死 Base Sepolia fork 区块号（十进制；留空 = latest）','');if(block===null){return;}button.disabled=true;document.getElementById('connection').textContent='正在创建 Tenderly Virtual TestNet（固定 Chain ID）…';try{const payload={environment:environment.value};if(block&&block.trim()){payload.blockNumber=block.trim();}const result=await requestJson('/api/tenderly-forks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});document.getElementById('connection').textContent='Virtual TestNet 已创建并回填：Chain ID '+result.fork.chainId+'（已校验）'+(result.fork.forkBlockNumber!==undefined?'，fork 块 '+result.fork.forkBlockNumber:'')+'，Tenderly env '+result.fork.environmentId+'；主 RPC / Admin RPC / WSS 已保存'+(result.fork.baselineRegistryUpdated?'，CURRENT.json 已登记':'')+'。下一步：按需 ② 部署合约，再 ④ 初始化 Mock Market Bundle。';await load();}catch(error){showError(error);}finally{button.disabled=false;}});
     document.getElementById('reload-market-sources').addEventListener('click',async function(){const button=this;button.disabled=true;document.getElementById('market-source-status').textContent='正在读取链上 Market 数据…';try{await loadMarketSources();}catch(error){state.marketSources=[];renderMarketSources();document.getElementById('market-source-status').textContent='Market 列表读取失败：'+error.message;}finally{button.disabled=false;}});
     document.getElementById('copy-market-source').addEventListener('click',function(){copyMarketSource().catch(showError);});

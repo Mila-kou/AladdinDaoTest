@@ -86,6 +86,11 @@ interface VerificationResult {
   readonly consoleImplementedRows: number;
   readonly consoleFilteredRows: number;
   readonly environmentsTitle: string | null;
+  readonly envTabCount: number;
+  readonly envTabSelected: string | null;
+  readonly envSelectValue: string;
+  readonly envTabBadgeText: string;
+  readonly envMobileTabCount: number;
   readonly wizardSectionTitle: string;
   readonly wizardStepRows: number;
   readonly wizardRunDisabled: boolean;
@@ -371,12 +376,19 @@ async function verifyFormulas(page: Page, url: string, readyId: string) {
   };
 }
 
-// 测试环境页：「⓪ 一键搭建向导」四步行齐全、「② 部署合约」section 存在；
+// 测试环境页：环境标签条 5 个标签、默认选中 tx-fork（静态打开即验，无记忆时的默认值）；
+// 「⓪ 一键搭建向导」四步行齐全、「② 部署合约」section 存在；
 // 静态打开时向导一键按钮、分支下拉与两个部署按钮降级禁用并提示 dashboard:serve。
 async function verifyEnvironments(page: Page, url: string) {
   await page.goto(url);
   await page.waitForSelector('#environment-page[data-page-ready="true"]');
   const environmentsTitle = await page.locator('h1').textContent();
+  const envTabCount = await page.locator('#env-tabs .env-tab').count();
+  const envTabSelected = envTabCount > 0
+    ? await page.locator('#env-tabs .env-tab[aria-selected="true"]').getAttribute('data-env')
+    : null;
+  const envSelectValue = await page.locator('#environment').inputValue();
+  const envTabBadgeText = (await page.locator('#env-tabs').textContent()) ?? '';
   const wizardSectionTitle = (await page.locator('#wizard-panel h2').textContent()) ?? '';
   const wizardStepRows = await page.locator('#wizard-panel .wizard-step').count();
   const wizardRunDisabled = await page.locator('#wizard-run').isDisabled();
@@ -388,6 +400,10 @@ async function verifyEnvironments(page: Page, url: string) {
   const deployStatusText = (await page.locator('#deploy-status').textContent()) ?? '';
   return {
     environmentsTitle,
+    envTabCount,
+    envTabSelected,
+    envSelectValue,
+    envTabBadgeText,
     wizardSectionTitle,
     wizardStepRows,
     wizardRunDisabled,
@@ -512,6 +528,7 @@ if (!input) {
   await page.goto(environmentsUrl);
   await page.waitForSelector('#environment-page[data-page-ready="true"]');
   const environmentsMobileBodyWidth = await page.evaluate(() => document.body.scrollWidth);
+  const envMobileTabCount = await page.locator('#env-tabs .env-tab').count();
   await page.goto(reconciliationConsoleUrl);
   await page.waitForSelector('#reconciliation-console-page[data-page-ready="true"]');
   const consoleMobileBodyWidth = await page.evaluate(() => document.body.scrollWidth);
@@ -567,6 +584,7 @@ if (!input) {
     pageFormulaHasPositionSizes: pageFormulas.formulaHasPositionSizes,
     ...reconciliationConsole,
     ...environmentsPage,
+    envMobileTabCount,
     environmentsMobileBodyWidth,
     mobileBodyWidth,
     executionMobileBodyWidth,
@@ -686,6 +704,13 @@ if (!input) {
     || result.consoleFilteredRows < 1
     || result.consoleFilteredRows >= result.consoleFieldRows
     || result.environmentsTitle !== '测试环境'
+    // 环境标签条：5 个环境标签齐全、无记忆时默认选中 tx-fork（隐藏 select 同步）；390 宽标签条仍完整（配合上/下方 body 宽度断言）。
+    || result.envTabCount !== 5
+    || result.envTabSelected !== 'tx-fork'
+    || result.envSelectValue !== 'tx-fork'
+    // 徽章至少要有三条 Fork 的固定 Chain ID（静态模式来自内嵌常量，serve 模式来自 profiles）。
+    || !['Chain 99911', 'Chain 99912', 'Chain 99913'].every((badge) => result.envTabBadgeText.includes(badge))
+    || result.envMobileTabCount !== 5
     // ⓪ 一键搭建向导：面板存在、四步行齐全；静态打开时一键按钮禁用并提示 dashboard:serve。
     || !result.wizardSectionTitle.includes('⓪ 一键搭建向导')
     || result.wizardStepRows !== 4

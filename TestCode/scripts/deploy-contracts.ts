@@ -423,12 +423,28 @@ export default config;
   };
   await writeFile(parametersPath, `${JSON.stringify(ignitionParameters, null, 2)}\n`, 'utf8');
   log(`Ignition 参数：keeper 角色=keeper 地址，config/market/timelock/multisig/feeKeeper=admin 地址（回落规则见 02 §9.2）`);
-  const deployedAddressesPath = join(options.repoPath, 'ignition', 'deployments', options.deploymentId, 'deployed_addresses.json');
-  if (existsSync(deployedAddressesPath)) {
+  let deployedAddressesPath = join(options.repoPath, 'ignition', 'deployments', options.deploymentId, 'deployed_addresses.json');
+  // 完整性哨兵：SubaccountRouter 属 Fx100Core 依赖图最后一批 future，缺它说明上次部署中断。
+  const productsComplete = existsSync(deployedAddressesPath)
+    && Object.keys(JSON.parse(await readFile(deployedAddressesPath, 'utf8')) as Record<string, string>)
+      .some((key) => key.endsWith('#SubaccountRouter'));
+  if (productsComplete) {
     // 续跑：Ignition journal 记录了首次 deployer；新生成的一次性 deployer 会触发 from-account 对账失败，
     // 且部署已完成，直接复用产物即可。
     log(`检测到已完成的部署产物，跳过 Ignition：${deployedAddressesPath}`);
   } else {
+    if (existsSync(deployedAddressesPath)) {
+      // 产物不完整（上次部署中断，如 serve 重启杀掉按钮任务）：journal 绑定首次一次性 deployer（key 已弃），
+      // 换 deployer 续跑会被 Ignition from-account 对账拒绝——改用全新 deployment-id 整套重部
+      // （fork 上多几十笔便宜交易，换取干净一致的地址簿；半套旧合约留在 fork 上无害）。
+      let suffix = 2;
+      while (existsSync(join(options.repoPath, 'ignition', 'deployments', `${options.deploymentId}r${suffix}`))) suffix += 1;
+      const freshDeploymentId = `${options.deploymentId}r${suffix}`;
+      log(`检测到不完整的部署产物（缺 SubaccountRouter）：${deployedAddressesPath}`);
+      log(`journal 无法用新 deployer 续跑，改用全新 deployment-id ${freshDeploymentId} 重新部署`);
+      (options as { deploymentId: string }).deploymentId = freshDeploymentId;
+      deployedAddressesPath = join(options.repoPath, 'ignition', 'deployments', freshDeploymentId, 'deployed_addresses.json');
+    }
     await runCommand(
       `hardhat ignition deploy（deployment-id=${options.deploymentId}）`,
       'npx',

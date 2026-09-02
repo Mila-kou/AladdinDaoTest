@@ -209,6 +209,14 @@ export class ContractDeploymentManager {
   private execute(job: ContractDeploymentJob, secrets: readonly string[]): void {
     const executable = join(this.projectRoot, 'node_modules', '.bin', 'tsx');
     const args = ['scripts/deploy-contracts.ts', '--env', job.environment, '--branch', job.branch];
+    // 页面按钮无法让用户传 --snapshot-id，而参数快照目录（TestCase/config/<版本>/<环境>/<id>/）同 id 拒绝覆盖：
+    // 服务端为每次真实部署自动生成唯一 id（YYMMDD-HHMM），同日重复部署不再撞护栏；dry-run 不产生快照无需 id。
+    if (!job.dryRun) {
+      const now = new Date();
+      const pad = (v: number): string => String(v).padStart(2, '0');
+      const snapshotId = `${String(now.getFullYear()).slice(2)}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+      args.push('--snapshot-id', snapshotId);
+    }
     if (job.dryRun) args.push('--dry-run');
     const record = (chunk: Buffer | string): void => {
       const lines = sanitize(String(chunk), secrets).split(/\r?\n/).filter(Boolean);
@@ -240,7 +248,7 @@ export class ContractDeploymentManager {
         if (exitCode === 0) {
           finish(0, job.dryRun
             ? 'dry-run 预览完成（未触链、未登记）。确认计划无误后可执行真实部署。'
-            : '部署完成：deployment manifest、.env.local E2E_DEPLOYMENT_MANIFEST、Docs/contract-releases/CURRENT.json、参数快照四处已自动登记。下一步：重新初始化 Mock Market Bundle。');
+            : '部署完成：deployment manifest、config/environment-bindings.json、Docs/contract-releases/CURRENT.json、参数快照四处已自动登记。下一步：重新初始化 Mock Market Bundle。');
         } else {
           finish(exitCode, `部署失败：deploy:contracts 退出码 ${exitCode}，详见日志末尾。`);
         }

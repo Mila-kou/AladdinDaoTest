@@ -20,6 +20,7 @@ import type {
   ScenarioResult,
   TestRunArtifact,
 } from './schema.js';
+import { loadVersionCases } from './version-cases.js';
 import { writeRunOutputs } from './write-outputs.js';
 
 interface ReporterOptions {
@@ -135,6 +136,53 @@ function executionLinks(result: TestResult): ScenarioResult['executionLinks'] {
   });
 }
 
+// —— 版本功能用例（CT/XT/FT）标题识别 ——跨会话锁定约定：测试标题「<ID> <标题> @p0/@p1 @readonly|@tx」，
+// ID 满足 ^(?:CT|XT|FT)-[A-Z0-9]+(?:-[A-Z0-9]+)*-\d{3}$。SCN 提取与校验保持原样，本组仅服务
+// 「没有 SCN 编号」时的新增分支。
+const FUNCTIONAL_TITLE_ID = /\b(?:CT|XT|FT)-[A-Z0-9]+(?:-[A-Z0-9]+)*-\d{3}(?!\d)/;
+
+type FunctionalPriority = ScenarioCatalogItem['priority'];
+
+interface FunctionalCatalogIndex {
+  readonly release: string;
+  readonly byId: ReadonlyMap<string, { readonly title: string; readonly priority: FunctionalPriority }>;
+}
+
+/**
+ * 功能用例目录：TestCase/E2E/versions/<release>/Trade-测试用例矩阵.md，
+ * release 取 CURRENT.json primary.version（loadVersionCases 已容错——CURRENT.json 缺失、
+ * versions/ 目录或矩阵文件不存在都不抛错，得到空索引，reporter 逐条记 WARNING 回退）。
+ */
+async function loadFunctionalCatalog(): Promise<FunctionalCatalogIndex> {
+  const byId = new Map<string, { title: string; priority: FunctionalPriority }>();
+  try {
+    const data = await loadVersionCases(process.cwd());
+    const view = data.versions.find((item) => item.release === data.defaultRelease) ?? data.versions[0];
+    for (const section of view?.sections ?? []) {
+      for (const item of section.cases) {
+        if (/^P[0-2]$/.test(item.priority)) {
+          byId.set(item.id, { title: item.title, priority: item.priority as FunctionalPriority });
+        }
+      }
+    }
+    return { release: view?.release ?? data.defaultRelease, byId };
+  } catch {
+    return { release: '', byId };
+  }
+}
+
+/** 矩阵缺行时的标题回退：测试标题去掉 ID 与 @ 标签。 */
+function functionalFallbackTitle(testTitle: string, id: string): string {
+  const stripped = testTitle.replace(id, ' ').replace(/@[\w-]+/g, ' ').replace(/\s+/g, ' ').trim();
+  return stripped || testTitle;
+}
+
+/** 矩阵缺行时的优先级回退：标题 @p0/@p1/@p2 标记；再缺省 P1。 */
+function functionalFallbackPriority(testTitle: string): FunctionalPriority {
+  const match = /@p([0-2])\b/i.exec(testTitle);
+  return match ? (`P${match[1]}` as FunctionalPriority) : 'P1';
+}
+
 function makeScenarioResult(
   test: TestCase,
   scenario: ScenarioCatalogItem,
@@ -223,10 +271,61 @@ export default class Fx100Reporter implements Reporter {
       const qualityIssues: TestRunArtifact['qualityIssues'] = [];
       const scenarioResults: ScenarioResult[] = [];
       const resultKeys = new Set<string>();
+      // 版本功能用例目录懒加载：纯 SCN 跑批不读矩阵，行为不变。
+      let functionalCatalog: FunctionalCatalogIndex | undefined;
 
       for (const test of this.tests) {
         const id = /SCN-\d{3}/.exec(test.titlePath().join(' '))?.[0];
         if (!id) {
+          // —— 新增分支：版本功能用例（CT/XT/FT）。标题命中任务书 ID 正则时按版本矩阵取标题/优先级；
+          //    矩阵里不存在的 ID 记 WARNING（annotation + qualityIssues.note）仍入结果，不判 ERROR。 ——
+          const functionalId = FUNCTIONAL_TITLE_ID.exec(test.titlePath().join(' '))?.[0];
+          if (functionalId) {
+            functionalCatalog ??= await loadFunctionalCatalog();
+            const entry = functionalCatalog.byId.get(functionalId);
+            if (!entry) {
+              qualityIssues.push({
+                severity: 'WARNING',
+                code: 'UNKNOWN_VERSION_CASE',
+                message: `功能用例 ${functionalId} 不在版本矩阵`
+                  + `（release ${functionalCatalog.release || '未登记'}）中：标题/优先级回退测试标题与 @p 标记。`,
+              });
+            }
+            const scenarioResult = makeScenarioResult(test, {
+              id: functionalId,
+              suite: functionalId.slice(0, 2),
+              suiteName: '版本功能用例',
+              title: entry?.title ?? functionalFallbackTitle(test.title, functionalId),
+              priority: entry?.priority ?? functionalFallbackPriority(test.title),
+              executionMode: 'automated',
+            });
+            if (!scenarioResult) {
+              qualityIssues.push({
+                severity: 'ERROR',
+                code: 'MISSING_RESULT',
+                message: `${functionalId} 在 ${test.parent.project()?.name ?? 'unknown-project'} 没有任何 Playwright TestResult。`,
+              });
+              continue;
+            }
+            const annotated = entry ? scenarioResult : {
+              ...scenarioResult,
+              annotations: [...scenarioResult.annotations, {
+                type: 'catalog-warning',
+                description: `编号不在版本矩阵中（release ${functionalCatalog.release || '未登记'}），标题/优先级来自测试标题回退。`,
+              }],
+            };
+            const functionalKey = `${annotated.id}:${annotated.project}`;
+            if (resultKeys.has(functionalKey)) {
+              qualityIssues.push({
+                severity: 'ERROR',
+                code: 'DUPLICATE_SCENARIO_PROJECT',
+                message: `${annotated.id} 在 ${annotated.project} 中出现多次。`,
+              });
+            }
+            resultKeys.add(functionalKey);
+            scenarioResults.push(annotated);
+            continue;
+          }
           qualityIssues.push({
             severity: 'ERROR',
             code: 'UNMAPPED_TEST',

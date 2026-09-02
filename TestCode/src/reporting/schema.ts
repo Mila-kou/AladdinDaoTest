@@ -1,6 +1,22 @@
 import { z } from 'zod';
 
 import { executionModeValues } from './test-environments.js';
+import { VERSION_CASE_ID } from './version-cases.js';
+
+/**
+ * 版本功能用例（CT/XT/FT，Trade 测试用例矩阵）结果 id：与 SCN 场景 id 并列的联合分支，
+ * 正则复用 version-cases 的任务书定义（`^(?:CT|XT|FT)-[A-Z0-9]+(?:-[A-Z0-9]+)*-\d{3}$`）。
+ * SCN 原正则不放宽；功能用例不进 SCENARIO-CHECKLIST 目录，目录一致性校验对其豁免
+ * （矩阵缺行由 reporter 记 WARNING）。
+ */
+export function isFunctionalResultId(id: string): boolean {
+  return VERSION_CASE_ID.test(id);
+}
+
+const scenarioResultIdSchema = z.string().regex(/^SCN-\d{3}$/);
+const functionalResultIdSchema = z.string().regex(VERSION_CASE_ID);
+/** 功能用例结果的 suite 取 ID 前缀（CT/XT/FT）；SCN 结果仍必须是 S\d{2}。 */
+const functionalSuiteSchema = z.enum(['CT', 'XT', 'FT']);
 
 export const resultStatusSchema = z.enum([
   'PASS',
@@ -118,9 +134,9 @@ const attemptSchema = z.object({
 });
 
 export const scenarioResultSchema = z.object({
-  id: z.string().regex(/^SCN-\d{3}$/),
+  id: z.union([scenarioResultIdSchema, functionalResultIdSchema]),
   testId: z.string().min(1),
-  suite: z.string().regex(/^S\d{2}$/),
+  suite: z.union([z.string().regex(/^S\d{2}$/), functionalSuiteSchema]),
   scenarioTitle: z.string().min(1),
   testTitle: z.string().min(1),
   priority: z.enum(['P0', 'P1', 'P2']),
@@ -199,6 +215,10 @@ export function validateTestRunArtifact(input: unknown): TestRunArtifact {
   }
 
   for (const result of artifact.results) {
+    // 功能用例（CT/XT/FT）不在 SCN 场景目录；其目录归属由版本矩阵判定（缺行 = reporter WARNING，不是结构错误）。
+    if (isFunctionalResultId(result.id)) {
+      continue;
+    }
     if (!catalogIds.has(result.id)) {
       throw new Error(`运行结果引用了目录之外的编号：${result.id}`);
     }

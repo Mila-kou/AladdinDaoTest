@@ -19,7 +19,7 @@ import {
   preliminaryIncreaseTokens,
 } from '../reconciliation/formulas.js';
 import { isExecutionPriceAcceptable } from '../scenarios/scn-070-model.js';
-import type { ScenarioResult, TestRunArtifact } from './schema.js';
+import { isFunctionalResultId, type ScenarioResult, type TestRunArtifact } from './schema.js';
 
 type JsonRecord = Record<string, unknown>;
 type Reconciliation = NonNullable<ScenarioResult['executionEvidence']>['reconciliations'][number];
@@ -2685,7 +2685,12 @@ function deriveScn009Evidence(
 
 interface EvidenceSource {
   readonly attachmentName: string;
-  readonly derive: (raw: JsonRecord, sourcePath: string) => NonNullable<ScenarioResult['executionEvidence']>;
+  /**
+   * 缺省 = 透明兜底（版本功能用例）：不派生 executionEvidence，Playwright 注解与附件保持原样
+   * （preserveAttachments 照常归档、可下载），绝不抛错。A 节 spec 的证据结构由 spec 侧定义，
+   * 等结构定稿后再补专属派生器。
+   */
+  readonly derive?: (raw: JsonRecord, sourcePath: string) => NonNullable<ScenarioResult['executionEvidence']>;
 }
 
 const EVIDENCE_SOURCES: Record<string, EvidenceSource> = {
@@ -2709,8 +2714,19 @@ const EVIDENCE_SOURCES: Record<string, EvidenceSource> = {
   'SCN-070': { attachmentName: 'scn-070-evidence.json', derive: deriveScn070Evidence },
 };
 
+/**
+ * 结果 id → 证据来源：SCN 走静态映射表；版本功能用例（CT/XT/FT）走通用规则——
+ * 附件名 = id 小写 + '-evidence.json'（每条一份），派生器缺省（透明兜底）。
+ */
+function evidenceSourceFor(id: string): EvidenceSource | undefined {
+  const staticSource = EVIDENCE_SOURCES[id];
+  if (staticSource) return staticSource;
+  if (isFunctionalResultId(id)) return { attachmentName: `${id.toLowerCase()}-evidence.json` };
+  return undefined;
+}
+
 async function evidenceForResult(result: ScenarioResult): Promise<ScenarioResult['executionEvidence']> {
-  const source = EVIDENCE_SOURCES[result.id];
+  const source = evidenceSourceFor(result.id);
   const attachment = source
     ? result.attempts.at(-1)?.attachments.find((item) => item.name === source.attachmentName)
     : undefined;
@@ -2718,6 +2734,8 @@ async function evidenceForResult(result: ScenarioResult): Promise<ScenarioResult
   const evidencePath = resolve(process.cwd(), attachment.path);
   const relativePath = relative(process.cwd(), evidencePath);
   if (relativePath.startsWith('..')) return undefined;
+  // 透明兜底：路径检查通过但没有专属派生器——附件登记在案、原样归档，executionEvidence 缺省。
+  if (!source.derive) return result.executionEvidence;
   try {
     const parsed = JSON.parse(await readFile(evidencePath, 'utf8')) as unknown;
     return source.derive(record(parsed), relativePath);

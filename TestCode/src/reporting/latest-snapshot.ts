@@ -1,7 +1,12 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { validateTestRunArtifact, type ScenarioResult, type TestRunArtifact } from './schema.js';
+import {
+  isFunctionalResultId,
+  validateTestRunArtifact,
+  type ScenarioResult,
+  type TestRunArtifact,
+} from './schema.js';
 
 function resultKey(result: ScenarioResult): string {
   return `${result.id}:${result.project}`;
@@ -22,7 +27,9 @@ export function mergeLatestSnapshot(
   const catalogIds = new Set(current.catalog.map((item) => item.id));
   const merged = new Map<string, ScenarioResult>();
   for (const result of [...previous.results, ...current.results]) {
-    if (!catalogIds.has(result.id)) continue;
+    // SCN 结果仍按当前目录过滤（目录裁撤即出场）；功能用例（CT/XT/FT）不在 SCN 目录，
+    // 按 id:project 正常参与合并（SKIP 不覆盖已有执行的规则同一套），删除走墓碑机制。
+    if (!catalogIds.has(result.id) && !isFunctionalResultId(result.id)) continue;
     const key = resultKey(result);
     merged.set(key, preferResult(merged.get(key), result));
   }

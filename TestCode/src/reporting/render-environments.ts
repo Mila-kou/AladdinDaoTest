@@ -105,8 +105,62 @@ export function renderEnvironmentsHtml(generatedAt: string): string {
     <div id="check-results" class="check-grid"><p class="muted">点击“检查当前环境”开始。</p></div>
   </section>
 
+  <section class="panel section-card" id="ls-panel">
+    <div class="section-heading"><div><h2>⑥ 本地服务：前端 + Keeper</h2><p>把「起一套指向某环境的本地前端 + Keeper」变成按钮：前端选分支与目标环境的 RPC，Keeper 按类型勾选；每个进程独立登记，停止时杀到真正的子进程。</p></div></div>
+    <div class="ls-grid">
+      <article class="ls-card" id="ls-fe-card">
+        <h3>本地前端</h3>
+        <div class="ls-fields">
+          <label>前端分支（Github/ 下 fx100-apps@* 克隆 / worktree）<select id="ls-fe-branch" disabled><option value="">正在读取分支列表…</option></select><small id="ls-fe-branch-hint" hidden></small></label>
+          <label>目标环境（前端 RPC 指向该环境；随页面环境切换同步）<select id="ls-fe-env"></select></label>
+          <label>端口<input type="number" id="ls-fe-port" value="3110" min="1024" max="65535"><small>3010 留给常驻 fx100-frontend-local，请用其它端口</small></label>
+        </div>
+        <details class="ls-advanced"><summary>高级选项（数据源 / 门禁 / Flash / 价格 API / Chainlink 凭证）</summary>
+          <div class="ls-fields">
+            <label>数据源 NEXT_PUBLIC_MARKETS_DATA_SOURCE<select id="ls-fe-data-source"><option value="api" selected>api（默认；split 会因地址大小写索引失配而 Market Unavailable）</option><option value="split">split</option></select></label>
+            <label class="ls-opt"><input type="checkbox" id="ls-fe-gate-off" checked><span>关闭门禁（NEXT_PUBLIC_GATE_ENABLED=false；本地 /api/access-gate/verify 缺 DATABASE_URL 必 500）</span></label>
+            <label class="ls-opt"><input type="checkbox" id="ls-fe-flash"><span>Flash / One-Click（NEXT_PUBLIC_FLASH_ENABLED=true）<small>需 Upstash Redis：UPSTASH_REDIS_REST_URL/TOKEN，否则订单在签名后、上链前失败</small></span></label>
+            <label>价格 API（NEXT_PUBLIC_PRICE_FEED_API_URL）<input type="text" id="ls-fe-price-api" value="https://fx100-apps.vercel.app/api"></label>
+            <label>API URL（NEXT_PUBLIC_API_URL）<input type="text" id="ls-fe-api-url" value="https://fx100-apps.vercel.app"></label>
+            <label class="ls-opt"><input type="checkbox" id="ls-fe-chainlink" checked><span>Chainlink 凭证从 keeper .env 抽取（shell 侧，只取四行，不进看板进程）</span></label>
+          </div>
+        </details>
+        <div class="actions ls-actions"><button id="ls-fe-precheck" type="button" class="secondary">前置检查</button><button id="ls-fe-start" type="button">启动前端</button><button id="ls-fe-refresh" type="button" class="secondary">刷新实例</button></div>
+        <p id="ls-fe-status" class="notice"></p>
+        <div id="ls-fe-precheck-results" hidden></div>
+        <p id="ls-fe-pruned" class="muted" hidden></p>
+        <div id="ls-fe-services" class="table-wrap"><p class="muted">尚未读取本地前端实例。</p></div>
+      </article>
+      <article class="ls-card" id="ls-kp-card">
+        <h3>本地 Keeper</h3>
+        <div class="ls-fields">
+          <label>目标环境（车道 = 该环境 Chain ID，日志落 logs/&lt;chainId&gt;/；随页面环境切换同步）<select id="ls-kp-env"></select></label>
+        </div>
+        <div class="ls-workers">
+          <label class="ls-opt"><input type="checkbox" id="ls-kp-w-producer" data-worker="producer"><span><strong>producer</strong><small>事件监听 · 填队列（勾选任一 worker 自动包含）</small></span></label>
+          <label class="ls-opt"><input type="checkbox" id="ls-kp-w-ord" data-worker="ord-worker" checked><span><strong>ord-worker</strong><small>订单执行 · ORDER_KEEPER</small></span></label>
+          <label class="ls-opt"><input type="checkbox" id="ls-kp-w-liq" data-worker="liq-worker"><span><strong>liq-worker</strong><small>清算 · LIQUIDATION_KEEPER</small></span></label>
+          <label class="ls-opt"><input type="checkbox" id="ls-kp-w-adl" data-worker="adl-worker"><span><strong>adl-worker</strong><small>ADL · ADL_KEEPER</small></span></label>
+          <label class="ls-opt"><input type="checkbox" id="ls-kp-w-rel" data-worker="rel-worker"><span><strong>rel-worker</strong><small>Relay 代发 · Express/Flash（队列由前端 /api/relay/* 填）</small></span></label>
+        </div>
+        <div class="ls-fields">
+          <label class="ls-opt"><input type="checkbox" id="ls-kp-fork-mode" checked><span>Fork 模式：关闭全量扫描（KEEPER_LEGACY_MARKET_STATE_SCAN_ENABLED=false + POSITION_EVENT_CACHE=true）</span></label>
+          <label class="ls-opt"><input type="checkbox" id="ls-kp-clear-cursors" checked><span>启动前清理本链事件游标（先备份到 artifacts/local-services/redis-backup/）</span></label>
+          <label class="ls-opt ls-danger"><input type="checkbox" id="ls-kp-clear-queues"><span>连队列一起清（keeper:* 全部）</span></label>
+        </div>
+        <div class="guide ls-guide">换 Fork 不清游标，producer 会死等旧块号，订单上链后无人执行；两个扫描开关必须成对。</div>
+        <div class="actions ls-actions"><button id="ls-kp-check" type="button" class="secondary">体检</button><button id="ls-kp-start" type="button">启动所选</button><button id="ls-kp-status" type="button" class="secondary">状态</button><button id="ls-kp-stop" type="button" class="secondary">停止本车道</button></div>
+        <p id="ls-kp-status-line" class="notice"></p>
+        <p id="ls-kp-summary" class="muted" hidden></p>
+        <ul id="ls-kp-warnings" class="ls-warnings" hidden></ul>
+        <details id="ls-kp-output-wrap" hidden><summary>命令输出</summary><code id="ls-kp-command"></code><pre id="ls-kp-output"></pre></details>
+        <div id="ls-kp-state"><p class="muted">尚未读取 Keeper 状态。</p></div>
+      </article>
+    </div>
+  </section>
+
   <section class="panel section-card noise-plan-section">
-    <div class="section-heading"><div><h2>⑥ 造数据计划：多 Trader 注资 + 网格交易</h2><p>作为测试环境配置的最后一步，为 Fork 批量铺设复杂交易数据。</p></div></div>
+    <div class="section-heading"><div><h2>⑦ 造数据计划：多 Trader 注资 + 网格交易</h2><p>作为测试环境配置的最后一步，为 Fork 批量铺设复杂交易数据。</p></div></div>
     <iframe id="noise-plan-frame" title="造数据计划：多 Trader 注资 + 网格交易" src="./faucet.html?embed=noise" loading="lazy"></iframe>
   </section>
 
@@ -137,6 +191,17 @@ export function renderEnvironmentsHtml(generatedAt: string): string {
     .wizard-log{width:100%;margin:0;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere;max-height:130px;overflow:auto;font-size:12px;border-top:1px dashed var(--line);padding-top:6px}
     .status.pending{color:var(--muted)}.status.running{color:#f6c85f}.status.succeeded{color:#76e3aa}.status.failed{color:#ff9090}.status.skipped{color:var(--muted)}
     .operation-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:9px;margin-top:12px}.operation-grid label,.check{display:flex;grid-template-columns:auto 1fr;align-items:flex-start;gap:9px;border:1px solid var(--line);border-radius:9px;padding:10px;background:#0d1627;color:var(--text)}.bundle-alias{min-width:min(310px,100%)}.danger-check{border-color:#8b6227;color:#f6c85f}.market-source{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:9px;background:#0d1627}.market-source label{min-width:min(680px,100%)}.market-source span{padding:9px 0}.deploy-controls{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin-top:12px}.deploy-controls label{min-width:min(520px,100%);flex:1}details summary{cursor:pointer;font-weight:700}.table-wrap{overflow:auto;margin-top:12px}table{width:100%;border-collapse:collapse}th,td{text-align:left;border-bottom:1px solid var(--line);padding:8px;white-space:nowrap}td input{min-width:260px}.group-funding{color:#73d8a4}.group-fee{color:#f6c85f}.init-actions{border-top:1px dashed var(--line);padding-top:16px;margin-top:16px}.init-actions label{min-width:min(240px,100%)}pre{max-height:360px;overflow:auto;white-space:pre-wrap;background:#08101d;border-radius:9px;padding:12px}.noise-plan-section{padding-bottom:4px}.noise-plan-section iframe{display:block;width:100%;min-height:900px;border:0;background:transparent;margin-top:12px}footer{margin-top:18px;color:var(--muted)}
+    .ls-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(440px,1fr));gap:14px;margin-top:14px}@media (max-width:520px){.ls-grid{grid-template-columns:1fr}}
+    .ls-card{border:1px solid var(--line);border-radius:11px;background:#0d1627;padding:14px;min-width:0;overflow-wrap:anywhere}.ls-card h3{margin:0}.ls-card .table-wrap{margin-top:10px}.ls-card td{white-space:normal;overflow-wrap:anywhere}.ls-card pre{margin:0;max-height:260px;font-size:12px}
+    .ls-fields{display:grid;gap:10px;margin-top:10px}.ls-fields label{min-width:0}.ls-fields small,.ls-opt small{display:block;color:var(--muted)}
+    .ls-opt{display:flex;flex-direction:row;align-items:flex-start;gap:8px;color:var(--text)}.ls-opt span{min-width:0}.ls-opt input[type=checkbox]{margin-top:4px;flex:none}.ls-danger{color:#f6c85f}
+    .ls-workers{display:grid;gap:8px;margin-top:10px;border:1px solid var(--line);border-radius:9px;padding:10px;background:#0a1322}.ls-workers strong{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+    .ls-advanced{margin-top:10px}.ls-advanced summary{color:var(--muted)}.ls-actions{margin-top:12px}.ls-guide{margin-top:10px;padding:8px 12px;font-size:12px}
+    .ls-check-grid{margin-top:10px}.ls-info{display:grid;gap:6px;border:1px solid var(--line);border-radius:9px;padding:10px;margin-top:10px;background:#0a1322}.ls-info code{overflow-wrap:anywhere;word-break:break-all}.ls-rpc-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .ls-mini{padding:4px 9px;font-size:12px}.ls-row-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.ls-log-row td{background:#08101d}
+    .ls-kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:10px 0 0;font-size:13px}.ls-kv dt{color:var(--muted)}.ls-kv dd{margin:0;overflow-wrap:anywhere}
+    .ls-warnings{margin:8px 0 0;padding-left:18px;color:#f6c85f}.ls-muted-details{margin-top:8px}.ls-muted-details summary{color:var(--muted);font-weight:600}.ls-muted-details ul{margin:6px 0 0;padding-left:18px}
+    #ls-kp-command{display:block;color:var(--muted);font-size:12px;margin-bottom:6px;overflow-wrap:anywhere}
   `;
 
   const script = `
@@ -243,6 +308,7 @@ export function renderEnvironmentsHtml(generatedAt: string): string {
     async function loadMarketSources(){const query=encodeURIComponent(environment.value);const result=await requestJson('/api/default-market-source?environment='+query);state.marketSources=result.markets;renderMarketSources();}
     async function copyMarketSource(){const button=document.getElementById('copy-market-source'),select=document.getElementById('market-source-select'),status=document.getElementById('market-source-status');button.disabled=true;status.textContent='正在读取该 Market 的 33 项参数…';try{const result=await requestJson('/api/default-market-source',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({environment:environment.value,indexToken:select.value})});state.profile.profile.referenceMarketIndex=result.source.marketIndex;state.profile.profile.parameterOverrides=result.source.parameterOverrides;state.profile.parameters=Object.entries(result.source.parameterOverrides).map(function(entry){const current=state.profile.parameters.find(function(parameter){return parameter.label===entry[0];});return Object.assign({},current,{overrideValue:entry[1]});});renderProfile();status.textContent='已复制 Market #'+result.source.marketIndex+' 的 33 项参数；点击“保存初始化配置”后生效。';}finally{button.disabled=false;}}
     async function load(){
+      renderLocalServicesEnvironment();
       if(!['http:','https:'].includes(location.protocol)){
         document.getElementById('connection').textContent='静态 HTML 仅预览：配置读取、合约部署与初始化需要经 npm run dashboard:serve 打开本页。';
         document.getElementById('deploy-status').textContent='静态模式不可部署：分支列表与部署任务需要本机看板服务，请经 npm run dashboard:serve 打开本页（按钮已禁用）。';
@@ -340,6 +406,170 @@ export function renderEnvironmentsHtml(generatedAt: string): string {
     document.getElementById('run-initialization').addEventListener('click',async function(){const button=this;const bundleAlias=document.getElementById('bundle-alias').value.trim();if(!/^[a-z0-9][a-z0-9-]{0,47}$/.test(bundleAlias)){showError(new Error('Market Bundle 别名只允许小写字母、数字和连字符，长度 1–48。'));return;}button.disabled=true;try{await saveConfiguration();await saveProfile();const result=await requestJson('/api/environment-initializations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({environment:environment.value,bundleAlias:bundleAlias,force:document.getElementById('force-init').checked,forceSharedCollateral:document.getElementById('force-shared-collateral').checked,reuseRpcForAdmin:false})});state.activeInitializationId=result.initialization.id;renderJob(result.initialization);state.poll=setInterval(function(){pollJob().catch(showError);},1500);}catch(error){button.disabled=false;showError(error);}});
     function showError(error){document.getElementById('connection').textContent='操作失败：'+error.message;document.getElementById('initialization-status').textContent='操作失败：'+error.message;}
     window.addEventListener('message',function(event){if(event.origin!==location.origin||!event.data||event.data.type!=='fx100-noise-height')return;const frame=document.getElementById('noise-plan-frame');if(event.source===frame.contentWindow){frame.style.height=Math.max(900,Number(event.data.height)||900)+'px';}});
+    // ⑥ 本地服务：前端 + Keeper。接口 /api/local-services/*；404/405 或网络错误一律视作看板服务旧进程（不弹 alert，只写各卡片状态行）。
+    const lsEnvironmentNames=environmentNames.filter(function(name){return name!=='dev-readonly';});
+    const LS_STALE_NOTICE='看板服务是旧进程或未启用本地服务接口，请停止后重新 npm run dashboard:serve';
+    const lsWorkerLabels={'producer':'事件监听 · 填队列','ord-worker':'订单执行 · ORDER_KEEPER','liq-worker':'清算 · LIQUIDATION_KEEPER','adl-worker':'ADL · ADL_KEEPER','rel-worker':'Relay 代发 · Express/Flash'};
+    const lsKeeperActionLabels={check:'体检',start:'启动',status:'状态读取',stop:'停止本车道','clear-cursors':'清理游标'};
+    const lsState={initialized:false,kpDefaultsApplied:false,branches:[],branchesLoaded:false,feServices:[],feLogs:{},feOpenLogs:{},fePoll:null,feRefreshing:false,fePrecheck:null,prunedShown:{},kpStatus:null,kpOpenLogs:{}};
+    async function lsRequest(url,options){let response;try{response=await fetch(url,options);}catch(error){throw new Error(LS_STALE_NOTICE);}let result=null;try{result=await response.json();}catch(error){result=null;}const detail=result&&(result.detail||result.error);if(response.status===404||response.status===405){if(!detail||detail==='Not Found'||detail==='Method Not Allowed')throw new Error(LS_STALE_NOTICE);throw new Error(String(detail));}if(!response.ok)throw new Error(detail?String(detail):('接口返回 '+response.status));return result||{};}
+    function lsFrontendStatusLine(text){document.getElementById('ls-fe-status').textContent=text;}
+    function lsKeeperStatusLine(text){document.getElementById('ls-kp-status-line').textContent=text;}
+    function lsShortHead(head){return String(head==null?'':head).slice(0,12);}
+    function lsFormatUptime(seconds){seconds=Math.max(0,Math.floor(Number(seconds)||0));if(seconds<60)return seconds+' 秒';if(seconds<3600)return Math.floor(seconds/60)+' 分 '+(seconds%60)+' 秒';return Math.floor(seconds/3600)+' 时 '+Math.floor(seconds%3600/60)+' 分';}
+    function lsFormatTime(value){if(value==null||value==='')return '—';const date=new Date(value);return isNaN(date.getTime())?String(value):date.toLocaleString('zh-CN',{hour12:false});}
+    function lsJoin(value){if(Array.isArray(value))return value.length?value.join(', '):'无';return value==null?'—':String(value);}
+    function lsSetFrontendBusy(busy){['ls-fe-precheck','ls-fe-start','ls-fe-refresh'].forEach(function(id){document.getElementById(id).disabled=busy;});document.querySelectorAll('#ls-fe-services button').forEach(function(button){button.disabled=busy;});}
+    function lsSetKeeperBusy(busy){['ls-kp-check','ls-kp-start','ls-kp-status','ls-kp-stop'].forEach(function(id){document.getElementById(id).disabled=busy;});}
+    function lsSetStaticMode(){['ls-fe-branch','ls-fe-env','ls-fe-port','ls-fe-precheck','ls-fe-start','ls-fe-refresh','ls-kp-env','ls-kp-check','ls-kp-start','ls-kp-status','ls-kp-stop'].forEach(function(id){document.getElementById(id).disabled=true;});document.getElementById('ls-fe-branch').innerHTML='<option value="">静态模式不可用（需 dashboard:serve）</option>';const text='静态模式不可用：本地前端 / Keeper 的启停需经 npm run dashboard:serve 打开本页（按钮已禁用）。';lsFrontendStatusLine(text);lsKeeperStatusLine(text);}
+    // —— 本地前端 ——
+    function lsRenderBranchHint(){const select=document.getElementById('ls-fe-branch'),hint=document.getElementById('ls-fe-branch-hint');const item=lsState.branches.find(function(entry){return entry.directory===select.value;});const text=item?[item.path?'路径 '+item.path:'',item.installStale?('依赖可能过期'+(item.installHint?'：'+item.installHint:'')):'',item.patch==='MIXED'?'fork 补丁状态 MIXED：部分文件已打补丁，启动前先核对':''].filter(Boolean).join(' · '):'';hint.textContent=text;hint.hidden=!text;}
+    async function lsLoadFrontendBranches(){const select=document.getElementById('ls-fe-branch');try{const result=await lsRequest('/api/local-services/frontend/branches');lsState.branches=result.branches||[];if(!lsState.branches.length){select.innerHTML='<option value="">Github/ 下没有 fx100-apps@* 克隆或 worktree</option>';select.disabled=true;lsRenderBranchHint();return;}select.innerHTML=lsState.branches.map(function(item){return '<option value="'+esc(item.directory)+'">'+esc(item.directory)+' · '+esc(item.branch)+' @ '+esc(lsShortHead(item.head))+' · 补丁 '+esc(item.patch||'UNKNOWN')+(item.installStale?' · 依赖可能过期':'')+'</option>';}).join('');select.disabled=false;lsRenderBranchHint();}catch(error){lsState.branchesLoaded=false;select.innerHTML='<option value="">分支列表不可用</option>';select.disabled=true;lsRenderBranchHint();lsFrontendStatusLine('前端分支列表读取失败：'+error.message);}}
+    function lsPrecheckKey(env,directory,port){return env+'|'+directory+'|'+port;}
+    function lsInvalidatePrecheck(){lsState.fePrecheck=null;document.getElementById('ls-fe-precheck-results').hidden=true;}
+    function lsReadPort(){const raw=document.getElementById('ls-fe-port').value.trim();const port=Number(raw);if(!/^[0-9]+$/.test(raw)||port<1024||port>65535){lsFrontendStatusLine('端口须是 1024–65535 的整数。');return null;}if(port===3010){lsFrontendStatusLine('3010 留给常驻 fx100-frontend-local，请改用其它端口。');return null;}return port;}
+    function lsCopyFallback(text,done){const area=document.createElement('textarea');area.value=text;area.setAttribute('readonly','');area.style.position='fixed';area.style.opacity='0';document.body.appendChild(area);area.select();let ok=false;try{ok=document.execCommand('copy');}catch(error){ok=false;}document.body.removeChild(area);if(!ok){const code=document.getElementById('ls-fe-rpc');if(code){const range=document.createRange();range.selectNodeContents(code);const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);}}done(ok);}
+    function lsCopyText(text,stateNode){function done(ok){stateNode.textContent=ok?'已复制':'复制失败：已选中 RPC 文本，请按 ⌘C / Ctrl+C';}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){done(true);},function(){lsCopyFallback(text,done);});return;}lsCopyFallback(text,done);}
+    function lsRenderPrecheck(result){
+      const node=document.getElementById('ls-fe-precheck-results');const heads=result.heads||{};const fork=heads.fork,base=heads.baseSepolia;const rpc=result.rpcUrl||result.rpcMasked||'';
+      node.hidden=false;
+      node.innerHTML='<div class="check-grid ls-check-grid">'+(result.checks||[]).map(function(item){return '<article class="check-result '+esc(item.status)+'"><strong>'+esc(item.name)+' · '+esc(item.status)+'</strong><small>'+esc(item.detail)+'</small></article>';}).join('')+'</div>'
+        +'<div class="ls-info"><div class="ls-rpc-line"><strong>RPC 全文（钱包网络 / 前端 .env 用）</strong><button type="button" class="secondary ls-mini" id="ls-fe-copy-rpc">复制</button><span id="ls-fe-copy-state" class="muted"></span></div><code id="ls-fe-rpc">'+esc(rpc||'（接口未返回 RPC）')+'</code>'
+        +'<div>环境 <strong>'+esc(result.environment)+'</strong> · Chain ID <code>'+esc(result.chainId)+'</code></div>'
+        +'<div>'+(fork?'Fork 块高 <strong>'+esc(fork.blockNumber)+'</strong>（延迟 '+esc(fork.latencyMs)+' ms，eth_chainId '+esc(fork.chainId)+'）':'Fork RPC <strong>不可达</strong>')+' vs '+(base?'Base Sepolia 真链块高 <strong>'+esc(base.blockNumber)+'</strong>（延迟 '+esc(base.latencyMs)+' ms）':'Base Sepolia 真链 <strong>不可达</strong>')+'</div>'
+        +(result.identifyHint?'<div class="muted">识别提示：'+esc(result.identifyHint)+'</div>':'')+'</div>';
+      document.getElementById('ls-fe-copy-rpc').addEventListener('click',function(){lsCopyText(rpc,document.getElementById('ls-fe-copy-state'));});
+    }
+    async function lsRunFrontendPrecheck(env,directory,port){const query='environment='+encodeURIComponent(env)+'&directory='+encodeURIComponent(directory)+'&port='+encodeURIComponent(port);const result=await lsRequest('/api/local-services/frontend/precheck?'+query);lsState.fePrecheck={key:lsPrecheckKey(env,directory,port),data:result};lsRenderPrecheck(result);return result;}
+    function lsPrecheckSummary(result){const counts={PASS:0,WARN:0,FAIL:0};(result.checks||[]).forEach(function(item){counts[item.status]=(counts[item.status]||0)+1;});return 'PASS '+counts.PASS+' · WARN '+counts.WARN+' · FAIL '+counts.FAIL;}
+    async function lsPrecheckFrontend(){const directory=document.getElementById('ls-fe-branch').value,env=document.getElementById('ls-fe-env').value,port=lsReadPort();if(!directory){lsFrontendStatusLine('请先选择前端分支。');return;}if(port===null)return;lsSetFrontendBusy(true);lsFrontendStatusLine('前置检查中（'+env+' · :'+port+'）…');try{const result=await lsRunFrontendPrecheck(env,directory,port);lsFrontendStatusLine('前置检查完成：'+lsPrecheckSummary(result)+'。');}catch(error){lsFrontendStatusLine('前置检查失败：'+error.message);}finally{lsSetFrontendBusy(false);}}
+    function lsFrontendOptions(){return {marketsDataSource:document.getElementById('ls-fe-data-source').value,gateEnabled:!document.getElementById('ls-fe-gate-off').checked,flashEnabled:document.getElementById('ls-fe-flash').checked,priceFeedApiUrl:document.getElementById('ls-fe-price-api').value.trim(),apiUrl:document.getElementById('ls-fe-api-url').value.trim(),chainlinkFromKeeperEnv:document.getElementById('ls-fe-chainlink').checked};}
+    async function lsStartFrontend(){
+      const directory=document.getElementById('ls-fe-branch').value,env=document.getElementById('ls-fe-env').value,port=lsReadPort();
+      if(!directory){lsFrontendStatusLine('请先选择前端分支。');return;}
+      if(port===null)return;
+      lsSetFrontendBusy(true);
+      try{
+        // 没做过（或参数已变）的前置检查先补做一次，FAIL 项列进确认框，仍允许强行启动。
+        const key=lsPrecheckKey(env,directory,port);
+        if(!lsState.fePrecheck||lsState.fePrecheck.key!==key){lsFrontendStatusLine('启动前先做前置检查（'+env+' · :'+port+'）…');await lsRunFrontendPrecheck(env,directory,port);}
+        const fails=(lsState.fePrecheck.data.checks||[]).filter(function(item){return item.status==='FAIL';});
+        if(fails.length&&!window.confirm('前置检查有 '+fails.length+' 项 FAIL：\\n'+fails.map(function(item){return '· '+item.name+'：'+item.detail;}).join('\\n')+'\\n\\n仍要启动前端？')){lsFrontendStatusLine('已取消启动（前置检查 '+lsPrecheckSummary(lsState.fePrecheck.data)+'）。');return;}
+        lsFrontendStatusLine('正在启动前端：'+directory+' → '+env+' · :'+port+'…');
+        const result=await lsRequest('/api/local-services/frontend',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'start',environment:env,directory:directory,port:port,options:lsFrontendOptions()})});
+        const service=result.service||{};
+        lsFrontendStatusLine('前端已登记启动：'+(service.id||'')+' · 端口 '+(service.port||port)+' · 状态 '+(service.status||'starting')+'；变为 listening 后可「打开 /trade」。');
+        await lsRefreshFrontendServices();
+      }catch(error){lsFrontendStatusLine('启动失败：'+error.message);}
+      finally{lsSetFrontendBusy(false);}
+    }
+    function lsNotePruned(pruned){const fresh=pruned.filter(function(item){return item&&item.id&&!lsState.prunedShown[item.id];});if(!fresh.length)return;fresh.forEach(function(item){lsState.prunedShown[item.id]=true;});const node=document.getElementById('ls-fe-pruned');node.hidden=false;node.textContent='上次未正常停止的登记已清理: '+fresh.map(function(item){return item.label||item.id;}).join('、');}
+    function lsRenderFrontendServices(){
+      const wrap=document.getElementById('ls-fe-services');const services=lsState.feServices;
+      if(!services.length){wrap.innerHTML='<p class="muted">当前没有登记的本地前端实例。</p>';return;}
+      wrap.innerHTML='<table><thead><tr><th>端口</th><th>分支</th><th>环境</th><th>状态</th><th>PID</th><th>启动时间</th><th>运行时长</th><th>操作</th></tr></thead><tbody>'+services.map(function(service){
+        const statusClass={starting:'running',listening:'succeeded',exited:'failed'}[service.status]||'pending';const open=!!lsState.feOpenLogs[service.id];
+        let row='<tr><td><strong>'+esc(service.port)+'</strong></td><td>'+esc(service.directory)+'<br><small class="muted">'+esc(service.branch)+' @ '+esc(lsShortHead(service.head))+'</small></td><td>'+esc(service.environment)+'<br><small class="muted">Chain '+esc(service.chainId)+'</small></td><td><span class="status '+statusClass+'">'+esc(service.status)+'</span></td><td>'+esc(service.pid==null?'—':service.pid)+'</td><td>'+esc(lsFormatTime(service.startedAt))+'</td><td>'+esc(lsFormatUptime(service.uptimeSeconds))+'</td><td class="ls-row-actions">'
+          +(service.status==='listening'?'<a href="http://127.0.0.1:'+esc(service.port)+'/trade" target="_blank" rel="noopener">打开 /trade</a>':'')
+          +'<button type="button" class="secondary ls-mini" data-ls-fe-log="'+esc(service.id)+'">'+(open?'收起日志':'日志')+'</button>'
+          +'<button type="button" class="secondary ls-mini" data-ls-fe-stop="'+esc(service.id)+'">停止</button></td></tr>';
+        if(open)row+='<tr class="ls-log-row"><td colspan="8"><pre>'+esc((lsState.feLogs[service.id]||service.logTail||[]).join('\\n')||'（日志为空）')+'</pre><small class="muted">'+esc(service.logPath||'')+(service.command?' · '+esc(service.command):'')+'</small></td></tr>';
+        return row;}).join('')+'</tbody></table>';
+    }
+    function lsSyncFrontendPoll(){const needed=lsState.feServices.some(function(service){return service.status==='starting';});if(needed&&!lsState.fePoll){lsState.fePoll=setInterval(function(){lsRefreshFrontendServices();},4000);}if(!needed&&lsState.fePoll){clearInterval(lsState.fePoll);lsState.fePoll=null;}}
+    async function lsFetchFrontendLog(id){const result=await lsRequest('/api/local-services/frontend/'+encodeURIComponent(id)+'/log?lines=300');lsState.feLogs[id]=result.lines||[];}
+    async function lsRefreshFrontendServices(){
+      if(lsState.feRefreshing)return;lsState.feRefreshing=true;
+      try{
+        const result=await lsRequest('/api/local-services/frontend');
+        lsState.feServices=result.services||[];
+        const openIds=lsState.feServices.filter(function(service){return lsState.feOpenLogs[service.id];}).map(function(service){return service.id;});
+        await Promise.all(openIds.map(function(id){return lsFetchFrontendLog(id).catch(function(){});}));
+        lsRenderFrontendServices();lsNotePruned(result.pruned||[]);
+      }catch(error){lsState.feServices=[];document.getElementById('ls-fe-services').innerHTML='<p class="muted">实例列表不可用：'+esc(error.message)+'</p>';lsFrontendStatusLine('前端实例列表读取失败：'+error.message);}
+      finally{lsState.feRefreshing=false;lsSyncFrontendPoll();}
+    }
+    async function lsToggleFrontendLog(id){if(lsState.feOpenLogs[id]){lsState.feOpenLogs[id]=false;lsRenderFrontendServices();return;}lsState.feOpenLogs[id]=true;try{await lsFetchFrontendLog(id);}catch(error){lsState.feLogs[id]=['日志读取失败：'+error.message];}lsRenderFrontendServices();}
+    async function lsStopFrontend(id){lsSetFrontendBusy(true);lsFrontendStatusLine('正在停止 '+id+'…');try{const result=await lsRequest('/api/local-services/frontend',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'stop',id:id})});const detail=result.result||{};lsFrontendStatusLine('已停止 '+(result.id||id)+'：signaled '+lsJoin(detail.signaled)+' · remaining '+lsJoin(detail.remaining)+'。');delete lsState.feOpenLogs[id];await lsRefreshFrontendServices();}catch(error){lsFrontendStatusLine('停止失败：'+error.message);}finally{lsSetFrontendBusy(false);}}
+    // —— 本地 Keeper ——
+    function lsSyncProducer(){const producer=document.getElementById('ls-kp-w-producer');const implied=['ls-kp-w-ord','ls-kp-w-liq','ls-kp-w-adl'].some(function(id){return document.getElementById(id).checked;});if(implied){producer.checked=true;producer.disabled=true;}else{producer.disabled=false;}}
+    function lsSelectedWorkers(){return Array.from(document.querySelectorAll('#ls-kp-card [data-worker]')).filter(function(input){return input.checked;}).map(function(input){return input.dataset.worker;});}
+    function lsApplyKeeperDefaults(env){const fork=env!=='base-sepolia';document.getElementById('ls-kp-fork-mode').checked=fork;document.getElementById('ls-kp-clear-cursors').checked=fork;document.getElementById('ls-kp-clear-queues').checked=false;}
+    function lsKeeperOptions(){return {forkMode:document.getElementById('ls-kp-fork-mode').checked,clearCursors:document.getElementById('ls-kp-clear-cursors').checked,clearQueues:document.getElementById('ls-kp-clear-queues').checked};}
+    function lsRenderKeeperStatus(status){
+      const node=document.getElementById('ls-kp-state');
+      if(!status){node.innerHTML='<p class="muted">尚未读取 Keeper 状态。</p>';return;}
+      const lane=status.lane||{},redis=status.redis||{},cursors=redis.cursorKeys||[],processes=status.processes||[];
+      let html='<dl class="ls-kv"><dt>车道</dt><dd>Chain ID <code>'+esc(lane.chainId==null?'—':lane.chainId)+'</code> · 日志目录 <code>'+esc(lane.logDir||'—')+'</code></dd><dt>DataStore</dt><dd><code>'+esc(status.dataStore||'—')+'</code></dd><dt>RPC</dt><dd><code>'+esc(status.rpcMasked||'—')+'</code></dd><dt>Redis</dt><dd><span class="status '+(redis.reachable?'PASS':'FAIL')+'">'+(redis.reachable?'可达':'不可达')+'</span> 前缀 <code>'+esc(redis.keyspacePrefix||'—')+'</code> · 键数 '+esc(redis.keyCount==null?'—':redis.keyCount)+'</dd></dl>';
+      html+='<div class="table-wrap"><table><thead><tr><th>游标键</th><th>类型</th><th>值</th></tr></thead><tbody>'+(cursors.length?cursors.map(function(item){return '<tr><td><code>'+esc(item.key)+'</code></td><td>'+esc(item.type)+'</td><td><code>'+esc(item.value)+'</code></td></tr>';}).join(''):'<tr><td colspan="3" class="muted">本链没有事件游标键</td></tr>')+'</tbody></table></div>';
+      html+='<div class="table-wrap"><table><thead><tr><th>进程</th><th>PID</th><th>存活</th><th>日志</th></tr></thead><tbody>'+(processes.length?processes.map(function(proc){const open=!!lsState.kpOpenLogs[proc.name];return '<tr><td><strong>'+esc(proc.name)+'</strong><br><small class="muted">'+esc(lsWorkerLabels[proc.name]||'')+'</small></td><td>'+esc(proc.pid==null?'—':proc.pid)+'</td><td><span class="status '+(proc.alive?'succeeded':'failed')+'">'+(proc.alive?'alive':'dead')+'</span></td><td><button type="button" class="secondary ls-mini" data-ls-kp-log="'+esc(proc.name)+'">'+(open?'收起':'日志')+'</button></td></tr>'+(open?'<tr class="ls-log-row"><td colspan="4"><pre>'+esc((proc.logTail||[]).join('\\n')||'（日志为空）')+'</pre><small class="muted">'+esc(proc.logPath||'')+'</small></td></tr>':'');}).join(''):'<tr><td colspan="4" class="muted">本车道没有登记的 Keeper 进程</td></tr>')+'</tbody></table></div>';
+      if(status.entrypoints&&status.entrypoints.length)html+='<details class="ls-muted-details"><summary>入口脚本（'+status.entrypoints.length+'）</summary><ul class="muted">'+status.entrypoints.map(function(item){return '<li><code>'+esc(item)+'</code></li>';}).join('')+'</ul></details>';
+      if(status.registry&&status.registry.length)html+='<details class="ls-muted-details"><summary>进程登记（'+status.registry.length+'）</summary><pre>'+esc(JSON.stringify(status.registry,null,1))+'</pre></details>';
+      if(status.warnings&&status.warnings.length)html+='<ul class="ls-warnings">'+status.warnings.map(function(item){return '<li>'+esc(item)+'</li>';}).join('')+'</ul>';
+      node.innerHTML=html;
+    }
+    async function lsRefreshKeeperStatus(){const env=document.getElementById('ls-kp-env').value;try{const result=await lsRequest('/api/local-services/keeper?environment='+encodeURIComponent(env));if(document.getElementById('ls-kp-env').value!==env)return;lsState.kpStatus=result;lsRenderKeeperStatus(result);}catch(error){if(document.getElementById('ls-kp-env').value!==env)return;lsState.kpStatus=null;document.getElementById('ls-kp-state').innerHTML='<p class="muted">Keeper 状态不可用：'+esc(error.message)+'</p>';lsKeeperStatusLine('Keeper 状态读取失败：'+error.message);}}
+    function lsRenderKeeperResult(result,action,env){
+      const label=lsKeeperActionLabels[action]||action;
+      lsKeeperStatusLine(label+(result.ok===false?' 失败':' 完成')+'：'+(result.environment||env)+' · Chain ID '+(result.chainId==null?'?':result.chainId)+'。');
+      const parts=[];
+      if(result.started&&result.started.length)parts.push('已启动 '+result.started.map(function(item){return item.name+'(pid '+item.pid+')';}).join('、'));
+      if(result.stopped)parts.push('已停止：signaled '+lsJoin(result.stopped.signaled)+' · remaining '+lsJoin(result.stopped.remaining));
+      if(result.backups&&result.backups.length)parts.push('Redis 备份 '+result.backups.length+' 份：'+result.backups.join('、'));
+      if(result.cleared&&result.cleared.length)parts.push('已清理 '+result.cleared.length+' 个键');
+      const summary=document.getElementById('ls-kp-summary');summary.hidden=!parts.length;summary.textContent=parts.join('；');
+      const warnings=document.getElementById('ls-kp-warnings'),list=result.warnings||[];warnings.hidden=!list.length;warnings.innerHTML=list.map(function(item){return '<li>'+esc(item)+'</li>';}).join('');
+      const wrap=document.getElementById('ls-kp-output-wrap'),output=Array.isArray(result.output)?result.output.join('\\n'):String(result.output==null?'':result.output);
+      document.getElementById('ls-kp-command').textContent=result.command?String(result.command):'';
+      document.getElementById('ls-kp-output').textContent=output||'（无输出）';
+      wrap.hidden=false;wrap.open=true;
+    }
+    async function lsKeeperAction(action){
+      const env=document.getElementById('ls-kp-env').value,workers=lsSelectedWorkers(),options=lsKeeperOptions();
+      if(action==='start'){
+        if(!workers.length){lsKeeperStatusLine('请至少勾选一个 worker。');return;}
+        const chainId=(lsState.kpStatus&&lsState.kpStatus.environment===env&&lsState.kpStatus.chainId!=null)?lsState.kpStatus.chainId:(fixedChainIds[env]||'?');
+        let message='将在环境 '+env+'（Chain ID '+chainId+'）启动 Keeper：'+workers.join(', ')+'。\\n\\nFork 模式（关闭全量扫描 + 事件缓存）：'+(options.forkMode?'开':'关')+'\\nRedis：'+(options.clearQueues?'清理本链 keeper:* 全部键（含队列；先备份到 artifacts/local-services/redis-backup/）':options.clearCursors?'清理本链事件游标（先备份到 artifacts/local-services/redis-backup/）':'不清理');
+        if(env==='base-sepolia')message+='\\n\\n注意：base-sepolia 是真链，Keeper 会执行真实订单 / 清算。';
+        message+='\\n\\n确认启动？';
+        if(!window.confirm(message))return;
+      }
+      const label=lsKeeperActionLabels[action]||action;
+      lsSetKeeperBusy(true);lsKeeperStatusLine(label+' 执行中（'+env+'）…');
+      try{const response=await lsRequest('/api/local-services/keeper',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:action,environment:env,workers:workers,options:options})});lsRenderKeeperResult(response.result||{},action,env);}
+      catch(error){lsKeeperStatusLine(label+' 失败：'+error.message);}
+      finally{lsSetKeeperBusy(false);}
+      await lsRefreshKeeperStatus();
+    }
+    function lsBindLocalServices(){
+      document.getElementById('ls-fe-precheck').addEventListener('click',function(){lsPrecheckFrontend();});
+      document.getElementById('ls-fe-start').addEventListener('click',function(){lsStartFrontend();});
+      document.getElementById('ls-fe-refresh').addEventListener('click',function(){lsRefreshFrontendServices();});
+      document.getElementById('ls-fe-branch').addEventListener('change',function(){lsInvalidatePrecheck();lsRenderBranchHint();});
+      document.getElementById('ls-fe-env').addEventListener('change',lsInvalidatePrecheck);
+      document.getElementById('ls-fe-port').addEventListener('input',lsInvalidatePrecheck);
+      document.getElementById('ls-fe-services').addEventListener('click',function(event){const target=event.target.closest('button');if(!target)return;if(target.dataset.lsFeLog)lsToggleFrontendLog(target.dataset.lsFeLog);else if(target.dataset.lsFeStop)lsStopFrontend(target.dataset.lsFeStop);});
+      ['ls-kp-w-ord','ls-kp-w-liq','ls-kp-w-adl'].forEach(function(id){document.getElementById(id).addEventListener('change',lsSyncProducer);});
+      document.getElementById('ls-kp-env').addEventListener('change',function(){lsApplyKeeperDefaults(this.value);lsState.kpStatus=null;lsRefreshKeeperStatus();});
+      document.getElementById('ls-kp-check').addEventListener('click',function(){lsKeeperAction('check');});
+      document.getElementById('ls-kp-start').addEventListener('click',function(){lsKeeperAction('start');});
+      document.getElementById('ls-kp-status').addEventListener('click',function(){lsKeeperAction('status');});
+      document.getElementById('ls-kp-stop').addEventListener('click',function(){lsKeeperAction('stop');});
+      document.getElementById('ls-kp-state').addEventListener('click',function(event){const target=event.target.closest('button');if(!target||!target.dataset.lsKpLog)return;const name=target.dataset.lsKpLog;lsState.kpOpenLogs[name]=!lsState.kpOpenLogs[name];lsRenderKeeperStatus(lsState.kpStatus);});
+      lsSyncProducer();
+    }
+    // load() 每次（初次 / 切环境 / 重新读取）调用：两张卡的目标环境跟随页面环境（dev-readonly 不在选项内则回落 tx-fork），清掉前端轮询后刷新实例与 Keeper 状态。
+    function renderLocalServicesEnvironment(){
+      const feEnv=document.getElementById('ls-fe-env'),kpEnv=document.getElementById('ls-kp-env');
+      if(!lsState.initialized){lsState.initialized=true;const options=lsEnvironmentNames.map(function(name){return '<option value="'+name+'">'+name+'</option>';}).join('');feEnv.innerHTML=options;kpEnv.innerHTML=options;lsBindLocalServices();}
+      if(!['http:','https:'].includes(location.protocol)){lsSetStaticMode();return;}
+      const target=lsEnvironmentNames.includes(environment.value)?environment.value:lsEnvironmentNames[0];
+      if(feEnv.value!==target){feEnv.value=target;lsInvalidatePrecheck();}
+      if(kpEnv.value!==target||!lsState.kpDefaultsApplied){lsState.kpDefaultsApplied=true;kpEnv.value=target;lsApplyKeeperDefaults(target);lsState.kpStatus=null;}
+      if(lsState.fePoll){clearInterval(lsState.fePoll);lsState.fePoll=null;}
+      if(!lsState.branchesLoaded){lsState.branchesLoaded=true;lsLoadFrontendBranches();}
+      lsRefreshFrontendServices();lsRefreshKeeperStatus();
+    }
     load().catch(showError).finally(function(){document.querySelector('main').dataset.pageReady='true';});
   `;
 

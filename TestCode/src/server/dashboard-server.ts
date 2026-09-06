@@ -21,6 +21,8 @@ import { attachExecutions, loadTestCases, type TestCaseView } from '../reporting
 import { listParameterEnvironments, queryParameters } from './parameter-query.js';
 import { RunBatchManager } from './run-batches.js';
 import { KeeperServiceManager } from './keeper-service.js';
+import { FrontendLauncher } from './frontend-launcher.js';
+import { KeeperLauncher } from './keeper-launcher.js';
 import { TenderlyForkManager } from './tenderly-forks.js';
 import {
   ContractDeploymentConflictError,
@@ -181,6 +183,9 @@ export async function startDashboardServer(options: DashboardServerOptions) {
   const keeperServiceManager = new KeeperServiceManager(projectRoot);
   const tenderlyForkManager = new TenderlyForkManager(projectRoot);
   const contractDeploymentManager = new ContractDeploymentManager(projectRoot);
+  // 环境页 ⑥ 本地服务：前端 dev server 与 Keeper 车道各自持有路由（docs/04 §10）。
+  const frontendLauncher = new FrontendLauncher(projectRoot);
+  const keeperLauncher = new KeeperLauncher(projectRoot);
   const environmentSetupOrchestrator = new EnvironmentSetupOrchestrator({
     projectRoot,
     tenderlyForkManager,
@@ -813,6 +818,14 @@ export async function startDashboardServer(options: DashboardServerOptions) {
         return;
       }
 
+      // ⑥ 本地服务：路由内聚在各自启动器里（同源校验、参数校验、状态码都在那边），这里只分发。
+      if (url.pathname.startsWith('/api/local-services/')) {
+        if (await frontendLauncher.handle(request, response, url, method)) return;
+        if (await keeperLauncher.handle(request, response, url, method)) return;
+        sendJson(response, 404, { error: '未知的本地服务接口', detail: url.pathname });
+        return;
+      }
+
       const manualActionMatch =
         /^\/api\/run-batches\/([a-zA-Z0-9._-]+)\/(manual-result|manual-start)$/.exec(url.pathname);
       if (manualActionMatch && method === 'PUT') {
@@ -1158,6 +1171,8 @@ export async function startDashboardServer(options: DashboardServerOptions) {
               '/api/run-batches/:id/manual-result',
               '/api/run-batches/:id/manual-start',
               '/api/keeper-service',
+              '/api/local-services/frontend',
+              '/api/local-services/keeper',
               '/api/fund-usdc',
               '/api/faucet-balance',
               '/api/faucet-auto-funding',

@@ -263,6 +263,8 @@ npm run dashboard:serve
 - `PUT /api/run-batches/<runId>/manual-result`：回填手工核对用例的人工结论（`caseId` / `status` / `operator` / `note`）；只接受该批次里 `manual` 的用例，`status=MANUAL` 表示撤销回填；
 - `PUT /api/run-batches/<runId>/manual-start`：记录手工核对用例的人工开始执行时间（点"打开前端并开始"时触发），已开始过不会被重置；
 - `GET /api/manual-check-target`：手工核对要打开的被测前端地址，只读复用测试环境的 Trade 站点地址 `E2E_APP_BASE_URL`（返回站点根地址与 `/trade`）；
+- `GET /api/local-services/frontend/branches|precheck`、`GET/POST /api/local-services/frontend`、`GET /api/local-services/frontend/<id>/log`：环境页 ⑥ 本地前端——选 `Github/fx100-apps@<分支>`、目标环境 RPC 与端口（3010 保留给常驻实例），§10.3 前置检查（链支持 / 端口 / RPC / 合约 / 依赖 / fork 补丁 / Chainlink / Flash），detached 进程组启动与整树停止；
+- `GET/POST /api/local-services/keeper`：环境页 ⑥ 本地 Keeper——按环境车道（`run.sh --chain-id`）勾选 producer / ord / liq / adl / rel worker，Fork 模式成对扫描开关、启动前游标备份+清理、按部署清单注入地址覆盖；keeper 代码只认 chainId 8453/84532/99917/99918，其它链拒绝启动并说明（`docs/04` §10、`artifacts/local-services-research.md`）；
 - `GET /api/transactions/<txHash>`：按交易哈希查看当前运行中保存的交易与回执证据；
 - `GET /health`：服务与看板数据健康状态；
 - `GET /summary.md`：Markdown 摘要。

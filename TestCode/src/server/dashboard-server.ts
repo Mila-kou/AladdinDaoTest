@@ -190,6 +190,8 @@ export async function startDashboardServer(options: DashboardServerOptions) {
     projectRoot,
     tenderlyForkManager,
     contractDeploymentManager,
+    frontendLauncher,
+    keeperLauncher,
     runManager,
   });
   const defaultMarketSourceManager = new DefaultMarketSourceManager(projectRoot);

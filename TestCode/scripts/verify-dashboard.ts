@@ -977,7 +977,7 @@ if (!input) {
     || result.envMobileTabCount !== 5
     // ⓪ 一键搭建向导：面板存在、四步行齐全；静态打开时一键按钮禁用并提示 dashboard:serve。
     || !result.wizardSectionTitle.includes('⓪ 一键搭建向导')
-    || result.wizardStepRows !== 4
+    || result.wizardStepRows !== 6
     || (!isHttp && !result.wizardRunDisabled)
     || (!isHttp && !result.wizardStatusText.includes('dashboard:serve'))
     || !result.deploySectionTitle.includes('② 部署合约')

@@ -10,18 +10,29 @@ import {
 import { checkEnvironmentConfiguration } from './environment-configuration.js';
 import { readEnvironmentSettings } from './environment-settings.js';
 import type { ContractDeploymentManager } from './contract-deployments.js';
+import { FrontendLauncherError, type FrontendLauncher, type FrontendServiceView } from './frontend-launcher.js';
+import { KEEPER_WORKER_NAMES, type KeeperActionResult, type KeeperLauncher } from './keeper-launcher.js';
+import {
+  isGroupAlive,
+  isProcessAlive,
+  redactSecrets,
+  tailFile,
+  waitForPort,
+} from './local-services-core.js';
 import type { TenderlyForkManager } from './tenderly-forks.js';
 import type { RunBatchManager } from './run-batches.js';
 
 /**
- * 环境页「⓪ 一键搭建向导」的编排器：把已有的四个分步能力串成一个长任务——
+ * 环境页「⓪ 一键搭建向导」的编排器：把已有的六个分步能力串成一个长任务——
  *   createFork（TenderlyForkManager.create）→ deploy（ContractDeploymentManager 长任务，轮询至终态）
- *   → init（RunBatchManager.initializeEnvironment 长任务，轮询至终态）→ check（checkEnvironmentConfiguration 只读）。
+ *   → init（RunBatchManager.initializeEnvironment 长任务，轮询至终态）→ check（checkEnvironmentConfiguration 只读）
+ *   → frontend（FrontendLauncher.start，再等端口监听）→ keeper（KeeperLauncher.execute start）。
  * 不重写任何步骤逻辑，只做顺序编排、进度记录与失败传播（一步失败即停，后续步骤标 skipped）。
  * 任务只存进程内存（与合约部署任务一致）；日志与失败信息沿用各管理器的脱敏，再叠加一层 RPC 兜底脱敏。
+ * frontend / keeper 起的是常驻进程：登记、停止、日志仍归 ⑥ 本地服务面板（同一份 registry.json），向导只负责"起来并确认"。
  */
 
-const STEP_ORDER = ['createFork', 'deploy', 'init', 'check'] as const;
+const STEP_ORDER = ['createFork', 'deploy', 'init', 'check', 'frontend', 'keeper'] as const;
 export type EnvironmentSetupStepName = (typeof STEP_ORDER)[number];
 
 const STEP_LABELS: Record<EnvironmentSetupStepName, string> = {
@@ -29,12 +40,53 @@ const STEP_LABELS: Record<EnvironmentSetupStepName, string> = {
   deploy: '部署合约',
   init: '初始化 Mock Bundle',
   check: '环境检查',
+  frontend: '启动本地前端',
+  keeper: '启动 Keeper',
 };
+
+/** 只在三个 Fork 环境上有意义的步骤；check / frontend / keeper 任何环境都可单独勾选（keeper 在只读环境由启动器拒绝）。 */
+const FORK_ONLY_STEPS: ReadonlySet<EnvironmentSetupStepName> = new Set(['createFork', 'deploy', 'init']);
 
 /** 长任务跟随轮询：2s 一次；单步最长跟随 60 分钟（超时只停止跟随并判失败，不杀原任务）。 */
 const POLL_INTERVAL_MS = 2_000;
 const STEP_TIMEOUT_MS = 60 * 60 * 1000;
 const LOG_TAIL_LINES = 120;
+/**
+ * 前端 dev server 从启动到监听端口的最长等待：Next dev 首次监听通常 5～90s。到时只判失败、不杀进程
+ * （与 deploy 的"超时只停止跟随"同一约定，进程留给 ⑥ 面板查看或停止）。
+ */
+const FRONTEND_LISTEN_TIMEOUT_MS = 120_000;
+/** 等待分片：每片 waitForPort 之间复核进程存活，进程一退出立刻判失败，不空等满 120s。 */
+const FRONTEND_LISTEN_SLICE_MS = 2_000;
+/** 步骤日志里附带的服务日志尾巴：前端 dev 日志取最后几行（编译进度），keeper 取 run.sh 输出末尾。 */
+const FRONTEND_LOG_TAIL_LINES = 6;
+const KEEPER_OUTPUT_TAIL_LINES = 20;
+/** 失败 summary 是一行字：日志尾巴拼进去要封顶，完整内容在 logTail 里。 */
+const SUMMARY_MAX_CHARS = 600;
+
+function isHttpUrl(value: string): boolean {
+  try {
+    return ['http:', 'https:'].includes(new URL(value).protocol);
+  } catch {
+    return false;
+  }
+}
+
+const httpUrlSchema = z.string().trim().min(1).max(500).refine(isHttpUrl, { message: '必须是 http(s) 地址。' });
+
+/**
+ * 与 frontend-launcher 的 startOptionsSchema 同形，但全部可省略、不设默认值：向导只校验形状，
+ * 缺省值由启动器自己 parse 补齐（默认值只在启动器一处维护，这里不复制）。
+ */
+const frontendOptionsSchema = z.object({
+  marketsDataSource: z.enum(['api', 'split']).optional(),
+  showDevMarkets: z.boolean().optional(),
+  gateEnabled: z.boolean().optional(),
+  flashEnabled: z.boolean().optional(),
+  priceFeedApiUrl: httpUrlSchema.optional(),
+  apiUrl: httpUrlSchema.optional(),
+  chainlinkFromKeeperEnv: z.boolean().optional(),
+});
 
 const setupStepsSchema = z.object({
   createFork: z.object({
@@ -52,6 +104,23 @@ const setupStepsSchema = z.object({
     forceSharedCollateral: z.boolean().optional(),
   }).optional(),
   check: z.literal(true).optional(),
+  frontend: z.object({
+    /** Github/ 下的 fx100-apps@<分支目录名>；是否真的存在由启动器在执行时核对（不存在 → 该步失败）。 */
+    directory: z.string().trim().min(1).max(120),
+    port: z.number().int().min(1024).max(65535),
+    options: frontendOptionsSchema.optional(),
+    /** 向导的环境永远优先。这里只为识别"页面顺手带了别的环境"并在步骤日志里说明，不会生效。 */
+    environment: z.enum(environmentNames).optional(),
+  }).optional(),
+  keeper: z.object({
+    workers: z.array(z.enum(KEEPER_WORKER_NAMES)).min(1),
+    options: z.object({
+      forkMode: z.boolean().optional(),
+      clearCursors: z.boolean().optional(),
+      clearQueues: z.boolean().optional(),
+      dryRun: z.boolean().optional(),
+    }).optional(),
+  }).optional(),
 });
 
 const createSetupSchema = z.object({
@@ -60,6 +129,8 @@ const createSetupSchema = z.object({
 });
 
 type SetupInput = z.output<typeof createSetupSchema>;
+type FrontendStepInput = NonNullable<SetupInput['steps']['frontend']>;
+type KeeperStepInput = NonNullable<SetupInput['steps']['keeper']>;
 
 export type EnvironmentSetupStepStatus = 'pending' | 'running' | 'succeeded' | 'failed' | 'skipped';
 export type EnvironmentSetupJobStatus = 'running' | 'succeeded' | 'failed';
@@ -110,6 +181,9 @@ export interface EnvironmentSetupDependencies {
   readonly contractDeploymentManager: ContractDeploymentManager;
   /** 初始化长任务经 RunBatchManager 的串行队列（与 ④ 面板同一路径）。 */
   readonly runManager: RunBatchManager;
+  /** ⑥ 本地服务的两个启动器：向导只转调 start；登记 / 停止 / 日志仍归各自面板（同一份 registry.json）。 */
+  readonly frontendLauncher: FrontendLauncher;
+  readonly keeperLauncher: KeeperLauncher;
 }
 
 function sanitize(value: string, secrets: readonly string[]): string {
@@ -129,6 +203,48 @@ function delay(milliseconds: number): Promise<void> {
 
 function safeIdPart(value: string): string {
   return value.replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '') || 'setup';
+}
+
+/**
+ * 启动器抛出的错误 → 一行可读文字。
+ *   · FrontendLauncherError（400 端口 3010 / 409 端口占用 / 500 秒退）带 status + detail；
+ *   · keeper-launcher 的 KeeperLauncherError 没有导出（只在它自己的 HTTP 层 instanceof），按形状识别：
+ *     Error 且带 status 与字符串 detail——链支持门槛「Chain ID 99911 不在 keeper 支持列表」就是这条路，
+ *     tx-fork / oracle-fork / time-fork 上今天必然走到，要给用户 message：detail，不是堆栈；
+ *   · zod 参数错误逐条 issue 列出；其余原样取 message。
+ */
+function describeLauncherError(error: unknown): string {
+  if (error instanceof z.ZodError) {
+    const issues = error.issues
+      .map((issue) => `${issue.path.length ? issue.path.map(String).join('.') : '(root)'}: ${issue.message}`)
+      .join('；');
+    return `参数不合法：${issues}`;
+  }
+  if (error instanceof Error) {
+    const shaped = error as Error & { status?: unknown; detail?: unknown };
+    const hasStatus = error instanceof FrontendLauncherError || typeof shaped.status === 'number';
+    if (hasStatus && typeof shaped.detail === 'string' && shaped.detail) {
+      return `${error.message}：${shaped.detail}`;
+    }
+    return error.message;
+  }
+  return String(error);
+}
+
+function clampSummary(value: string): string {
+  return value.length > SUMMARY_MAX_CHARS ? `${value.slice(0, SUMMARY_MAX_CHARS)}…` : value;
+}
+
+/**
+ * keeper start 返回 ok=false 时挑"决定性"的一条：启动器把 run.sh 退出码 / 启动即退出 / 日志致命行都写进 warnings，
+ * 体检失败的具体原因则只在 output 里——取 output 里最后一条 FAIL/ERROR 类的行拼在后面；都没有就退回 output 最后一行。
+ */
+function decisiveKeeperError(result: KeeperActionResult): string {
+  const decisive = result.warnings.filter((line) => /退出码|已退出|致命行|判定：/.test(line)).slice(0, 2);
+  const outputLines = result.output.split('\n').map((line) => line.trim()).filter(Boolean);
+  const failLine = outputLines.filter((line) => /\b(?:FAIL|FAILED|ERR|ERROR)\b|失败|错误|missing|not found|refused/i.test(line)).at(-1);
+  if (decisive.length) return failLine ? `${decisive.join(' ')} ← ${failLine}` : decisive.join(' ');
+  return failLine ?? outputLines.at(-1) ?? 'run.sh 未给出原因（见日志）。';
 }
 
 export class EnvironmentSetupOrchestrator {
@@ -157,13 +273,13 @@ export class EnvironmentSetupOrchestrator {
     const input = createSetupSchema.parse(rawInput);
     const selected = STEP_ORDER.filter((name) => input.steps[name] !== undefined);
     if (selected.length === 0) {
-      throw new Error('至少勾选一个步骤（createFork / deploy / init / check）。');
+      throw new Error('至少勾选一个步骤（createFork / deploy / init / check / frontend / keeper）。');
     }
     const definition = environments[input.environment];
     if (!definition.initializesDefaultMockResources
-      && selected.some((name) => name !== 'check')) {
+      && selected.some((name) => FORK_ONLY_STEPS.has(name))) {
       throw new Error(
-        `${input.environment} 仅支持向导的 check 步骤；新建 Fork / 部署 / 初始化只适用于 tx-fork / oracle-fork / time-fork。`,
+        `${input.environment} 仅支持向导的 check / frontend / keeper 步骤；新建 Fork / 部署 / 初始化只适用于 tx-fork / oracle-fork / time-fork。`,
       );
     }
     const running = Array.from(this.jobs.values())
@@ -193,11 +309,11 @@ export class EnvironmentSetupOrchestrator {
   }
 
   private async run(job: SetupJob, input: SetupInput): Promise<void> {
-    // RPC 原文只用于日志兜底脱敏，不进任务记录。
+    // RPC / WSS 原文只用于日志兜底脱敏，不进任务记录（前端 dev 日志与 keeper 输出里可能带 WSS）。
     let secrets: string[] = [];
     try {
       const settings = await readEnvironmentSettings(this.projectRoot, job.environment);
-      secrets = [settings.rpcUrl ?? '', settings.adminRpcUrl ?? ''].filter(Boolean);
+      secrets = [settings.rpcUrl ?? '', settings.adminRpcUrl ?? '', settings.wssUrl ?? ''].filter(Boolean);
     } catch {
       secrets = [];
     }
@@ -253,7 +369,7 @@ export class EnvironmentSetupOrchestrator {
         // 新 Fork 已回填 .env.local：刷新脱敏词表，后续步骤日志按新 RPC 脱敏。
         try {
           const settings = await readEnvironmentSettings(this.projectRoot, job.environment);
-          for (const secret of [settings.rpcUrl ?? '', settings.adminRpcUrl ?? '']) {
+          for (const secret of [settings.rpcUrl ?? '', settings.adminRpcUrl ?? '', settings.wssUrl ?? '']) {
             if (secret && !secrets.includes(secret)) secrets.push(secret);
           }
         } catch {
@@ -336,7 +452,125 @@ export class EnvironmentSetupOrchestrator {
         return `READY（${result.checks.length - failed.length - warned.length} PASS`
           + `${warned.length > 0 ? ` / ${warned.length} WARN` : ''}）`;
       }
+      case 'frontend':
+        return this.startFrontend(job, step, input.steps.frontend!, secrets, record);
+      case 'keeper':
+        return this.startKeeper(job, step, input.steps.keeper!, secrets, record);
     }
+  }
+
+  /**
+   * frontend：转调 FrontendLauncher.start（登记进 registry.json，与 ⑥ 面板同一条记录），再替用户等端口监听。
+   * 启动器刻意不等编译（页面按 status 轮询即可），向导是长任务、可以等：分片 waitForPort，片与片之间
+   * 复核进程存活并刷新 dev 日志尾巴——进程一退出立刻判失败；到时仍未监听只判失败、不杀进程。
+   */
+  private async startFrontend(
+    job: SetupJob,
+    step: SetupStep,
+    options: FrontendStepInput,
+    secrets: readonly string[],
+    record: (step: SetupStep, line: string) => void,
+  ): Promise<string> {
+    if (options.environment !== undefined && options.environment !== job.environment) {
+      record(step, `请求里的前端环境 ${options.environment} 已忽略：向导统一按 ${job.environment} 启动。`);
+    }
+    record(step, `正在启动本地前端（${options.directory} :${options.port} → ${job.environment}）…`);
+    let service: FrontendServiceView;
+    try {
+      service = await this.deps.frontendLauncher.start({
+        action: 'start',
+        environment: job.environment,
+        directory: options.directory,
+        port: options.port,
+        ...(options.options !== undefined ? { options: options.options } : {}),
+      });
+    } catch (error) {
+      throw new Error(describeLauncherError(error));
+    }
+    record(step, `命令：${service.command}`);
+    record(step, `pid ${service.pid}（进程组 ${service.pgid}），登记 ${service.id}`);
+    record(step, `日志：${service.logPath}`);
+    // 上面几行固定不动；等待期间只替换其后的"dev 日志尾部"区，不把每次轮询都追加进去。
+    const fixedLines = [...step.logTail];
+    const redactLine = (line: string): string => sanitize(redactSecrets(line, secrets), secrets);
+    const refreshTail = async (): Promise<string[]> => {
+      const tail = (await tailFile(service.logPath, FRONTEND_LOG_TAIL_LINES)).map(redactLine);
+      step.logTail = [...fixedLines, `── dev server 日志尾部（${tail.length} 行）──`, ...tail].slice(-LOG_TAIL_LINES);
+      return tail;
+    };
+    const joinTail = (tail: readonly string[]): string => tail.join(' | ') || '（空）';
+    const alive = (): boolean => isProcessAlive(service.pid) || isGroupAlive(service.pgid);
+
+    const startedAt = Date.now();
+    const deadline = startedAt + FRONTEND_LISTEN_TIMEOUT_MS;
+    for (;;) {
+      if (!alive()) {
+        const tail = await refreshTail();
+        throw new Error(clampSummary(
+          `前端进程已退出（pid ${service.pid}；登记 ${service.id} 会在 ⑥ 面板下次列举时清理）。日志尾部：${joinTail(tail)}`,
+        ));
+      }
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) break;
+      if (await waitForPort(options.port, Math.min(FRONTEND_LISTEN_SLICE_MS, remaining))) {
+        await refreshTail();
+        step.logTail.push(`端口 ${options.port} 已监听（耗时 ${Math.round((Date.now() - startedAt) / 1000)}s）。`);
+        return `本地前端已启动：http://127.0.0.1:${options.port}/trade（${options.directory}，pid ${service.pid}）`;
+      }
+      await refreshTail();
+    }
+    const tail = await refreshTail();
+    throw new Error(clampSummary(
+      `前端 ${FRONTEND_LISTEN_TIMEOUT_MS / 1000}s 内未监听端口 ${options.port}`
+        + `（pid ${service.pid} 仍在运行，向导停止等待；请到 ⑥ 本地服务面板查看日志或停止）。日志尾部：${joinTail(tail)}`,
+    ));
+  }
+
+  /**
+   * keeper：转调 KeeperLauncher.execute({ action: 'start' })——车道 / 地址覆盖 / fork 开关 / 游标清理全在启动器里，向导不复制任何判断。
+   * 启动器把"请求本身的问题"（只读环境、链不在地址表、车道已有存活进程）作为带状态码的错误抛出，
+   * 把"run.sh 跑了但没成"（体检失败、进程秒退）放进 ok=false + warnings + output——两条路都要落成一行可读 summary。
+   */
+  private async startKeeper(
+    job: SetupJob,
+    step: SetupStep,
+    options: KeeperStepInput,
+    secrets: readonly string[],
+    record: (step: SetupStep, line: string) => void,
+  ): Promise<string> {
+    const dryRun = options.options?.dryRun === true;
+    record(step, `正在${dryRun ? '以 dry-run ' : ''}启动 Keeper（${job.environment}，workers=${options.workers.join(' / ')}）…`);
+    let result: KeeperActionResult;
+    try {
+      result = await this.deps.keeperLauncher.execute({
+        action: 'start',
+        environment: job.environment,
+        workers: options.workers,
+        ...(options.options !== undefined ? { options: options.options } : {}),
+      });
+    } catch (error) {
+      throw new Error(describeLauncherError(error));
+    }
+    // result.command / output 已由启动器按车道秘密脱敏；这里再按向导词表过一遍是兜底，不是重复劳动。
+    const commands = result.command.split('\n').filter((line) => line.trim() !== '');
+    for (const line of commands) record(step, `$ ${redactSecrets(line, secrets)}`);
+    for (const warning of result.warnings) record(step, `警告：${redactSecrets(warning, secrets)}`);
+    const outputTail = result.output.split('\n').filter((line) => line.trim() !== '').slice(-KEEPER_OUTPUT_TAIL_LINES);
+    if (outputTail.length) {
+      record(step, `── run.sh 输出尾部（${outputTail.length} 行）──`);
+      for (const line of outputTail) record(step, redactSecrets(line, secrets));
+    }
+    if (!result.ok) {
+      throw new Error(clampSummary(`Keeper 启动失败：${redactSecrets(decisiveKeeperError(result), secrets)}`));
+    }
+    if (dryRun) {
+      return `Keeper dry-run：未启动任何进程；计划命令 ${commands.length} 条见日志（${options.workers.join(' / ')}）。`;
+    }
+    // ok=true 但一个都没登记：run.sh 正常退出却没写 pid（典型：worker 私钥未配被跳过）。什么都没起来不能算成功。
+    if (!result.started.length) {
+      throw new Error('run.sh 正常退出但没有登记任何 keeper 进程（多半是 worker 私钥未配、被 run.sh 跳过），详见日志警告。');
+    }
+    return `Keeper 已启动：${result.started.map((item) => `${item.name}(pid ${item.pid})`).join('、')}`;
   }
 
   private async waitFor<T>(

@@ -2,7 +2,7 @@
 //
 //   import { CONFIG, loadFx100Config, requireFork } from "<相对路径>/config.mjs";
 //
-//   node Test/project/fx100/config.mjs      # 打印当前生效配置（脱敏），排查用
+//   node Test/config.mjs      # 打印当前生效配置（脱敏），排查用
 //
 // ┌─ 要改参数？改下面 `CONFIG` 那一块就行，其余是解析与守卫逻辑。
 // └─ 新增参数直接往 `CONFIG` 里加字段，不要另起配置文件。

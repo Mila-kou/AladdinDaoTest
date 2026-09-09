@@ -33,8 +33,8 @@ export const defaultMockMarketProfile = {
   },
   oracle: {
     description: 'FXMOCK / USD',
-    decimals: 8,
-    initialPrice: 60_000n * 10n ** 8n,
+    decimals: 18,
+    initialPrice: 2_000n * 10n ** 18n,
     heartbeatDuration: 86_400n,
   },
   parameters: [

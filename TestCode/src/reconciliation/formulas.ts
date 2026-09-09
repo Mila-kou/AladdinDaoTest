@@ -22,7 +22,7 @@ export function calculateGrace(input: {
   return {
     effectiveGrace,
     graceEnd,
-    expanded: `${input.graceStart} + (${input.graceBase} × ${input.tierMultiplier} / 1e18) = ${graceEnd}`,
+    expanded: `${input.graceStart} + floor(${input.graceBase} × ${input.tierMultiplier} / 1e18) = ${graceEnd}`,
   };
 }
 
@@ -284,17 +284,41 @@ export function calculatePriceImpactSpread(input: {
   };
 }
 
-// ── Dynamic Spread 总合成（getDynamicSpread 口径）───────────────────────────────
-// 蓝本：src/pricing/PositionPricingUtils.sol:152-175：skewImpact + constant + priceImpactSpread，≤0 夹到 0。
+// ── Dynamic Spread 总合成（getDynamicSpread 口径，v0.3.2）────────────────────────
+// 蓝本：Github/fx100-contracts@release-v0.3.2/src/pricing/PositionPricingUtils.sol:154-186：
+//   raw = skewImpact + int256(constantPriceSpread) + priceImpactSpread
+//   min = getInt(MIN_DYNAMIC_SPREAD[marketIndex][isLong])；max = getInt(MAX_DYNAMIC_SPREAD[marketIndex][isLong])
+//   if (!allowNegativeSpread && min < 0) min = 0；if (max < min) max = min
+//   return Calc.clamp(raw, min, max)   （等号不属于钳制侧）
+// ⚠️ 两键未配置时 getInt 为 0 → clamp(raw, 0, 0) = 0，常数点差一并被吞——这是链上真实行为，
+//    不是"未配置视为不限制"；调用方读不到键值时应标 NOT_VERIFIED，而不是在这里兜底。
+// v0.3.1 的 floor-at-0（sum ≤ 0 → 0）已废弃：v0.3.2 允许负点差（min < 0 且 allowNegativeSpread）。
 export function composeDynamicSpread(input: {
   readonly constantPriceSpread: bigint;
   readonly priceImpactSpread: bigint;
   readonly skewImpact: bigint;
+  readonly minDynamicSpread: bigint;
+  readonly maxDynamicSpread: bigint;
+  readonly allowNegativeSpread: boolean;
 }) {
-  const sum = input.skewImpact + input.constantPriceSpread + input.priceImpactSpread;
-  const spread = sum <= 0n ? 0n : sum;
+  const raw = input.skewImpact + input.constantPriceSpread + input.priceImpactSpread;
+  const minFloored = !input.allowNegativeSpread && input.minDynamicSpread < 0n;
+  const effectiveMin = minFloored ? 0n : input.minDynamicSpread;
+  const maxCollapsed = input.maxDynamicSpread < effectiveMin;
+  const effectiveMax = maxCollapsed ? effectiveMin : input.maxDynamicSpread;
+  const spread = clamp(raw, effectiveMin, effectiveMax);
+  const minText = minFloored
+    ? `min = ${input.minDynamicSpread} → 0（allowNegativeSpread=false 且 min<0）`
+    : `min = ${input.minDynamicSpread}`;
+  const maxText = maxCollapsed
+    ? `max = ${input.maxDynamicSpread} < min → ${effectiveMax}（区间坍缩为 [min, min]）`
+    : `max = ${input.maxDynamicSpread}`;
   return {
     spread,
-    expanded: `max(0, skewImpact ${input.skewImpact} + constant ${input.constantPriceSpread} + priceImpact ${input.priceImpactSpread}) = ${spread}`,
+    raw,
+    effectiveMin,
+    effectiveMax,
+    expanded: `raw = skewImpact ${input.skewImpact} + constant ${input.constantPriceSpread} + priceImpact ${input.priceImpactSpread} = ${raw}；`
+      + `${minText}；${maxText}；clamp(${raw}, ${effectiveMin}, ${effectiveMax}) = ${spread}`,
   };
 }

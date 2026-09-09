@@ -4,7 +4,7 @@ keeper 源码在 `Github/fx100-apps@develop/apps/keeper`（monorepo 内）。
 本目录只放**测试环境的配置与启动脚本**，不往被测仓库里塞 `.env`。
 
 > **收编说明**：本目录原在工作区的 `Test/project/fx100/tool/keeper-runner`，该树被移出
-> AladdinDaoTest 后 `run.sh` 的相对路径全部偏级，导致所有子命令（含 `check` / `status`）
+> FX100 后 `run.sh` 的相对路径全部偏级，导致所有子命令（含 `check` / `status`）
 > 在第一行 `cd` 就失败——SCN-009 报错里让你执行的 `./run.sh check` 曾是一条死路。
 > 现已收编到 `TestCode/tools/keeper-runner`，并把两处路径改成可覆盖：
 >
@@ -15,7 +15,7 @@ keeper 源码在 `Github/fx100-apps@develop/apps/keeper`（monorepo 内）。
 > 想让它彻底落在本目录，把你现有的 `.env` 移过来即可（内容我没有读、也没有复制）：
 >
 > ```bash
-> mv /Users/milakou/Documents/AladdinDaoTest-claude/project/fx100/tool/keeper-runner/.env /Users/milakou/Documents/AladdinDaoTest/TestCode/tools/keeper-runner/.env
+> mv /Users/milakou/Documents/AladdinDaoTest-claude/project/fx100/tool/keeper-runner/.env /Users/milakou/Documents/FX100/TestCode/tools/keeper-runner/.env
 > ```
 >
 > 不想移动就用 `KEEPER_ENV_FILE` 指过去，两种都支持。
@@ -56,6 +56,58 @@ keeper 侧有六个 entrypoint，性质不一样，别一股脑全起：
 ./run.sh inspect dump orders        # 看 orders 队列里每一项
 ./run.sh status                     # 哪些在跑（顺带清理陈旧 pid）
 ```
+
+## 并行车道：两条会话各跑一套 keeper
+
+原来 pid/日志写死在 `logs/<name>.pid`，`stop` 扫 `logs/*.pid` 逐个 kill——两条会话同时跑时，
+A 在看板点「停止 Keeper」会把 B 的进程一并杀掉。现在可以按 chainId 分车道，
+**可选、不传就是老样子**：
+
+| 给什么 | 日志/pid 目录 | 说明 |
+|---|---|---|
+| 什么都不给 | `logs/`（不变） | 与改造前同一路径、同一文件名，看板与既有会话零感知 |
+| `--chain-id <id>` / `KEEPER_RUNNER_CHAIN_ID` | `logs/<id>/` | 并行车道开关，见下 |
+| `--log-dir <dir>` / `KEEPER_LOG_DIR` | 该目录（相对路径按本目录解析） | 同一条链要开两条车道时用 |
+
+`status` / `stop` **只作用于解析出的那一个目录**，不再无差别扫全部 pid；默认车道的
+`status` 在发现同级还有别的 chainId 槽位时会提示一句，但不去碰它们。
+
+```bash
+# 会话 A：沿用默认车道，命令一个字都不用改
+./run.sh both
+
+# 会话 B：另一条链自成一档，停自己的不影响 A
+./run.sh --chain-id 99912 both
+./run.sh --chain-id 99912 status
+./run.sh --chain-id 99912 stop
+```
+
+## 链 ID 只有一个真值（假绿灯闸门）
+
+体检比对的是 `KEEPER_EXPECTED_CHAIN_ID`，而 keeper 进程真正用的是 `KEEPER_CHAIN_ID`——
+Redis keyspace 前缀按后者拼（`apps/keeper/src/infra/keyspace.ts`：`<version>:<chainId>:`）。
+两者不一致就会出现**体检全绿、队列却写在另一条链前缀下**的假绿灯：
+实测 fork 99911 上跑的 keeper，Redis 里全是 `v0.3.2:84532:keeper:*`。
+
+原因有二，都已修：
+
+1. `set -a; source .env` 原来排在命令行前缀变量之后，`KEEPER_CHAIN_ID=99911 ./run.sh …`
+   会被 `.env` 里的同名值**静默覆盖**。现在 source 前先快照调用方环境、source 后原样恢复，
+   **调用方传入的值优先于 `.env`**（脚本只处理变量优先级，不读取、不打印 `.env` 内容）。
+2. 期望链与进程实际链现在是同一个变量：给了 `--chain-id`（或 `--align-chain-id`）时，
+   脚本把 `KEEPER_CHAIN_ID` 对齐后导给子进程，体检那句 ✅ 会直接把实际值打出来。
+
+没给这两个开关时**行为不变**（不动 `KEEPER_CHAIN_ID`），只是 `check` 在检测到两者不一致时
+多打一段 ⚠️ 说明和修法——判定结论、退出码都不变。要顺手把假绿灯修掉：
+
+```bash
+./run.sh --chain-id 99911 check     # 期望链、实际链、日志目录三者一起绑到 99911
+./run.sh --align-chain-id check     # 只对齐链，日志仍在默认 logs/
+```
+
+> 注意：换了 `KEEPER_CHAIN_ID` 就是换了 Redis keyspace 前缀，旧前缀下的队列、
+> 区块游标（`events:lastBlock`）、价格缓冲**不会**跟着搬家。在跑批中途别切，
+> 要切就 producer + worker 一起重起。
 
 ## 运行环境 = fork，不是真测试网
 

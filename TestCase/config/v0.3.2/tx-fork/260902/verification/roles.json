@@ -1,0 +1,453 @@
+{
+ "task": "roles: offline verification of the tx-fork@v0.3.2 (deploymentId tx-fork-v032-260902r3, chainId 99911) role matrix against 02-部署与升级手册 §9.2/§9.3 expected matrix, plus 02 §18.1 row `DataStore.hasRole(CONTROLLER, OrderHandler)`.",
+ "files_read": [
+  "/Users/milakou/Documents/FX100/Docs/contract-releases/v0.3.2/02-部署与升级手册.md (§9 lines 225-260, §18.1 lines 477-493)",
+  "/Users/milakou/Documents/FX100/TestCase/config/v0.3.2/tx-fork/260902/parameters.json (.meta, .roles[])",
+  "/Users/milakou/Documents/FX100/TestCase/config/v0.3.2/tx-fork/260902/roles.json",
+  "/Users/milakou/Documents/FX100/TestCase/config/v0.3.2/tx-fork/260902/deployed-addresses.json",
+  "/Users/milakou/Documents/FX100/TestCase/config/v0.3.2/tx-fork/260902/tokens.json",
+  "/Users/milakou/Documents/FX100/TestCode/config/deployments/tx-fork-v0.3.2-260902.json (read through a redaction filter; contains no RPC URL)",
+  "/Users/milakou/Documents/FX100/TestCode/config/deployments/base-sepolia-v0.3.1-260729.json (contracts/additionalContracts/roles only, redaction filter)",
+  "/Users/milakou/Documents/FX100/TestCode/config/deployments/README.md",
+  "/Users/milakou/Documents/FX100/TestCode/scripts/deploy-contracts.ts (lines 36-50, 319-325, 395-415, 505-535, 650-680, 750-760, 785-800; 0 literal URLs)",
+  "/Users/milakou/Documents/FX100/Docs/contract-releases/CURRENT.json (.primary, .environments.tx-fork, redaction filter)",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/ignition/modules/Fx100Role.ts",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/ignition/modules/Fx100Fee.ts",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/ignition/modules/Fx100Oracle.ts (grep of role lines)",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/ignition/modules/utils/roleConstants.ts",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/ignition/parameters/fx100.fork.tx-fork.json (redaction filter; addresses only)",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/ignition/deployments/tx-fork-v032-260902r3/journal.jsonl (parsed with node; grantRole/setHandler futures + TRANSACTION_CONFIRM receipts)",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/ignition/deployments/tx-fork-v032-260902r3/deployed_addresses.json",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/src/constants/Role.sol",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/src/fee-distribute/ProtocolTreasury.sol (grep ROLE)",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/src/vault/VaultBase.sol (grep CONTROLLER_ROLE)"
+ ],
+ "method": "EXPECTED matrix: taken verbatim from 02 §9.2 table rows (02:239-248) and cross-checked line-by-line against the ignition source that the table claims to summarise: Fx100Role.ts:38-40 (CONTROLLER->bootstrapAdmin), :47-67 (15 CONTROLLER contract grants), :85-94 (4 ROUTER_PLUGIN), :96-121 (bootstrap CONFIG/LIMITED_CONFIG/MARKET_KEEPER + 9 parameter-address grants), :123-134 (6 LPVault CONTROLLER_ROLE), :136-144 (3 ReferralStorage setHandler); Fx100Fee.ts:44-60 (Treasury x2 TOKEN_RECEIVER->lpVault+multisig, MULTICALL+BATCH_TRANSFER->feeKeeper), :73-78 (second CONTROLLER->bootstrapAdmin); Fx100Oracle.ts:21-26 (second CONFIG_KEEPER->bootstrapAdmin). Source matrix == manual matrix (no discrepancy). Holder resolution: (a) bootstrapAdmin = m.getAccount(0) (Fx100Role.ts:13) = the only `from` in the r3 journal = 0x4b32f9bc794b0298b9373cf0d67e36162a2e9247 = roles.json.defaultAdminRoleMember0; (b) parameter addresses from ignition/parameters/fx100.fork.tx-fork.json: Fx100Role.{configKeeper,limitedConfigKeeper,marketKeeper,timelockAdmin} and Fx100Fee.{multisig,feeKeeper} = 0xf82CF35C5c0019861c2cDC65041C8Ac32970D403; Fx100Role.{orderKeeper,liquidationKeeper,adlKeeper} = 0x542fe841228416F6a3D65eb534a90Ebc5cc36354 (none are zero, so the 02:250 fallback-to-deployer rule did not trigger; deploy-contracts.ts:406-414 shows these come from E2E_ADMIN_ACCOUNT / E2E_KEEPER_ACCOUNT, values not read); (c) contract names -> addresses via TestCase/.../deployed-addresses.json, which is byte-identical (67 keys, 0 diffs) to ignition/deployments/tx-fork-v032-260902r3/deployed_addresses.json and consistent with the manifest contracts/additionalContracts (0 mismatches). ACTUAL: parameters.json .roles[i].members (chain read at block 46282993, .meta.blockNumber; .meta.counts.errors=0; every .roles[i].error=null), compared lowercase via a node script (32 expected pairs, 0 misses, 1 extra); roles.json.grants (7) checked as a subset of members. Role hashes: all 11 .roles[i].hash strings appear verbatim as the `Hash:` comments in Role.sol and were recomputed with the repo's ethers (keccak256(abi.encode(string))); LPVault/Treasury role ids seen in the journal args match ethers.id(\"CONTROLLER_ROLE\")=0x7b765e0e..., \"MULTICALL_ROLE\"=0x75999568..., \"BATCH_TRANSFER_ROLE\"=0x8ba31296..., \"TOKEN_RECEIVER_ROLE\"=0x607b5964... and VaultBase.sol:53 / ProtocolTreasury.sol:25-31. Non-DataStore roles (LPVault/Treasury/ReferralStorage) are absent from parameters.json and roles.json, so those rows are NOT_VERIFIABLE_OFFLINE; as supporting (deploy-time, not read-back) evidence the journal shows all 51 grantRole/setHandler futures with TRANSACTION_CONFIRM receipt.status=SUCCESS in blocks 46282751-46282873, all before the snapshot block 46282993.",
+ "checks": [
+  {
+   "item": "DataStore CONTROLLER -> bootstrapAdmin (deployer)",
+   "expected": "0x4b32f9bc794b0298b9373cf0d67e36162a2e9247 is a CONTROLLER member (granted twice: Fx100Role#GrantControllerBootstrapAdmin + Fx100Fee#GrantFeeModuleControllerBootstrapAdmin)",
+   "actual": "0x4b32f9bc794b0298b9373cf0d67e36162a2e9247 present; both bootstrap grant futures SUCCESS in journal",
+   "status": "PASS",
+   "evidence": "02:239; Fx100Role.ts:38-40; Fx100Fee.ts:73-78; roles.json.defaultAdminRoleMember0; parameters.json .roles[3].members[0]"
+  },
+  {
+   "item": "DataStore CONTROLLER -> EventEmitter",
+   "expected": "0xb6c75bf4839e98514e258b5fe14c9292f6d21dc7",
+   "actual": "0xb6c75bf4839e98514e258b5fe14c9292f6d21dc7",
+   "status": "PASS",
+   "evidence": "02:239; Fx100Role.ts:48; deployed-addresses.json[\"Fx100Base#EventEmitter\"]; parameters.json .roles[3].members[2]"
+  },
+  {
+   "item": "DataStore CONTROLLER -> Config",
+   "expected": "0x52a504c65b9ee62718afff3f984f3ebc136b3703",
+   "actual": "0x52a504c65b9ee62718afff3f984f3ebc136b3703",
+   "status": "PASS",
+   "evidence": "02:239; Fx100Role.ts:49; deployed-addresses.json[\"Fx100Base#Config\"]; parameters.json .roles[3].members[1]"
+  },
+  {
+   "item": "DataStore CONTROLLER -> Oracle",
+   "expected": "0xd68153cfd5bea319b0a52f6b91279b41e488566d",
+   "actual": "0xd68153cfd5bea319b0a52f6b91279b41e488566d",
+   "status": "PASS",
+   "evidence": "02:239; Fx100Role.ts:50; deployed-addresses.json[\"Fx100Base#Oracle\"]; parameters.json .roles[3].members[3]"
+  },
+  {
+   "item": "DataStore CONTROLLER -> OrderHandler",
+   "expected": "0x5459670bc4976568c7bd8bba56793d7b989fb64b",
+   "actual": "0x5459670bc4976568c7bd8bba56793d7b989fb64b",
+   "status": "PASS",
+   "evidence": "02:239; Fx100Role.ts:51; deployed-addresses.json[\"Fx100Execution#OrderHandler\"]; parameters.json .roles[3].members[12]"
+  },
+  {
+   "item": "DataStore CONTROLLER -> ExchangeRouter",
+   "expected": "0x3ada58b32e196b02b4188f1261c04175d71c1f2f",
+   "actual": "0x3ada58b32e196b02b4188f1261c04175d71c1f2f",
+   "status": "PASS",
+   "evidence": "02:239; Fx100Role.ts:52; deployed-addresses.json[\"Fx100Execution#ExchangeRouter\"]; parameters.json .roles[3].members[8]"
+  },
+  {
+   "item": "DataStore CONTROLLER -> SubaccountRouter",
+   "expected": "0xb7b8332f600df5cbfef65b464486bdfd963d2f1c",
+   "actual": "0xb7b8332f600df5cbfef65b464486bdfd963d2f1c",
+   "status": "PASS",
+   "evidence": "02:239; Fx100Role.ts:53; deployed-addresses.json[\"Fx100Execution#SubaccountRouter\"]; parameters.json .roles[3].members[15]"
+  },
+  {
+   "item": "DataStore CONTROLLER -> RelayRouter",
+   "expected": "0xb25e3a0da2d4654144222800d639d0d17d001186",
+   "actual": "0xb25e3a0da2d4654144222800d639d0d17d001186",
+   "status": "PASS",
+   "evidence": "02:239; Fx100Role.ts:54; deployed-addresses.json[\"Fx100Execution#RelayRouter\"]; parameters.json .roles[3].members[13]"
+  },
+  {
+   "item": "DataStore CONTROLLER -> SubaccountRelayRouter",
+   "expected": "0x1c038c1d34ac612d408a60cef38f4f3622cee8a0",
+   "actual": "0x1c038c1d34ac612d408a60cef38f4f3622cee8a0",
+   "status": "PASS",
+   "evidence": "02:239; Fx100Role.ts:55; deployed-addresses.json[\"Fx100Execution#SubaccountRelayRouter\"]; parameters.json .roles[3].members[14]"
+  },
+  {
+   "item": "DataStore CONTROLLER -> LiquidationHandler",
+   "expected": "0x276b5c707d341433c5c3b7a47d34ae55e8cd2959",
+   "actual": "0x276b5c707d341433c5c3b7a47d34ae55e8cd2959",
+   "status": "PASS",
+   "evidence": "02:239; Fx100Role.ts:56; deployed-addresses.json[\"Fx100Execution#LiquidationHandler\"]; parameters.json .roles[3].members[11]"
+  },
+  {
+   "item": "DataStore CONTROLLER -> AdlHandler",
+   "expected": "0x4ed3526e9db8581d0a90b44c9da18d2089ebde38",
+   "actual": "0x4ed3526e9db8581d0a90b44c9da18d2089ebde38",
+   "status": "PASS",
+   "evidence": "02:239; Fx100Role.ts:57; deployed-addresses.json[\"Fx100Execution#AdlHandler\"]; parameters.json .roles[3].members[6]"
+  },
+  {
+   "item": "DataStore CONTROLLER -> FeeHandler",
+   "expected": "0x26e852e8d89109b5bb9b0621d6fb29d2d0bced9d",
+   "actual": "0x26e852e8d89109b5bb9b0621d6fb29d2d0bced9d",
+   "status": "PASS",
+   "evidence": "02:239; Fx100Role.ts:58; deployed-addresses.json[\"Fx100Execution#FeeHandler\"]; parameters.json .roles[3].members[9]"
+  },
+  {
+   "item": "DataStore CONTROLLER -> MarketFactory",
+   "expected": "0xd41d7ea390f6184df904de4263a4bece5d2b1816",
+   "actual": "0xd41d7ea390f6184df904de4263a4bece5d2b1816",
+   "status": "PASS",
+   "evidence": "02:239; Fx100Role.ts:59; deployed-addresses.json[\"Fx100Periphery#MarketFactory\"]; parameters.json .roles[3].members[5]"
+  },
+  {
+   "item": "DataStore CONTROLLER -> AutoCancelSyncer",
+   "expected": "0x990559f8341355415b38989dbe782dca32c3b73d",
+   "actual": "0x990559f8341355415b38989dbe782dca32c3b73d",
+   "status": "PASS",
+   "evidence": "02:239; Fx100Role.ts:60; deployed-addresses.json[\"Fx100Periphery#AutoCancelSyncer\"]; parameters.json .roles[3].members[4]"
+  },
+  {
+   "item": "DataStore CONTROLLER -> IncreaseOrderExecutor",
+   "expected": "0x8a23c6189459ced8844f3be2969ca12839c41eb2",
+   "actual": "0x8a23c6189459ced8844f3be2969ca12839c41eb2",
+   "status": "PASS",
+   "evidence": "02:239; Fx100Role.ts:61; deployed-addresses.json[\"Fx100Execution#IncreaseOrderExecutor\"]; parameters.json .roles[3].members[10]"
+  },
+  {
+   "item": "DataStore CONTROLLER -> DecreaseOrderExecutor",
+   "expected": "0x9de8eda16f88799dcba811fdc8d9240fbb709a1c",
+   "actual": "0x9de8eda16f88799dcba811fdc8d9240fbb709a1c",
+   "status": "PASS",
+   "evidence": "02:239; Fx100Role.ts:62; deployed-addresses.json[\"Fx100Execution#DecreaseOrderExecutor\"]; parameters.json .roles[3].members[7]"
+  },
+  {
+   "item": "DataStore ROUTER_PLUGIN -> ExchangeRouter",
+   "expected": "0x3ada58b32e196b02b4188f1261c04175d71c1f2f",
+   "actual": "0x3ada58b32e196b02b4188f1261c04175d71c1f2f",
+   "status": "PASS",
+   "evidence": "02:240; Fx100Role.ts:86; parameters.json .roles[4].members[0]"
+  },
+  {
+   "item": "DataStore ROUTER_PLUGIN -> SubaccountRouter",
+   "expected": "0xb7b8332f600df5cbfef65b464486bdfd963d2f1c",
+   "actual": "0xb7b8332f600df5cbfef65b464486bdfd963d2f1c",
+   "status": "PASS",
+   "evidence": "02:240; Fx100Role.ts:87; parameters.json .roles[4].members[3]"
+  },
+  {
+   "item": "DataStore ROUTER_PLUGIN -> RelayRouter",
+   "expected": "0xb25e3a0da2d4654144222800d639d0d17d001186",
+   "actual": "0xb25e3a0da2d4654144222800d639d0d17d001186",
+   "status": "PASS",
+   "evidence": "02:240; Fx100Role.ts:88; parameters.json .roles[4].members[1]"
+  },
+  {
+   "item": "DataStore ROUTER_PLUGIN -> SubaccountRelayRouter",
+   "expected": "0x1c038c1d34ac612d408a60cef38f4f3622cee8a0",
+   "actual": "0x1c038c1d34ac612d408a60cef38f4f3622cee8a0",
+   "status": "PASS",
+   "evidence": "02:240; Fx100Role.ts:89; parameters.json .roles[4].members[2]"
+  },
+  {
+   "item": "DataStore ROUTER_PLUGIN member set has no extras",
+   "expected": "exactly 4 members",
+   "actual": "4 members (all expected)",
+   "status": "PASS",
+   "evidence": "parameters.json .roles[4].members.length=4"
+  },
+  {
+   "item": "DataStore CONFIG_KEEPER -> bootstrapAdmin (deployer)",
+   "expected": "0x4b32f9bc794b0298b9373cf0d67e36162a2e9247 (granted by Fx100Oracle#GrantOracleConfigKeeperBootstrapAdmin + Fx100Role#GrantBootstrapConfigKeeper)",
+   "actual": "0x4b32f9bc794b0298b9373cf0d67e36162a2e9247 present; both futures SUCCESS",
+   "status": "PASS",
+   "evidence": "02:241; Fx100Oracle.ts:21-26; Fx100Role.ts:97; parameters.json .roles[1].members[0]"
+  },
+  {
+   "item": "DataStore CONFIG_KEEPER -> configKeeper param",
+   "expected": "0xf82cf35c5c0019861c2cdc65041c8ac32970d403",
+   "actual": "0xf82cf35c5c0019861c2cdc65041c8ac32970d403",
+   "status": "PASS",
+   "evidence": "02:241; fx100.fork.tx-fork.json Fx100Role.configKeeper; Fx100Role.ts:104; parameters.json .roles[1].members[1]; roles.json.grants[5]"
+  },
+  {
+   "item": "DataStore LIMITED_CONFIG_KEEPER -> bootstrapAdmin (deployer)",
+   "expected": "0x4b32f9bc794b0298b9373cf0d67e36162a2e9247",
+   "actual": "0x4b32f9bc794b0298b9373cf0d67e36162a2e9247",
+   "status": "PASS",
+   "evidence": "02:242; Fx100Role.ts:98-102; parameters.json .roles[2].members[0]"
+  },
+  {
+   "item": "DataStore LIMITED_CONFIG_KEEPER -> limitedConfigKeeper param",
+   "expected": "0xf82cf35c5c0019861c2cdc65041c8ac32970d403",
+   "actual": "0xf82cf35c5c0019861c2cdc65041c8ac32970d403",
+   "status": "PASS",
+   "evidence": "02:242; fx100.fork.tx-fork.json Fx100Role.limitedConfigKeeper; Fx100Role.ts:105-109; parameters.json .roles[2].members[1]"
+  },
+  {
+   "item": "DataStore MARKET_KEEPER -> bootstrapAdmin (deployer)",
+   "expected": "0x4b32f9bc794b0298b9373cf0d67e36162a2e9247",
+   "actual": "0x4b32f9bc794b0298b9373cf0d67e36162a2e9247",
+   "status": "PASS",
+   "evidence": "02:242; Fx100Role.ts:103; parameters.json .roles[5].members[0]"
+  },
+  {
+   "item": "DataStore MARKET_KEEPER -> marketKeeper param",
+   "expected": "0xf82cf35c5c0019861c2cdc65041c8ac32970d403",
+   "actual": "0xf82cf35c5c0019861c2cdc65041c8ac32970d403",
+   "status": "PASS",
+   "evidence": "02:242; fx100.fork.tx-fork.json Fx100Role.marketKeeper; Fx100Role.ts:110; parameters.json .roles[5].members[1]; roles.json.grants[6]"
+  },
+  {
+   "item": "DataStore ORDER_KEEPER -> orderKeeper param",
+   "expected": "0x542fe841228416f6a3d65eb534a90ebc5cc36354 (sole member)",
+   "actual": "0x542fe841228416f6a3d65eb534a90ebc5cc36354 (members.length=1)",
+   "status": "PASS",
+   "evidence": "02:243; fx100.fork.tx-fork.json Fx100Role.orderKeeper; Fx100Role.ts:111; parameters.json .roles[7].members[0]; roles.json.grants[0]"
+  },
+  {
+   "item": "DataStore FROZEN_ORDER_KEEPER -> orderKeeper param (same address)",
+   "expected": "0x542fe841228416f6a3d65eb534a90ebc5cc36354 (sole member)",
+   "actual": "0x542fe841228416f6a3d65eb534a90ebc5cc36354 (members.length=1)",
+   "status": "PASS",
+   "evidence": "02:243; Fx100Role.ts:112; parameters.json .roles[8].members[0]; roles.json.grants[1]"
+  },
+  {
+   "item": "DataStore LIQUIDATION_KEEPER -> liquidationKeeper param",
+   "expected": "0x542fe841228416f6a3d65eb534a90ebc5cc36354 (sole member)",
+   "actual": "0x542fe841228416f6a3d65eb534a90ebc5cc36354 (members.length=1)",
+   "status": "PASS",
+   "evidence": "02:244; fx100.fork.tx-fork.json Fx100Role.liquidationKeeper; Fx100Role.ts:113; parameters.json .roles[9].members[0]; roles.json.grants[2]"
+  },
+  {
+   "item": "DataStore ADL_KEEPER -> adlKeeper param",
+   "expected": "0x542fe841228416f6a3d65eb534a90ebc5cc36354 (sole member)",
+   "actual": "0x542fe841228416f6a3d65eb534a90ebc5cc36354 (members.length=1)",
+   "status": "PASS",
+   "evidence": "02:244; fx100.fork.tx-fork.json Fx100Role.adlKeeper; Fx100Role.ts:114; parameters.json .roles[10].members[0]; roles.json.grants[3]"
+  },
+  {
+   "item": "DataStore FEE_KEEPER -> feeKeeper param",
+   "expected": "0xf82cf35c5c0019861c2cdc65041c8ac32970d403 (sole member)",
+   "actual": "0xf82cf35c5c0019861c2cdc65041c8ac32970d403 (members.length=1)",
+   "status": "PASS",
+   "evidence": "02:244; fx100.fork.tx-fork.json Fx100Role.feeKeeper (resolved via Fx100Role.ts:30 resolveRoleAddress); Fx100Role.ts:115; parameters.json .roles[6].members[0]"
+  },
+  {
+   "item": "DataStore TIMELOCK_ADMIN -> timelockAdmin param",
+   "expected": "0xf82cf35c5c0019861c2cdc65041c8ac32970d403 (sole member)",
+   "actual": "0xf82cf35c5c0019861c2cdc65041c8ac32970d403 (members.length=1)",
+   "status": "PASS",
+   "evidence": "02:244; fx100.fork.tx-fork.json Fx100Role.timelockAdmin; Fx100Role.ts:116; parameters.json .roles[0].members[0]"
+  },
+  {
+   "item": "EXTRA GRANT: DataStore CONTROLLER -> 0xf82cf35c5c0019861c2cdc65041c8ac32970d403 (E2E admin EOA = configKeeper/marketKeeper/feeKeeper/timelockAdmin/multisig param address)",
+   "expected": "not in 02 §9.2 matrix (CONTROLLER is granted only to bootstrapAdmin + 15 contracts); not the bootstrap deployer, so 02 §9.3 does not cover it",
+   "actual": "0xf82cf35c5c0019861c2cdc65041c8ac32970d403 is CONTROLLER member[16]; source is the TestCode pipeline step 8 post-deploy grant (deploy-contracts.ts:43, :657 `{ role: 'CONTROLLER', account: adminAccount }`), recorded as roles.json.grants[4]; intentional harness grant, documented in roles.json but absent from the 02 manual",
+   "status": "FAIL",
+   "evidence": "02:239 vs parameters.json .roles[3].members[16]; roles.json.grants[4]; TestCode/scripts/deploy-contracts.ts:43,657-673; manifest .roles.controller"
+  },
+  {
+   "item": "DataStore CONTROLLER member count",
+   "expected": "16 per 02 §9.2 (bootstrapAdmin + 15 contracts)",
+   "actual": "17 (16 expected + the extra 0xf82c... above)",
+   "status": "FAIL",
+   "evidence": "02:239; parameters.json .roles[3].members.length=17"
+  },
+  {
+   "item": "02 §9.3 bootstrap residue: DEFAULT_ADMIN_ROLE stays on deployer",
+   "expected": "DataStore DEFAULT_ADMIN_ROLE member[0] = ignition deployer 0x4b32f9bc794b0298b9373cf0d67e36162a2e9247 (journal sole `from`)",
+   "actual": "roles.json.defaultAdminRoleMember0 = 0x4b32f9bC794B0298b9373cf0d67E36162A2e9247 (read on-chain by deploy-contracts.ts:516-518 getRoleMember(0x00..,0))",
+   "status": "PASS",
+   "evidence": "02:254; roles.json.defaultAdminRoleMember0; journal.jsonl distinct from = [0x4b32f9bc...]; deploy-contracts.ts:508-521"
+  },
+  {
+   "item": "02 §9.3 bootstrap residue: deployer's DataStore role set",
+   "expected": "deployer 0x4b32f9bc... holds exactly CONTROLLER, CONFIG_KEEPER, LIMITED_CONFIG_KEEPER, MARKET_KEEPER (and nothing else) because Ignition never revokes",
+   "actual": "0x4b32f9bc... appears in .roles[3] CONTROLLER, .roles[1] CONFIG_KEEPER, .roles[2] LIMITED_CONFIG_KEEPER, .roles[5] MARKET_KEEPER only; absent from TIMELOCK_ADMIN, ROUTER_PLUGIN, FEE_KEEPER, ORDER/FROZEN/LIQUIDATION/ADL_KEEPER",
+   "status": "PASS",
+   "evidence": "02:254; parameters.json .roles[1].members[0], .roles[2].members[0], .roles[3].members[0], .roles[5].members[0]; node membership scan over all 11 roles"
+  },
+  {
+   "item": "02 §18.1 row: DataStore.hasRole(CONTROLLER, OrderHandler)",
+   "expected": "true",
+   "actual": "true (OrderHandler 0x5459670bc4976568c7bd8bba56793d7b989fb64b is CONTROLLER member[12]; deploy-contracts.ts also read-checked hasRole(CONTROLLER, OrderHandler) at step 9)",
+   "status": "PASS",
+   "evidence": "02:488; deployed-addresses.json[\"Fx100Execution#OrderHandler\"]; parameters.json .roles[3].members[12]; journal Fx100Role#GrantControllerOrderHandler receipt SUCCESS; deploy-contracts.ts:754-757"
+  },
+  {
+   "item": "02 §18.1 row (second clause): old v0.3.1 addresses hold no role in the new DataStore",
+   "expected": "false for every v0.3.1 contract address (22 addresses from base-sepolia-v0.3.1-260729.json contracts+additionalContracts, e.g. old OrderHandler 0x84162e52063504a701cDA5E931D2Fd174c10648d)",
+   "actual": "0 of 22 v0.3.1 addresses appear in any of the 11 role member lists of DataStore 0x4741A9C9F0310625C0C68997ACdce43Ab55604b8 (fresh deployment, new DataStore; not an in-place upgrade)",
+   "status": "PASS",
+   "evidence": "02:488; base-sepolia-v0.3.1-260729.json .contracts/.additionalContracts; parameters.json .roles[*].members; CURRENT.json environments.tx-fork.forkOf=tx-fork@v0.3.2, forkBlockNumber 46282748"
+  },
+  {
+   "item": "Role hash sanity (11 DataStore roles)",
+   "expected": "parameters.json .roles[i].hash == Role.sol `Hash:` comment == keccak256(abi.encode(name)) recomputed with repo ethers",
+   "actual": "11/11 match (e.g. CONTROLLER 0x97adf037b2472f4a6a9825eff7d2dd45e37f2dc308df2a260d6a72af4189a65b, ORDER_KEEPER 0x40a07f8f0fc57fcf18b093d96362a8e661eaac7b7e6edbf66f242111f83a6794)",
+   "status": "PASS",
+   "evidence": "Role.sol:7-48; roleConstants.ts:3-27; parameters.json .roles[0..10].hash"
+  },
+  {
+   "item": "roles.json.grants (7 harness grants) are all reflected in chain members",
+   "expected": "each (role, account) in roles.json.grants is present in parameters.json .roles[].members",
+   "actual": "7/7 present",
+   "status": "PASS",
+   "evidence": "roles.json.grants[0..6]; parameters.json .roles[7,8,9,10].members[0]=0x542fe8..., .roles[3].members[16], .roles[1].members[1], .roles[5].members[1]=0xf82cf3..."
+  },
+  {
+   "item": "LPVault CONTROLLER_ROLE -> IncreaseOrderExecutor",
+   "expected": "0x8A23C6189459ced8844f3be2969CA12839C41eb2 has role 0x7b765e0e932d348852a6f810bfa1ab891e259123f02db8cdcde614c570223357 on LPVault 0x46Fb4f1eeBf811A59dcf6E6343aC5be36122DdE8",
+   "actual": "not in parameters.json/roles.json (snapshot covers DataStore roles only); journal Fx100Role#GrantLpVaultControllerIncreaseExecutor receipt SUCCESS block 46282864 (deploy-time evidence, not read-back)",
+   "status": "NOT_VERIFIABLE_OFFLINE",
+   "evidence": "02:245; Fx100Role.ts:124; VaultBase.sol:53; journal.jsonl futureId Fx100Role#GrantLpVaultControllerIncreaseExecutor"
+  },
+  {
+   "item": "LPVault CONTROLLER_ROLE -> DecreaseOrderExecutor",
+   "expected": "0x9De8eDA16F88799DCBa811FDC8D9240Fbb709A1c has CONTROLLER_ROLE on LPVault",
+   "actual": "not in snapshot; journal Fx100Role#GrantLpVaultControllerDecreaseExecutor SUCCESS block 46282862",
+   "status": "NOT_VERIFIABLE_OFFLINE",
+   "evidence": "02:245; Fx100Role.ts:125; journal.jsonl"
+  },
+  {
+   "item": "LPVault CONTROLLER_ROLE -> LiquidationHandler",
+   "expected": "0x276b5c707D341433c5c3b7A47d34ae55E8cD2959 has CONTROLLER_ROLE on LPVault",
+   "actual": "not in snapshot; journal Fx100Role#GrantLpVaultControllerLiquidationHandler SUCCESS block 46282865",
+   "status": "NOT_VERIFIABLE_OFFLINE",
+   "evidence": "02:245; Fx100Role.ts:126; journal.jsonl"
+  },
+  {
+   "item": "LPVault CONTROLLER_ROLE -> AdlHandler",
+   "expected": "0x4eD3526E9dB8581D0a90b44c9da18D2089ebDe38 has CONTROLLER_ROLE on LPVault",
+   "actual": "not in snapshot; journal Fx100Role#GrantLpVaultControllerAdlHandler SUCCESS block 46282861",
+   "status": "NOT_VERIFIABLE_OFFLINE",
+   "evidence": "02:245; Fx100Role.ts:127; journal.jsonl"
+  },
+  {
+   "item": "LPVault CONTROLLER_ROLE -> FeeHandler",
+   "expected": "0x26E852e8D89109b5bb9B0621d6fb29D2D0BCed9D has CONTROLLER_ROLE on LPVault",
+   "actual": "not in snapshot; journal Fx100Role#GrantLpVaultControllerFeeHandler SUCCESS block 46282863",
+   "status": "NOT_VERIFIABLE_OFFLINE",
+   "evidence": "02:245; Fx100Role.ts:128; journal.jsonl"
+  },
+  {
+   "item": "LPVault CONTROLLER_ROLE -> OrderHandler",
+   "expected": "0x5459670bc4976568c7Bd8BBa56793d7b989fB64B has CONTROLLER_ROLE on LPVault",
+   "actual": "not in snapshot; journal Fx100Role#GrantLpVaultControllerOrderHandler SUCCESS block 46282866",
+   "status": "NOT_VERIFIABLE_OFFLINE",
+   "evidence": "02:245; Fx100Role.ts:129; journal.jsonl"
+  },
+  {
+   "item": "ProtocolTreasury TOKEN_RECEIVER_ROLE -> LPVault",
+   "expected": "0x46Fb4f1eeBf811A59dcf6E6343aC5be36122DdE8 has 0x607b5964b99ba60004997a77c26b85dfbfe3dd5c8325bfb94d82d08cf63c6932 on 0x4f184fC7862af8184a81e4E3007F5C8CA9cfebeE",
+   "actual": "not in snapshot; journal Fx100Fee#GrantProtocolTreasuryTokenReceiverLpVault SUCCESS block 46282809",
+   "status": "NOT_VERIFIABLE_OFFLINE",
+   "evidence": "02:246; Fx100Fee.ts:48-50; ProtocolTreasury.sol:31; journal.jsonl"
+  },
+  {
+   "item": "ProtocolTreasury TOKEN_RECEIVER_ROLE -> multisig param",
+   "expected": "0xf82CF35C5c0019861c2cDC65041C8Ac32970D403 (fx100.fork.tx-fork.json Fx100Fee.multisig) has TOKEN_RECEIVER_ROLE on ProtocolTreasury",
+   "actual": "not in snapshot; journal Fx100Fee#GrantProtocolTreasuryTokenReceiverMultisig args [0x607b5964..., 0xf82CF35C...] SUCCESS block 46282795",
+   "status": "NOT_VERIFIABLE_OFFLINE",
+   "evidence": "02:246; Fx100Fee.ts:51-53; journal.jsonl"
+  },
+  {
+   "item": "InsuranceTreasury TOKEN_RECEIVER_ROLE -> LPVault",
+   "expected": "0x46Fb4f1eeBf811A59dcf6E6343aC5be36122DdE8 has TOKEN_RECEIVER_ROLE on 0xaaeaFd0ca2a17a4AAA0aA945D74779F05fF58F2A",
+   "actual": "not in snapshot; journal Fx100Fee#GrantInsuranceTreasuryTokenReceiverLpVault SUCCESS block 46282808",
+   "status": "NOT_VERIFIABLE_OFFLINE",
+   "evidence": "02:246; Fx100Fee.ts:48-50; journal.jsonl"
+  },
+  {
+   "item": "InsuranceTreasury TOKEN_RECEIVER_ROLE -> multisig param",
+   "expected": "0xf82CF35C5c0019861c2cDC65041C8Ac32970D403 has TOKEN_RECEIVER_ROLE on InsuranceTreasury",
+   "actual": "not in snapshot; journal Fx100Fee#GrantInsuranceTreasuryTokenReceiverMultisig SUCCESS block 46282792",
+   "status": "NOT_VERIFIABLE_OFFLINE",
+   "evidence": "02:246; Fx100Fee.ts:51-53; journal.jsonl"
+  },
+  {
+   "item": "ProtocolTreasury MULTICALL_ROLE -> feeKeeper param",
+   "expected": "0xf82CF35C5c0019861c2cDC65041C8Ac32970D403 has 0x759995689d0b5a8d082ba285697cd721c40ae33fadfeb8da798e7c4b54e8827d on ProtocolTreasury",
+   "actual": "not in snapshot; journal Fx100Fee#GrantProtocolTreasuryMulticallFeeKeeper SUCCESS block 46282794",
+   "status": "NOT_VERIFIABLE_OFFLINE",
+   "evidence": "02:247; Fx100Fee.ts:54-56; ProtocolTreasury.sol:25; journal.jsonl"
+  },
+  {
+   "item": "ProtocolTreasury BATCH_TRANSFER_ROLE -> feeKeeper param",
+   "expected": "0xf82CF35C5c0019861c2cDC65041C8Ac32970D403 has 0x8ba312960b5597dbb6106c0155aa0551317467e13792b46ce452b4e143b06e13 on ProtocolTreasury",
+   "actual": "not in snapshot; journal Fx100Fee#GrantProtocolTreasuryBatchTransferFeeKeeper SUCCESS block 46282793",
+   "status": "NOT_VERIFIABLE_OFFLINE",
+   "evidence": "02:247; Fx100Fee.ts:57-59; ProtocolTreasury.sol:28; journal.jsonl"
+  },
+  {
+   "item": "InsuranceTreasury MULTICALL_ROLE -> feeKeeper param",
+   "expected": "0xf82CF35C5c0019861c2cDC65041C8Ac32970D403 has MULTICALL_ROLE on InsuranceTreasury",
+   "actual": "not in snapshot; journal Fx100Fee#GrantInsuranceTreasuryMulticallFeeKeeper SUCCESS block 46282791",
+   "status": "NOT_VERIFIABLE_OFFLINE",
+   "evidence": "02:247; Fx100Fee.ts:54-56; journal.jsonl"
+  },
+  {
+   "item": "InsuranceTreasury BATCH_TRANSFER_ROLE -> feeKeeper param",
+   "expected": "0xf82CF35C5c0019861c2cDC65041C8Ac32970D403 has BATCH_TRANSFER_ROLE on InsuranceTreasury",
+   "actual": "not in snapshot; journal Fx100Fee#GrantInsuranceTreasuryBatchTransferFeeKeeper SUCCESS block 46282790",
+   "status": "NOT_VERIFIABLE_OFFLINE",
+   "evidence": "02:247; Fx100Fee.ts:57-59; journal.jsonl"
+  },
+  {
+   "item": "ReferralStorage handler -> OrderHandler",
+   "expected": "ReferralStorage 0x4c130fb16f8fD19b82c75674756922aaFD891Ac8 .isHandler(0x5459670bc4976568c7Bd8BBa56793d7b989fB64B) = true",
+   "actual": "not in snapshot; journal Fx100Role#GrantReferralHandlerOrderHandler setHandler(0x5459...,true) SUCCESS block 46282869",
+   "status": "NOT_VERIFIABLE_OFFLINE",
+   "evidence": "02:248; Fx100Role.ts:137; journal.jsonl"
+  },
+  {
+   "item": "ReferralStorage handler -> LiquidationHandler",
+   "expected": "isHandler(0x276b5c707D341433c5c3b7A47d34ae55E8cD2959) = true",
+   "actual": "not in snapshot; journal Fx100Role#GrantReferralHandlerLiquidationHandler SUCCESS block 46282868",
+   "status": "NOT_VERIFIABLE_OFFLINE",
+   "evidence": "02:248; Fx100Role.ts:138; journal.jsonl"
+  },
+  {
+   "item": "ReferralStorage handler -> AdlHandler",
+   "expected": "isHandler(0x4eD3526E9dB8581D0a90b44c9da18D2089ebDe38) = true",
+   "actual": "not in snapshot; journal Fx100Role#GrantReferralHandlerAdlHandler SUCCESS block 46282867",
+   "status": "NOT_VERIFIABLE_OFFLINE",
+   "evidence": "02:248; Fx100Role.ts:139; journal.jsonl"
+  },
+  {
+   "item": "02 §9.3 residue on LPVault/Treasury DEFAULT_ADMIN_ROLE and 4 ProxyAdmin ownerships",
+   "expected": "deployer 0x4b32f9bc... holds LPVault/ProtocolTreasury/InsuranceTreasury DEFAULT_ADMIN_ROLE (initialize(bootstrapAdmin), Fx100Fee.ts:27,36) and owns the 4 ProxyAdmins",
+   "actual": "no offline snapshot covers these contracts' AccessControl or ProxyAdmin owner",
+   "status": "NOT_VERIFIABLE_OFFLINE",
+   "evidence": "02:254; Fx100Fee.ts:27-31,36-40; parameters.json .roles[] (DataStore only); roles.json (DataStore only)"
+  }
+ ],
+ "summary": "PASS 38 / FAIL 2 / NOT_VERIFIABLE_OFFLINE 18 / N/A 0. Verdict: every (role, holder) pair that 02 §9.2 prescribes for DataStore (32 pairs: 16 CONTROLLER, 4 ROUTER_PLUGIN, 2 each CONFIG/LIMITED_CONFIG/MARKET_KEEPER, 1 each ORDER/FROZEN_ORDER/LIQUIDATION/ADL/FEE_KEEPER/TIMELOCK_ADMIN) is present on-chain at block 46282993, role hashes match Role.sol, the bootstrap deployer 0x4b32f9bc... retains exactly the §9.3-listed DataStore roles (DEFAULT_ADMIN, CONTROLLER, CONFIG_KEEPER, LIMITED_CONFIG_KEEPER, MARKET_KEEPER) and nothing more, and §18.1 `hasRole(CONTROLLER, OrderHandler)` = true with no v0.3.1 address holding any role. The two FAIL rows are the same finding: DataStore CONTROLLER has one extra member, the E2E admin EOA 0xf82cf35c5c0019861c2cdc65041c8ac32970d403, which is not the bootstrap deployer (so §9.3 does not explain it) but is an intentional TestCode harness grant (deploy-contracts.ts:43/657, roles.json.grants[4]) that the 02 manual does not document. LPVault CONTROLLER_ROLE, Treasury x2 roles and ReferralStorage handlers (17 pairs) plus LPVault/Treasury DEFAULT_ADMIN and ProxyAdmin ownership are outside the offline snapshot; the r3 ignition journal shows all 17 corresponding grant/setHandler transactions confirmed SUCCESS before the snapshot block, but that is deploy-time evidence, not a read-back.",
+ "unexplained_mismatches": [],
+ "caveats": [
+  "Extra CONTROLLER on 0xf82cf35c... is explained (TestCode/scripts/deploy-contracts.ts step 8, line 657; roles.json.grants[4]; manifest .roles.controller) but is a real deviation from 02 §9.2 and is a powerful right (direct DataStore writes); acceptable only as a fork-only harness convenience. Recommend either documenting it in 02 §9.2/§18.1 (or CURRENT.json) as a known test-environment grant, or revoking it after configure so the fork mirrors the manual.",
+  "In the tx-fork parameter file the multisig, feeKeeper, configKeeper, limitedConfigKeeper, marketKeeper and timelockAdmin are all the same EOA 0xf82CF35C... and orderKeeper/liquidationKeeper/adlKeeper are all 0x542fe841... (fx100.fork.tx-fork.json). The §9.2 fallback-to-deployer rule (02:250) did not trigger (no zero addresses), but privilege concentration on two EOAs is test-only and must not be copied to production.",
+  "parameters.json .roles[] enumerates only the 11 DataStore roles; DEFAULT_ADMIN_ROLE is known only through roles.json.defaultAdminRoleMember0 (member index 0). Additional DEFAULT_ADMIN members, if any, cannot be excluded offline.",
+  "LPVault / ProtocolTreasury / InsuranceTreasury / ReferralStorage role state is not captured by config-dump; the 17 NOT_VERIFIABLE_OFFLINE rows rely on ignition journal receipts (status SUCCESS, blocks 46282751-46282873, all before snapshot block 46282993). Suggest extending config-dump (or the deploy read-back step 9) to read LPVault.hasRole(CONTROLLER_ROLE,x), Treasury.hasRole(...), ReferralStorage.isHandler(x) so these become chain-verified.",
+  "The §18.1 clause 'old address (in-place upgrade) = false' is trivially satisfied: tx-fork v0.3.2 is a fresh deployment with a new DataStore (0x4741A9C9...), not an in-place upgrade of the v0.3.1 DataStore (0x606D72Ab...). The check confirms none of the 22 v0.3.1 addresses hold any role on the new DataStore.",
+  "parameters-by-module.csv was not consulted; role data lives in parameters.json .roles[], which was used directly. Address mapping snapshot deployed-addresses.json is identical (67 keys, 0 diffs) to ignition deployed_addresses.json for tx-fork-v032-260902r3 and consistent with the manifest.",
+  "Per ground rules no .env*, pk.txt, mnemonic, noise-traders.json, Devconfig/ or Memory/ files were read; TestCode/config/environments/tx-fork-260729.json matched the address grep but was deliberately not opened (environment files may carry RPC URLs). The manifest, parameter file and CURRENT.json were read through a redaction filter and contained no URL/secret. E2E_ADMIN_ACCOUNT / E2E_KEEPER_ACCOUNT values were not read; their on-chain effect is taken from the ignition parameter file and the snapshot.",
+  "Older ignition deployment ids tx-fork-v032-260901 and tx-fork-v032-260902 (non-r3) also exist in the contract clone; they are separate deployments and were not used for any actual value here."
+ ]
+}

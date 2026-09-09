@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "bindings": {
+    "dev-readonly": {
+      "deploymentId": "base-sepolia@v0.3.1",
+      "manifest": "./config/deployments/base-sepolia-v0.3.1-260729.json",
+      "manifestName": "base-sepolia-v0.3.1-260729",
+      "release": "v0.3.1",
+      "contractCommit": "d9a7fd2f23705c0bcfe44eaa2f40d9d5c170aaa0",
+      "environmentChainId": 84532,
+      "deploymentChainId": 84532,
+      "parameterRegistry": "./config/parameter-registries/v0.3.1@d9a7fd2.json",
+      "artifactDirectory": "../Github/fx100-contracts@release-v0.3.1/out"
+    },
+    "tx-fork": {
+      "deploymentId": "tx-fork@v0.3.2",
+      "manifest": "./config/deployments/tx-fork-v0.3.2-260902-2305.json",
+      "manifestName": "tx-fork-v0.3.2-260902-2305",
+      "release": "v0.3.2",
+      "contractCommit": "13880f2416918f4fed3fea86d7f1023084a3ce0d",
+      "environmentChainId": 99911,
+      "deploymentChainId": 99911,
+      "parameterRegistry": "./config/parameter-registries/v0.3.2@13880f2.json",
+      "artifactDirectory": "../Github/fx100-contracts@release-v0.3.2/artifacts"
+    },
+    "oracle-fork": {
+      "deploymentId": "base-sepolia@v0.3.1",
+      "manifest": "./config/deployments/base-sepolia-v0.3.1-260729.json",
+      "manifestName": "base-sepolia-v0.3.1-260729",
+      "release": "v0.3.1",
+      "contractCommit": "d9a7fd2f23705c0bcfe44eaa2f40d9d5c170aaa0",
+      "environmentChainId": 99912,
+      "deploymentChainId": 84532,
+      "parameterRegistry": "./config/parameter-registries/v0.3.1@d9a7fd2.json",
+      "artifactDirectory": "../Github/fx100-contracts@release-v0.3.1/out"
+    },
+    "time-fork": {
+      "deploymentId": "base-sepolia@v0.3.1",
+      "manifest": "./config/deployments/base-sepolia-v0.3.1-260729.json",
+      "manifestName": "base-sepolia-v0.3.1-260729",
+      "release": "v0.3.1",
+      "contractCommit": "d9a7fd2f23705c0bcfe44eaa2f40d9d5c170aaa0",
+      "environmentChainId": 99913,
+      "deploymentChainId": 84532,
+      "parameterRegistry": "./config/parameter-registries/v0.3.1@d9a7fd2.json",
+      "artifactDirectory": "../Github/fx100-contracts@release-v0.3.1/out"
+    },
+    "base-sepolia": {
+      "deploymentId": "base-sepolia@v0.3.1",
+      "manifest": "./config/deployments/base-sepolia-v0.3.1-260729.json",
+      "manifestName": "base-sepolia-v0.3.1-260729",
+      "release": "v0.3.1",
+      "contractCommit": "d9a7fd2f23705c0bcfe44eaa2f40d9d5c170aaa0",
+      "environmentChainId": 84532,
+      "deploymentChainId": 84532,
+      "parameterRegistry": "./config/parameter-registries/v0.3.1@d9a7fd2.json",
+      "artifactDirectory": "../Github/fx100-contracts@release-v0.3.1/out"
+    }
+  }
+}

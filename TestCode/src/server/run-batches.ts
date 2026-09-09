@@ -27,12 +27,18 @@ import {
 } from './environment-settings.js';
 import { EnvironmentInitializationManager } from './environment-initializations.js';
 import { isReleaseMismatch, targetRelease } from '../config/baseline.js';
+import { isFunctionalCaseId } from '../reporting/version-cases.js';
+
+const runCaseIdSchema = z.string().refine(
+  (id) => /^SCN-\d{3}$/.test(id) || isFunctionalCaseId(id),
+  { message: '用例 ID 格式无效。' },
+);
 
 const createRunBatchSchema = z.object({
   release: z.string().trim().min(1).max(120),
   description: z.string().trim().max(1_000).default(''),
   scope: z.enum(['single', 'selected', 'all']),
-  scenarioIds: z.array(z.string().regex(/^SCN-\d{3}$/)).min(1).max(200),
+  scenarioIds: z.array(runCaseIdSchema).min(1).max(300),
   environmentMode: z.enum(['default', 'override']),
   marketSelection: z.enum(['default', 'deployed']).default('default'),
   keeperMode: z.enum(['inline', 'service']).default('inline'),
@@ -59,11 +65,11 @@ const createRunBatchSchema = z.object({
 });
 
 const manualStartSchema = z.object({
-  caseId: z.string().regex(/^SCN-\d{3}$/),
+  caseId: runCaseIdSchema,
 });
 
 const manualVerdictSchema = z.object({
-  caseId: z.string().regex(/^SCN-\d{3}$/),
+  caseId: runCaseIdSchema,
   // 'MANUAL' 表示撤销回填，把用例退回“待人工执行”。
   status: z.enum(['PASS', 'FAIL', 'BLOCKED', 'SKIP', 'MANUAL']),
   operator: z.string().trim().max(60).default(''),
@@ -622,9 +628,12 @@ export class RunBatchManager {
     const mockResourceAlias = items[0]?.resolvedMockResourceAlias ?? 'none';
     const executionRunId = `${safeIdPart(batch.id, 32)}-${environment}-${marketMode}-${safeIdPart(mockResourceAlias, 24)}`;
     const specPaths = Array.from(new Set(items.flatMap((item) => item.specPath ? [item.specPath] : [])));
-    const args = ['test', ...specPaths, `--project=${environment}`];
+    const selectedIdPattern = items
+      .map((item) => item.id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+      .join('|');
+    const args = ['test', ...specPaths, `--project=${environment}`, `--grep=\\b(?:${selectedIdPattern})\\b`];
     const injectedKeys = [
-      'E2E_ENV', 'E2E_RELEASE', 'E2E_RUN_ID', 'E2E_MARKET_MODE', 'E2E_MARKET_RESOURCE_ALIAS', 'E2E_KEEPER_MODE',
+      'E2E_ENV', 'E2E_RELEASE', 'E2E_BATCH_ID', 'E2E_RUN_ID', 'E2E_MARKET_MODE', 'E2E_MARKET_RESOURCE_ALIAS', 'E2E_KEEPER_MODE',
       definition.rpcEnvironmentVariable,
       ...(definition.adminRpcEnvironmentVariable && settings.adminRpcUrl ? [definition.adminRpcEnvironmentVariable] : []),
     ];
@@ -632,6 +641,7 @@ export class RunBatchManager {
       ...process.env,
       E2E_ENV: environment,
       E2E_RELEASE: batch.release,
+      E2E_BATCH_ID: batch.id,
       E2E_RUN_ID: executionRunId,
       E2E_MARKET_MODE: marketMode,
       E2E_MARKET_RESOURCE_ALIAS: mockResourceAlias,

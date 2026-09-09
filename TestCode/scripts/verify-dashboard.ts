@@ -8,6 +8,7 @@ interface VerificationResult {
   readonly title: string | null;
   readonly dashboardNavLabel: string;
   readonly testRunNavHref: string | null;
+  readonly deploymentsNavHref: string | null;
   readonly faucetTitle: string | null;
   readonly fundingPanelExists: boolean;
   readonly fundingButtonEnabled: boolean;
@@ -41,6 +42,57 @@ interface VerificationResult {
   readonly graceFilteredText: string;
   readonly feeFilteredRows: number;
   readonly allFilteredRows: number;
+  readonly functionalExecutionRows: number;
+  readonly functionalExecutionMetrics: string;
+  readonly functionalFailureRows: number;
+  readonly functionalExecutionLayers: string;
+  readonly functionalExecutionDetail: string;
+  readonly functionalEvidenceLinks: number;
+  readonly functionalCheckRows: number;
+  readonly functionalCheckHeaders: string;
+  readonly functionalTransactionLinks: number;
+  readonly functionalTransactionLinkStatus: number | null;
+  readonly functionalExplorerLinks: number;
+  readonly functionalExplorerHref: string | null;
+  readonly functionalTradeSummary: string;
+  readonly functionalBindingSummary: string;
+  readonly functionalBindingHref: string | null;
+  readonly functionalNestedBindings: number;
+  readonly functionalStandaloneBindings: number;
+  readonly functionalTestDataSections: number;
+  readonly functionalActionModuleCount: number;
+  readonly functionalActionHeaderCount: number;
+  readonly functionalActionTradeSubmodules: number;
+  readonly functionalActionReceiptSubmodules: number;
+  readonly functionalFormulaRuleBlocks: number;
+  readonly functionalFormulaExampleBlocks: number;
+  readonly functionalFormulaBasisBlocks: number;
+  readonly functionalFormulaSourceLinks: number;
+  readonly functionalHeroCaseLinks: number;
+  readonly functionalActionTabs: number;
+  readonly functionalActionSelectionChecks: number;
+  readonly functionalActionSelectionErrors: string;
+  readonly functionalActionModuleOrderChecks: number;
+  readonly functionalActionModuleOrderErrors: string;
+  readonly functionalTxTableStructureChecks: number;
+  readonly functionalTxTableStructureErrors: string;
+  readonly functionalAssertionRows: number;
+  readonly functionalCleanupPositionRemovedText: string;
+  readonly functionalReadablePrecisionMarkers: number;
+  readonly functionalPositionSizeReadableText: string;
+  readonly functionalPrecisionValueChecks: number;
+  readonly functionalPrecisionValueErrors: string;
+  readonly functionalPrecisionValueSummary: string;
+  readonly functionalDesktopTableLayoutChecks: number;
+  readonly functionalDesktopTableLayoutErrors: string;
+  readonly functionalDesktopTableLayoutSummary: string;
+  readonly functionalMobileTableLayoutChecks: number;
+  readonly functionalMobileTableLayoutErrors: string;
+  readonly functionalMobileTableLayoutSummary: string;
+  readonly functionalOpenActionRows: number;
+  readonly functionalOpenActionTitle: string;
+  readonly functionalAllActionRows: number;
+  readonly functionalAllTransactionRecords: number;
   readonly testCaseRows: number;
   readonly scnCatalogCount: number;
   readonly scnCatalogAllScn: boolean;
@@ -57,6 +109,9 @@ interface VerificationResult {
   readonly versionCoreAddressMissing: number;
   readonly versionOtherRows: number;
   readonly versionOtherIncomplete: number;
+  readonly versionDetailRows: number;
+  readonly versionDetailIncomplete: number;
+  readonly versionDetailOpens: boolean;
   readonly versionSwitchRelease: string | null;
   readonly versionSwitchBlockText: string;
   readonly versionSectionText: string;
@@ -133,12 +188,52 @@ interface VerificationResult {
   readonly deployDryRunDisabled: boolean;
   readonly deployRunDisabled: boolean;
   readonly deployStatusText: string;
+  readonly deploymentsTitle: string | null;
+  readonly deploymentsNavCurrent: string | null;
+  readonly deploymentVersionOptions: number;
+  readonly deploymentEnvironmentOptions: number;
+  readonly deploymentInitialCards: number;
+  readonly deploymentVersionFilteredCards: number;
+  readonly deploymentEnvironmentFilteredCards: number;
+  readonly deploymentCoreRows: number;
+  readonly deploymentMockRows: number;
+  readonly deploymentMockText: string;
+  readonly deploymentPageAddressText: string;
+  readonly deploymentV031SelectedVersion: string;
+  readonly deploymentV031SelectedEnvironment: string;
+  readonly deploymentV031CoordinatedCards: number;
+  readonly deploymentV031BaseSepoliaCards: number;
+  readonly deploymentV031CoreRows: number;
+  readonly deploymentV031CoreAddressCount: number;
+  readonly deploymentV031InvalidCoreAddresses: number;
+  readonly deploymentV031SnapshotRows: number;
+  readonly deploymentV031DeploymentId: string;
+  readonly deploymentV031ManifestName: string;
+  readonly deploymentV031ChainPair: string;
   readonly environmentsMobileBodyWidth: number;
+  readonly deploymentsMobileBodyWidth: number;
   readonly testCasesMobileBodyWidth: number;
   readonly mobileBodyWidth: number;
   readonly executionMobileBodyWidth: number;
   readonly runsMobileBodyWidth: number;
   readonly consoleMobileBodyWidth: number;
+}
+
+interface FunctionalTableLayoutMeasurement {
+  readonly viewportWidth: number;
+  readonly steps: ReadonlyArray<{
+    readonly stepId: string;
+    readonly buttonCount: number;
+    readonly containerCount: number;
+    readonly tableCount: number;
+    readonly containerClientWidth: number;
+    readonly containerScrollWidth: number;
+    readonly overflowX: string;
+    readonly bodyClientWidth: number;
+    readonly bodyScrollWidth: number;
+    readonly documentClientWidth: number;
+    readonly documentScrollWidth: number;
+  }>;
 }
 
 async function verifyDashboard(page: Page, url: string) {
@@ -147,6 +242,7 @@ async function verifyDashboard(page: Page, url: string) {
   const title = await page.locator('h1').textContent();
   const dashboardNavLabel = (await page.locator('.top-nav a[href="./dashboard.html"]').textContent()) ?? '';
   const testRunNavHref = await page.locator('.top-nav a[href="./runs.html"]').getAttribute('href');
+  const deploymentsNavHref = await page.locator('.top-nav a[href="./deployments.html"]').getAttribute('href');
   const metricCards = await page.locator('.metric').count();
   const detailRowsBefore = await page.locator('#detail-table tr').count();
   const suiteLabel = await page.locator('#filter-suite option[value="S01"]').textContent();
@@ -175,6 +271,7 @@ async function verifyDashboard(page: Page, url: string) {
     title,
     dashboardNavLabel,
     testRunNavHref,
+    deploymentsNavHref,
     metricCards,
     detailRowsBefore,
     suiteLabel,
@@ -184,6 +281,91 @@ async function verifyDashboard(page: Page, url: string) {
     scenarioExecutionHref,
     evidenceRowText,
     detailRowsAfter,
+  };
+}
+
+// 版本、环境与合约地址：独立页面、双筛选、核心合约及环境运行时 Mock 地址均可核对。
+async function verifyDeployments(page: Page, url: string) {
+  await page.goto(url);
+  await page.waitForSelector('#deployments-page[data-page-ready="true"]');
+  const deploymentsTitle = await page.locator('h1').textContent();
+  const deploymentsNavCurrent = await page.locator('.top-nav a[href="./deployments.html"]').getAttribute('aria-current');
+  const deploymentVersionOptions = await page.locator('#filter-version option').count();
+  const deploymentEnvironmentOptions = await page.locator('#filter-environment option').count();
+  const deploymentInitialCards = await page.locator('.deployment-card').count();
+
+  const firstVersion = await page.locator('#filter-version option').nth(1).getAttribute('value');
+  if (firstVersion) await page.locator('#filter-version').selectOption(firstVersion);
+  const deploymentVersionFilteredCards = await page.locator('.deployment-card').count();
+  await page.locator('#filter-version').selectOption('');
+
+  const environmentOptions = await page.locator('#filter-environment option').evaluateAll((options) =>
+    options.map((option) => (option as HTMLOptionElement).value));
+  const selectedEnvironment = environmentOptions.includes('tx-fork') ? 'tx-fork' : environmentOptions.find(Boolean) ?? '';
+  if (selectedEnvironment) await page.locator('#filter-environment').selectOption(selectedEnvironment);
+  const deploymentEnvironmentFilteredCards = await page.locator('.deployment-card').count();
+  const selectedCard = page.locator(`.deployment-card[data-environment="${selectedEnvironment}"]`);
+  const deploymentCoreRows = await selectedCard.locator('.core-addresses tbody tr').count();
+  const deploymentMockRows = await selectedCard.locator('.runtime-addresses tbody tr').count();
+  const deploymentMockText = (await selectedCard.locator('.runtime-addresses').textContent().catch(() => '')) ?? '';
+  const deploymentPageAddressText = [
+    (await page.locator('.page-addresses').textContent()) ?? '',
+    (await selectedCard.locator('.binding-meta').textContent()) ?? '',
+  ].join(' ');
+
+  // 从不兼容的 tx-fork 切换到 v0.3.1 时，页面应自动协调到该版本的 Base Sepolia 部署。
+  await page.locator('#filter-environment').selectOption('tx-fork');
+  await page.locator('#filter-version').selectOption('v0.3.1');
+  const deploymentV031SelectedVersion = await page.locator('#filter-version').inputValue();
+  const deploymentV031SelectedEnvironment = await page.locator('#filter-environment').inputValue();
+  const deploymentV031CoordinatedCards = await page.locator('.deployment-card').count();
+  const deploymentV031CardLocator = page.locator(
+    '.deployment-card[data-version="v0.3.1"][data-environment="base-sepolia"]',
+  );
+  const deploymentV031BaseSepoliaCards = await deploymentV031CardLocator.count();
+  const deploymentV031Card = deploymentV031CardLocator.first();
+  const deploymentV031CoreRows = await deploymentV031Card.locator('.core-addresses tbody tr').count();
+  const deploymentV031CoreAddresses = (await deploymentV031Card
+    .locator('.core-addresses tbody tr td:nth-child(3) code')
+    .allTextContents())
+    .map((address) => address.trim());
+  const deploymentV031CoreAddressCount = deploymentV031CoreAddresses.length;
+  const deploymentV031InvalidCoreAddresses = deploymentV031CoreAddresses.filter((address) =>
+    !/^0x[0-9a-fA-F]{40}$/.test(address) || /^0x0{40}$/i.test(address)).length;
+  const deploymentV031SnapshotRows = await deploymentV031Card
+    .locator('.deployment-snapshot-addresses tbody tr')
+    .count();
+  const deploymentV031Meta = new Map(await deploymentV031Card.locator('.binding-meta dt').evaluateAll((terms) =>
+    terms.map((term) => [
+      (term.textContent ?? '').replace(/\s+/g, ' ').trim(),
+      (term.nextElementSibling?.textContent ?? '').replace(/\s+/g, ' ').trim(),
+    ] as const)));
+  const deploymentV031DeploymentId = deploymentV031Meta.get('Deployment') ?? '';
+  const deploymentV031ManifestName = deploymentV031Meta.get('Manifest') ?? '';
+  const deploymentV031ChainPair = deploymentV031Meta.get('部署链 / 运行链') ?? '';
+  return {
+    deploymentsTitle,
+    deploymentsNavCurrent,
+    deploymentVersionOptions,
+    deploymentEnvironmentOptions,
+    deploymentInitialCards,
+    deploymentVersionFilteredCards,
+    deploymentEnvironmentFilteredCards,
+    deploymentCoreRows,
+    deploymentMockRows,
+    deploymentMockText,
+    deploymentPageAddressText,
+    deploymentV031SelectedVersion,
+    deploymentV031SelectedEnvironment,
+    deploymentV031CoordinatedCards,
+    deploymentV031BaseSepoliaCards,
+    deploymentV031CoreRows,
+    deploymentV031CoreAddressCount,
+    deploymentV031InvalidCoreAddresses,
+    deploymentV031SnapshotRows,
+    deploymentV031DeploymentId,
+    deploymentV031ManifestName,
+    deploymentV031ChainPair,
   };
 }
 
@@ -252,6 +434,61 @@ async function verifyParameters(page: Page, url: string) {
   return { title, parameterRows, marketFilteredParameterRows, globalParameterRows, marketScopeSummary, foreignMarketRows, filteredParameterRows };
 }
 
+async function measureFunctionalTableLayout(
+  page: Page,
+  url: string,
+  viewportWidth: number,
+): Promise<FunctionalTableLayoutMeasurement> {
+  await page.setViewportSize({ width: viewportWidth, height: viewportWidth <= 390 ? 844 : 1000 });
+  await page.goto(url);
+  await page.waitForSelector('#executions-page[data-page-ready="true"]');
+
+  const functionalTab = page.locator('#execution-tab-functional');
+  if (await functionalTab.count() > 0) await functionalTab.click();
+  const transactionCaseValue = await page.locator('#functional-result-select option').evaluateAll((options) =>
+    options.find((option) => (option.textContent ?? '').includes('XT-MKT-OPEN-001'))?.getAttribute('value') ?? '');
+  if (transactionCaseValue) await page.locator('#functional-result-select').selectOption(transactionCaseValue);
+
+  const steps: FunctionalTableLayoutMeasurement['steps'][number][] = [];
+  for (const stepId of ['TX1', 'TX2', 'TX3', 'TX4']) {
+    const button = page.locator(`.functional-tx-step-tab[data-functional-tx-step="${stepId}"]`);
+    const buttonCount = await button.count();
+    if (buttonCount === 1) await button.click();
+
+    const container = page.locator('#functional-tx-step-content .functional-checks .check-scroll');
+    const table = container.locator('table');
+    const containerCount = await container.count();
+    const tableCount = await table.count();
+    const dimensions = containerCount === 1
+      ? await container.evaluate((node) => {
+        const element = node as HTMLElement;
+        const body = document.body;
+        const root = document.documentElement;
+        return {
+          containerClientWidth: element.clientWidth,
+          containerScrollWidth: element.scrollWidth,
+          overflowX: getComputedStyle(element).overflowX,
+          bodyClientWidth: body.clientWidth,
+          bodyScrollWidth: body.scrollWidth,
+          documentClientWidth: root.clientWidth,
+          documentScrollWidth: root.scrollWidth,
+        };
+      })
+      : {
+        containerClientWidth: 0,
+        containerScrollWidth: 0,
+        overflowX: '',
+        bodyClientWidth: 0,
+        bodyScrollWidth: 0,
+        documentClientWidth: 0,
+        documentScrollWidth: 0,
+      };
+    steps.push({ stepId, buttonCount, containerCount, tableCount, ...dimensions });
+  }
+
+  return { viewportWidth, steps };
+}
+
 async function verifyExecutions(page: Page, url: string) {
   await page.goto(url);
   await page.waitForSelector('#executions-page[data-page-ready="true"]');
@@ -273,11 +510,11 @@ async function verifyExecutions(page: Page, url: string) {
   const traderTransactions = await page.locator('.tx-record .actor-TRADER').count();
   const keeperTransactions = await page.locator('.tx-record .actor-KEEPER').count();
   const transactionEvidenceLinks = await page.locator('.tx-record .api-link').count();
-  const testCaseOverviewLink = page.locator('.case-overview .case-link');
+  const testCaseOverviewLink = page.locator('#execution-panel-scenario .case-overview .case-link');
   const hasCaseOverview = await testCaseOverviewLink.count() > 0;
   const testCaseOverviewHref = hasCaseOverview ? await testCaseOverviewLink.getAttribute('href') : null;
   const testCaseOverviewText = hasCaseOverview
-    ? (await page.locator('.case-overview').textContent()) ?? ''
+    ? (await page.locator('#execution-panel-scenario .case-overview').textContent()) ?? ''
     : '';
   let graceFilteredRows = 0;
   let graceFilteredText = '';
@@ -297,6 +534,310 @@ async function verifyExecutions(page: Page, url: string) {
     await allFilter.click();
     allFilteredRows = await page.locator('#reconciliation-table tbody tr:not([hidden])').count();
   }
+  await page.locator('#execution-tab-functional').click();
+  const functionalExecutionRows = await page.locator('#functional-result-select option').count();
+  const functionalExecutionMetrics = (await page.locator('#functional-metrics').textContent()) ?? '';
+  const transactionCaseValue = await page.locator('#functional-result-select option').evaluateAll((options) =>
+    options.find((option) => (option.textContent ?? '').includes('XT-MKT-OPEN-001'))?.getAttribute('value') ?? '');
+  if (transactionCaseValue) await page.locator('#functional-result-select').selectOption(transactionCaseValue);
+  const functionalActionTabLocator = page.locator('.functional-tx-step-tab');
+  const functionalActionTabs = await functionalActionTabLocator.count();
+  let functionalActionSelectionChecks = 0;
+  const functionalActionSelectionErrors: string[] = [];
+  const verifyFunctionalActionSelection = async (expectedStep: string | null, phase: string) => {
+    functionalActionSelectionChecks += 1;
+    const activeTabs = page.locator('.functional-tx-step-tab.is-active');
+    const activeCount = await activeTabs.count();
+    const activeStep = activeCount > 0
+      ? await activeTabs.first().getAttribute('data-functional-tx-step')
+      : null;
+    if (activeCount !== 1) {
+      functionalActionSelectionErrors.push(`${phase}: active 数量为 ${activeCount}（应为 1）`);
+    }
+    if (!expectedStep || activeStep !== expectedStep) {
+      functionalActionSelectionErrors.push(`${phase}: active=${activeStep ?? '无'}（应为 ${expectedStep ?? '有效 TX/ALL'}）`);
+    }
+
+    const checkTitleLocator = expectedStep === 'ALL'
+      ? page.locator('#functional-tx-step-content > .functional-checks h2')
+      : page.locator('#functional-tx-step-content .functional-action-checks h3');
+    const checkTitle = ((await checkTitleLocator.textContent().catch(() => '')) ?? '').trim();
+    const actionModuleCount = await page.locator('#functional-tx-step-content > .functional-action-module').count();
+    if (expectedStep === 'ALL') {
+      const transactionRecords = await page.locator('#functional-tx-step-content .functional-tx-record').count();
+      if (checkTitle !== '全流程数据核对' || actionModuleCount !== 0 || transactionRecords !== functionalActionTabs - 1) {
+        functionalActionSelectionErrors.push(
+          `${phase}: 全流程内容未同步（标题=${checkTitle || '无'}，动作模块=${actionModuleCount}，交易记录=${transactionRecords}）`,
+        );
+      }
+      return;
+    }
+
+    const actionEyebrow = ((await page.locator('#functional-tx-step-content .functional-action-title .eyebrow').textContent().catch(() => '')) ?? '').trim();
+    if (!expectedStep
+      || checkTitle !== '数据核对'
+      || actionModuleCount !== 1
+      || !actionEyebrow.startsWith(`${expectedStep} ·`)) {
+      functionalActionSelectionErrors.push(
+        `${phase}: TX 内容未同步（标题=${checkTitle || '无'}，动作=${actionEyebrow || '无'}，动作模块=${actionModuleCount}）`,
+      );
+    }
+  };
+
+  const initialActiveStep = await page.locator('.functional-tx-step-tab.is-active').first()
+    .getAttribute('data-functional-tx-step')
+    .catch(() => null);
+  await verifyFunctionalActionSelection(initialActiveStep, '初始状态');
+  const functionalActionStepIds = await functionalActionTabLocator.evaluateAll((buttons) =>
+    buttons.map((button) => button.getAttribute('data-functional-tx-step')).filter((step): step is string => Boolean(step)));
+  const expectedFunctionalTxSteps = ['TX1', 'TX2', 'TX3', 'TX4'];
+  let functionalActionModuleOrderChecks = 0;
+  const functionalActionModuleOrderErrors: string[] = [];
+  const functionalTxTableStructureErrors: string[] = [];
+  let functionalTxTableStructureChecks = 0;
+  let functionalAssertionRows = 0;
+  let functionalCleanupPositionRemovedText = '';
+  let functionalReadablePrecisionMarkers = 0;
+  let functionalPositionSizeReadableText = '';
+  const functionalPrecisionValueErrors: string[] = [];
+  const functionalPrecisionValueSummary: string[] = [];
+  const functionalPrecisionValueChecks = new Set<string>();
+  const functionalPrecisionExpectations = [
+    { name: 'position.size-usd', raw: '50000000000000000000000000000000', readable: '= 50 USD' },
+    { name: 'pricing.execution-price', raw: '2032740628092499', readable: '= 2,032.740628092499 USD / Token' },
+    { name: 'market.oi-token-primary-side', raw: '24597333919044772', readable: '≈ 0.024597333919 FXMOCK' },
+    { name: 'fee.position.amount', raw: '10010', readable: '= 0.01001 USDC' },
+    { name: 'position.collateral', raw: '9989990', readable: '= 9.98999 USDC' },
+  ];
+  for (const expectedStep of expectedFunctionalTxSteps) {
+    const matchingTabs = functionalActionStepIds.filter((stepId) => stepId === expectedStep).length;
+    if (matchingTabs !== 1) {
+      functionalActionSelectionErrors.push(`${expectedStep}: 入口数量为 ${matchingTabs}（应为 1）`);
+    }
+  }
+  for (const stepId of functionalActionStepIds) {
+    await page.locator(`.functional-tx-step-tab[data-functional-tx-step="${stepId}"]`).click();
+    await verifyFunctionalActionSelection(stepId, `点击 ${stepId}`);
+    if (!expectedFunctionalTxSteps.includes(stepId)) continue;
+
+    functionalActionModuleOrderChecks += 1;
+    const actionModuleStructure = await page.locator('#functional-tx-step-content').evaluate((mount) => {
+      const mountChildren = Array.from(mount.children);
+      const actionModules = mountChildren.filter((child) => child.classList.contains('functional-action-module'));
+      const actionModuleIndex = mountChildren.findIndex((child) => child.classList.contains('functional-action-module'));
+      const legacyFollowingChecks = actionModuleIndex < 0
+        ? []
+        : mountChildren.slice(actionModuleIndex + 1).filter((child) => child.classList.contains('functional-checks'));
+      const actionModule = actionModules[0];
+      const actionBodies = actionModules.length === 1 && actionModule
+        ? Array.from(actionModule.children).filter((child) => child.classList.contains('functional-action-body'))
+        : [];
+      const actionBody = actionBodies[0];
+      const bodyChildren = actionBodies.length === 1 && actionBody ? Array.from(actionBody.children) : [];
+      return {
+        actionModuleCount: actionModules.length,
+        actionBodyCount: actionBodies.length,
+        legacyFollowingCheckCount: legacyFollowingChecks.length,
+        bodyChildren: bodyChildren.map((child) => ({
+          classes: Array.from(child.classList),
+          text: (child.textContent ?? '').replace(/\s+/g, ' ').trim(),
+        })),
+      };
+    });
+    const expectedActionSubmodules = [
+      { className: 'functional-action-checks', label: '数据核对' },
+      { className: 'functional-trade-summary', label: '测试数据' },
+      { className: 'functional-tx-receipt', label: '链上证据' },
+    ];
+    const actionModuleOrderProblems: string[] = [];
+    if (actionModuleStructure.actionModuleCount !== 1) {
+      actionModuleOrderProblems.push(`动作模块数量=${actionModuleStructure.actionModuleCount}（应为 1）`);
+    }
+    if (actionModuleStructure.actionBodyCount !== 1) {
+      actionModuleOrderProblems.push(`动作主体数量=${actionModuleStructure.actionBodyCount}（应为 1）`);
+    }
+    if (actionModuleStructure.bodyChildren.length !== expectedActionSubmodules.length) {
+      actionModuleOrderProblems.push(`动作主体直接子级=${actionModuleStructure.bodyChildren.length}（应为 3）`);
+    }
+    expectedActionSubmodules.forEach((expected, index) => {
+      const actual = actionModuleStructure.bodyChildren[index];
+      if (!actual?.classes.includes(expected.className)) {
+        actionModuleOrderProblems.push(`第 ${index + 1} 个子级不是 .${expected.className}`);
+      }
+      if (!actual?.classes.includes('functional-action-submodule')) {
+        actionModuleOrderProblems.push(`第 ${index + 1} 个子级缺少 .functional-action-submodule`);
+      }
+      if (!actual?.text.includes(expected.label)) {
+        actionModuleOrderProblems.push(`第 ${index + 1} 个子级缺少“${expected.label}”`);
+      }
+    });
+    if (actionModuleStructure.legacyFollowingCheckCount !== 0) {
+      actionModuleOrderProblems.push(`动作模块后仍有 ${actionModuleStructure.legacyFollowingCheckCount} 个同级数据核对模块`);
+    }
+    if (actionModuleOrderProblems.length > 0) {
+      functionalActionModuleOrderErrors.push(`${stepId}: ${actionModuleOrderProblems.join('，')}`);
+    }
+
+    const table = page.locator('#functional-tx-step-content .functional-checks table');
+    const tableCount = await table.count();
+    if (tableCount !== 1) {
+      functionalTxTableStructureErrors.push(`${stepId}: 数据核对表数量为 ${tableCount}（应为 1）`);
+      continue;
+    }
+    const rowStructures = await table.locator('tbody tr.functional-check-row').evaluateAll((rows) => rows.map((row, index) => {
+      const cells = Array.from((row as HTMLTableRowElement).cells);
+      return {
+        index: index + 1,
+        kind: (row as HTMLElement).dataset.checkKind ?? '',
+        cellCount: cells.length,
+        effectiveColumnCount: cells.reduce((sum, cell) => sum + Math.max(1, cell.colSpan || 1), 0),
+        hasLegacyAssertionCell: Boolean(row.querySelector('.functional-assertion-values')),
+        actualIsFourth: Boolean(cells[3]?.classList.contains('functional-assertion-actual')),
+        expectedIsSeventh: Boolean(cells[6]?.classList.contains('functional-assertion-expected')),
+        evidenceIsEighth: Boolean(cells[7]?.classList.contains('functional-check-note')),
+      };
+    }));
+    if (rowStructures.length === 0) {
+      functionalTxTableStructureErrors.push(`${stepId}: 数据核对表没有明细行`);
+    }
+    for (const row of rowStructures) {
+      functionalTxTableStructureChecks += 1;
+      if (row.effectiveColumnCount !== 8) {
+        functionalTxTableStructureErrors.push(`${stepId} 第 ${row.index} 行有效列数为 ${row.effectiveColumnCount}（应为 8）`);
+      }
+      if (row.kind !== 'assertion') continue;
+      functionalAssertionRows += 1;
+      if (row.cellCount !== 8
+        || row.hasLegacyAssertionCell
+        || !row.actualIsFourth
+        || !row.expectedIsSeventh
+        || !row.evidenceIsEighth) {
+        functionalTxTableStructureErrors.push(
+          `${stepId} 第 ${row.index} 行断言布局错误（单元格=${row.cellCount}，Actual第4列=${row.actualIsFourth}，Expected第7列=${row.expectedIsSeventh}，证据第8列=${row.evidenceIsEighth}，旧合并单元格=${row.hasLegacyAssertionCell}）`,
+        );
+      }
+    }
+
+    if (stepId === 'TX4') {
+      const cleanupRow = table.locator('tbody tr.functional-check-row').filter({ hasText: 'cleanup.position-removed' });
+      const cleanupRowCount = await cleanupRow.count();
+      if (cleanupRowCount !== 1) {
+        functionalTxTableStructureErrors.push(`TX4: cleanup.position-removed 行数量为 ${cleanupRowCount}（应为 1）`);
+      } else {
+        functionalCleanupPositionRemovedText = ((await cleanupRow.locator('td').nth(3).textContent()) ?? '').replace(/\s+/g, ' ').trim();
+        if (!functionalCleanupPositionRemovedText.includes('仓位已移除：是（position.exists=false）')) {
+          functionalTxTableStructureErrors.push(`TX4: cleanup.position-removed 实际值不可读（${functionalCleanupPositionRemovedText || '空'}）`);
+        }
+      }
+    }
+
+    const actionReadablePrecisionMarkers = await table.locator('.functional-readable-value[data-readable-value]').count();
+    functionalReadablePrecisionMarkers += actionReadablePrecisionMarkers;
+    if (actionReadablePrecisionMarkers > 0) {
+      for (const expectation of functionalPrecisionExpectations) {
+        const matchingRows = table.locator('tbody tr.functional-check-row').filter({ hasText: expectation.name });
+        const matchingRowCount = await matchingRows.count();
+        if (matchingRowCount === 0) continue;
+        if (matchingRowCount !== 1) {
+          functionalPrecisionValueErrors.push(`${stepId}: ${expectation.name} 行数量为 ${matchingRowCount}（应为 1）`);
+          continue;
+        }
+        const actualCell = matchingRows.locator('td').nth(3);
+        const rawValues = await actualCell.locator('.functional-value-raw').allTextContents();
+        const readableValues = await actualCell.locator('.functional-readable-value[data-readable-value]').evaluateAll((nodes) =>
+          nodes.map((node) => node.getAttribute('data-readable-value') ?? ''));
+        const rawValue = rawValues.map((value) => value.trim()).join(' | ');
+        const readableValue = readableValues.join(' | ');
+        functionalPrecisionValueChecks.add(expectation.name);
+        if (expectation.name === 'position.size-usd') functionalPositionSizeReadableText = readableValue;
+        functionalPrecisionValueSummary.push(`${expectation.name}: ${rawValue || '缺少原值'} ${readableValue || '缺少可读值'}`);
+        if (!rawValues.map((value) => value.trim()).includes(expectation.raw)) {
+          functionalPrecisionValueErrors.push(`${stepId}: ${expectation.name} Actual 单元格原值为“${rawValue || '空'}”（应包含“${expectation.raw}”）`);
+        }
+        if (!readableValues.includes(expectation.readable)) {
+          functionalPrecisionValueErrors.push(`${stepId}: ${expectation.name} Actual 单元格可读值为“${readableValue || '空'}”（应包含“${expectation.readable}”）`);
+        }
+      }
+    }
+  }
+  if (functionalReadablePrecisionMarkers > 0) {
+    for (const expectation of functionalPrecisionExpectations) {
+      if (!functionalPrecisionValueChecks.has(expectation.name)) {
+        functionalPrecisionValueErrors.push(`已启用可读精度显示，但 TX1～TX4 中没有 ${expectation.name} 行`);
+      }
+    }
+  }
+  const functionalCreateOpenAction = page.locator('.functional-tx-step-tab').filter({ hasText: '创建开仓订单' }).first();
+  if (await functionalCreateOpenAction.count() > 0) await functionalCreateOpenAction.click();
+  const functionalTraderTradeSummary = (await page.locator('.functional-trade-summary[data-trade-action="createOpen"]').textContent().catch(() => '')) ?? '';
+  const functionalActionModuleCount = await page.locator('#functional-tx-step-content > .functional-action-module').count();
+  const functionalActionHeaderCount = await page.locator('.functional-action-module > .functional-action-header').count();
+  const functionalActionTradeSubmodules = await page.locator('.functional-action-module .functional-trade-summary').count();
+  const functionalActionReceiptSubmodules = await page.locator('.functional-action-module .functional-tx-receipt').count();
+  const functionalOpenAction = page.locator('.functional-tx-step-tab').filter({ hasText: '执行开仓订单' }).first();
+  if (await functionalOpenAction.count() > 0) await functionalOpenAction.click();
+  const functionalKeeperTradeSummary = (await page.locator('.functional-trade-summary[data-trade-action="executeOpen"]').textContent().catch(() => '')) ?? '';
+  const functionalTradeSummary = `${functionalTraderTradeSummary} ${functionalKeeperTradeSummary}`;
+  const functionalOpenActionRows = await page.locator('#functional-tx-step-content .functional-check-row').count();
+  const functionalOpenActionTitle = (await page.locator('#functional-tx-step-content .functional-action-checks h3').textContent().catch(() => '')) ?? '';
+  const functionalFormulaRuleBlocks = await page.locator('#functional-tx-step-content .formula-rule').count();
+  const functionalFormulaExampleBlocks = await page.locator('#functional-tx-step-content .formula-example').count();
+  const functionalFormulaBasisBlocks = await page.locator('#functional-tx-step-content .formula-basis').count();
+  const functionalFormulaSourceLinks = await page.locator('#functional-tx-step-content .functional-formula-source a, #functional-tx-step-content .functional-formula-catalog-link').count();
+  const functionalAllAction = page.locator('.functional-tx-step-tab[data-functional-tx-step="ALL"]');
+  if (await functionalAllAction.count() > 0) await functionalAllAction.click();
+  functionalActionModuleOrderChecks += 1;
+  const functionalAllModuleOrder = await page.locator('#functional-tx-step-content').evaluate((mount) => {
+    const children = Array.from(mount.children);
+    const checkIndexes = children
+      .map((child, index) => child.classList.contains('functional-checks') ? index : -1)
+      .filter((index) => index >= 0);
+    const transactionListIndexes = children
+      .map((child, index) => child.classList.contains('tx-record-list') ? index : -1)
+      .filter((index) => index >= 0);
+    return {
+      checkIndexes,
+      transactionListIndexes,
+      childClasses: children.map((child) => Array.from(child.classList).join('.')),
+    };
+  });
+  const allCheckIndex = functionalAllModuleOrder.checkIndexes[0];
+  const allTransactionListIndex = functionalAllModuleOrder.transactionListIndexes[0];
+  if (functionalAllModuleOrder.checkIndexes.length !== 1
+    || functionalAllModuleOrder.transactionListIndexes.length !== 1
+    || allCheckIndex === undefined
+    || allTransactionListIndex === undefined
+    || allCheckIndex >= allTransactionListIndex) {
+    functionalActionModuleOrderErrors.push(
+      `ALL: 数据核对应位于 tx-record-list 前（直接子级=${functionalAllModuleOrder.childClasses.join(' → ') || '无'}）`,
+    );
+  }
+  const functionalAllActionRows = await page.locator('#functional-tx-step-content .functional-check-row').count();
+  const functionalAllTransactionRecords = await page.locator('#functional-tx-step-content .functional-tx-record').count();
+  const functionalTransactionLinks = await page.locator('.functional-tx-link').count();
+  const firstFunctionalTransactionHref = functionalTransactionLinks > 0
+    ? await page.locator('.functional-tx-link').first().getAttribute('href')
+    : null;
+  const functionalTransactionLinkStatus = firstFunctionalTransactionHref && /^https?:\/\//.test(page.url())
+    ? (await page.request.get(new URL(firstFunctionalTransactionHref, page.url()).href)).status()
+    : null;
+  const functionalExplorerLinks = await page.locator('.functional-tx-explorer-link').count();
+  const functionalExplorerHref = functionalExplorerLinks > 0
+    ? await page.locator('.functional-tx-explorer-link').first().getAttribute('href')
+    : null;
+  const functionalBindingSummary = (await page.locator('#functional-execution-content .execution-binding-summary').textContent().catch(() => '')) ?? '';
+  const functionalBindingHref = await page.locator('#functional-execution-content .execution-binding-summary .case-link').getAttribute('href').catch(() => null);
+  const functionalNestedBindings = await page.locator('.functional-case-overview .functional-case-head > .execution-binding-inline').count();
+  const functionalStandaloneBindings = await page.locator('#functional-execution-content > .execution-binding-summary').count();
+  const functionalHeroCaseLinks = await page.locator('#functional-execution-content > .functional-detail-hero .case-link').count();
+  const functionalTestDataSections = await page.locator('.functional-case-overview > .functional-test-data').count();
+  await page.locator('#functional-status').selectOption('FAIL');
+  const functionalFailureRows = await page.locator('#functional-result-select option').count();
+  const functionalExecutionLayers = (await page.locator('.functional-layer-grid').textContent().catch(() => '')) ?? '';
+  const functionalExecutionDetail = (await page.locator('#functional-execution-content').textContent()) ?? '';
+  const functionalEvidenceLinks = await page.locator('.functional-evidence a').count();
+  const functionalCheckRows = await page.locator('.functional-check-row').count();
+  const functionalCheckHeaders = (await page.locator('.functional-checks thead').textContent().catch(() => '')) ?? '';
   return {
     executionTitle,
     executionSourceStatus,
@@ -312,6 +853,51 @@ async function verifyExecutions(page: Page, url: string) {
     graceFilteredText,
     feeFilteredRows,
     allFilteredRows,
+    functionalExecutionRows,
+    functionalExecutionMetrics,
+    functionalFailureRows,
+    functionalExecutionLayers,
+    functionalExecutionDetail,
+    functionalEvidenceLinks,
+    functionalCheckRows,
+    functionalCheckHeaders,
+    functionalTransactionLinks,
+    functionalTransactionLinkStatus,
+    functionalExplorerLinks,
+    functionalExplorerHref,
+    functionalTradeSummary,
+    functionalBindingSummary,
+    functionalBindingHref,
+    functionalNestedBindings,
+    functionalStandaloneBindings,
+    functionalTestDataSections,
+    functionalActionModuleCount,
+    functionalActionHeaderCount,
+    functionalActionTradeSubmodules,
+    functionalActionReceiptSubmodules,
+    functionalFormulaRuleBlocks,
+    functionalFormulaExampleBlocks,
+    functionalFormulaBasisBlocks,
+    functionalFormulaSourceLinks,
+    functionalHeroCaseLinks,
+    functionalActionTabs,
+    functionalActionSelectionChecks,
+    functionalActionSelectionErrors: functionalActionSelectionErrors.join('；'),
+    functionalActionModuleOrderChecks,
+    functionalActionModuleOrderErrors: functionalActionModuleOrderErrors.join('；'),
+    functionalTxTableStructureChecks,
+    functionalTxTableStructureErrors: functionalTxTableStructureErrors.join('；'),
+    functionalAssertionRows,
+    functionalCleanupPositionRemovedText,
+    functionalReadablePrecisionMarkers,
+    functionalPositionSizeReadableText,
+    functionalPrecisionValueChecks: functionalPrecisionValueChecks.size,
+    functionalPrecisionValueErrors: functionalPrecisionValueErrors.join('；'),
+    functionalPrecisionValueSummary: functionalPrecisionValueSummary.join('；'),
+    functionalOpenActionRows,
+    functionalOpenActionTitle,
+    functionalAllActionRows,
+    functionalAllTransactionRecords,
   };
 }
 
@@ -331,7 +917,8 @@ async function verifyTestCases(page: Page, url: string) {
   });
   const scnVersionSourcesText = (await page.locator('#scn-version-sources').textContent().catch(() => '')) ?? '';
 
-  // —— 版本功能用例（CT/XT/FT）分区：准入横幅、45/55 条、8/9 列混排零报错、无 SCN 泄漏。 ——
+  // —— 版本功能用例（CT/XT/FT）分区：准入横幅、8/11 列混排零报错、完整设计字段、无 SCN 泄漏。 ——
+  await page.locator('#case-tab-functional').click();
   const versionSectionExists = await page.locator('#version-cases').count() === 1;
   const admissionBannerExists = await page.locator('#admission-banner').count() === 1;
   const admissionBannerText = admissionBannerExists
@@ -380,6 +967,18 @@ async function verifyTestCases(page: Page, url: string) {
         return !id || !/^P[0-2]$/.test(priority) || !caseTitle;
       }).length)
     : -1;
+  const versionDetailRows = await defaultBlock.locator('tr.vc-detail-row').count();
+  const versionDetailIncomplete = versionDetailRows > 0
+    ? await defaultBlock.locator('tr.vc-detail-row').evaluateAll((rows) => rows.filter((row) => {
+      const values = Array.from(row.querySelectorAll('.vc-detail-grid article p'))
+        .map((node) => (node.textContent ?? '').trim());
+      return values.length !== 6 || values.some((value) => !value || value === '—');
+    }).length)
+    : -1;
+  const firstDetailToggle = defaultBlock.locator('.vc-detail-toggle').first();
+  await firstDetailToggle.click();
+  const versionDetailOpens = await defaultBlock.locator('tr.vc-detail-row:not([hidden])').count() === 1;
+  await firstDetailToggle.click();
   const versionSectionText = versionSectionExists
     ? (await page.locator('#version-cases').textContent()) ?? ''
     : '';
@@ -438,6 +1037,8 @@ async function verifyTestCases(page: Page, url: string) {
     }
   }
 
+  // 两类用例独立 Tab：回到 Scenario 后继续验证其筛选、选择与编辑逻辑。
+  await page.locator('#case-tab-scenario').click();
   const testCaseEditorEnabled = await page.locator('#save-case').isEnabled();
   const selectedTestCaseId = await page.locator('#case-editor input[name="id"]').inputValue();
   const selectedPlannedProject = await page.locator('#case-editor select[name="targetProject"]').inputValue();
@@ -490,6 +1091,9 @@ async function verifyTestCases(page: Page, url: string) {
     versionCoreAddressMissing,
     versionOtherRows,
     versionOtherIncomplete,
+    versionDetailRows,
+    versionDetailIncomplete,
+    versionDetailOpens,
     versionSectionText,
     versionSwitchRelease,
     versionSwitchBlockText,
@@ -648,6 +1252,7 @@ if (!input) {
       access(join(dirname(dashboardPath), 'runs.html')),
       access(join(dirname(dashboardPath), 'faucet.html')),
       access(join(dirname(dashboardPath), 'environments.html')),
+      access(join(dirname(dashboardPath), 'deployments.html')),
       access(join(dirname(dashboardPath), 'reconciliation-console.html')),
     ]);
   }
@@ -677,6 +1282,9 @@ if (!input) {
   const environmentsUrl = isHttp
     ? new URL('./environments.html', dashboardUrl).href
     : pathToFileURL(join(dirname(dashboardPath!), 'environments.html')).href;
+  const deploymentsUrl = isHttp
+    ? new URL('./deployments.html', dashboardUrl).href
+    : pathToFileURL(join(dirname(dashboardPath!), 'deployments.html')).href;
   const reconciliationConsoleUrl = isHttp
     ? new URL('./reconciliation-console.html', dashboardUrl).href
     : pathToFileURL(join(dirname(dashboardPath!), 'reconciliation-console.html')).href;
@@ -705,13 +1313,70 @@ if (!input) {
   const formulas = await verifyFormulas(page, formulasUrl, 'contract-formulas-page');
   const pageFormulas = await verifyFormulas(page, pageFormulasUrl, 'page-formulas-page');
   const environmentsPage = await verifyEnvironments(page, environmentsUrl);
+  const deploymentsPage = await verifyDeployments(page, deploymentsUrl);
   const reconciliationConsole = await verifyReconciliationConsole(page, reconciliationConsoleUrl);
+
+  const functionalDesktopTableLayoutErrors: string[] = [];
+  const functionalDesktopTableLayoutSummary: string[] = [];
+  let functionalDesktopTableLayoutChecks = 0;
+  for (const viewportWidth of [1440, 1920]) {
+    const measurement = await measureFunctionalTableLayout(page, executionsUrl, viewportWidth);
+    for (const step of measurement.steps) {
+      functionalDesktopTableLayoutChecks += 1;
+      functionalDesktopTableLayoutSummary.push(
+        `${viewportWidth}/${step.stepId}: ${step.containerScrollWidth}/${step.containerClientWidth}px`,
+      );
+      if (step.buttonCount !== 1 || step.containerCount !== 1 || step.tableCount !== 1) {
+        functionalDesktopTableLayoutErrors.push(
+          `${viewportWidth}px ${step.stepId}: 入口=${step.buttonCount}，滚动容器=${step.containerCount}，表格=${step.tableCount}（均应为 1）`,
+        );
+        continue;
+      }
+      if (step.containerScrollWidth > step.containerClientWidth + 1) {
+        functionalDesktopTableLayoutErrors.push(
+          `${viewportWidth}px ${step.stepId}: 数据核对表仍需横向滚动（scrollWidth=${step.containerScrollWidth}px，clientWidth=${step.containerClientWidth}px）`,
+        );
+      }
+    }
+  }
+
+  const functionalMobileTableLayoutErrors: string[] = [];
+  const functionalMobileTableLayoutSummary: string[] = [];
+  let functionalMobileTableLayoutChecks = 0;
+  const functionalMobileTableLayout = await measureFunctionalTableLayout(page, executionsUrl, 390);
+  for (const step of functionalMobileTableLayout.steps) {
+    functionalMobileTableLayoutChecks += 1;
+    functionalMobileTableLayoutSummary.push(
+      `390/${step.stepId}: 表格 ${step.containerScrollWidth}/${step.containerClientWidth}px，页面 ${step.documentScrollWidth}/${step.documentClientWidth}px`,
+    );
+    if (step.buttonCount !== 1 || step.containerCount !== 1 || step.tableCount !== 1) {
+      functionalMobileTableLayoutErrors.push(
+        `390px ${step.stepId}: 入口=${step.buttonCount}，滚动容器=${step.containerCount}，表格=${step.tableCount}（均应为 1）`,
+      );
+      continue;
+    }
+    if (step.bodyScrollWidth > step.documentClientWidth + 1
+      || step.documentScrollWidth > step.documentClientWidth + 1) {
+      functionalMobileTableLayoutErrors.push(
+        `390px ${step.stepId}: 横向滚动泄漏到页面（body=${step.bodyScrollWidth}px，document=${step.documentScrollWidth}px，viewport=${step.documentClientWidth}px）`,
+      );
+    }
+    if (step.containerScrollWidth > step.containerClientWidth + 1
+      && !['auto', 'scroll'].includes(step.overflowX)) {
+      functionalMobileTableLayoutErrors.push(
+        `390px ${step.stepId}: 表格超宽但滚动容器 overflow-x=${step.overflowX || '未设置'}`,
+      );
+    }
+  }
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(environmentsUrl);
   await page.waitForSelector('#environment-page[data-page-ready="true"]');
   const environmentsMobileBodyWidth = await page.evaluate(() => document.body.scrollWidth);
   const envMobileTabCount = await page.locator('#env-tabs .env-tab').count();
+  await page.goto(deploymentsUrl);
+  await page.waitForSelector('#deployments-page[data-page-ready="true"]');
+  const deploymentsMobileBodyWidth = await page.evaluate(() => document.body.scrollWidth);
   await page.goto(reconciliationConsoleUrl);
   await page.waitForSelector('#reconciliation-console-page[data-page-ready="true"]');
   const consoleMobileBodyWidth = await page.evaluate(() => document.body.scrollWidth);
@@ -733,6 +1398,12 @@ if (!input) {
     ...dashboard,
     ...faucet,
     ...executions,
+    functionalDesktopTableLayoutChecks,
+    functionalDesktopTableLayoutErrors: functionalDesktopTableLayoutErrors.join('；'),
+    functionalDesktopTableLayoutSummary: functionalDesktopTableLayoutSummary.join('；'),
+    functionalMobileTableLayoutChecks,
+    functionalMobileTableLayoutErrors: functionalMobileTableLayoutErrors.join('；'),
+    functionalMobileTableLayoutSummary: functionalMobileTableLayoutSummary.join('；'),
     testCaseRows: testCases.testCaseRows,
     scnCatalogCount: testCases.scnCatalogCount,
     scnCatalogAllScn: testCases.scnCatalogAllScn,
@@ -749,6 +1420,9 @@ if (!input) {
     versionCoreAddressMissing: testCases.versionCoreAddressMissing,
     versionOtherRows: testCases.versionOtherRows,
     versionOtherIncomplete: testCases.versionOtherIncomplete,
+    versionDetailRows: testCases.versionDetailRows,
+    versionDetailIncomplete: testCases.versionDetailIncomplete,
+    versionDetailOpens: testCases.versionDetailOpens,
     versionSwitchRelease: testCases.versionSwitchRelease,
     versionSwitchBlockText: testCases.versionSwitchBlockText,
     versionSectionText: testCases.versionSectionText,
@@ -803,8 +1477,10 @@ if (!input) {
     pageFormulaHasPositionSizes: pageFormulas.formulaHasPositionSizes,
     ...reconciliationConsole,
     ...environmentsPage,
+    ...deploymentsPage,
     envMobileTabCount,
     environmentsMobileBodyWidth,
+    deploymentsMobileBodyWidth,
     testCasesMobileBodyWidth,
     mobileBodyWidth,
     executionMobileBodyWidth,
@@ -813,10 +1489,12 @@ if (!input) {
   };
   const expectedHeaders = ['核对结果', '执行链接', '执行时间'];
   const expectedReconciliationHeaders = ['Before（链上）', 'After（链上 Actual）', 'Expected Δ（订单 / 公式）', 'Expected After = Before + Δ', '公式与依据'];
-  const requiresExecutionEvidence = result.executionSourceStatus === 'ready';
+  const requiresScenarioExecutionEvidence = result.executionSourceStatus === 'ready' && result.evidenceScenarioId !== null;
+  const requiresFunctionalExecutionEvidence = result.executionSourceStatus === 'ready' && result.functionalExecutionRows > 0;
   const failed = dashboard.title !== 'FX100 E2E 测试看板'
     || dashboard.dashboardNavLabel !== '测试看板'
     || dashboard.testRunNavHref !== './runs.html'
+    || dashboard.deploymentsNavHref !== './deployments.html'
     || faucet.faucetTitle !== 'FX100 Faucet USDC'
     || !faucet.fundingPanelExists
     || !faucet.faucetMonitorExists
@@ -839,29 +1517,97 @@ if (!input) {
     || result.detailRowsAfter < 1
     || !result.suiteLabel?.includes('交易准备与首单')
     || !expectedHeaders.every((header) => result.detailHeaders.includes(header))
-    || result.executionLinks < 1
-    || (requiresExecutionEvidence && (!result.evidenceScenarioId
+    || (requiresScenarioExecutionEvidence && result.executionLinks < 1)
+    || (requiresScenarioExecutionEvidence && (!result.evidenceScenarioId
       || !result.scenarioExecutionHref?.includes(`scenario=${result.evidenceScenarioId}`)))
     // 断言 forkDisplayName 已归一化展示（项目名而非技术 Fork ID）；不锁定环境——最新证据可能来自任一 fork。
-    || (requiresExecutionEvidence && !result.evidenceRowText.includes(' / aladdindao/test'))
-    || (requiresExecutionEvidence && result.evidenceRowText.includes('9f3df3-7d0923'))
-    || (requiresExecutionEvidence && result.reconciliationRows < 1)
-    || (requiresExecutionEvidence && !expectedReconciliationHeaders.every((header) => result.reconciliationHeaders.includes(header)))
-    || (requiresExecutionEvidence && result.traderTransactions < 2)
-    || (requiresExecutionEvidence && result.keeperTransactions < 2)
-    || (requiresExecutionEvidence && result.transactionEvidenceLinks < 4)
+    || (requiresScenarioExecutionEvidence && !result.evidenceRowText.includes(' / aladdindao/test'))
+    || (requiresScenarioExecutionEvidence && result.evidenceRowText.includes('9f3df3-7d0923'))
+    || (requiresScenarioExecutionEvidence && result.reconciliationRows < 1)
+    || (requiresScenarioExecutionEvidence && !expectedReconciliationHeaders.every((header) => result.reconciliationHeaders.includes(header)))
+    || (requiresScenarioExecutionEvidence && result.traderTransactions < 2)
+    || (requiresScenarioExecutionEvidence && result.keeperTransactions < 2)
+    || (requiresScenarioExecutionEvidence && result.transactionEvidenceLinks < 4)
     // 概述链接必须指向证据对应的场景（最新证据场景随数据变化，不硬编码具体 SCN）。
-    || (requiresExecutionEvidence && !result.testCaseOverviewHref?.includes(`test-cases.html?scenario=${result.evidenceScenarioId}`))
-    || (requiresExecutionEvidence && !result.testCaseOverviewText.includes('角色与意图'))
-    || (requiresExecutionEvidence && result.graceFilteredRows < 1)
-    || (requiresExecutionEvidence && !['Grace 公式核对', 'graceStart', 'graceEnd']
+    || (requiresScenarioExecutionEvidence && !result.testCaseOverviewHref?.includes(`test-cases.html?scenario=${result.evidenceScenarioId}`))
+    || (requiresScenarioExecutionEvidence && !result.testCaseOverviewText.includes('角色与意图'))
+    || (requiresScenarioExecutionEvidence && result.graceFilteredRows < 1)
+    || (requiresScenarioExecutionEvidence && !['Grace 公式核对', 'graceStart', 'graceEnd']
       .every((field) => result.graceFilteredText.includes(field)))
-    || (requiresExecutionEvidence && (result.feeFilteredRows < 1 || result.feeFilteredRows >= result.reconciliationRows))
-    || (requiresExecutionEvidence && result.allFilteredRows !== result.reconciliationRows)
-    || (requiresExecutionEvidence && !result.executionHeroText.includes('执行结果 PASS'))
-    || (requiresExecutionEvidence && !result.executionHeroText.includes('自动化覆盖 PARTIAL'))
-    || (requiresExecutionEvidence && !result.executionHeroText.includes(' / aladdindao/test'))
-    || (requiresExecutionEvidence && result.executionHeroText.includes('9f3df3-7d0923'))
+    || (requiresScenarioExecutionEvidence && (result.feeFilteredRows < 1 || result.feeFilteredRows >= result.reconciliationRows))
+    || (requiresScenarioExecutionEvidence && result.allFilteredRows !== result.reconciliationRows)
+    || (requiresScenarioExecutionEvidence && !result.executionHeroText.includes('执行结果 PASS'))
+    || (requiresScenarioExecutionEvidence && !result.executionHeroText.includes('自动化覆盖 PARTIAL'))
+    || (requiresScenarioExecutionEvidence && !result.executionHeroText.includes(' / aladdindao/test'))
+    || (requiresScenarioExecutionEvidence && result.executionHeroText.includes('9f3df3-7d0923'))
+    || (requiresFunctionalExecutionEvidence && !result.functionalExecutionMetrics.includes('已有自动化结果'))
+    || (requiresFunctionalExecutionEvidence && result.functionalFailureRows < 1)
+    || (requiresFunctionalExecutionEvidence && !['合约层', '前端层', '交叉一致'].every((label) => result.functionalExecutionLayers.includes(label)))
+    || (requiresFunctionalExecutionEvidence && !result.functionalExecutionDetail.includes('本次自动化运行'))
+    || (requiresFunctionalExecutionEvidence && !['批次 ID', '结果 Run ID']
+      .every((label) => result.functionalExecutionDetail.includes(label)))
+    || (requiresFunctionalExecutionEvidence && !['当前版本与环境', '查看页面与合约地址']
+      .every((label) => result.functionalBindingSummary.includes(label)))
+    || (requiresFunctionalExecutionEvidence && !result.functionalBindingHref?.includes('deployments.html?environment='))
+    || (requiresFunctionalExecutionEvidence && result.functionalNestedBindings !== 1)
+    || (requiresFunctionalExecutionEvidence && result.functionalStandaloneBindings !== 0)
+    || (requiresFunctionalExecutionEvidence && result.functionalTestDataSections !== 1)
+    || (requiresFunctionalExecutionEvidence && result.functionalActionModuleCount !== 1)
+    || (requiresFunctionalExecutionEvidence && result.functionalActionHeaderCount !== 1)
+    || (requiresFunctionalExecutionEvidence && result.functionalActionTradeSubmodules !== 1)
+    || (requiresFunctionalExecutionEvidence && result.functionalActionReceiptSubmodules !== 1)
+    || (requiresFunctionalExecutionEvidence && result.functionalFormulaBasisBlocks < 1)
+    || (requiresFunctionalExecutionEvidence && result.functionalFormulaSourceLinks < 1)
+    || (requiresFunctionalExecutionEvidence && result.functionalHeroCaseLinks !== 0)
+    || (requiresFunctionalExecutionEvidence && result.functionalActionTabs < 2)
+    || (requiresFunctionalExecutionEvidence && result.functionalActionSelectionChecks !== result.functionalActionTabs + 1)
+    || (requiresFunctionalExecutionEvidence && result.functionalActionSelectionErrors !== '')
+    || (requiresFunctionalExecutionEvidence && result.functionalActionModuleOrderChecks !== 5)
+    || (requiresFunctionalExecutionEvidence && result.functionalActionModuleOrderErrors !== '')
+    || (requiresFunctionalExecutionEvidence && result.functionalTxTableStructureChecks < 1)
+    || (requiresFunctionalExecutionEvidence && result.functionalTxTableStructureErrors !== '')
+    || (requiresFunctionalExecutionEvidence && result.functionalDesktopTableLayoutChecks !== 8)
+    || (requiresFunctionalExecutionEvidence && result.functionalDesktopTableLayoutErrors !== '')
+    || (requiresFunctionalExecutionEvidence && result.functionalMobileTableLayoutChecks !== 4)
+    || (requiresFunctionalExecutionEvidence && result.functionalMobileTableLayoutErrors !== '')
+    || (requiresFunctionalExecutionEvidence && result.functionalAssertionRows < 1)
+    || (requiresFunctionalExecutionEvidence
+      && !result.functionalCleanupPositionRemovedText.includes('仓位已移除：是（position.exists=false）'))
+    || (requiresFunctionalExecutionEvidence
+      && result.functionalReadablePrecisionMarkers > 0
+      && result.functionalPositionSizeReadableText !== '= 50 USD')
+    || (requiresFunctionalExecutionEvidence
+      && result.functionalReadablePrecisionMarkers > 0
+      && result.functionalPrecisionValueChecks !== 5)
+    || (requiresFunctionalExecutionEvidence
+      && result.functionalReadablePrecisionMarkers > 0
+      && result.functionalPrecisionValueErrors !== '')
+    || (requiresFunctionalExecutionEvidence && result.functionalOpenActionRows < 1)
+    || (requiresFunctionalExecutionEvidence && result.functionalOpenActionTitle.trim() !== '数据核对')
+    || (requiresFunctionalExecutionEvidence && result.functionalAllActionRows <= result.functionalOpenActionRows)
+    || (requiresFunctionalExecutionEvidence && result.functionalAllTransactionRecords !== result.functionalActionTabs - 1)
+    || (requiresFunctionalExecutionEvidence && ![
+      '交易概要',
+      '交易员提交 10 USDC、5x 市价开多订单',
+      'USDC 从 Trader 转入 OrderVault',
+      'Keeper 执行开多订单；实际成交价 2,032.740628 USD',
+      'Margin10 USDC',
+      'Leverage5x',
+      'Position Size50 USD',
+      'Execution Price2,032.740628 USD',
+      'Execution Price Raw2032740628092499',
+      'Raw 换算口径raw ÷ 10^(30 − Index Token Decimals)',
+      'Index Token Decimals = 18',
+      '因此除以 1e12',
+    ].every((label) => result.functionalTradeSummary.replace(/\s+/g, '').includes(label.replace(/\s+/g, ''))))
+    || (requiresFunctionalExecutionEvidence && result.functionalEvidenceLinks < 1)
+    || (requiresFunctionalExecutionEvidence && result.functionalCheckRows < 1)
+    || (requiresFunctionalExecutionEvidence && !['核对项', 'Before', 'After（Actual）', 'Actual Δ', 'Expected Δ', 'Expected After / Expected', '公式 / 依据']
+      .every((label) => result.functionalCheckHeaders.includes(label)))
+    || (requiresFunctionalExecutionEvidence && result.functionalTransactionLinks < 1)
+    || (isHttp && requiresFunctionalExecutionEvidence && result.functionalTransactionLinkStatus !== 200)
+    || (requiresFunctionalExecutionEvidence && result.functionalExplorerLinks < 1)
+    || (requiresFunctionalExecutionEvidence && !/^https:\/\/(?:dashboard\.tenderly\.co\/[^/]+\/[^/]+\/testnet\/[a-zA-Z0-9-]+|sepolia\.basescan\.org)\/tx\/0x[0-9a-fA-F]{64}$/.test(result.functionalExplorerHref ?? ''))
     // 用例目录会持续增长；验证看板行为，不把当前目录条数误当成页面契约。
     || result.testCaseRows < 80
     // —— 共享 SCN 分区不变性：行数 = 目录数、全部为 SCN 编号；来源链接行存在（唯一新增行）。 ——
@@ -884,6 +1630,9 @@ if (!input) {
     || result.versionOtherRows < 55
     || result.versionOtherRows !== result.versionPayloadOtherCount
     || result.versionOtherIncomplete !== 0
+    || result.versionDetailRows !== result.vcRowsTotal
+    || result.versionDetailIncomplete !== 0
+    || !result.versionDetailOpens
     || result.versionParseIssueCount !== 0
     || /SCN-\d/.test(result.versionSectionText)
     || result.versionSectionText.includes('scenarios/')
@@ -900,6 +1649,8 @@ if (!input) {
     || result.vcNotRunFiltered !== result.vcNotRunExpected
     || result.vcDrawerCount !== 1
     || result.vcRecordButtons !== result.vcRowsTotal
+    || !result.versionSectionText.includes('自动化执行（0 条）')
+    || !result.versionSectionText.includes('手工执行（0 条）')
     || (!isHttp && result.vcRecordDisabled !== result.vcRecordButtons)
     || (!isHttp && !result.vcStartBatchDisabled)
     || (!isHttp && !result.vcManualHint.includes('dashboard:serve'))
@@ -968,6 +1719,31 @@ if (!input) {
     || result.consoleFilteredRows < 1
     || result.consoleFilteredRows >= result.consoleFieldRows
     || result.environmentsTitle !== '测试环境'
+    || result.deploymentsTitle !== '版本、环境与合约地址'
+    || result.deploymentsNavCurrent !== 'page'
+    || result.deploymentVersionOptions < 2
+    || result.deploymentEnvironmentOptions < 2
+    || result.deploymentInitialCards < 1
+    || result.deploymentVersionFilteredCards < 1
+    || result.deploymentVersionFilteredCards > result.deploymentInitialCards
+    || result.deploymentEnvironmentFilteredCards !== 1
+    || result.deploymentCoreRows < 1
+    || result.deploymentMockRows < 5
+    || !['USDC Mock', 'Index Token', 'Index Oracle', 'Token decimals 6', 'Oracle decimals 8', 'Oracle decimals 18']
+      .every((label) => result.deploymentMockText.includes(label))
+    || !['Trade 站点', '环境配置', '执行详情', '本页地址', '页面地址', '测试环境', '本环境地址目录']
+      .every((label) => result.deploymentPageAddressText.includes(label))
+    || result.deploymentV031SelectedVersion !== 'v0.3.1'
+    || result.deploymentV031SelectedEnvironment !== 'base-sepolia'
+    || result.deploymentV031CoordinatedCards !== 1
+    || result.deploymentV031BaseSepoliaCards !== 1
+    || result.deploymentV031CoreRows !== 11
+    || result.deploymentV031CoreAddressCount !== 11
+    || result.deploymentV031InvalidCoreAddresses !== 0
+    || result.deploymentV031SnapshotRows !== 67
+    || result.deploymentV031DeploymentId !== 'base-sepolia@v0.3.1'
+    || result.deploymentV031ManifestName !== 'base-sepolia-v0.3.1-260729'
+    || result.deploymentV031ChainPair !== '84532 / 84532'
     // 环境标签条：5 个环境标签齐全、无记忆时默认选中 tx-fork（隐藏 select 同步）；390 宽标签条仍完整（配合上/下方 body 宽度断言）。
     || result.envTabCount !== 5
     || result.envTabSelected !== 'tx-fork'
@@ -985,6 +1761,7 @@ if (!input) {
     || (!isHttp && !(result.deployBranchDisabled && result.deployDryRunDisabled && result.deployRunDisabled))
     || (!isHttp && !result.deployStatusText.includes('dashboard:serve'))
     || result.environmentsMobileBodyWidth > 410
+    || result.deploymentsMobileBodyWidth > 410
     || result.testCasesMobileBodyWidth > 410
     || errors.length > 0
     || externalRequests.length > 0

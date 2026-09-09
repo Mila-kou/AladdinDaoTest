@@ -6,6 +6,9 @@ import { privateKeyToAccount } from 'viem/accounts';
 
 import { resolveMockMarketBundle } from '../config/mock-resources.js';
 import type { RuntimeConfig } from '../config/runtime.js';
+import { assertRuntimeEnvironmentBinding } from '../config/environment-binding.js';
+import type { ResolvedTestEnvironment } from '../domain/test-environment.js';
+import { assertRuntimeMatchesResolvedEnvironment } from '../execution/runtime-environment.js';
 import { readTradeParameterSnapshot } from '../reconciliation/chain-parameter-snapshot.js';
 import { calculateGrace } from '../reconciliation/formulas.js';
 
@@ -193,8 +196,13 @@ function legacyPath(...parts: string[]): string {
   return resolve(process.cwd(), 'tools/fx100-legacy', ...parts);
 }
 
-function deploymentPath(): string {
-  return resolve(process.cwd(), '../Github/fx100-contracts@release-v0.3.1/base_sepolia_v0.3.1_260729');
+function deploymentPath(runtime: RuntimeConfig): string {
+  if (!runtime.deploymentDirectory) {
+    throw new Error(
+      `环境 ${runtime.environment} 的绑定 manifest ${runtime.deploymentManifestName} 缺少 source.deploymentDirectory。`,
+    );
+  }
+  return runtime.deploymentDirectory;
 }
 
 async function importFile<T>(path: string): Promise<T> {
@@ -608,7 +616,18 @@ async function readOracleConfig(
   };
 }
 
-export async function runScn010(runtime: RuntimeConfig): Promise<Scn010Evidence> {
+export async function runScn010(
+  runtime: RuntimeConfig,
+  options: { readonly resolvedEnvironment?: ResolvedTestEnvironment } = {},
+): Promise<Scn010Evidence> {
+  if (options.resolvedEnvironment) {
+    assertRuntimeMatchesResolvedEnvironment(runtime, options.resolvedEnvironment);
+    if (options.resolvedEnvironment.marketMode !== 'mock-market'
+      || options.resolvedEnvironment.oracleMode !== 'mock-oracle') {
+      throw new Error('SCN-010 需要 mock-market + mock-oracle');
+    }
+  }
+  await assertRuntimeEnvironmentBinding(runtime);
   if (!runtime.testAccount || !runtime.keeperAccount || !runtime.adminAccount) {
     throw new Error('SCN-010 需要 E2E_TEST_ACCOUNT、E2E_KEEPER_ACCOUNT 与 E2E_ADMIN_ACCOUNT');
   }
@@ -617,9 +636,11 @@ export async function runScn010(runtime: RuntimeConfig): Promise<Scn010Evidence>
   }
 
   const deps = await loadLegacyDependencies();
-  const deploymentDir = deploymentPath();
+  const deploymentDir = deploymentPath(runtime);
   const baseDeployment = deps.loadDeployment(deploymentDir);
-  const mockResourceAlias = process.env.E2E_MARKET_RESOURCE_ALIAS ?? 'default-mock';
+  const mockResourceAlias = options.resolvedEnvironment?.mockResourceAlias
+    ?? process.env.E2E_MARKET_RESOURCE_ALIAS
+    ?? 'default-mock';
   const resource = await resolveMockMarketBundle(runtime.environment, mockResourceAlias);
   if (!resource.market?.marketIndex || resource.market.status !== 'registered'
     || !resource.token || !resource.oracle || !resource.collateralToken || !resource.collateralOracle

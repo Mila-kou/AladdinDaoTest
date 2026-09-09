@@ -63,11 +63,11 @@
   },
   "source": {
     "deploymentDirectory": "../Github/fx100-contracts@release-v0.3.1/base_sepolia_v0.3.1_260729",
-    "addressesFile": "../Github/fx100-contracts@release-v0.3.1/base_sepolia_v0.3.1_260729/deployed_addresses.json",
+    "addressesFile": "../TestCase/config/v0.3.1/base-sepolia/260729/deployed-addresses.json",
     "abiDirectory": "../Github/fx100-contracts@release-v0.3.1/base_sepolia_v0.3.1_260729/abi",
-    "parametersFile": "../TestCase/project/fx100/config/base_sepolia_v0.3.1_260729.params.json",
-    "rolesFile": "../TestCase/project/fx100/config/base_sepolia_v0.3.1_260729.roles.json",
-    "tokensFile": "../TestCase/project/fx100/config/base_sepolia_v0.3.1_260729.tokens.json"
+    "parametersFile": "../TestCase/config/v0.3.1/base-sepolia/260729/parameters.json",
+    "rolesFile": "../TestCase/config/v0.3.1/base-sepolia/260729/parameters.json",
+    "tokensFile": "../TestCase/config/v0.3.1/base-sepolia/260729/parameters.json"
   },
   "abiFiles": {
     "ExchangeRouter": "ExchangeRouter.json",

@@ -1,0 +1,15 @@
+# hardhat compile 记录
+date: 2026-09-02T13:28:26Z
+repo: Github/fx100-contracts@release-v0.3.2
+HEAD: 13880f2416918f4fed3fea86d7f1023084a3ce0d
+branch: release/v0.3.2
+node: v24.15.0
+command: npm run compile
+---
+
+> fx100-contracts@0.1.0 compile
+> hardhat compile
+
+Nothing to compile
+---
+exit: 0

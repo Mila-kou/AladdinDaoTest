@@ -18,6 +18,7 @@ import { privateKeyToAccount } from 'viem/accounts';
 import { z } from 'zod';
 
 import { loadDeploymentManifest } from './deployment.js';
+import { assertRuntimeEnvironmentBinding } from './environment-binding.js';
 import { loadEnvironmentInitializationProfile } from '../server/environment-initialization-profile.js';
 import { isMockResourceEnvironment, loadMockResourceRegistry } from './mock-resources.js';
 import type { RuntimeConfig } from './runtime.js';
@@ -35,8 +36,10 @@ export interface CaseTraderMap {
   readonly assignments: Record<string, CaseTraderAssignment>;
 }
 
+// 编号族：共享场景 SCN-NNN、版本增补 SCN-B32-NN、版本级功能用例 CT/XT/FT-<域>-<子域>-NNN
+//（后者来自 TestCase/E2E/versions/<release>/Trade-测试用例矩阵.md 的地址映射表，见 scripts/generate-case-traders.ts）。
 const assignmentSchema = z.object({
-  scenarioId: z.string().regex(/^SCN-(?:\d{3}|B32-\d{2})$/),
+  scenarioId: z.string().regex(/^(?:SCN-(?:\d{3}|B32-\d{2})|(?:CT|XT|FT)-[A-Z0-9]+(?:-[A-Z0-9]+)*-\d{3})$/),
   traderIndex: z.number().int().positive(),
   address: z.string().regex(/^0x[0-9a-fA-F]{40}$/),
   label: z.string().min(1),
@@ -262,6 +265,9 @@ export async function applyCaseTrader(
   scenarioId: string,
   projectRoot: string = process.cwd(),
 ): Promise<RuntimeConfig> {
+  // 所有 Playwright spec 都从这里进入；注资或发交易前先确认 RPC 实际链及关键合约
+  // 与所选环境绑定一致，防止同一 Chain ID 的新旧 Fork 串用 manifest。
+  await assertRuntimeEnvironmentBinding(runtime, projectRoot);
   if (!perCaseTraderEnabled()) {
     warnOnce('disabled', '[trader-roster] E2E_TRADER_ASSIGNMENT 未设为 per-case，未启用每用例专属 Trader，沿用默认 trader 档案。');
     return runtime;

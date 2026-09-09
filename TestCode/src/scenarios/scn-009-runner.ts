@@ -1,12 +1,15 @@
 import { pathToFileURL } from 'node:url';
-import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { createPublicClient, createWalletClient, defineChain, encodeAbiParameters, formatUnits, getAddress, http, keccak256, parseAbi, parseAbiParameters, toHex } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 
 import type { RuntimeConfig } from '../config/runtime.js';
+import { assertRuntimeEnvironmentBinding } from '../config/environment-binding.js';
 import { resolveMockMarketBundle } from '../config/mock-resources.js';
+import { addTransactionExplorerLinks, resolveBlockExplorerBaseUrl } from '../config/transaction-links.js';
+import type { ResolvedTestEnvironment } from '../domain/test-environment.js';
+import { assertRuntimeMatchesResolvedEnvironment } from '../execution/runtime-environment.js';
 import {
   checkLedgerConservation,
   ledgerDiff,
@@ -217,30 +220,26 @@ const COLLATERAL = 10_000_000n;
 const SIZE_USD = 50n * 10n ** 30n;
 const EXECUTION_FEE = 20_000_000_000_000n;
 
+/** 市价流程缺省开仓数据（10 USDC / 50 USD / 0.00002 ETH）；XT 原子用例按行数据覆盖开仓腿时以此为基准。 */
+export const MARKET_FLOW_DEFAULTS = {
+  collateral: COLLATERAL,
+  sizeUsd: SIZE_USD,
+  executionFee: EXECUTION_FEE,
+} as const;
+
 // 遗留 .mjs 工具已随仓收编到 tools/fx100-legacy，目录结构与原 Test/project/fx100 保持一致，
 // 这样模块之间的相对 import（../../tool/... 等）不需要改动。
 function legacyPath(...parts: string[]): string {
   return resolve(process.cwd(), 'tools/fx100-legacy', ...parts);
 }
 
-function deploymentPath(): string {
-  // 部署产物目录：优先当前 deployment manifest 的 source.deploymentDirectory
-  // （tx-fork 自 2026-09-01 起是 deploy:contracts 在 fork 上生成的 v0.3.2 Ignition 产物）；
-  // manifest 无 source 时回退 v0.3.1 dev 导出（oracle-fork / time-fork 仍是 v0.3.1 部署镜像）。
-  const manifestPath = process.env.E2E_DEPLOYMENT_MANIFEST;
-  if (manifestPath) {
-    try {
-      const manifest = JSON.parse(readFileSync(resolve(process.cwd(), manifestPath), 'utf8')) as {
-        source?: { deploymentDirectory?: string };
-      };
-      if (manifest.source?.deploymentDirectory) {
-        return resolve(process.cwd(), manifest.source.deploymentDirectory);
-      }
-    } catch {
-      // manifest 读取失败按无 source 处理，走硬编码回退
-    }
+function deploymentPath(runtime: RuntimeConfig): string {
+  if (!runtime.deploymentDirectory) {
+    throw new Error(
+      `环境 ${runtime.environment} 的绑定 manifest ${runtime.deploymentManifestName} 缺少 source.deploymentDirectory。`,
+    );
   }
-  return resolve(process.cwd(), '../Github/fx100-contracts@release-v0.3.1/base_sepolia_v0.3.1_260729');
+  return runtime.deploymentDirectory;
 }
 
 async function importFile<T>(path: string): Promise<T> {
@@ -782,6 +781,11 @@ export type MarketFlowOrderEntryHook = (context: MarketFlowOrderEntryContext) =>
 export interface MarketFlowOptions {
   readonly scenarioId: string;
   readonly isLong: boolean;
+  /**
+   * Phase A/B structured environment bridge. New callers must pass the value
+   * resolved from Runtime/Driver state; omitted is retained only for legacy specs.
+   */
+  readonly resolvedEnvironment?: ResolvedTestEnvironment;
   /** 盈亏构造：开仓后（中段阶段前）把 Index 价格推动 ±N%（feed+时间戳+STABLE_PRICE 三件套，traps §11）。 */
   readonly priceMovePercent?: number;
   /** 中段阶段（加仓/部分平），按序执行于开仓与最终全平之间；证据落 middlePhases 数组。 */
@@ -799,6 +803,13 @@ export interface MarketFlowOptions {
   readonly orderEntry?: MarketFlowOrderEntryHook;
   /** 矩阵模式透传，仅用于停点上下文标注 */
   readonly datasetId?: string;
+  /**
+   * 开仓腿规模覆盖（USD 1e30 raw）；缺省 50e30。仅作用于开仓腿（RPC 构造与「开仓规模」断言），
+   * 中段阶段与全平腿不变；证据 testData/observations 记录实际值（十进制字符串）。
+   */
+  readonly openSizeDeltaUsd?: bigint;
+  /** 开仓腿抵押覆盖（USDC 原始单位 1e6）；缺省 10e6。同上仅作用于开仓腿。 */
+  readonly openCollateral?: bigint;
 }
 
 export interface TriggerSpec {
@@ -811,24 +822,65 @@ const ORDER_TYPE_NAMES: Record<number, string> = {
   1: 'LimitIncrease', 3: 'LimitDecrease(TP)', 4: 'StopLossDecrease', 6: 'StopIncrease',
 };
 
-export async function runScn009(runtime: RuntimeConfig): Promise<Scn009Evidence> {
-  return runMarketFlow(runtime, { scenarioId: 'SCN-009', isLong: true });
+export async function runScn009(
+  runtime: RuntimeConfig,
+  options: { readonly resolvedEnvironment?: ResolvedTestEnvironment } = {},
+): Promise<Scn009Evidence> {
+  return runMarketFlow(runtime, {
+    scenarioId: 'SCN-009',
+    isLong: true,
+    ...(options.resolvedEnvironment ? { resolvedEnvironment: options.resolvedEnvironment } : {}),
+  });
 }
 
 // 市价开仓→全平 的方向无关流程：SCN-009（long）与 SCN-065（short）共用。
 // 方向差异集中在：订单 isLong、执行价不利侧比较方向、断言与覆盖文案。
 export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOptions): Promise<Scn009Evidence> {
+  if (flow.resolvedEnvironment) assertRuntimeMatchesResolvedEnvironment(runtime, flow.resolvedEnvironment);
+  const explorerUrl = resolveBlockExplorerBaseUrl(
+    process.cwd(),
+    runtime.environment,
+    runtime.chainId,
+    runtime.forkDisplayName,
+  );
+  await assertRuntimeEnvironmentBinding(runtime);
   const isLong = flow.isLong;
   const directionLabel = isLong ? '多' : '空';
   if (!runtime.testAccount || !runtime.keeperAccount) {
     throw new Error('SCN-009 需要 E2E_TEST_ACCOUNT 与 E2E_KEEPER_ACCOUNT');
   }
+  // 开仓腿数据：缺省 10 USDC / 50 USD；XT 原子用例可按行数据覆盖（仅开仓腿，见 MarketFlowOptions）。
+  const openSizeUsd = flow.openSizeDeltaUsd ?? SIZE_USD;
+  const openCollateral = flow.openCollateral ?? COLLATERAL;
+  const openLegOverridden = flow.openSizeDeltaUsd !== undefined || flow.openCollateral !== undefined;
+  if (openSizeUsd <= 0n || openCollateral <= 0n) {
+    throw new Error(`开仓腿覆盖值必须为正：openSizeDeltaUsd=${openSizeUsd}，openCollateral=${openCollateral}`);
+  }
+  const openCollateralUsdcText = formatUnits(openCollateral, 6);
+  const openSizeUsdText = formatUnits(openSizeUsd, 30);
+  // 整数倍杠杆才打 `<n>x` 标签（reporter 以 collateral×leverage 推导期望规模）；缺省 10 USDC×5 = 50 USD。
+  const openLeverageWhole = openSizeUsd % (openCollateral * 10n ** 24n) === 0n
+    ? openSizeUsd / (openCollateral * 10n ** 24n)
+    : undefined;
+  const openLeverageLabel = openLeverageWhole !== undefined
+    ? `${openLeverageWhole}x`
+    : `${(Number(openSizeUsdText) / Number(openCollateralUsdcText)).toFixed(4)}x`;
+  const openLegLabel = openLegOverridden
+    ? `${openCollateralUsdcText} USDC / ${openLeverageLabel} / ${openSizeUsdText} USD`
+    : '10 USDC / 5x / 50 USD';
 
   const deps = await loadLegacyDependencies();
-  const deploymentDir = deploymentPath();
+  const deploymentDir = deploymentPath(runtime);
   const baseDeployment = deps.loadDeployment(deploymentDir);
-  const useDeployedMarket = process.env.E2E_MARKET_MODE === 'deployed-market';
-  const mockResourceAlias = process.env.E2E_MARKET_RESOURCE_ALIAS ?? 'default-mock';
+  if (flow.resolvedEnvironment?.marketMode === 'not-applicable') {
+    throw new Error('runMarketFlow 不能运行在 marketMode=not-applicable');
+  }
+  const useDeployedMarket = flow.resolvedEnvironment
+    ? flow.resolvedEnvironment.marketMode === 'deployed-market'
+    : process.env.E2E_MARKET_MODE === 'deployed-market';
+  const mockResourceAlias = flow.resolvedEnvironment?.mockResourceAlias
+    ?? process.env.E2E_MARKET_RESOURCE_ALIAS
+    ?? 'default-mock';
   const mockResource = useDeployedMarket
     ? undefined
     : await resolveMockMarketBundle(runtime.environment, mockResourceAlias);
@@ -918,7 +970,9 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
     appBaseUrl: runtime.appBaseUrl,
     ...(mockResource?.token?.address ? { indexToken: mockResource.token.address } : {}),
     ...(mockResource?.oracle?.address ? { indexOracle: mockResource.oracle.address } : {}),
-    intent: { collateralUsdc: '10', leverage: 5, sizeUsd: '50' },
+    intent: openLegOverridden
+      ? { collateralUsdc: openCollateralUsdcText, leverage: Number(openSizeUsdText) / Number(openCollateralUsdcText), sizeUsd: openSizeUsdText }
+      : { collateralUsdc: '10', leverage: 5, sizeUsd: '50' },
   } as const;
   const useUiOpen = Boolean(flow.orderEntry) && !flow.openTrigger;
   let open: SentOrder;
@@ -941,8 +995,8 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
         isLong,
         isIncrease: true,
         orderType: flow.openTrigger.orderType,
-        sizeDeltaUsd: SIZE_USD,
-        collateral: COLLATERAL,
+        sizeDeltaUsd: openSizeUsd,
+        collateral: openCollateral,
         triggerPriceInternal: openTriggerContext.internal,
         executionFee: EXECUTION_FEE,
       })
@@ -953,8 +1007,8 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
         account: runtime.testAccount,
         marketIndex,
         isLong,
-        sizeDeltaUsd: SIZE_USD,
-        collateral: COLLATERAL,
+        sizeDeltaUsd: openSizeUsd,
+        collateral: openCollateral,
         executionFee: EXECUTION_FEE,
       })),
     from: runtime.testAccount,
@@ -1063,10 +1117,12 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
     tierMultiplier: graceParameters.tierMultiplier,
   });
   check(assertions, `开仓后方向为${directionLabel}头`, openedPosition.isLong === isLong, openedPosition.isLong, isLong);
-  const expectedOpenSizeUsd = uiOrderEntryRecords.open ? BigInt(uiOrderEntryRecords.open.order.sizeDeltaUsd) : SIZE_USD;
+  const expectedOpenSizeUsd = uiOrderEntryRecords.open ? BigInt(uiOrderEntryRecords.open.order.sizeDeltaUsd) : openSizeUsd;
   check(
     assertions,
-    uiOrderEntryRecords.open ? '开仓规模 = 页面提交的 sizeDeltaUsd' : '开仓规模为 50 USD',
+    uiOrderEntryRecords.open
+      ? '开仓规模 = 页面提交的 sizeDeltaUsd'
+      : openLegOverridden ? `开仓规模 = ${openSizeUsdText} USD（行数据覆盖）` : '开仓规模为 50 USD',
     openedPosition.sizeInUsd === expectedOpenSizeUsd,
     openedPosition.sizeInUsd,
     expectedOpenSizeUsd,
@@ -1646,7 +1702,7 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
     );
   }
 
-  return {
+  const evidence: Scn009Evidence = {
     scenarioId: flow.scenarioId,
     runMode: runtime.signingMode === 'private-key' ? 'tx-fork-private-key' : 'tx-fork-impersonation',
     coverage: {
@@ -1656,8 +1712,8 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
           ? `${mockResourceAlias} Market #${marketIndex} / Mock Token / Mock Oracle`
           : `已部署 Market #${marketIndex} / 非 Mock Oracle`,
         runtime.signingMode === 'private-key'
-          ? `用户私钥签名：10 USDC / 5x / 50 USD 市价开${directionLabel}`
-          : `账户模拟：10 USDC / 5x / 50 USD 市价开${directionLabel}`,
+          ? `用户私钥签名：${openLegLabel} 市价开${directionLabel}`
+          : `账户模拟：${openLegLabel} 市价开${directionLabel}`,
         inlineKeeper
           ? 'Inline Keeper：ORDER_KEEPER 私钥真实签名 executeOrder'
           : 'Service Keeper：producer + ord-worker 异步执行',
@@ -1679,12 +1735,14 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
       chainId: runtime.chainId,
       rpcHost: new URL(runtime.rpcUrl).host,
       forkDisplayName: runtime.forkDisplayName,
+      ...(explorerUrl ? { explorerUrl } : {}),
       forkBlockNumber: before.blockNumber,
       marketIndex,
       marketMode: mockResource ? 'mock-market' : 'deployed-market',
       oracleMode: mockResource ? 'mock-oracle' : 'deployed-oracle',
       mockResourceAlias: mockResource ? mockResourceAlias : 'none',
       indexToken: mockResource?.token?.address,
+      indexTokenDecimals: mockResource?.token?.decimals,
       oracle: mockResource?.oracle?.address,
       collateralToken: deployment.addresses.usdc,
       trader: runtime.testAccount,
@@ -1706,7 +1764,16 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
           executionFeeEth: formatUnits(BigInt(uiOrderEntryRecords.open.order.executionFee), 18),
           orderEntry: 'ui',
         }
-        : { collateralUsdc: '10', leverage: '5x', sizeUsd: '50', executionFeeEth: '0.00002' }),
+        : openLegOverridden
+          ? {
+            collateralUsdc: openCollateralUsdcText,
+            sizeUsd: openSizeUsdText,
+            ...(openLeverageWhole !== undefined ? { leverage: `${openLeverageWhole}x` } : {}),
+            executionFeeEth: formatUnits(EXECUTION_FEE, 18),
+            openSizeDeltaUsdRaw: openSizeUsd.toString(),
+            openCollateralRaw: openCollateral.toString(),
+          }
+          : { collateralUsdc: '10', leverage: '5x', sizeUsd: '50', executionFeeEth: '0.00002' }),
       isLong,
       closeSizeUsdRaw: currentPosition.sizeInUsd.toString(),
       ...(flow.openTrigger && openTriggerContext ? {
@@ -1755,10 +1822,17 @@ export async function runMarketFlow(runtime: RuntimeConfig, flow: MarketFlowOpti
       openConservation: conservation.open,
       closeConservation: conservation.close,
       wholeFlowConservation: conservation.wholeFlow,
+      // 开仓腿被行数据覆盖时记录实际值（十进制字符串）；缺省流程不新增字段，保持既有 SCN 证据形状不变。
+      ...(openLegOverridden
+        ? { openSizeDeltaUsdRaw: openSizeUsd.toString(), openCollateralRaw: openCollateral.toString(), openLeverageLabel }
+        : {}),
     },
     ...(uiDisplay !== undefined ? { uiDisplay } : {}),
     ...(uiOrderEntryRecords.open || uiOrderEntryRecords.close ? { uiOrderEntry: uiOrderEntryRecords } : {}),
   };
+  // Explorer identity is captured while the fork identity is known. Historical
+  // adapters may consume the saved URL, but must never reconstruct it later.
+  return explorerUrl ? addTransactionExplorerLinks(evidence, explorerUrl) : evidence;
 }
 
 export interface MarketFlowDataset {
@@ -1785,6 +1859,8 @@ export interface MarketFlowCrossDatasetCheck {
 
 export interface MarketFlowMatrixInput {
   readonly scenarioId: string;
+  /** One actual environment selection is shared by every isolated dataset. */
+  readonly resolvedEnvironment?: ResolvedTestEnvironment;
   readonly datasets: readonly MarketFlowDataset[];
   /** 覆盖声明覆写：pending 给出则整体替换首数据集的 pending（如三组受控价格已由数据集覆盖时移除该项）；executed 追加在矩阵行之后 */
   readonly coverage?: { readonly executed?: readonly string[]; readonly pending?: readonly string[] };
@@ -1824,6 +1900,9 @@ export async function runMarketFlowMatrix(
   runtime: RuntimeConfig,
   input: MarketFlowMatrixInput,
 ): Promise<MarketFlowMatrixEvidence> {
+  if (input.resolvedEnvironment) {
+    assertRuntimeMatchesResolvedEnvironment(runtime, input.resolvedEnvironment);
+  }
   const adminUrl = runtime.adminRpcUrl ?? runtime.rpcUrl;
   const persist = process.env.E2E_PERSIST_FORK_STATE === 'true';
   const results: MarketFlowMatrixEvidence['datasets'] = [];
@@ -1833,6 +1912,7 @@ export async function runMarketFlowMatrix(
     try {
       const evidence = await runMarketFlow(runtime, {
         scenarioId: `${input.scenarioId}/${dataset.datasetId}`,
+        ...(input.resolvedEnvironment ? { resolvedEnvironment: input.resolvedEnvironment } : {}),
         isLong: dataset.isLong,
         ...(dataset.priceMovePercent !== undefined ? { priceMovePercent: dataset.priceMovePercent } : {}),
         ...(dataset.middlePhases !== undefined ? { middlePhases: dataset.middlePhases } : {}),
@@ -1915,17 +1995,26 @@ export interface ResidualPositionCloseResult {
 // 仅支持 mock-market + Inline Keeper；无残仓时直接返回 closed=false，不发任何交易。
 export async function closeResidualPosition(
   runtime: RuntimeConfig,
-  options: { readonly isLong: boolean },
+  options: { readonly isLong: boolean; readonly resolvedEnvironment?: ResolvedTestEnvironment },
 ): Promise<ResidualPositionCloseResult> {
+  if (options.resolvedEnvironment) {
+    assertRuntimeMatchesResolvedEnvironment(runtime, options.resolvedEnvironment);
+    if (options.resolvedEnvironment.marketMode !== 'mock-market') {
+      throw new Error('closeResidualPosition 仅支持 mock-market');
+    }
+  }
+  await assertRuntimeEnvironmentBinding(runtime);
   const isLong = options.isLong;
   if (!runtime.testAccount || !runtime.keeperAccount) {
     throw new Error('closeResidualPosition 需要 E2E_TEST_ACCOUNT 与 E2E_KEEPER_ACCOUNT');
   }
   if (runtime.keeperMode !== 'inline') throw new Error('closeResidualPosition 仅支持 Inline Keeper');
   const deps = await loadLegacyDependencies();
-  const deploymentDir = deploymentPath();
+  const deploymentDir = deploymentPath(runtime);
   const baseDeployment = deps.loadDeployment(deploymentDir);
-  const mockResourceAlias = process.env.E2E_MARKET_RESOURCE_ALIAS ?? 'default-mock';
+  const mockResourceAlias = options.resolvedEnvironment?.mockResourceAlias
+    ?? process.env.E2E_MARKET_RESOURCE_ALIAS
+    ?? 'default-mock';
   const mockResource = await resolveMockMarketBundle(runtime.environment, mockResourceAlias);
   if (!mockResource || mockResource.market?.status !== 'registered' || mockResource.market.marketIndex === undefined
     || !mockResource.collateralToken || !mockResource.token?.address || !mockResource.oracle?.address) {

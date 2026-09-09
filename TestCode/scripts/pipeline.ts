@@ -464,13 +464,13 @@ async function stageCollectResults(options: PipelineOptions): Promise<void> {
     return;
   }
   // rebuild 只读本地资料源（不查链），因此参数区断言失败通常是配置问题而非抖动：
-  // E2E_SYSTEM_PARAMETERS_SOURCE 必须指向 config-dump 原生 params-by-module.csv，否则参数页无快照。
+  // 环境绑定 manifest 的 source.parametersFile 必须有对应 params-by-module.csv，否则参数页无快照。
   // 保留一次重试只为兜浏览器渲染抖动（间隔 30s），配置错误重试也不会变绿。
   const rebuildCode = await runCommand('npm', ['run', 'dashboard:rebuild-latest'], process.env);
   if (rebuildCode !== 0) throw new PipelineError(50, `dashboard:rebuild-latest 失败（退出码 ${rebuildCode}）。`);
   let verifyCode = await runCommand('npm', ['run', 'dashboard:verify', '--', 'artifacts/latest/dashboard.html'], process.env);
   if (verifyCode !== 0) {
-    log('dashboard:verify 失败，30s 后重建并重试一次（仅兜浏览器渲染抖动；若报参数页 Market 选项缺失，请检查 E2E_SYSTEM_PARAMETERS_SOURCE）…');
+    log('dashboard:verify 失败，30s 后重建并重试一次（仅兜浏览器渲染抖动；若报参数页 Market 选项缺失，请刷新当前环境参数快照）…');
     await new Promise((resolveWait) => setTimeout(resolveWait, 30_000));
     const retryRebuild = await runCommand('npm', ['run', 'dashboard:rebuild-latest'], process.env);
     if (retryRebuild !== 0) throw new PipelineError(50, `dashboard:rebuild-latest 重试失败（退出码 ${retryRebuild}）。`);

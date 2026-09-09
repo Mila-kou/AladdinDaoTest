@@ -9,17 +9,16 @@
 //   2. key 派生函数 —— keccak256(abi.encode(BASE, 参数...)) 的参数类型顺序
 //   3. 取值类型 —— 全仓扫描 dataStore.getUint/getInt/getBool/getAddress/getBytes32(...Keys.X)
 //
-// 用法：node build-registry.mjs [--contracts <路径>] [--out registry.json]
+// 用法：node build-registry.mjs --contracts <合约版本路径> [--out registry.json]
 
 import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
-import { join, resolve, dirname } from "node:path";
+import { join, relative, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { keccak256Utf8 } from "./lib/keccak.mjs";
 import { abiEncode, keccak256Hex } from "./lib/abi.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const DEFAULT_CONTRACTS = resolve(HERE, "../../../Github/fx100-contracts@release-v0.3.1");
 
 // 参数名 -> 维度。决定 dump 阶段如何枚举取值。
 // enumerable=false 的维度（账户、时间片、任意字符串）无法穷举，登记但不取数，并在报告里点名。
@@ -245,7 +244,8 @@ function main() {
     }, [])
   );
 
-  const contractsRoot = resolve(args.contracts ?? DEFAULT_CONTRACTS);
+  if (!args.contracts) throw new Error("缺少 --contracts <合约版本路径>；不再回退固定 v0.3.1 源码。");
+  const contractsRoot = resolve(args.contracts);
   const outPath = resolve(args.out ?? join(HERE, "registry.json"));
 
   const keysPath = join(contractsRoot, "src/constants/FX100Keys.sol");
@@ -284,7 +284,7 @@ function main() {
 
   const registry = {
     generatedFrom: {
-      contracts: contractsRoot,
+      contracts: relative(process.cwd(), contractsRoot).replaceAll("\\", "/") || ".",
       ...gitInfo(contractsRoot),
       files: [
         "src/constants/FX100Keys.sol",

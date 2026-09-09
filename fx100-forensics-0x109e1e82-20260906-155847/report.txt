@@ -1,0 +1,211 @@
+
+==================================================================
+0. 环境预检
+==================================================================
+chainId      : 84532
+latest block : 46456619
+account      : 0x109e1e82A23082bB1D8819E1517a93Ee2dE528fc
+marketIndex  : all
+out dir      : ./fx100-forensics-0x109e1e82-20260906-155847
+EventEmitter : 0x8f00eBF8f571557685eEeAA2807Ecac396c3b380
+DataStore    : 0x606D72Ab0C0fDcce607d04B1645CE2D528B88014
+OrderVault   : 0xA2c327927b0e447969C67c2840B23cB8038e4b05
+Reader       : 0xB81D25f85ee2fE7D1950153dd5D1aAd47B78a761
+
+==================================================================
+2. 事件 topic（自算，非硬编码猜测）
+==================================================================
+topic0 EventLog   = 0x7e3bde2ba7aca4a8499608ca57f3b0c1c1c93ace63ffd3741a9fab204146fc9a
+topic0 EventLog1  = 0x137a44067c8961cd7e1d876f4754a5a3a75989b4552f1843fc69c3b372def160
+topic0 EventLog2  = 0x468a25a7ba624ceea6e540ad6f49171b52495b648417ae91bca21676d8a24dc5
+OrderCreated      = 0xa7427759bfd3b941f14e687e129519da3c9b0046c5b9aaa290bb1dede63753b3
+OrderExecuted     = 0x680f10f06595d3d707241f604672ec4b6ae50eb82728ec2f3c65f6789e897760
+OrderCancelled    = 0xc7bb288dfd646d5b6c69d5099dd75b72f9c8c09ec9d40984c8ad8182357ae4b2
+OrderFrozen       = 0x073fdba4e5f6b272d64068005c56e7adbaa6d8de035ca1f7b08422c6dc9fe606
+OrderUpdated      = 0x84b670ed7b7ee8ccb350963a7dea39493daff6e7a43ab021a0e4ac2d652d359e
+PositionIncrease  = 0xf94196ccb31f81a3e67df18f2a62cbfb50009c80a7d3c728a3f542e3abc5cb63
+PositionDecrease  = 0x07d51b51b408d7c62dcc47cc558da5ce6a6e0fd129a427ebce150f52b0e5171a
+
+topic 排布（合约 src/order/OrderEventUtils.sol:27/47/138/162）：
+  EventLog2: topics[0]=EventLog2sig  topics[1]=keccak(eventName)  topics[2]=orderKey   topics[3]=bytes32(account)
+  EventLog1: topics[0]=EventLog1sig  topics[1]=keccak(eventName)  topics[2]=bytes32(account)  (PositionIncrease/Decrease)
+
+==================================================================
+3. 拉取 EventEmitter 日志  blocks [46436619 .. 46456619]
+==================================================================
+3.1 订单生命周期 EventLog2（topics[3]=account 精确过滤）
+    -> 20 条 -> ./fx100-forensics-0x109e1e82-20260906-155847/raw-order-logs.jsonl
+3.2 仓位事件 EventLog1（topics[2]=account）
+    -> 10 条 -> ./fx100-forensics-0x109e1e82-20260906-155847/raw-position-logs.jsonl
+
+==================================================================
+4. 解码事件（cast abi-decode EventLogData -> JSONL）
+==================================================================
+-> ./fx100-forensics-0x109e1e82-20260906-155847/order-events.jsonl  (20 条)
+-> ./fx100-forensics-0x109e1e82-20260906-155847/position-events.jsonl (10 条)
+
+==================================================================
+5. 时间线（market=all；OrderCancelled/Frozen 无 marketIndex 字段，一并保留）
+==================================================================
+
+BLOCK     EVENT        ORDERKEY               TYPE       MKT      REASON / SIZE
+46452301  OrderCreated 0x7d00c71c0d8f165258   MktInc     14        10000000000000000000000000000000000
+46452306  OrderExecuted 0x7d00c71c0d8f165258              -         
+46454359  OrderCreated 0x2b2a57f7216087f48e   MktInc     5         1000000000000000000000000000000000
+46454361  OrderCreated 0xd27c46d14b61a58200   MktInc     5         1000000000000000000000000000000000
+46454364  OrderExecuted 0x2b2a57f7216087f48e              -         
+46454365  OrderExecuted 0xd27c46d14b61a58200              -         
+46454906  OrderCreated 0x6d60319459ab360cd0   MktDec     5         1000000000000000000000000000000000
+46454911  OrderExecuted 0x6d60319459ab360cd0              -         
+46455107  OrderCreated 0xde81422bd2597e5880   MktInc     5         20000000000000000000000000000000000
+46455109  OrderExecuted 0xde81422bd2597e5880              -         
+46455594  OrderCreated 0x2f2ab9737a12895982   MktDec     5         20000000000000000000000000000000000
+46455599  OrderExecuted 0x2f2ab9737a12895982              -         
+46455603  OrderCreated 0x21c57b2660bb66af5c   MktInc     5         189647000000000000000
+46455608  OrderExecuted 0x21c57b2660bb66af5c              -         
+46455640  OrderCreated 0xb1296364fecb3bf21d   MktDec     5         1000000000000000000000000000000000
+46455644  OrderCreated 0xbdcd4d027b3db29b95   MktInc     5         189647000000000000000
+46455645  OrderExecuted 0xb1296364fecb3bf21d              -         
+46455646  OrderExecuted 0xbdcd4d027b3db29b95              -         
+46456106  OrderCreated 0x987e38a3ebfe34fc26   MktDec     5         19951598820764105455000000000000000
+46456111  OrderExecuted 0x987e38a3ebfe34fc26              -         
+
+仓位事件（PositionIncrease / PositionDecrease）：
+BLOCK     EVENT              MKT   sizeInUsd                        execPrice
+46452306  PositionIncrease   14    10000000000000000000000000000000000 175485725756
+46454364  PositionIncrease   5     1000000000000000000000000000000000 105476627922510
+46454365  PositionIncrease   5     1000000000000000000000000000000000 105567409530212
+46454911  PositionDecrease   5     0                                105428075840085
+46455109  PositionIncrease   5     20000000000000000000000000000000000 105459040492110
+46455599  PositionDecrease   5     0                                105100668779756
+46455608  PositionIncrease   5     19947834918084134604000000000000000 105184025679732
+46455645  PositionDecrease   5     0                                105291529386505
+46455646  PositionIncrease   5     19951598820764105455000000000000000 105203872567265
+46456111  PositionDecrease   5     0                                105104516056329
+
+==================================================================
+6. 订单结局分类：open 腿「从未创建」 vs 「创建了但被取消/冻结/跳过」
+==================================================================
+orderKey  : 0x21c57b2660bb66af5c214f5add7f25f97b50cbc2fb6b0c318b5fedc636f311ba
+  createdAt : block 46455603  tx 0xcd38ae426c63fdd6336a607773b7631e06fc01017f143d288b173405ee65841c
+  type      : MarketIncrease  market 5  isLong=true  autoCancel=false
+  sizeDelta : 189647000000000000000   collDelta 813344955
+  updatedAt : 1788679494  acceptablePrice 105937044683974
+  OUTCOME   : OrderExecuted @block 46455608 reason=- tx=0x4af7bcb6478a3168310c3b4fb1401c739cbae7f3549d3daa35fa636b795194a9
+
+orderKey  : 0x2b2a57f7216087f48ec74479a70c287720ad431207a8f9f95c01aeb379a3b14d
+  createdAt : block 46454359  tx 0x6e189052a6e651b66b28918c3e61606f079d7989ef436f612145ac786929a797
+  type      : MarketIncrease  market 5  isLong=false  autoCancel=false
+  sizeDelta : 1000000000000000000000000000000000   collDelta 40749999
+  updatedAt : 1788677006  acceptablePrice 104941432746474
+  OUTCOME   : OrderExecuted @block 46454364 reason=- tx=0xf1745a551a8f6b4b8067dcad7d7396908b6241623aaff77affbd239ada7f2083
+
+orderKey  : 0x2f2ab9737a12895982fb6d891663f99a9a4dd4548d6a5bc4900a2f7b5b3fc39e
+  createdAt : block 46455594  tx 0xa2719ca8c7c5503fb5b28678ce7d652597ab47dba5c97f330a519ca5d81e22e7
+  type      : MarketDecrease  market 5  isLong=true  autoCancel=false
+  sizeDelta : 20000000000000000000000000000000000   collDelta 799668552
+  updatedAt : 1788679476  acceptablePrice 104599562978884
+  OUTCOME   : OrderExecuted @block 46455599 reason=- tx=0x3701ca9565ecf5ee5b7a9e36481fb94671e5a57a25048bc070d8cfcc93ef1d65
+
+orderKey  : 0x6d60319459ab360cd03b48a73810339520b3c646b7eadf03824b76cbfe278b5d
+  createdAt : block 46454906  tx 0xf9b46ac38f7df4ee38a516a97497d9b199b54b5981ecb5b19cb6348a48ba9924
+  type      : MarketDecrease  market 5  isLong=true  autoCancel=false
+  sizeDelta : 1000000000000000000000000000000000   collDelta 39999926
+  updatedAt : 1788678100  acceptablePrice 104850941983596
+  OUTCOME   : OrderExecuted @block 46454911 reason=- tx=0x223a746f8d07314847e3c605141d3d7c3a30f4a2d8148ddd96b126c7be6ccc01
+
+orderKey  : 0x7d00c71c0d8f165258614aa89dd1df1c35ebd7809049bcf6f652ccdb79bae05b
+  createdAt : block 46452301  tx 0x28c689106ad947a7cd9220638e240986c0d7fbd5e77cf487986eebfbb32696e1
+  type      : MarketIncrease  market 14  isLong=false  autoCancel=false
+  sizeDelta : 10000000000000000000000000000000000   collDelta 407499999
+  updatedAt : 1788672890  acceptablePrice 174593120985
+  OUTCOME   : OrderExecuted @block 46452306 reason=- tx=0xb16826fa4b7ee9c952537c7ae1d09c2c8589462ef7c64b661898d1c374ffc80d
+
+orderKey  : 0x987e38a3ebfe34fc26244a80b7005c96fe37d4de69d434a009eccf671e5dd136
+  createdAt : block 46456106  tx 0x3453a058eb08c0df590af85394bda599034220c96f8d18cb170acb1e0ae7b741
+  type      : MarketDecrease  market 5  isLong=false  autoCancel=false
+  sizeDelta : 19951598820764105455000000000000000   collDelta 796704194
+  updatedAt : 1788680500  acceptablePrice 105608768963322
+  OUTCOME   : OrderExecuted @block 46456111 reason=- tx=0x3a26c988cd43669536cc73fc5e60e58e1c42beeddb8050510af801c6d4198aed
+
+orderKey  : 0xb1296364fecb3bf21d5fd27e4ef34b0890a5e2a07294886587e0718fdd51a3cb
+  createdAt : block 46455640  tx 0x8da745a300e3ba73ccd4f196845b6f2e099c16685d12087fd143575aa80ea107
+  type      : MarketDecrease  market 5  isLong=false  autoCancel=false
+  sizeDelta : 1000000000000000000000000000000000   collDelta 39999927
+  updatedAt : 1788679568  acceptablePrice 105827980219959
+  OUTCOME   : OrderExecuted @block 46455645 reason=- tx=0x5374ec4e83985594eaacaaeb9c4428906c012789f21db05fc978326e519a3cd7
+
+orderKey  : 0xbdcd4d027b3db29b95ed460a370cb40db03e95b6567226a96935e97f1dc23a4f
+  createdAt : block 46455644  tx 0xe92e5420601b400b26977be145ec09c5442e7a1e678069d49559c31140c84aa6
+  type      : MarketIncrease  market 5  isLong=false  autoCancel=false
+  sizeDelta : 189647000000000000000   collDelta 811669609
+  updatedAt : 1788679576  acceptablePrice 104680146464209
+  OUTCOME   : OrderExecuted @block 46455646 reason=- tx=0x75b014974126b150ad831f32d1a239cee1ee5b55a21b215a5d07a4f6c20f8116
+
+orderKey  : 0xd27c46d14b61a58200a05f08013ac5d3257685559a7e912e00babe62316d126b
+  createdAt : block 46454361  tx 0xe8e62c6c5c0e833f6d53ac512b9a67c0fdb0aade1cf7cf0c5364d97dce6740d7
+  type      : MarketIncrease  market 5  isLong=true  autoCancel=false
+  sizeDelta : 1000000000000000000000000000000000   collDelta 40749999
+  updatedAt : 1788677010  acceptablePrice 106092015464592
+  OUTCOME   : OrderExecuted @block 46454365 reason=- tx=0x62c87d430a021f089c2918e4a86212d0bd3aa26b0b39a23114701d77331be156
+
+orderKey  : 0xde81422bd2597e5880219b80ecb48fbe61f3c1c902bbde0b18e0cba0ff6b212f
+  createdAt : block 46455107  tx 0xca6f83985ee8ed395c6b2631ea26ce2523156130d0013a66e8770b28411b49be
+  type      : MarketIncrease  market 5  isLong=true  autoCancel=false
+  sizeDelta : 20000000000000000000000000000000000   collDelta 814670535
+  updatedAt : 1788678502  acceptablePrice 105938213529625
+  OUTCOME   : OrderExecuted @block 46455109 reason=- tx=0xdb55a59b29f160895bc46612251ebbbf7203dba1025fc261513cb3f5bea7eef4
+
+判读规则（链上指纹）：
+  A. open 腿【从未创建】  : 时间线里 close 腿 MarketDecrease 之后，完全没有 orderType=0
+                            (MarketIncrease) 的 OrderCreated。=> 问题在前端/钱包，没上链。
+  B. 创建了但【被取消】    : 有 OrderCreated(type=0) + OrderCancelled，看 reason 字符串：
+       'AUTO_CANCEL'                       -> clearAutoCancelOrders（OrderUtils.sol:334-357）
+       'OracleTimestampsAreLargerThan...'  -> 超过 REQUEST_EXPIRATION_TIME 才被喂价
+                                              (IncreaseOrderUtils.sol:74-82)
+       'InsufficientRelayFee' / 其它 4bytes -> 看 reasonBytes（本脚本已解码到 .s.reason）
+  C. 创建了但【被冻结】    : OrderFrozen（只对非 market 单发生）
+  D. 创建了但【keeper 跳过】: 只有 OrderCreated，没有任何终态事件 =>「僵尸单」。
+       keeper 侧过期门：apps/keeper/src/providers/onchainAllOrdersProvider.ts:596-624
+       + apps/keeper/src/domain/orders/orderAge.ts:75-116（isExpiredMarketOrder）
+       它只 skip，不 cancel，所以订单留在 DataStore、保证金留在 OrderVault。
+       §7 会验证该单是否仍存活在链上。
+
+==================================================================
+7. 当前链上状态：仓位 / 挂单 / OrderVault
+==================================================================
+
+7.2 该地址当前所有挂单（Reader.getAccountOrders）
+accountOrderListKey = 0xaf6e527a1e1d6930d333a9aec9c02f7a5748bd834bf392fa31eef289beecfd4d   count = 3
+[0x1b3c4cb3ee953020efc4cd69837d48ae055a26b1d972d935320f74a3bbdf4f19, 0x6037298feb9a13888ec9fc27b8fc27d5f8a25832118f649f52743281e07f8e08, 0x608ede94d01213db24b36f105217e1c6787ccb6685e866d510fc6048dcf39dfc]
+
+Reader.getAccountOrders(0,50)：
+[(0x1b3c4cb3ee953020efc4cd69837d48ae055a26b1d972d935320f74a3bbdf4f19, ((0x109e1e82A23082bB1D8819E1517a93Ee2dE528fc, 0x109e1e82A23082bB1D8819E1517a93Ee2dE528fc, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000), (23, 1, 13951200000000000000 [1.395e19], 999987138 [9.999e8], 570000000000000 [5.7e14], 573080297934242 [5.73e14], 0, 0, 0, 1786119416 [1.786e9], 0), (true, false, false, false), [])), (0x6037298feb9a13888ec9fc27b8fc27d5f8a25832118f649f52743281e07f8e08, ((0x109e1e82A23082bB1D8819E1517a93Ee2dE528fc, 0x109e1e82A23082bB1D8819E1517a93Ee2dE528fc, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000), (23, 1, 13253600000000000000 [1.325e19], 949984914 [9.499e8], 570000000000000 [5.7e14], 573079763104406 [5.73e14], 0, 0, 0, 1786119344 [1.786e9], 0), (true, false, false, false), [])), (0x608ede94d01213db24b36f105217e1c6787ccb6685e866d510fc6048dcf39dfc, ((0x109e1e82A23082bB1D8819E1517a93Ee2dE528fc, 0x109e1e82A23082bB1D8819E1517a93Ee2dE528fc, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000), (23, 1, 697500000000000000 [6.975e17], 49995056 [4.999e7], 570000000000000 [5.7e14], 573070103249941 [5.73e14], 0, 0, 0, 1786119364 [1.786e9], 0), (true, false, false, false), []))]
+  Order.Props 字段序：((account,receiver,cancellationReceiver,callbackContract,uiFeeReceiver),
+   (marketIndex,orderType,sizeDelta,initialCollateralDeltaAmount,triggerPrice,acceptablePrice,
+    executionFee,callbackGasLimit,minOutputAmount,updatedAtTime,validFromTime),
+   (isLong,isFrozen,autoCancel,isSizeDeltaUsd), dataList)
+  ★ 若这里出现 orderType=0(MarketIncrease) 且 updatedAtTime 早于 now-REQUEST_EXPIRATION_TIME，
+    就坐实了「僵尸 open 腿」：keeper 永久跳过，保证金锁在 OrderVault。
+
+7.3 逐单存活复核（对 §6 里 NO TERMINAL EVENT 的 key）
+
+==================================================================
+8. OrderVault 托管保证金
+==================================================================
+
+==================================================================
+9. 相关链上策略参数
+==================================================================
+REQUEST_EXPIRATION_TIME key = 0xf664ba0f4e5389df44705cd100171228b74c4f050a9f00bd873e95d25c49a273
+REQUEST_EXPIRATION_TIME = 120 秒
+  合约用法：IncreaseOrderUtils.sol:74-82（MarketIncrease 的 maxOracleTimestamp 上限）
+            BaseHandler.sol:33-39（用户自撤单的最短等待）
+  keeper 用法：orderAge.ts:109  deadline = (updatedAtTime + 该值)*1000 + graceMs(默认 5000)
+
+==================================================================
+完成
+==================================================================
+报告：./fx100-forensics-0x109e1e82-20260906-155847/report.txt
+原始日志：./fx100-forensics-0x109e1e82-20260906-155847/raw-order-logs.jsonl  ./fx100-forensics-0x109e1e82-20260906-155847/raw-position-logs.jsonl
+解码事件：./fx100-forensics-0x109e1e82-20260906-155847/order-events.jsonl    ./fx100-forensics-0x109e1e82-20260906-155847/position-events.jsonl

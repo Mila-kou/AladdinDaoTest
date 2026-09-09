@@ -168,6 +168,7 @@ export function renderDashboardHtml(artifact: TestRunArtifact, baseline?: Baseli
     <a href="./test-cases.html">测试用例</a>
     <a href="./runs.html">测试运行</a>
     <a href="./environments.html">测试环境</a>
+    <a href="./deployments.html">版本、环境与合约地址</a>
     <a href="./faucet.html">Faucet USDC</a>
     <a href="./parameters.html">合约参数</a>
     <a href="./formulas.html">合约核心公式</a>

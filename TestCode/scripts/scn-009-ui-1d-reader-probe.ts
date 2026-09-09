@@ -4,20 +4,13 @@
  *
  *   E2E_ENV=tx-fork E2E_ENV_PRIORITY_KEYS=E2E_ENV npx tsx scripts/scn-009-ui-1d-reader-probe.ts
  */
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-
 import { createPublicClient, getAddress, http, zeroAddress } from 'viem';
 
-import { loadDeploymentManifest } from '../src/config/deployment.js';
+import { loadDeploymentAbi, loadDeploymentManifest } from '../src/config/deployment.js';
 import { resolveMockMarketBundle } from '../src/config/mock-resources.js';
 import { loadRuntimeConfig } from '../src/config/runtime.js';
 import { runMarketFlow, type MarketFlowBeforeCloseContext } from '../src/scenarios/scn-009-runner.js';
 import { readForkOraclePrices } from '../src/ui/fork-price-feed.js';
-
-const READER = '0xB81D25f85ee2fE7D1950153dd5D1aAd47B78a761';
-const REFERRAL_STORAGE = '0xe86d51a8840EC52cd78BC9d8F93B3734c8099005';
-const SDK_USDC = '0xbf4d9b318689ab928db9ee4cdc840c065575eb89';
 
 function jsonReplacer(_k: string, v: unknown) { return typeof v === 'bigint' ? v.toString() : v; }
 
@@ -26,8 +19,11 @@ async function main() {
   const manifest = await loadDeploymentManifest(runtime.deploymentManifestPath);
   const bundle = await resolveMockMarketBundle(runtime.environment, process.env.E2E_MARKET_RESOURCE_ALIAS ?? 'default-mock');
   if (!bundle.token || !bundle.market) throw new Error('缺 token/market 登记');
-  const readerAbi = JSON.parse(readFileSync(resolve(process.cwd(), '../Github/fx100-contracts@release-v0.3.1/base_sepolia_v0.3.1_260729/abi/Reader.json'), 'utf8')) as { abi?: unknown[] } | unknown[];
-  const abi = (Array.isArray(readerAbi) ? readerAbi : readerAbi.abi!) as readonly unknown[];
+  const abi = await loadDeploymentAbi(manifest, 'Reader');
+  const reader = getAddress(manifest.contracts.reader);
+  const referralStorage = getAddress(manifest.additionalContracts.referralStorage ?? (() => { throw new Error('绑定 manifest 缺少 referralStorage'); })());
+  const collateralToken = bundle.collateralToken?.address;
+  if (!collateralToken) throw new Error('缺 collateralToken 登记');
   const client = createPublicClient({ transport: http(runtime.rpcUrl, { timeout: 30_000 }) });
 
   const evidence = await runMarketFlow(runtime, {
@@ -37,13 +33,13 @@ async function main() {
       const out: Record<string, unknown> = { block: ctx.snapshotBlock, trader: ctx.trader, marketIndex: ctx.marketIndex, positionKey: ctx.positionKey };
       // 1) 无价格参数的原始仓位列表
       try {
-        const raw = await client.readContract({ address: getAddress(READER), abi: abi as never, functionName: 'getAccountPositions', args: [getAddress(ctx.dataStore), ctx.trader, 0n, 1000n] }) as unknown[];
+        const raw = await client.readContract({ address: reader, abi, functionName: 'getAccountPositions', args: [getAddress(ctx.dataStore), ctx.trader, 0n, 1000n] }) as unknown[];
         out.getAccountPositions = { count: raw.length, sample: raw.slice(0, 2) };
       } catch (error) { out.getAccountPositionsError = String(error instanceof Error ? error.message.split('\n')[0] : error); }
       // 2) 与 SDK 相同参数的 getAccountPositionInfoList（市场 [27]，价格 = fork provider min/max 内部刻度）
       const prices = await readForkOraclePrices({ rpcUrl: runtime.rpcUrl, dataStore: ctx.dataStore, oracle: ctx.oracle, tokens: [
         { symbol: bundle.token!.symbol, address: bundle.token!.address.toLowerCase(), decimals: bundle.token!.decimals },
-        { symbol: 'USDC', address: SDK_USDC, decimals: 6 },
+        { symbol: 'USDC', address: collateralToken.toLowerCase(), decimals: bundle.collateralToken!.decimals },
       ] });
       const idx = prices.find((p) => p.symbol === bundle.token!.symbol)!;
       const usdc = prices.find((p) => p.symbol === 'USDC')!;
@@ -51,13 +47,13 @@ async function main() {
       out.pricesUsed = marketPrices;
       for (const [label, account] of [['checksum', getAddress(ctx.trader)], ['lowercase', ctx.trader.toLowerCase()]] as const) {
         try {
-          const list = await client.readContract({ address: getAddress(READER), abi: abi as never, functionName: 'getAccountPositionInfoList', args: [getAddress(ctx.dataStore), getAddress(REFERRAL_STORAGE), account as `0x${string}`, [BigInt(ctx.marketIndex)], marketPrices, zeroAddress, 0n, 1000n] }) as Array<Record<string, unknown>>;
+          const list = await client.readContract({ address: reader, abi, functionName: 'getAccountPositionInfoList', args: [getAddress(ctx.dataStore), referralStorage, account as `0x${string}`, [BigInt(ctx.marketIndex)], marketPrices, zeroAddress, 0n, 1000n] }) as Array<Record<string, unknown>>;
           out[`infoList_${label}`] = { count: list.length, first: list[0] ? { position: (list[0] as { position?: unknown }).position, basePnlUsd: (list[0] as { basePnlUsd?: unknown }).basePnlUsd } : null };
         } catch (error) { out[`infoList_${label}Error`] = String(error instanceof Error ? error.message.split('\n').slice(0, 3).join(' | ') : error); }
       }
       // 3) 也试一下把 [27] 换成 [1,2,27]（SDK 会把 marketsInfoData 全部 key 传入）
       try {
-        const list = await client.readContract({ address: getAddress(READER), abi: abi as never, functionName: 'getAccountPositionInfoList', args: [getAddress(ctx.dataStore), getAddress(REFERRAL_STORAGE), getAddress(ctx.trader), [BigInt(ctx.marketIndex)], marketPrices, zeroAddress, 0n, 10n] }) as unknown[];
+        const list = await client.readContract({ address: reader, abi, functionName: 'getAccountPositionInfoList', args: [getAddress(ctx.dataStore), referralStorage, getAddress(ctx.trader), [BigInt(ctx.marketIndex)], marketPrices, zeroAddress, 0n, 10n] }) as unknown[];
         out.infoList_end10 = { count: list.length };
       } catch (error) { out.infoList_end10Error = String(error instanceof Error ? error.message.split('\n')[0] : error); }
       console.log(JSON.stringify(out, jsonReplacer, 2));

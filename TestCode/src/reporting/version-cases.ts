@@ -1,6 +1,8 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
+import type { TestCaseDefinition } from './test-cases.js';
+
 /**
  * 版本级功能用例（CT/XT/FT，Trade 测试用例矩阵）解析器。
  *
@@ -35,12 +37,22 @@ export interface VersionFunctionalCase {
   readonly id: string;
   readonly priority: string;
   readonly title: string;
-  /** 'core' = 9 列行（A/B 节，带 Trader / 地址列）；'other' = 8 列行（其余节）。 */
+  /** 'core' = 带测试账户 / Trader 地址列的完整分层行；'other' = 其余行。 */
   readonly kind: 'core' | 'other';
+  /** 用例要求覆盖的层；旧矩阵缺列时按 CT / XT / FT 前缀推导。 */
+  readonly layer: string;
   /** 本轮入口：地址映射表登记值；缺省按 ID 前缀推导（FT=页面，其余=RPC）。 */
   readonly entry: string;
   /** Trader 编号 + 地址（矩阵第 9 列原文，或 case-traders.json 回退；仍缺 =「待分配」）。 */
   readonly trader: string;
+  readonly preconditions: string;
+  readonly testData: string;
+  readonly steps: string;
+  readonly checks: string;
+  readonly expected: string;
+  /** 矩阵中的「关联用例 / 后续处理」原文；无该列时为空字符串。 */
+  readonly relatedCase: string;
+  readonly designBasis: string;
   readonly layers: VersionCaseLayers;
 }
 
@@ -98,7 +110,7 @@ function tableCells(line: string): string[] {
   return line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((cell) => cell.trim());
 }
 
-function isFunctionalCaseId(id: string): boolean {
+export function isFunctionalCaseId(id: string): boolean {
   return VERSION_CASE_ID.test(id) || GENERIC_CASE_ID.test(id);
 }
 
@@ -141,7 +153,16 @@ interface ParsedMatrixRow {
   readonly priority: string;
   readonly title: string;
   readonly kind: 'core' | 'other';
+  readonly layerCell: string;
+  readonly entryCell: string;
   readonly addressCell: string;
+  readonly preconditions: string;
+  readonly testData: string;
+  readonly steps: string;
+  readonly checks: string;
+  readonly expected: string;
+  readonly relatedCase: string;
+  readonly designBasis: string;
   readonly section: string;
 }
 
@@ -151,24 +172,32 @@ interface ParsedMatrix {
   readonly parseIssues: readonly string[];
 }
 
-/** 解析 Trade 矩阵：用例行（`ID / P` 首格，8/9 列混排容错）+ 地址映射表（裸 ID 首格 → 本轮入口）。 */
+/** 解析 Trade 矩阵：用例行（兼容新旧表头）+ 地址映射表（裸 ID 首格 → 本轮入口）。 */
 export function parseTradeMatrix(markdown: string): ParsedMatrix {
   const rows: ParsedMatrixRow[] = [];
   const entryById = new Map<string, string>();
   const parseIssues: string[] = [];
   let section = '';
+  let tableHeaders: string[] = [];
   const lines = markdown.split(/\r?\n/);
   for (let index = 0; index < lines.length; index++) {
     const line = lines[index] ?? '';
     const heading = /^#{2,4}\s+(.+?)\s*$/.exec(line);
     if (heading?.[1]) {
       section = heading[1];
+      tableHeaders = [];
       continue;
     }
     if (!line.trimStart().startsWith('|')) continue;
     const cells = tableCells(line);
     const first = cells[0] ?? '';
     if (!first || /^[-\s:]+$/.test(first)) continue;
+
+    const normalizedFirst = first.replace(/`/g, '').replace(/\s+/g, ' ').trim();
+    if (/^(?:ID\s*\/\s*P|用例\s*ID\s*\/\s*优先级)$/i.test(normalizedFirst)) {
+      tableHeaders = cells.map((cell) => cell.replace(/`/g, '').replace(/\s+/g, ' ').trim());
+      continue;
+    }
 
     const caseHead = /^([A-Z][A-Z0-9-]*-\d{3})\s*\/\s*(P[0-2])$/.exec(first);
     if (caseHead?.[1] && caseHead[2] && isFunctionalCaseId(caseHead[1])) {
@@ -178,14 +207,32 @@ export function parseTradeMatrix(markdown: string): ParsedMatrix {
         parseIssues.push(`第 ${index + 1} 行 ${id} 缺少测试标题`);
         continue;
       }
-      // 9 列以上视为带「Trader / 地址」列（A/B 节）；8 列及以下为其余节，混排不报错。
-      const kind: 'core' | 'other' = cells.length >= 9 ? 'core' : 'other';
+      const hasAccountColumn = tableHeaders.some((header) =>
+        header === 'Trader / 地址' || header === '测试账户 / 地址');
+      // 新矩阵已不再以 8/9 列区分用例类型：是否带账户地址列才是稳定标识。
+      // 表头缺失时保留旧矩阵的列数回退，避免历史文档全部改类。
+      const kind: 'core' | 'other' = hasAccountColumn
+        ? 'core'
+        : tableHeaders.length > 0 ? 'other' : cells.length >= 9 ? 'core' : 'other';
+      const valueFor = (...names: string[]): string => {
+        const headerIndex = tableHeaders.findIndex((header) => names.includes(header));
+        return headerIndex >= 0 ? (cells[headerIndex] ?? '').replace(/`/g, '').trim() : '';
+      };
       rows.push({
         id,
         priority: caseHead[2],
         title,
         kind,
-        addressCell: kind === 'core' ? (cells[8] ?? '').replace(/`/g, '') : '',
+        layerCell: valueFor('层'),
+        entryCell: valueFor('入口'),
+        addressCell: valueFor('Trader / 地址', '测试账户 / 地址'),
+        preconditions: valueFor('前置条件', '关联开仓用例 / 前置条件'),
+        testData: valueFor('测试数据', '前置/数据'),
+        steps: valueFor('操作步骤'),
+        checks: valueFor('核对数据'),
+        expected: valueFor('期望结果'),
+        relatedCase: valueFor('关联用例 / 后续处理'),
+        designBasis: valueFor('设计方法 / 依据', '设计依据 / 备注', '设计方法 / 备注'),
         section: section || '未分节',
       });
       continue;
@@ -301,6 +348,12 @@ function fallbackEntry(id: string): string {
   return id.startsWith('FT-') ? '页面' : 'RPC';
 }
 
+function fallbackLayer(id: string): string {
+  if (id.startsWith('CT-')) return '合约层';
+  if (id.startsWith('FT-')) return '前端层';
+  return '合约层 + 前端层';
+}
+
 function buildCase(
   row: ParsedMatrixRow,
   entryById: ReadonlyMap<string, string>,
@@ -318,9 +371,25 @@ function buildCase(
   const assignment = traders.get(row.id);
   const trader = row.addressCell
     || (assignment ? `T${assignment.traderIndex} ${assignment.address}` : '待分配');
-  const entry = entryById.get(row.id)
-    ?? (row.addressCell.includes('只读') ? 'RPC 只读' : fallbackEntry(row.id));
-  return { id: row.id, priority: row.priority, title: row.title, kind: row.kind, entry, trader, layers };
+  const entry = row.entryCell || entryById.get(row.id)
+    || (row.addressCell.includes('只读') ? 'RPC 只读' : fallbackEntry(row.id));
+  return {
+    id: row.id,
+    priority: row.priority,
+    title: row.title,
+    kind: row.kind,
+    layer: row.layerCell || fallbackLayer(row.id),
+    entry,
+    trader,
+    preconditions: row.preconditions,
+    testData: row.testData,
+    steps: row.steps,
+    checks: row.checks,
+    expected: row.expected,
+    relatedCase: row.relatedCase,
+    designBasis: row.designBasis,
+    layers,
+  };
 }
 
 async function loadVersionView(
@@ -434,4 +503,45 @@ export async function loadVersionCases(
     admission: admissionView,
     ...(noVersionsReason ? { noVersionsReason } : {}),
   };
+}
+
+/**
+ * 把当前版本矩阵里的 CT / XT / FT 等功能用例投影成测试运行可消费的统一用例模型。
+ * 矩阵仍是唯一事实源；这里不复制期望值，只补齐运行编排所需的环境与执行方式。
+ */
+export function buildVersionRunCaseDefinitions(data: VersionCasesData): TestCaseDefinition[] {
+  const view = data.versions.find((item) => item.release === data.defaultRelease);
+  if (!view?.hasMatrix) return [];
+
+  return view.sections.flatMap((section) => section.cases.map((item) => {
+    const pageOnly = item.entry.includes('页面') && !item.entry.includes('RPC');
+    const readonly = item.entry.includes('只读');
+    const needsTime = item.id.includes('-TIME-');
+    return {
+      id: item.id,
+      suite: item.id.split('-')[0] ?? 'CASE',
+      suiteName: `版本功能用例 · ${section.name}`,
+      title: item.title,
+      priority: item.priority as 'P0' | 'P1' | 'P2',
+      executionMode: pageOnly ? 'manual' as const : 'automated' as const,
+      targetProject: needsTime ? 'time-fork' as const : 'tx-fork' as const,
+      marketMode: 'mock-market' as const,
+      oracleMode: 'mock-oracle' as const,
+      marketCompatibility: 'mock-only' as const,
+      timeMode: needsTime ? 'controllable-time' as const : 'normal-block-time' as const,
+      signingMode: readonly
+        ? 'readonly' as const
+        : pageOnly ? 'browser-wallet-keeper' as const : 'trader-keeper-private-key' as const,
+      mockResourceAlias: 'default-mock',
+      environmentSetup: `按 ${view.release} Trade 矩阵在独享测试环境准备 Mock Market；入口：${item.entry}`,
+      roleIntent: `执行 ${view.release} Trade 矩阵中的 ${item.id} 原子用例。`,
+      preconditions: item.preconditions || `遵守“${section.name}”的前置条件与准入要求。`,
+      testData: [item.testData, item.trader].filter(Boolean).join('\nTrader / 地址：'),
+      steps: item.steps || `按矩阵 ${item.id} 行从“${item.entry}”入口执行，并保留实际结果与证据。`,
+      expected: [item.checks ? `核对数据：${item.checks}` : '', item.expected].filter(Boolean).join('\n'),
+      cleanup: '按矩阵的数据隔离约定回滚快照，或清理本用例产生的仓位、订单与授权。',
+      sourcePath: view.matrixPath,
+      edited: false,
+    };
+  }));
 }

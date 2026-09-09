@@ -15,3 +15,9 @@ Devconfig/*
 # 2026-08-21 凭证防护：会话记忆导出与临时扫描脚本（含 fork RPC 访问路径）不入库
 Memory/
 TestCode/tmp-scan*.mjs
+
+# 本机私有设置（含 autoMemoryDirectory 指向本地共享记忆目录），不入库
+.claude/settings.local.json
+
+# 并行会话的临时环境文件（各会话自用，不进 git；见 Docs/并行会话作业规程.md）
+TestCode/tmp-session/

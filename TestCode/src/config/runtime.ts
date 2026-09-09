@@ -11,6 +11,7 @@ import {
   type EnvironmentName,
 } from '../../config/environments/catalog.js';
 import { normalizeForkDisplayName } from '../domain/fork-display.js';
+import { loadEnvironmentBinding } from './environment-binding.js';
 
 // .env.local 是看板保存的项目当前配置，必须覆盖启动进程遗留的同名环境变量。
 // 例外：跑批子进程按批次显式注入的键（E2E_ENV_PRIORITY_KEYS 逗号列表）在加载后恢复为进程值，
@@ -57,7 +58,6 @@ const rawEnvironmentSchema = z.object({
   E2E_ORACLE_FORK_CHAIN_ID: optionalPositiveInteger,
   E2E_TIME_FORK_CHAIN_ID: optionalPositiveInteger,
   E2E_BASE_SEPOLIA_CHAIN_ID: optionalPositiveInteger,
-  E2E_DEPLOYMENT_MANIFEST: z.string().min(1),
   E2E_DEV_RPC_URL: optionalUrl,
   E2E_TX_FORK_RPC_URL: optionalUrl,
   E2E_ORACLE_FORK_RPC_URL: optionalUrl,
@@ -93,7 +93,13 @@ export interface RuntimeConfig {
   readonly chainId: number;
   readonly rpcUrl: string;
   readonly adminRpcUrl?: string;
+  /** 来自 config/environment-bindings.json；不再读取全局 E2E_DEPLOYMENT_MANIFEST。 */
   readonly deploymentManifestPath: string;
+  readonly environmentBindingsPath: string;
+  readonly deploymentId: string;
+  readonly deploymentRelease: string;
+  readonly deploymentManifestName: string;
+  readonly deploymentDirectory?: string;
   readonly requestTimeoutMs: number;
   readonly baselineId?: string;
   readonly forkDisplayName?: string;
@@ -129,12 +135,18 @@ export function forkDisplayNameFromRpcUrl(rawUrl: string): string | undefined {
 export function loadRuntimeConfig(): RuntimeConfig {
   const raw = rawEnvironmentSchema.parse(process.env);
   const definition = environments[raw.E2E_ENV];
+  const binding = loadEnvironmentBinding(process.cwd(), raw.E2E_ENV);
   const scopedChainId = definition.chainIdEnvironmentVariable
     ? raw[definition.chainIdEnvironmentVariable as keyof typeof raw]
     : undefined;
   const chainId = typeof scopedChainId === 'number' ? scopedChainId : raw.E2E_CHAIN_ID;
   if (!chainId) {
     throw new Error(`环境 ${definition.name} 缺少 ${definition.chainIdEnvironmentVariable ?? 'E2E_CHAIN_ID'} 固定 Chain ID。`);
+  }
+  if (chainId !== binding.binding.environmentChainId) {
+    throw new Error(
+      `环境 ${definition.name} 配置 Chain ID=${chainId}，但 config/environment-bindings.json 绑定为 ${binding.binding.environmentChainId}。`,
+    );
   }
   const rpcUrl = readOptionalEnvironmentVariable(definition.rpcEnvironmentVariable);
 
@@ -185,7 +197,12 @@ export function loadRuntimeConfig(): RuntimeConfig {
     chainId,
     rpcUrl,
     ...(adminRpcUrl ? { adminRpcUrl } : {}),
-    deploymentManifestPath: resolve(process.cwd(), raw.E2E_DEPLOYMENT_MANIFEST),
+    deploymentManifestPath: binding.manifestPath,
+    environmentBindingsPath: binding.registryPath,
+    deploymentId: binding.binding.deploymentId,
+    deploymentRelease: binding.binding.release,
+    deploymentManifestName: binding.binding.manifestName,
+    ...(binding.deploymentDirectory ? { deploymentDirectory: binding.deploymentDirectory } : {}),
     requestTimeoutMs: raw.E2E_REQUEST_TIMEOUT_MS,
     ...(raw.E2E_FORK_BASELINE_ID ? { baselineId: raw.E2E_FORK_BASELINE_ID } : {}),
     ...(raw.E2E_ENV === 'dev-readonly' || raw.E2E_ENV === 'base-sepolia'

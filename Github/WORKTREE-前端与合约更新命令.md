@@ -4,8 +4,8 @@
 
 | 内容 | 本地 worktree | 更新来源 |
 | --- | --- | --- |
-| 前端 | `/Users/milakou/Documents/AladdinDaoTest/Github/fx100-apps@develop` | `origin/develop` |
-| 合约 | `/Users/milakou/Documents/AladdinDaoTest/Github/fx100-contracts@release-v0.3.1` | `origin/release/v0.3.1` |
+| 前端 | `/Users/milakou/Documents/FX100/Github/fx100-apps@develop` | `origin/develop` |
+| 合约 | `/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.1` | `origin/release/v0.3.1` |
 
 Worktree 只是同一个 Git 仓库下的独立工作目录，更新方式和普通 Git 目录相同。关键是要在正确的 worktree 中拉取对应分支。
 
@@ -15,12 +15,12 @@ Worktree 只是同一个 Git 仓库下的独立工作目录，更新方式和普
 
 ```bash
 # 查看前端状态，然后把前端更新到 origin/develop 的最新代码
-git -C /Users/milakou/Documents/AladdinDaoTest/Github/fx100-apps@develop status --short --branch
-git -C /Users/milakou/Documents/AladdinDaoTest/Github/fx100-apps@develop pull --ff-only origin develop
+git -C /Users/milakou/Documents/FX100/Github/fx100-apps@develop status --short --branch
+git -C /Users/milakou/Documents/FX100/Github/fx100-apps@develop pull --ff-only origin develop
 
 # 查看合约状态，然后把合约更新到 origin/release/v0.3.1 的最新代码
-git -C /Users/milakou/Documents/AladdinDaoTest/Github/fx100-contracts@release-v0.3.1 status --short --branch
-git -C /Users/milakou/Documents/AladdinDaoTest/Github/fx100-contracts@release-v0.3.1 pull --ff-only origin release/v0.3.1
+git -C /Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.1 status --short --branch
+git -C /Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.1 pull --ff-only origin release/v0.3.1
 ```
 
 如果只更新其中一套代码，只执行对应的两行。
@@ -34,7 +34,7 @@ git -C /Users/milakou/Documents/AladdinDaoTest/Github/fx100-contracts@release-v0
 ### 3.1 前端
 
 ```bash
-cd /Users/milakou/Documents/AladdinDaoTest/Github/fx100-apps@develop
+cd /Users/milakou/Documents/FX100/Github/fx100-apps@develop
 
 # 先确认有哪些本地修改
 git status --short --branch
@@ -54,7 +54,7 @@ git stash list
 ### 3.2 合约
 
 ```bash
-cd /Users/milakou/Documents/AladdinDaoTest/Github/fx100-contracts@release-v0.3.1
+cd /Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.1
 
 # 先确认有哪些本地修改
 git status --short --branch
@@ -92,7 +92,7 @@ git stash pop
 ### 前端
 
 ```bash
-cd /Users/milakou/Documents/AladdinDaoTest/Github/fx100-apps@develop
+cd /Users/milakou/Documents/FX100/Github/fx100-apps@develop
 
 # 严格按照 yarn.lock 安装依赖，不允许安装过程改写锁文件
 yarn install --frozen-lockfile
@@ -104,7 +104,7 @@ yarn build
 ### 合约
 
 ```bash
-cd /Users/milakou/Documents/AladdinDaoTest/Github/fx100-contracts@release-v0.3.1
+cd /Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.1
 
 # 严格按照 package-lock.json 重新安装依赖
 npm ci

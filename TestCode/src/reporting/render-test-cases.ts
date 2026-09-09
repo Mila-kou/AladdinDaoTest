@@ -42,7 +42,9 @@ function renderScnVersionSourcesHtml(data: VersionCasesData): string {
 function renderVersionCaseRowHtml(item: VersionFunctionalCase, section: string): string {
   const layerCell = (role: string, status: string): string =>
     `<td><span class="layer layer-${escapeHtml(status)}" data-layer="${role}">${escapeHtml(status)}</span></td>`;
-  return `<tr class="vc-row" data-kind="${item.kind}" data-id="${escapeHtml(item.id)}"`
+  const detailField = (label: string, value: string, className = ''): string =>
+    `<article${className ? ` class="${className}"` : ''}><h4>${label}</h4><p>${escapeHtml(value || '—')}</p></article>`;
+  const row = `<tr class="vc-row" data-kind="${item.kind}" data-id="${escapeHtml(item.id)}"`
     + ` data-section="${escapeHtml(section)}" data-priority="${escapeHtml(item.priority)}"`
     + ` data-entry="${escapeHtml(item.entry)}" data-trader="${escapeHtml(item.trader)}"`
     + ` data-c="${escapeHtml(item.layers.contract)}" data-f="${escapeHtml(item.layers.frontend)}" data-x="${escapeHtml(item.layers.parity)}">`
@@ -50,13 +52,22 @@ function renderVersionCaseRowHtml(item: VersionFunctionalCase, section: string):
     + `<td class="vc-id">${escapeHtml(item.id)}</td>`
     + `<td class="vc-p">${escapeHtml(item.priority)}</td>`
     + `<td class="vc-title">${escapeHtml(item.title)}</td>`
-    + `<td class="vc-entry">${escapeHtml(item.entry)}</td>`
+    + `<td class="vc-entry">${escapeHtml(item.entry)}<small>${escapeHtml(item.layer)}</small></td>`
     + `<td class="vc-trader">${escapeHtml(item.trader)}</td>`
     + layerCell('c', item.layers.contract)
     + layerCell('f', item.layers.frontend)
     + layerCell('x', item.layers.parity)
-    + `<td class="vc-act"><button type="button" class="vc-record" data-id="${escapeHtml(item.id)}" disabled title="需通过 npm run dashboard:serve 打开本页">记录结果</button></td>`
+    + `<td class="vc-act"><button type="button" class="vc-detail-toggle" data-id="${escapeHtml(item.id)}" aria-expanded="false">详情</button><button type="button" class="vc-record" data-id="${escapeHtml(item.id)}" disabled title="需通过 npm run dashboard:serve 打开本页">记录结果</button></td>`
     + '</tr>';
+  const detail = `<tr class="vc-detail-row" data-detail-for="${escapeHtml(item.id)}" hidden><td colspan="10">`
+    + `<section class="vc-case-detail" aria-label="${escapeHtml(item.id)} 完整测试用例">`
+    + `<header><div><span>${escapeHtml(item.id)} · ${escapeHtml(item.priority)}</span><h3>${escapeHtml(item.title)}</h3></div>`
+    + `<div class="vc-detail-meta"><span>层：${escapeHtml(item.layer)}</span><span>入口：${escapeHtml(item.entry)}</span><span>Trader / 地址：${escapeHtml(item.trader)}</span></div></header>`
+    + `<div class="vc-detail-grid">${detailField('前置条件', item.preconditions)}${detailField('测试数据', item.testData)}`
+    + `${detailField('操作步骤', item.steps)}${detailField('核对数据', item.checks)}`
+    + `${detailField('期望结果', item.expected, 'expected')}${detailField('设计方法 / 依据', item.designBasis)}</div>`
+    + '</section></td></tr>';
+  return row + detail;
 }
 
 function renderVersionBlockHtml(view: VersionCasesView, hidden: boolean): string {
@@ -70,6 +81,38 @@ function renderVersionBlockHtml(view: VersionCasesView, hidden: boolean): string
       ).join('')
     : `<p class="vc-empty">${escapeHtml(view.emptyReason ?? '该版本暂无版本级功能用例。')}</p>`;
   return `<div class="version-case-block" data-release="${escapeHtml(view.release)}"${hidden ? ' hidden' : ''}>${body}</div>`;
+}
+
+// 抽屉内「链上核对」块：tx hash → POST /api/verify-tx 渲染分层结论 → POST /api/manual-runs/attach 回填证据与合约层结果。
+// 放在 <form id="vc-drawer-form"> 之外：块内输入回车不会触发保存表单的隐式提交。
+function renderTxVerifyBlockHtml(): string {
+  const overrideField = (key: string, label: string, hint: string, wide = false): string =>
+    `<label${wide ? ' class="vc-wide"' : ''}>${label}<input id="vc-tx-ov-${key}" data-override="${key}" autocomplete="off" spellcheck="false" placeholder="登记值">`
+    + `<small class="vc-tx-default" data-default-for="${key}">${hint}</small></label>`;
+  return `
+      <details class="vc-tx-verify" id="vc-tx-verify" open>
+        <summary><strong>链上核对</strong><span class="vc-tx-badge" id="vc-tx-verdict" hidden></span><span class="muted" id="vc-tx-mode"></span></summary>
+        <div class="vc-tx-grid">
+          <label>环境<select id="vc-tx-env"><option value="">加载中…</option></select></label>
+          <label class="vc-wide">tx hash（每行一个）<textarea id="vc-tx-hashes" spellcheck="false" placeholder="0x… 按链上顺序每行一个（如 下单 / Keeper 执行 / 平仓 / Keeper 执行）"></textarea></label>
+        </div>
+        <details class="vc-tx-overrides" id="vc-tx-overrides">
+          <summary>元数据覆盖（留空 = 登记默认值）</summary>
+          <div class="vc-tx-grid">
+            ${overrideField('contractVersion', '合约版本', '留空 = 登记值')}
+            ${overrideField('contractHead', '合约 head', '留空 = 登记值')}
+            ${overrideField('frontendHead', '前端 head', '留空 = 登记值')}
+            ${overrideField('executedAt', '执行时间（ISO）', '留空 = 登记值')}
+            ${overrideField('note', '备注', '可选；随元数据写入证据', true)}
+          </div>
+        </details>
+        <div class="vc-drawer-actions vc-tx-actions">
+          <button type="button" id="vc-tx-run" disabled>核对</button>
+          <button type="button" id="vc-tx-attach" disabled>回填</button>
+          <span class="save-status" id="vc-tx-status"></span>
+        </div>
+        <div class="vc-tx-result" id="vc-tx-result" hidden></div>
+      </details>`;
 }
 
 // 手工测试工作台侧边抽屉 + 逐条引导模式（放在 #version-cases 外，功能用例分区文本保持只含矩阵内容）。
@@ -97,7 +140,7 @@ function renderVersionDrawerHtml(): string {
         <dt>Trader / 地址</dt><dd id="vc-r-trader"></dd>
         <dt>当前状态</dt><dd id="vc-r-status"></dd>
       </dl>
-      <p class="vc-admission-hint" id="vc-admission-hint" hidden></p>
+      <p class="vc-admission-hint" id="vc-admission-hint" hidden></p>${renderTxVerifyBlockHtml()}
       <form id="vc-drawer-form">
         <div class="vc-form-grid">
           ${statusSelect('vc-f-contract', '合约层')}
@@ -157,7 +200,8 @@ function renderVersionCasesSectionHtml(data: VersionCasesData): string {
       <strong id="vc-selected-count">已选 0 条</strong>
       <button type="button" id="vc-select-visible-cases">选择当前筛选</button>
       <button type="button" id="vc-clear-selected">清空</button>
-      <button type="button" id="vc-start-batch" class="primary" disabled>开始手工执行（0 条）</button>
+      <button type="button" id="vc-run-selected" class="primary" disabled>自动化执行（0 条）</button>
+      <button type="button" id="vc-start-batch" class="primary" disabled>手工执行（0 条）</button>
       <span class="muted" id="vc-manual-hint"></span>
     </div>
     <div class="vc-batch-setup" id="vc-batch-setup" hidden>
@@ -175,10 +219,12 @@ export function renderTestCasesHtml(
   cases: TestCaseView[],
   generatedAt: string,
   versionCases: VersionCasesData,
+  automatedFunctionalCaseIds: readonly string[] = [],
 ): string {
   const payload = serializeForHtml({ cases, generatedAt });
   const versionPayload = serializeForHtml({
     defaultRelease: versionCases.defaultRelease,
+    automatedCaseIds: automatedFunctionalCaseIds,
     releases: versionCases.releases,
     admission: versionCases.admission,
     versions: versionCases.versions.map((view) => ({
@@ -200,8 +246,15 @@ export function renderTestCasesHtml(
     })),
     ...(versionCases.noVersionsReason ? { noVersionsReason: versionCases.noVersionsReason } : {}),
   });
+  const defaultVersionView = versionCases.versions.find((view) => view.release === versionCases.defaultRelease);
+  const functionalCaseCount = defaultVersionView ? defaultVersionView.coreCount + defaultVersionView.otherCount : 0;
   const content = `
-  <section class="notice" id="editor-notice">通过 Node 看板服务打开时可编辑；直接打开离线 HTML 时为只读模式。</section>${renderAdmissionBannerHtml(versionCases.admission)}${renderScnVersionSourcesHtml(versionCases)}
+  <section class="notice" id="editor-notice">通过 Node 看板服务打开时可编辑；直接打开离线 HTML 时为只读模式。</section>
+  <nav class="case-tabs" role="tablist" aria-label="测试用例类型">
+    <button type="button" role="tab" id="case-tab-scenario" data-case-tab="scenario" aria-controls="case-panel-scenario" aria-selected="true">Scenario <span>${cases.length}</span></button>
+    <button type="button" role="tab" id="case-tab-functional" data-case-tab="functional" aria-controls="case-panel-functional" aria-selected="false">功能用例 <span>${functionalCaseCount}</span></button>
+  </nav>
+  <section class="case-tab-panel" id="case-panel-scenario" role="tabpanel" aria-labelledby="case-tab-scenario">${renderScnVersionSourcesHtml(versionCases)}
   <section class="metric-grid" id="case-metrics"></section>
   <section class="filters panel" aria-label="测试用例筛选">
     <label>套件<select id="case-suite"><option value="">全部</option></select></label>
@@ -250,7 +303,11 @@ export function renderTestCasesHtml(
         <div class="editor-actions"><button id="save-case" type="submit">保存修改</button><button id="run-current" type="button">仅执行当前用例</button></div>
       </form>
     </article>
-  </section>${renderVersionCasesSectionHtml(versionCases)}${renderVersionDrawerHtml()}
+  </section>
+  </section>
+  <section class="case-tab-panel" id="case-panel-functional" role="tabpanel" aria-labelledby="case-tab-functional" hidden>
+    ${renderAdmissionBannerHtml(versionCases.admission)}${renderVersionCasesSectionHtml(versionCases)}${renderVersionDrawerHtml()}
+  </section>
   <script id="test-case-data" type="application/json">${payload}</script>
   <script id="version-case-data" type="application/json">${versionPayload}</script>`;
 
@@ -262,6 +319,11 @@ export function renderTestCasesHtml(
     const state={cases:initial.cases,selectedId:initialSelectedId,editable:false,selectedForRun:new Set()};
     const controls={suite:document.getElementById('case-suite'),project:document.getElementById('case-project'),compatibility:document.getElementById('case-compatibility'),priority:document.getElementById('case-priority'),execution:document.getElementById('case-execution'),status:document.getElementById('case-status'),search:document.getElementById('case-search')};
     const form=document.getElementById('case-editor');const saveButton=document.getElementById('save-case');const saveStatus=document.getElementById('save-status');
+    const tabButtons=Array.prototype.slice.call(document.querySelectorAll('[data-case-tab]'));
+    const tabPanels={scenario:document.getElementById('case-panel-scenario'),functional:document.getElementById('case-panel-functional')};
+    function setCaseTab(name,updateUrl){if(!tabPanels[name])name='scenario';tabButtons.forEach(function(button){var active=button.dataset.caseTab===name;button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1;});Object.keys(tabPanels).forEach(function(key){tabPanels[key].hidden=key!==name;});if(updateUrl&&history.replaceState){var url=new URL(location.href);if(name==='scenario')url.searchParams.delete('tab');else url.searchParams.set('tab',name);history.replaceState(null,'',url.pathname+url.search+url.hash);}}
+    tabButtons.forEach(function(button,index){button.addEventListener('click',function(){setCaseTab(button.dataset.caseTab,true);});button.addEventListener('keydown',function(event){if(event.key!=='ArrowLeft'&&event.key!=='ArrowRight')return;event.preventDefault();var next=(index+(event.key==='ArrowRight'?1:-1)+tabButtons.length)%tabButtons.length;tabButtons[next].focus();setCaseTab(tabButtons[next].dataset.caseTab,true);});});
+    setCaseTab(requestedCaseId&&/^SCN-\\d{3}$/.test(requestedCaseId)?'scenario':(new URLSearchParams(location.search).get('tab')||(requestedCaseId?'functional':'scenario')),false);
     function escapeHtml(value){return String(value==null?'':value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');}
     function isManual(item){return item.executionMode==='manual';}
     function statuses(item){return item.executions.length?Array.from(new Set(item.executions.map(function(run){return run.status;}))):[isManual(item)?'MANUAL':'NOT_AUTOMATED'];}
@@ -292,8 +354,11 @@ export function renderTestCasesHtml(
       var section=document.getElementById('version-cases');if(!section)return;
       var vcData=JSON.parse(document.getElementById('version-case-data').textContent);
       var releaseSelect=document.getElementById('version-case-release');
+      var requestedRelease=new URLSearchParams(location.search).get('release');
+      if(releaseSelect&&requestedRelease&&Array.prototype.some.call(releaseSelect.options,function(option){return option.value===requestedRelease;})){releaseSelect.value=requestedRelease;document.querySelectorAll('.version-case-block').forEach(function(block){block.hidden=block.getAttribute('data-release')!==requestedRelease;});}
       var drawer=document.getElementById('vc-drawer');
       var FILTER_KEY='fx100.vc.filters';var EXECUTOR_KEY='fx100.vc.executor';
+      var automatedCaseIds=new Set(vcData.automatedCaseIds||[]);
       var live=false;var deployLabel='待确认';var activeRow=null;
       var guide={active:false,batchId:'',ids:[],index:0,saved:0,skipped:0,executor:''};
       var controls={status:document.getElementById('vc-filter-status'),layer:document.getElementById('vc-filter-layer'),priority:document.getElementById('vc-filter-priority'),section:document.getElementById('vc-filter-section'),entry:document.getElementById('vc-filter-entry'),trader:document.getElementById('vc-filter-trader'),search:document.getElementById('vc-filter-search')};
@@ -318,9 +383,11 @@ export function renderTestCasesHtml(
         var okSection=!f.section||row.dataset.section===f.section;
         var okEntry=!f.entry||row.dataset.entry===f.entry;
         var okTrader=!f.trader||(row.dataset.trader||'').toLowerCase().indexOf(f.trader.toLowerCase())>=0;
-        var okSearch=!f.search||(row.textContent||'').toLowerCase().indexOf(f.search.toLowerCase())>=0;
+        var detail=row.nextElementSibling&&row.nextElementSibling.classList.contains('vc-detail-row')?row.nextElementSibling:null;
+        var searchable=(row.textContent||'')+' '+(detail?detail.textContent||'':'');
+        var okSearch=!f.search||searchable.toLowerCase().indexOf(f.search.toLowerCase())>=0;
         return okStatus&&okPriority&&okSection&&okEntry&&okTrader&&okSearch;}
-      function applyFilters(){var f=filterState();var rows=allRows();var shown=0;rows.forEach(function(row){var ok=rowMatches(row,f);row.hidden=!ok;if(ok)shown++;});
+      function applyFilters(){var f=filterState();var rows=allRows();var shown=0;rows.forEach(function(row){var ok=rowMatches(row,f);row.hidden=!ok;if(!ok){var detail=row.nextElementSibling;if(detail&&detail.classList.contains('vc-detail-row'))detail.hidden=true;var button=row.querySelector('.vc-detail-toggle');if(button)button.setAttribute('aria-expanded','false');}if(ok)shown++;});
         var block=visibleBlock();if(block){var heads=block.querySelectorAll('.vc-section-head');var wraps=block.querySelectorAll('.vc-section-scroll');for(var i=0;i<wraps.length;i++){var any=wraps[i].querySelector('tr.vc-row:not([hidden])');wraps[i].hidden=!any;if(heads[i])heads[i].hidden=!any;}}
         var counter=document.getElementById('vc-filter-count');if(counter)counter.textContent='匹配 '+shown+' / '+rows.length+' 条';
         persistFilters();updateSelectedCount();}
@@ -329,10 +396,12 @@ export function renderTestCasesHtml(
       document.getElementById('vc-filter-reset').addEventListener('click',function(){Object.keys(controls).forEach(function(key){controls[key].value='';});applyFilters();});
       // —— 选择与批次 ——
       function selectedIds(){var ids=[];allRows().forEach(function(row){var check=row.querySelector('.vc-check');if(check&&check.checked)ids.push(row.dataset.id);});return ids;}
-      function updateSelectedCount(){var count=selectedIds().length;document.getElementById('vc-selected-count').textContent='已选 '+count+' 条';var startButton=document.getElementById('vc-start-batch');startButton.textContent='开始手工执行（'+count+' 条）';startButton.disabled=!live||count===0;}
+      function automatedSelectedIds(){return selectedIds().filter(function(id){return automatedCaseIds.has(id);});}
+      function updateSelectedCount(){var count=selectedIds().length;var automatedCount=automatedSelectedIds().length;document.getElementById('vc-selected-count').textContent='已选 '+count+' 条 · 可自动化 '+automatedCount+' 条';var runButton=document.getElementById('vc-run-selected');runButton.textContent='自动化执行（'+automatedCount+' 条）';runButton.disabled=automatedCount===0;var startButton=document.getElementById('vc-start-batch');startButton.textContent='手工执行（'+count+' 条）';startButton.disabled=!live||count===0;}
       section.addEventListener('change',function(event){if(event.target&&event.target.classList&&event.target.classList.contains('vc-check'))updateSelectedCount();});
       document.getElementById('vc-select-visible-cases').addEventListener('click',function(){allRows().forEach(function(row){if(!row.hidden){var check=row.querySelector('.vc-check');if(check)check.checked=true;}});updateSelectedCount();});
       document.getElementById('vc-clear-selected').addEventListener('click',function(){allRows().forEach(function(row){var check=row.querySelector('.vc-check');if(check)check.checked=false;});updateSelectedCount();});
+      document.getElementById('vc-run-selected').addEventListener('click',function(){var ids=automatedSelectedIds();if(!ids.length)return;var query=new URLSearchParams();query.set('cases',ids.sort().join(','));query.set('release',currentRelease());location.href='./runs.html?'+query.toString();});
       // —— 抽屉 ——
       var statusText=document.getElementById('vc-drawer-status');
       function setStatusOptionGuards(select,layer){Array.prototype.forEach.call(select.options,function(option){if(option.value==='PASS'||option.value==='FAIL'){var ready=layerReady(layer);option.disabled=!ready;option.title=ready?'':'admissionScope['+(layer==='contract'?'tx-fork:contract':'tx-fork:frontend')+'] 非 READY_FOR_SYSTEM_TEST，只能记 BLOCKED / NOT_RUN';}});}
@@ -361,10 +430,14 @@ export function renderTestCasesHtml(
         var nav=document.getElementById('vc-guide-nav');nav.hidden=!guide.active;
         if(guide.active)document.getElementById('vc-guide-progress').textContent='第 '+(guide.index+1)+' / '+guide.ids.length+' 条';
         document.getElementById('vc-drawer-main').hidden=false;document.getElementById('vc-guide-end').hidden=true;
+        resetTxVerify();
         drawer.hidden=false;}
       function closeDrawer(){drawer.hidden=true;activeRow=null;guide.active=false;document.getElementById('vc-guide-nav').hidden=true;}
       document.getElementById('vc-drawer-close').addEventListener('click',closeDrawer);
-      section.addEventListener('click',function(event){var target=event.target;var button=target&&target.closest?target.closest('.vc-record'):null;if(!button||button.disabled)return;guide.active=false;var row=button.closest('tr.vc-row');if(row)openDrawer(row);});
+      section.addEventListener('click',function(event){var target=event.target;
+        var detailButton=target&&target.closest?target.closest('.vc-detail-toggle'):null;
+        if(detailButton){var detailRow=detailButton.closest('tr.vc-row');var detail=detailRow&&detailRow.nextElementSibling;if(detail&&detail.classList.contains('vc-detail-row')){var willOpen=detail.hidden;allRows().forEach(function(row){var candidate=row.nextElementSibling;if(candidate&&candidate.classList.contains('vc-detail-row'))candidate.hidden=true;var toggle=row.querySelector('.vc-detail-toggle');if(toggle)toggle.setAttribute('aria-expanded','false');});detail.hidden=!willOpen;detailButton.setAttribute('aria-expanded',String(willOpen));if(willOpen&&history.replaceState){var url=new URL(location.href);url.searchParams.set('tab','functional');url.searchParams.set('scenario',detailRow.dataset.id);url.searchParams.set('release',currentRelease());history.replaceState(null,'',url.pathname+url.search+url.hash);}}return;}
+        var button=target&&target.closest?target.closest('.vc-record'):null;if(!button||button.disabled)return;guide.active=false;var row=button.closest('tr.vc-row');if(row)openDrawer(row);});
       async function refreshRelease(){if(!live)return;try{var response=await fetch('/api/version-results?release='+encodeURIComponent(currentRelease()),{headers:{Accept:'application/json'}});if(!response.ok)return;var data=await response.json();if(data.available===false)return;deployLabel=data.deploy||deployLabel;var latest={};(data.rows||[]).forEach(function(row){latest[row.caseId]=row;});
         allRows().forEach(function(row){var record=latest[row.dataset.id];if(!record)return;setBadge(row,'c',record.contract);setBadge(row,'f',record.frontend);setBadge(row,'x',record.cross);});applyFilters();}catch(error){}}
       document.getElementById('vc-drawer-form').addEventListener('submit',async function(event){event.preventDefault();if(!live||!activeRow)return;
@@ -408,13 +481,119 @@ export function renderTestCasesHtml(
           archiveStatus.textContent='已归档 '+result.summary.file;
         }catch(error){archiveStatus.textContent='归档失败：'+error.message;}});
       document.getElementById('vc-guide-finish').addEventListener('click',closeDrawer);
+      // —— 链上核对（抽屉内）：tx hash → /api/verify-tx 渲染分层结论 → /api/manual-runs/attach 回填证据与合约层结果 ——
+      // 纪律：结论只从接口返回读取；results.md 词汇表没有 NOT_VERIFIED，映射为 GAP（核对缺口），服务端若给 layerStatus 则以其为准；
+      // 回填后合约层下拉锁定「不可手改成更好的」（PASS > GAP/BLOCKED/NOT_RUN > FAIL），换用例重开抽屉才解锁。
+      var TX_ENV_KEY='fx100.vc.verifyEnv';
+      var TX_HASH_PATTERN=/^0x[0-9a-fA-F]{64}$/;
+      var TX_OVERRIDE_KEYS=['contractVersion','contractHead','frontendHead','executedAt','note'];
+      var TX_OVERRIDE_HINTS={contractVersion:'登记值：CURRENT.json environments.<env>.forkOf → deployments[].releaseLabel',contractHead:'登记值：CURRENT.json primary / comparison.head（核对后回显）',frontendHead:'登记值：CURRENT.json frontend.head（核对后回显）',executedAt:'登记值：最后一笔 tx 的区块时间（核对后回显）',note:'可选；随元数据写入证据'};
+      var TX_META_FIELDS=[['contractVersion','合约版本'],['contractHead','合约 head'],['frontendHead','前端 head'],['executedAt','执行时间'],['chainId','chainId'],['note','备注']];
+      var TX_LAYER_RANK={PASS:3,GAP:2,BLOCKED:2,NOT_RUN:2,FAIL:1};
+      var txVerify={environments:[],artifact:null,artifactPath:'',attached:null,lock:'',running:false};
+      var txEls=null;
+      function txOverrideInput(key){return document.getElementById('vc-tx-ov-'+key);}
+      function txDefaultHint(key){return document.querySelector('.vc-tx-default[data-default-for="'+key+'"]');}
+      function txText(value){return value==null?'':String(value);}
+      function txShort(value,head,tail){var s=txText(value);return s.length>head+tail+1?(s.slice(0,head)+'…'+s.slice(s.length-tail)):s;}
+      function txOption(select,value){for(var i=0;i<select.options.length;i++){if(select.options[i].value===value)return select.options[i];}return null;}
+      function txHashes(){var lines=txEls.hashes.value.split('\\n').map(function(line){return line.trim();}).filter(function(line){return line.length>0;});var hashes=[];var invalid=[];lines.forEach(function(line){if(!TX_HASH_PATTERN.test(line)){invalid.push(line);return;}var lower=line.toLowerCase();if(hashes.indexOf(lower)<0)hashes.push(lower);});return {hashes:hashes,invalid:invalid};}
+      function txOverrides(){var out={};TX_OVERRIDE_KEYS.forEach(function(key){var input=txOverrideInput(key);if(!input)return;var value=input.value.trim();if(value)out[key]=value;});return out;}
+      function txCurrentProfile(){var name=txEls.env.value;for(var i=0;i<txVerify.environments.length;i++){if(txVerify.environments[i].name===name)return txVerify.environments[i];}return null;}
+      function txResetDefaultHints(){var profile=txCurrentProfile();TX_OVERRIDE_KEYS.forEach(function(key){var input=txOverrideInput(key);var hint=txDefaultHint(key);if(!input||!hint)return;if(key==='contractVersion'&&profile&&profile.forkOfVersion){input.placeholder='登记值 '+profile.forkOfVersion;hint.textContent='登记值：'+profile.forkOfVersion+'（CURRENT.json environments.'+profile.name+'.forkOf）';return;}input.placeholder=key==='note'?'':'登记值';hint.textContent=TX_OVERRIDE_HINTS[key]||'';});}
+      function txApplyMetadataHints(artifact){var meta=(artifact.data&&artifact.data.metadata)||{};var resolved=meta.resolvedFrom||{};var sources=meta.sources||{};TX_OVERRIDE_KEYS.forEach(function(key){var input=txOverrideInput(key);var hint=txDefaultHint(key);if(!input||!hint||meta[key]===undefined)return;if(resolved[key]==='override'){hint.textContent='覆盖值（本次核对已采用）· '+txText(sources[key]);return;}input.placeholder='登记值 '+txText(meta[key]);hint.textContent='登记值：'+txText(meta[key])+' · '+txText(sources[key]);});}
+      function txDefaultEnv(){var stored='';try{stored=localStorage.getItem(TX_ENV_KEY)||'';}catch(error){}var names=txVerify.environments.map(function(profile){return profile.name;});if(names.indexOf(stored)>=0)return stored;if(names.indexOf('tx-fork')>=0)return 'tx-fork';var capable=txVerify.environments.filter(function(profile){return profile.permitsTransactions;});return capable.length?capable[0].name:(names[0]||'');}
+      async function loadTxEnvironments(){try{var response=await fetch('/api/environments',{headers:{Accept:'application/json'}});if(!response.ok)throw new Error('HTTP '+response.status);var data=await response.json();txVerify.environments=(data.environments||[]).filter(function(profile){return profile&&typeof profile.name==='string';});
+        txEls.env.innerHTML=txVerify.environments.map(function(profile){return '<option value="'+escapeHtml(profile.name)+'">'+escapeHtml(profile.name+'（'+(profile.forkOfVersion||'版本未登记')+(profile.rpcConfigured?'':' · RPC 未配置')+'）')+'</option>';}).join('')||'<option value="">无可用环境</option>';
+        txEls.env.value=txDefaultEnv();txEls.env.disabled=txVerify.environments.length===0;txEls.run.disabled=txVerify.environments.length===0;txResetDefaultHints();}
+        catch(error){txEls.env.innerHTML='<option value="">环境列表不可用</option>';txEls.status.textContent='环境列表加载失败：'+error.message;}}
+      async function txReadJson(response){try{return await response.json();}catch(error){return null;}}
+      function txErrorText(response,result,route){if(result&&(result.detail||result.error))return txText(result.detail||result.error);if(response.status===404)return '看板服务未提供 '+route+'（请更新代码并重启 npm run dashboard:serve）';return 'HTTP '+response.status;}
+      // /api/verify-tx 的证据在 evidence 键（verify-tx-routes.ts 契约）；artifact / 顶层 summary 两种旧形保留兼容。
+      function txUnwrapArtifact(result){if(!result||typeof result!=='object')return null;if(result.evidence&&typeof result.evidence==='object'&&result.evidence.summary)return result.evidence;if(result.artifact&&typeof result.artifact==='object'&&result.artifact.summary)return result.artifact;if(result.summary)return result;return null;}
+      function txFirstString(candidates){for(var i=0;i<candidates.length;i++){if(typeof candidates[i]==='string'&&candidates[i].trim())return candidates[i].trim();}return '';}
+      function txArtifactPath(result,artifact){return txFirstString([result&&result.path,result&&result.artifactPath,result&&result.out,result&&result.file,artifact&&artifact.path,artifact&&artifact.artifactPath]);}
+      function txCheckRows(artifact){var basis=(artifact.data&&artifact.data.formulaBasis&&artifact.data.formulaBasis.byCheckId)||{};var report=artifact.reconciliationReport||{};
+        function sectionOf(name){var item=basis[name];return item&&item.section?item.section:'—';}
+        function valueOf(value){if(value==null)return '—';if(typeof value==='object')return txText(value.display!=null?value.display:value.raw);return txText(value);}
+        if(Array.isArray(report.checks)&&report.checks.length){return report.checks.map(function(check){var name=txText(check.actionId)+' '+txText(check.id);return {name:name,label:txText(check.label||''),verification:txText(check.verification),verdict:txText(check.verdict),severity:txText(check.severity),expected:valueOf(check.expected),actual:valueOf(check.actual),formula:check.formula&&check.formula.expanded?txText(check.formula.expanded):'—',formulaId:check.formula&&check.formula.id?txText(check.formula.id):'',section:sectionOf(name),note:txText(check.note||check.difference||'')};});}
+        return (artifact.checks||[]).map(function(check){var name=txText(check.name);return {name:name,label:txText(check.label||''),verification:txText(check.verification),verdict:txText(check.verdict),severity:txText(check.severity),expected:valueOf(check.expected),actual:valueOf(check.actual),formula:'—',formulaId:'',section:sectionOf(name),note:txText(check.note||'')};});}
+      function txStatusHtml(value){return '<span class="status status-'+escapeHtml(value)+'">'+escapeHtml(value)+'</span>';}
+      function txRenderResult(artifact,path,extraWarnings){var summary=artifact.summary||{};var data=artifact.data||{};var meta=data.metadata||{};var plan=data.plan||{};var resolved=meta.resolvedFrom||{};var sources=meta.sources||{};var verdict=txText(summary.verdict||'NOT_VERIFIED');
+        var counts=summary.counts||{};var countText=Object.keys(counts).map(function(key){return key+' '+counts[key];}).join(' · ')||'无核对行';
+        var rows=txCheckRows(artifact);
+        var html='<div class="vc-tx-summary"><span class="vc-tx-badge vc-tx-badge-'+escapeHtml(verdict)+'">'+escapeHtml(verdict)+'</span><span>报告 '+txStatusHtml(txText(summary.reportStatus||'—'))+'</span><span class="muted">'+escapeHtml(countText)+'</span><span class="muted">计划 '+escapeHtml(txText(plan.id||'—')+'@'+txText(plan.version||'—')+'（'+(plan.trust==='registered'?'注册表可信计划':'adhoc · 未登记')+'）')+'</span></div>';
+        if(Array.isArray(summary.reasons)&&summary.reasons.length)html+='<ul class="vc-tx-reasons">'+summary.reasons.map(function(reason){return '<li>'+escapeHtml(reason)+'</li>';}).join('')+'</ul>';
+        var layers=summary.layers||{};html+='<div class="vc-tx-layers">'+Object.keys(layers).map(function(layer){return '<span>'+escapeHtml(layer)+' '+txStatusHtml(txText(layers[layer]))+'</span>';}).join('')+'</div>';
+        html+='<h4>独立核对分层结论（'+rows.length+' 行）</h4>';
+        html+=rows.length?'<div class="vc-tx-scroll"><table class="vc-tx-table"><thead><tr><th>action / id</th><th>verification</th><th>verdict</th><th>expected</th><th>actual</th><th>formula</th><th>§</th></tr></thead><tbody>'+rows.map(function(row){return '<tr data-verdict="'+escapeHtml(row.verdict)+'"><td><strong>'+escapeHtml(row.name)+'</strong>'+(row.label?'<small>'+escapeHtml(row.label)+'</small>':'')+(row.formulaId?'<small class="muted">'+escapeHtml(row.formulaId)+'</small>':'')+'</td><td>'+escapeHtml(row.verification)+'</td><td>'+txStatusHtml(row.verdict)+(row.severity==='warning'?'<small class="muted">warning</small>':'')+'</td><td class="vc-tx-value">'+escapeHtml(row.expected)+'</td><td class="vc-tx-value">'+escapeHtml(row.actual)+'</td><td class="vc-tx-formula">'+escapeHtml(row.formula)+(row.note?'<small class="muted">'+escapeHtml(row.note)+'</small>':'')+'</td><td>'+escapeHtml(row.section)+'</td></tr>';}).join('')+'</tbody></table></div>':'<p class="muted">（无核对行）</p>';
+        html+='<h4>元数据</h4><table class="vc-tx-meta"><thead><tr><th>字段</th><th>值</th><th>来源</th><th>出处</th></tr></thead><tbody>';
+        html+='<tr><td>环境</td><td>'+escapeHtml(txText(meta.env||'—')+'（forkOf='+txText(meta.forkOf||'—')+' · deployment='+txText(meta.deploymentId||'—')+' · manifest='+txText(meta.deploymentManifest||'—')+'）')+'</td><td class="vc-tx-source-default">登记</td><td>CURRENT.json environments.'+escapeHtml(txText(meta.env||'<env>'))+'</td></tr>';
+        TX_META_FIELDS.forEach(function(field){var key=field[0];if(meta[key]===undefined&&key!=='note')return;if(key==='note'&&!meta.note)return;var origin=resolved[key]==='override'?'覆盖':(resolved[key]==='default'?'默认（登记值）':'—');var cls=resolved[key]==='override'?'vc-tx-source-override':'vc-tx-source-default';var value=txText(meta[key]);if(key==='chainId'&&meta.rpcChainId!==undefined)value+=' · RPC eth_chainId='+txText(meta.rpcChainId)+(String(meta.rpcChainId)===String(meta.chainId)?'':' ⚠ 不一致');html+='<tr><td>'+escapeHtml(field[1])+'</td><td>'+escapeHtml(value||'（空）')+'</td><td class="'+cls+'">'+escapeHtml(origin)+'</td><td>'+escapeHtml(txText(sources[key]||'—'))+'</td></tr>';});
+        html+='</tbody></table>';
+        var perTx=Array.isArray(meta.perTx)?meta.perTx:[];if(perTx.length)html+='<details class="vc-tx-sub"><summary>tx 明细（'+perTx.length+' 笔）</summary><div class="vc-tx-scroll"><table class="vc-tx-table"><thead><tr><th>action</th><th>tx</th><th>kind</th><th>role</th><th>block</th><th>执行时间</th><th>orderKey</th></tr></thead><tbody>'+perTx.map(function(tx){return '<tr><td>'+escapeHtml(txText(tx.actionId))+'</td><td title="'+escapeHtml(txText(tx.hash))+'">'+escapeHtml(txShort(tx.hash,10,6))+'</td><td>'+escapeHtml(txText(tx.kind))+'</td><td>'+escapeHtml(txText(tx.role))+'</td><td>'+escapeHtml(txText(tx.blockNumber))+'</td><td>'+escapeHtml(txText(tx.executedAtIso))+'</td><td>'+escapeHtml(tx.orderKey?txShort(tx.orderKey,10,0):'—')+'</td></tr>';}).join('')+'</tbody></table></div></details>';
+        var notes=[];(plan.applied||[]).length&&notes.push('已接入 pack：'+plan.applied.join('、'));(plan.excluded||[]).forEach(function(item){notes.push('排除 pack '+txText(item.id)+'：'+txText(item.reason));});(plan.noPack||[]).forEach(function(gap){notes.push('无 pack '+txText(gap.actionId)+' '+txText(gap.kind)+'/'+txText(gap.type)+'：'+txText(gap.reason));});(plan.notes||[]).forEach(function(note){notes.push('说明：'+txText(note));});(data.warnings||[]).concat(extraWarnings||[]).forEach(function(warning){notes.push('告警：'+txText(warning));});if(plan.digest)notes.push('digest '+txText(plan.digest));
+        if(notes.length)html+='<details class="vc-tx-sub"><summary>计划 / pack / 告警（'+notes.length+'）</summary><ul class="vc-tx-notes">'+notes.map(function(note){return '<li>'+escapeHtml(note)+'</li>';}).join('')+'</ul></details>';
+        html+='<p class="muted vc-tx-foot">产物：'+escapeHtml(path||'（接口未返回产物路径）')+' · 公式依据：'+escapeHtml(txText((data.formulaBasis&&data.formulaBasis.sourcePath)||'—'))+'</p>';
+        txEls.result.innerHTML=html;txEls.result.hidden=false;
+        txEls.verdictBadge.textContent=verdict;txEls.verdictBadge.className='vc-tx-badge vc-tx-badge-'+verdict;txEls.verdictBadge.hidden=false;
+        drawer.classList.add('vc-drawer-wide');}
+      async function runTxVerify(){if(!live||txVerify.running)return;var parsed=txHashes();
+        if(parsed.invalid.length){txEls.status.textContent='tx hash 不合法：'+parsed.invalid.slice(0,3).join('、');return;}
+        if(!parsed.hashes.length){txEls.status.textContent='请至少填一条 tx hash。';return;}
+        if(!txEls.env.value){txEls.status.textContent='请选择环境。';return;}
+        var body={env:txEls.env.value,hashes:parsed.hashes,release:currentRelease(),overrides:txOverrides()};
+        if(activeRow)body.caseId=activeRow.dataset.id;if(guide.active&&guide.batchId)body.batchId=guide.batchId;
+        txVerify.running=true;txEls.run.disabled=true;txEls.attach.disabled=true;txVerify.artifact=null;txVerify.artifactPath='';
+        txEls.status.textContent='核对中…（读链 + 跑核对包，可能需要十几秒）';
+        try{var response=await fetch('/api/verify-tx',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(body)});
+          var result=await txReadJson(response);if(!response.ok)throw new Error(txErrorText(response,result,'/api/verify-tx'));
+          var artifact=txUnwrapArtifact(result);if(!artifact)throw new Error('接口返回缺少 summary，无法渲染核对结论。');
+          txVerify.artifact=artifact;txVerify.artifactPath=txArtifactPath(result,artifact);
+          txRenderResult(artifact,txVerify.artifactPath,(result&&Array.isArray(result.warnings))?result.warnings:[]);txApplyMetadataHints(artifact);
+          txEls.attach.disabled=false;
+          txEls.status.textContent='核对完成：'+txText(artifact.summary.verdict)+(txVerify.artifactPath?' · 产物 '+txVerify.artifactPath:'')+(txVerify.lock?'（合约层仍按上次回填 '+txVerify.lock+' 锁定，重新回填以更新）':'');
+        }catch(error){txEls.status.textContent='核对失败：'+error.message;}
+        finally{txVerify.running=false;txEls.run.disabled=!live;}}
+      function txAttachPath(result){return txFirstString([result&&result.path,result&&result.evidencePath,result&&result.file,result&&result.attachment&&result.attachment.path,result&&result.evidence&&result.evidence.path]);}
+      function txAttachVerdict(result,artifact){var value=txFirstString([result&&result.verdict,result&&result.summary&&result.summary.verdict,result&&result.attachment&&result.attachment.verdict,artifact&&artifact.summary&&artifact.summary.verdict]);return ['PASS','FAIL','NOT_VERIFIED'].indexOf(value)>=0?value:'NOT_VERIFIED';}
+      function txAttachLayerStatus(result){var value=txFirstString([result&&result.layerStatus,result&&result.contractLayer,result&&result.layers&&result.layers.contract]);return TX_LAYER_RANK[value]!==undefined?value:'';}
+      function txFillEvidence(path){var lines=fields.evidence.value.split('\\n').map(function(line){return line.trim();}).filter(function(line){return line.length>0;});var prefix=guide.active&&guide.batchId?('TestCase/E2E/manual-runs/'+guide.batchId+'/'):'';lines=lines.filter(function(line){return !(prefix&&line===prefix&&path.indexOf(prefix)===0);});if(lines.indexOf(path)<0)lines.push(path);fields.evidence.value=lines.join('\\n');}
+      function txApplyContractLock(){var lockRank=txVerify.lock?TX_LAYER_RANK[txVerify.lock]:0;Array.prototype.forEach.call(fields.contract.options,function(option){option.disabled=false;option.title='';});setStatusOptionGuards(fields.contract,'contract');if(!txVerify.lock)return;Array.prototype.forEach.call(fields.contract.options,function(option){var rank=TX_LAYER_RANK[option.value];if(rank!==undefined&&rank>lockRank){option.disabled=true;option.title='链上核对已回填 '+txVerify.lock+'：不可手改成更好的结果';}});}
+      function txLockContract(verdict,layerStatus){var mapped=layerStatus||(verdict==='PASS'?'PASS':verdict==='FAIL'?'FAIL':'GAP');var note=verdict==='NOT_VERIFIED'&&!layerStatus?'NOT_VERIFIED 不在 results.md 词汇表，记 GAP（核对缺口）；':'';txVerify.lock='';txApplyContractLock();var option=txOption(fields.contract,mapped);if(option&&option.disabled){note+='admission 门槛禁用 '+mapped+'，改记 BLOCKED；';mapped='BLOCKED';}fields.contract.value=mapped;txVerify.lock=mapped;txApplyContractLock();return {status:mapped,note:note};}
+      function txActualSummary(artifact,verdict){var summary=artifact.summary||{};var counts=summary.counts||{};var countText=Object.keys(counts).map(function(key){return key+' '+counts[key];}).join('/');var reasons=Array.isArray(summary.reasons)?summary.reasons.slice(0,2).join('；'):'';return '链上核对（verify-tx）'+verdict+'：report '+txText(summary.reportStatus||'—')+(countText?'；核对行 '+countText:'')+(reasons?'；'+reasons:'');}
+      // attach 契约（verify-tx-routes.ts）：{ batchId?, caseId, evidence }。evidence 就是核对接口返回的证据 JSON 原样回传；
+      // 非引导模式不带 batchId，服务端落到默认段 adhoc（路径由返回的 path 回显）；服务端不接受 artifactPath 路径引用，故不发。
+      async function attachTxVerify(){if(!live||!txVerify.artifact||!activeRow)return;
+        var body={caseId:activeRow.dataset.id,evidence:txVerify.artifact};
+        if(guide.active&&guide.batchId)body.batchId=guide.batchId;
+        txEls.attach.disabled=true;txEls.status.textContent='回填中…';
+        try{var response=await fetch('/api/manual-runs/attach',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(body)});
+          var result=await txReadJson(response);if(!response.ok)throw new Error(txErrorText(response,result,'/api/manual-runs/attach'));
+          var path=txAttachPath(result);if(!path)throw new Error('接口未返回证据路径（path）。');
+          var verdict=txAttachVerdict(result,txVerify.artifact);var locked=txLockContract(verdict,txAttachLayerStatus(result));
+          txVerify.attached={path:path,verdict:verdict,status:locked.status};txFillEvidence(path);
+          if(!fields.actual.value.trim())fields.actual.value=txActualSummary(txVerify.artifact,verdict);
+          txEls.status.textContent='已回填：'+path+' · 链上结论 '+verdict+' → 合约层 '+locked.status+'（'+locked.note+'不可手改成更好的）'+(result&&typeof result.note==='string'&&result.note?' · '+result.note:'');
+        }catch(error){txEls.status.textContent='回填失败：'+error.message;}
+        finally{txEls.attach.disabled=!txVerify.artifact;}}
+      function resetTxVerify(){if(!txEls)return;txEls.hashes.value='';txVerify.artifact=null;txVerify.artifactPath='';txVerify.attached=null;txVerify.lock='';txVerify.running=false;txEls.result.hidden=true;txEls.result.innerHTML='';txEls.verdictBadge.hidden=true;txEls.attach.disabled=true;txEls.run.disabled=!live||txVerify.environments.length===0;txEls.status.textContent='';drawer.classList.remove('vc-drawer-wide');txApplyContractLock();}
+      function initTxVerify(){var block=document.getElementById('vc-tx-verify');if(!block)return;
+        txEls={block:block,env:document.getElementById('vc-tx-env'),hashes:document.getElementById('vc-tx-hashes'),run:document.getElementById('vc-tx-run'),attach:document.getElementById('vc-tx-attach'),status:document.getElementById('vc-tx-status'),result:document.getElementById('vc-tx-result'),mode:document.getElementById('vc-tx-mode'),verdictBadge:document.getElementById('vc-tx-verdict')};
+        if(!live){txEls.mode.textContent='需 dashboard:serve';txEls.env.innerHTML='<option value="">需 dashboard:serve</option>';txEls.env.disabled=true;txEls.hashes.disabled=true;TX_OVERRIDE_KEYS.forEach(function(key){var input=txOverrideInput(key);if(input)input.disabled=true;});txEls.run.disabled=true;txEls.attach.disabled=true;txEls.status.textContent='静态模式：链上核对需通过 npm run dashboard:serve 打开本页（按钮已禁用）。';return;}
+        txEls.mode.textContent='核对 → /api/verify-tx · 回填 → /api/manual-runs/attach';
+        txEls.run.addEventListener('click',runTxVerify);txEls.attach.addEventListener('click',attachTxVerify);
+        txEls.env.addEventListener('change',function(){try{localStorage.setItem(TX_ENV_KEY,txEls.env.value);}catch(error){}txResetDefaultHints();});
+        loadTxEnvironments();}
       // —— 版本切换与静态守卫 ——
       if(releaseSelect)releaseSelect.addEventListener('change',function(){document.querySelectorAll('.version-case-block').forEach(function(block){block.hidden=block.getAttribute('data-release')!==releaseSelect.value;});populateOptions();applyFilters();refreshRelease();});
       if(['http:','https:'].indexOf(location.protocol)>=0){try{var probe=await fetch('/api/version-results?release='+encodeURIComponent(currentRelease()),{headers:{Accept:'application/json'}});if(probe.ok){live=true;var probeData=await probe.json();deployLabel=probeData.deploy||deployLabel;var latest={};(probeData.rows||[]).forEach(function(row){latest[row.caseId]=row;});allRows().forEach(function(row){var record=latest[row.dataset.id];if(!record)return;setBadge(row,'c',record.contract);setBadge(row,'f',record.frontend);setBadge(row,'x',record.cross);});}}catch(error){}}
       var manualHint=document.getElementById('vc-manual-hint');
       if(live){document.querySelectorAll('.vc-record').forEach(function(button){button.disabled=false;button.title='';});manualHint.textContent='结果写回 results.md 标记区（追加行，不覆盖）；批次归档到 TestCase/E2E/manual-runs/。';}
       else{manualHint.textContent='静态模式：记录结果与手工批次需通过 npm run dashboard:serve 打开本页（按钮已禁用）。';}
+      initTxVerify();
       restoreFilters();populateOptions();applyFilters();
+      if(requestedCaseId){var requestedRow=rowById(requestedCaseId);if(requestedRow){var detailButton=requestedRow.querySelector('.vc-detail-toggle');if(detailButton)detailButton.click();}}
     }
     try{await initVersionCases();}catch(error){var vcHint=document.getElementById('vc-manual-hint');if(vcHint)vcHint.textContent='手工测试工作台初始化失败：'+error.message;}
     saveButton.disabled=!state.editable;fillFilters();renderMetrics();renderRows();if(state.selectedId)selectCase(state.selectedId);document.getElementById('test-cases-page').dataset.pageReady='true';
@@ -429,6 +608,7 @@ export function renderTestCasesHtml(
     script,
     extraStyles: `
       .notice { border:1px solid #2d5f8f; background:#10243b; color:#bfdbfe; border-radius:12px; padding:11px 14px; margin-bottom:14px; }
+      .case-tabs{display:flex;gap:8px;margin:0 0 14px;padding:5px;border:1px solid var(--line);border-radius:14px;background:#0c1424;width:max-content;max-width:100%}.case-tabs button{display:flex;align-items:center;gap:9px;border:0;border-radius:10px;background:transparent;color:var(--muted);padding:10px 18px;font:inherit;font-weight:750;cursor:pointer}.case-tabs button span{display:inline-flex;align-items:center;justify-content:center;min-width:28px;border-radius:999px;background:#17243a;color:#9fb3cf;padding:1px 7px;font-size:11px}.case-tabs button[aria-selected="true"]{background:#14569a;color:#fff;box-shadow:0 5px 14px rgba(20,86,154,.28)}.case-tabs button[aria-selected="true"] span{background:rgba(255,255,255,.16);color:#fff}.case-tab-panel[hidden]{display:none!important}
       .metric-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-bottom:14px; } .metric { display:grid; gap:4px; } .metric span { color:var(--muted); font-size:12px; } .metric strong { font-size:25px; }
       .filters { display:grid; grid-template-columns:1fr 1fr 1.2fr .8fr 1fr 1fr 2fr; gap:10px; margin-bottom:14px; }
       .selection-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px}.selection-toolbar>div:first-child{display:grid}.selection-toolbar span{color:var(--muted);font-size:12px}.selection-actions{display:flex;flex-wrap:wrap;gap:7px}.selection-actions button,.editor-actions button{border:1px solid #365274;border-radius:8px;background:#0b2038;color:#cfe4ff;padding:7px 10px;cursor:pointer}.selection-actions button.primary{background:#14569a;border-color:#3978bd;color:white}.selection-actions button:disabled{opacity:.4;cursor:not-allowed}
@@ -445,14 +625,14 @@ export function renderTestCasesHtml(
       .admission-ready{color:#36d399;border-color:#1f7a55;background:#0b2a1e}.admission-blocked{color:#fde68a;border-color:#d97706;background:#3a2405}.admission-unknown{color:#93a4bd}
       .admission-source{color:var(--muted);overflow-wrap:anywhere}
       .scn-version-sources{border:1px solid var(--line);background:#0c1424;border-radius:12px;padding:9px 14px;margin-bottom:14px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-      .version-cases{margin-top:14px}.version-cases .panel-head{flex-wrap:wrap;align-items:center}
+      .version-cases{margin-top:0}.version-cases .panel-head{flex-wrap:wrap;align-items:center}
       .vc-release-picker{min-width:130px}.vc-release-picker select{min-height:34px}
       .version-cases h3{margin:16px 0 8px;font-size:15px}
       .vc-block-note{color:var(--muted);font-size:12px;overflow-wrap:anywhere;margin:0 0 6px}
       .vc-empty{color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:12px}
       .vc-blocked{display:inline-flex;border:1px solid #d97706;background:#3a2405;color:#fde68a;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:700;white-space:nowrap}
       .version-cases .scroll{max-height:560px}
-      .vc-table td.vc-title{min-width:260px}.vc-table td.vc-id,.vc-table td.vc-entry{white-space:nowrap}
+      .vc-table td.vc-title{min-width:260px}.vc-table td.vc-id,.vc-table td.vc-entry{white-space:nowrap}.vc-entry small{display:block;color:var(--muted);margin-top:3px}.vc-act{display:flex;gap:6px;min-width:132px}
       .vc-table td.vc-trader{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;overflow-wrap:anywhere;min-width:200px}
       .layer{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:2px 6px;white-space:nowrap;font-size:10px}
       .layer-PASS{color:#36d399}.layer-FAIL{color:#fb7185}.layer-BLOCKED{color:#a78bfa}.layer-GAP{color:#fbbf24}.layer-NOT_RUN{color:#94a3b8}.layer-NONE{color:#64748b}
@@ -467,7 +647,8 @@ export function renderTestCasesHtml(
       .vc-batch-setup[hidden]{display:none!important}
       .vc-batch-setup label{min-width:180px;flex:1}
       .vc-check{width:auto;min-height:auto;accent-color:#5ea7ff}
-      .vc-record{border:1px solid #365274;border-radius:8px;background:#0b2038;color:#cfe4ff;padding:4px 8px;cursor:pointer;white-space:nowrap;font-size:11px}
+      .vc-record,.vc-detail-toggle{border:1px solid #365274;border-radius:8px;background:#0b2038;color:#cfe4ff;padding:4px 8px;cursor:pointer;white-space:nowrap;font-size:11px}.vc-detail-toggle[aria-expanded="true"]{background:#14569a;border-color:#5ea7ff;color:#fff}
+      .vc-detail-row>td{padding:0 8px 12px;background:#0a111e}.vc-case-detail{border:1px solid #3978bd;border-radius:12px;background:#0c1729;padding:15px}.vc-case-detail>header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:12px}.vc-case-detail header span{color:#8fc2ff;font-size:11px;font-weight:750}.vc-case-detail h3{margin:4px 0 0!important;font-size:17px}.vc-detail-meta{display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap}.vc-detail-meta span{border:1px solid var(--line);border-radius:999px;padding:4px 8px;color:var(--muted)!important;max-width:420px;overflow-wrap:anywhere}.vc-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.vc-detail-grid article{border:1px solid var(--line);border-radius:10px;background:#0b1220;padding:11px 13px}.vc-detail-grid article.expected{border-color:#315f51;background:rgba(54,211,153,.045)}.vc-detail-grid h4{margin:0 0 6px;color:#9fc9ff;font-size:12px}.vc-detail-grid p{margin:0;white-space:pre-line;line-height:1.55;color:#d8e2f0}
       #vc-drawer{position:fixed;top:0;right:0;height:100vh;width:min(520px,100vw);z-index:50;overflow:auto;margin:0;border-radius:0;border-left:1px solid var(--line);box-shadow:-12px 0 30px rgba(0,0,0,.45)}
       #vc-drawer[hidden]{display:none!important}
       .vc-drawer-head{display:flex;align-items:center;gap:10px;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap}
@@ -482,8 +663,28 @@ export function renderTestCasesHtml(
       .vc-drawer-actions{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
       .vc-drawer-actions button{border:1px solid #3978bd;border-radius:9px;background:#14569a;color:white;padding:8px 12px;cursor:pointer}
       .vc-drawer-actions button:disabled{opacity:.45;cursor:not-allowed}
+      #vc-drawer.vc-drawer-wide{width:min(900px,100vw)}
+      .vc-tx-verify{border:1px solid #2d5f8f;border-radius:10px;background:#0c1729;padding:8px 10px;margin:0 0 12px}
+      .vc-tx-verify>summary{cursor:pointer;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}.vc-tx-verify>summary .muted{font-size:11px}
+      .vc-tx-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.vc-tx-grid textarea{min-height:64px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px}
+      .vc-tx-overrides{margin-top:8px;border:1px dashed var(--line);border-radius:8px;padding:6px 8px}.vc-tx-overrides>summary{cursor:pointer;color:var(--muted);font-size:12px}
+      .vc-tx-default{color:#64748b;font-size:10px;overflow-wrap:anywhere}.vc-tx-actions{margin-top:8px}
+      .vc-tx-result{margin-top:10px;display:grid;gap:8px;font-size:12px}.vc-tx-result[hidden]{display:none!important}
+      .vc-tx-summary{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+      .vc-tx-badge{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-weight:800;font-size:12px;white-space:nowrap}.vc-tx-badge[hidden]{display:none!important}
+      .vc-tx-badge-PASS{color:#36d399;border-color:#1f7a55;background:#0b2a1e}.vc-tx-badge-FAIL{color:#fb7185;border-color:#9f3347;background:#2b1118}.vc-tx-badge-NOT_VERIFIED{color:#fde68a;border-color:#d97706;background:#3a2405}
+      .vc-tx-reasons,.vc-tx-notes{margin:0;padding-left:18px;color:#fde68a;overflow-wrap:anywhere}.vc-tx-notes{color:#c6d3e4}
+      .vc-tx-layers{display:flex;flex-wrap:wrap;gap:6px}.vc-tx-layers>span{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:2px 8px;color:var(--muted);font-size:11px}
+      .vc-tx-result h4{margin:4px 0 0;font-size:12px;color:#9fc9ff}
+      .vc-tx-scroll{overflow:auto;max-height:340px;border:1px solid var(--line);border-radius:8px}
+      .vc-tx-table{font-size:11px;min-width:760px}.vc-tx-table td,.vc-tx-table th{padding:5px 6px;white-space:nowrap;vertical-align:top}.vc-tx-table td small{display:block;color:#93a4bd;font-size:10px}
+      .vc-tx-table td.vc-tx-value{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;max-width:200px;overflow:hidden;text-overflow:ellipsis}.vc-tx-table td.vc-tx-formula{white-space:normal;min-width:240px;max-width:380px;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+      .vc-tx-table tr[data-verdict="FAIL"] td{background:rgba(159,51,71,.1)}.vc-tx-table tr[data-verdict="NOT_VERIFIED"] td{background:rgba(217,119,6,.08)}
+      .vc-tx-meta{font-size:11px}.vc-tx-meta td,.vc-tx-meta th{padding:4px 6px;overflow-wrap:anywhere}.vc-tx-source-default{color:#93a4bd;white-space:nowrap}.vc-tx-source-override{color:#fbbf24;white-space:nowrap}
+      .vc-tx-sub>summary{cursor:pointer;color:var(--muted);font-size:12px}.vc-tx-foot{margin:0;overflow-wrap:anywhere}
+      .status-NOT_VERIFIED,.status-PASS_WITH_GAPS,.status-INCOMPLETE{color:#fbbf24}.status-NOT_RUN,.status-NOT_APPLICABLE{color:#94a3b8}.status-INVALID_EVIDENCE{color:#fb7185}
       @media(max-width:1150px){.workspace{grid-template-columns:1fr}.filters{grid-template-columns:1fr 1fr}.list-panel .scroll{max-height:520px}}
-      @media(max-width:650px){.metric-grid,.filters,.form-grid{grid-template-columns:1fr}.wide{grid-column:auto}.editor-panel,.list-panel{padding:11px}.selection-toolbar{align-items:stretch;flex-direction:column}.version-cases .scroll{max-height:420px}.vc-filters,.vc-form-grid{grid-template-columns:1fr}.vc-wide{grid-column:auto}#vc-drawer{width:100vw}}
+      @media(max-width:650px){.case-tabs{width:100%}.case-tabs button{flex:1;justify-content:center;padding:9px 10px}.metric-grid,.filters,.form-grid{grid-template-columns:1fr}.wide{grid-column:auto}.editor-panel,.list-panel{padding:11px}.selection-toolbar{align-items:stretch;flex-direction:column}.version-cases .scroll{max-height:420px}.vc-filters,.vc-form-grid,.vc-detail-grid{grid-template-columns:1fr}.vc-case-detail>header{display:block}.vc-detail-meta{justify-content:flex-start;margin-top:10px}.vc-wide{grid-column:auto}#vc-drawer,#vc-drawer.vc-drawer-wide{width:100vw}.vc-tx-grid{grid-template-columns:1fr}}
     `,
   });
 }

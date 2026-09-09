@@ -80,9 +80,9 @@
     "deploymentDirectory": "../Github/fx100-contracts@release-v0.3.2/ignition/deployments/tx-fork-v032-260902r3",
     "addressesFile": "../Github/fx100-contracts@release-v0.3.2/ignition/deployments/tx-fork-v032-260902r3/deployed_addresses.json",
     "abiDirectory": "../Github/fx100-contracts@release-v0.3.2/artifacts",
-    "parametersFile": "./artifacts/parameter-cache/tx-fork/tx-fork-v0.3.2-260902.params.json",
-    "rolesFile": "./artifacts/parameter-cache/tx-fork/tx-fork-v0.3.2-260902.roles.json",
-    "tokensFile": "./artifacts/parameter-cache/tx-fork/tx-fork-v0.3.2-260902.tokens.json"
+    "parametersFile": "../TestCase/config/v0.3.2/tx-fork/260902/parameters.json",
+    "rolesFile": "../TestCase/config/v0.3.2/tx-fork/260902/roles.json",
+    "tokensFile": "../TestCase/config/v0.3.2/tx-fork/260902/tokens.json"
   },
   "abiFiles": {},
   "initialization": {

@@ -1,12 +1,30 @@
 import { resolve } from 'node:path';
 
+import { environmentNames } from '../config/environments/catalog.js';
 import { loadDeploymentManifest } from '../src/config/deployment.js';
+import { loadEnvironmentBinding } from '../src/config/environment-binding.js';
 
 const inputPath = process.argv[2];
 
 if (!inputPath) {
-  console.error('Usage: npm run config:validate -- <deployment-manifest.json>');
-  process.exitCode = 1;
+  try {
+    const rows = environmentNames.map((environment) => {
+      const context = loadEnvironmentBinding(process.cwd(), environment);
+      return {
+        environment,
+        deploymentId: context.binding.deploymentId,
+        release: context.binding.release,
+        environmentChainId: context.binding.environmentChainId,
+        deploymentChainId: context.binding.deploymentChainId,
+        manifest: context.binding.manifest,
+      };
+    });
+    console.table(rows);
+    console.log({ status: 'VALID', bindings: rows.length });
+  } catch (error) {
+    console.error(error);
+    process.exitCode = 1;
+  }
 } else {
   try {
     const path = resolve(process.cwd(), inputPath);

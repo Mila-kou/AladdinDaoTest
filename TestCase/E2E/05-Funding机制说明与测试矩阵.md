@@ -70,7 +70,7 @@ Long 比 Short 多一个 `fundingFloor`。因此存在“Short OI 略多，但 L
 
 ## 3. 当前 ETH market #2 的判断示例
 
-> 下表使用本地 `base_sepolia_v0.3.1_260729` 部署快照（@v0.3.1 快照，CURRENT.json `deployments[0].paramsExport`），不代替执行时链上读数；`primary` 版本部署值待部署确认（见 `Docs/contract-releases/v0.3.2/04-参数目录.md`）。
+> 下表使用本地 `base_sepolia_v0.3.1_260729` 源部署在 tx-fork 的历史采集快照（`TestCase/config/v0.3.1/tx-fork/260812/`，chainId 99911，block 45389192），不代替执行时链上读数；Base Sepolia 真链快照与 CURRENT 登记另见 `TestCase/config/v0.3.1/base-sepolia/260729/`。
 
 | 参数 | 快照年化值 |
 |---|---:|
@@ -170,6 +170,6 @@ E2E 负责验证用户可见语义、页面/Reader/事件一致和关键资金�
 - [ExecuteOrderUtils.sol：订单执行前更新市场 Funding（@v0.3.1 快照）](../../Github/fx100-contracts@release-v0.3.1/src/order/ExecuteOrderUtils.sol)
 - [IncreasePositionUtils.sol：首次开仓基准和加仓结算（@v0.3.1 快照；v0.3.2 已改）](../../Github/fx100-contracts@release-v0.3.1/src/position/IncreasePositionUtils.sol)
 - [DecreasePositionCollateralUtils.sol：减仓的 Funding 收付（@v0.3.1 快照；v0.3.2 已改）](../../Github/fx100-contracts@release-v0.3.1/src/position/DecreasePositionCollateralUtils.sol)
-- [合约核心字段计算公式](ContractCodeSummary/FX100-核心字段计算公式.md)
+- [合约版本摘要与计算公式索引](ContractCodeSummary/README.md)
 - [需求总结：页面字段计算公式](../../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md)
-- [部署参数快照（@v0.3.1 快照 base_sepolia_v0.3.1_260729）](../project/fx100/config/base_sepolia_v0.3.1_260729.params-by-module.csv)
+- [本节参数来源（@v0.3.1 / tx-fork / 260812）](../config/v0.3.1/tx-fork/260812/parameters-by-module.csv)

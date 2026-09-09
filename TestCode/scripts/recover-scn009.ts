@@ -35,6 +35,9 @@ function stringify(value: unknown): string {
 }
 
 const runtime = loadRuntimeConfig();
+if (runtime.deploymentRelease !== 'v0.3.1' || !runtime.deploymentDirectory) {
+  throw new Error('recover-scn009 仅用于 v0.3.1 历史固定区块证据；请切换到对应的环境绑定后再运行。');
+}
 const [rpcModule, deploymentModule, ledgerModule, eventsModule, scenarioModule] = await Promise.all([
   importFile<{ Rpc: new (url: string) => {
     single(method: string, params: readonly unknown[]): Promise<unknown>;
@@ -60,9 +63,7 @@ const [rpcModule, deploymentModule, ledgerModule, eventsModule, scenarioModule] 
 ]);
 
 const rpc = new rpcModule.Rpc(runtime.rpcUrl);
-const deployment = deploymentModule.loadDeployment(
-  resolve(process.cwd(), '../Github/fx100-contracts@release-v0.3.1/base_sepolia_v0.3.1_260729'),
-);
+const deployment = deploymentModule.loadDeployment(runtime.deploymentDirectory);
 const ledgerContext = { trader: TRADER, marketIndex: MARKET_INDEX, isLong: true };
 const [before, afterOpen, afterClose, createdEvents, executedEvents] = await Promise.all([
   ledgerModule.snapshot(rpc, deployment, ledgerContext, BEFORE_BLOCK),

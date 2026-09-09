@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
 
 import dotenv from 'dotenv';
 import {
@@ -16,7 +16,10 @@ import {
 import { z } from 'zod';
 
 import { environments, type EnvironmentName } from '../../config/environments/catalog.js';
-import { loadDeploymentManifest } from '../config/deployment.js';
+import {
+  assertRuntimeEnvironmentBinding,
+  loadEnvironmentBinding,
+} from '../config/environment-binding.js';
 import { isMockResourceEnvironment, resolveMockMarketBundle } from '../config/mock-resources.js';
 import { sendAdminTransaction } from '../drivers/admin-rpc.js';
 import {
@@ -140,12 +143,17 @@ export class MockOraclePriceManager {
       || !resource.token?.address || !resource.collateralToken?.address) {
       throw new Error(`${environment}/${bundleAlias} 缺少 Token / Mock Oracle 登记；请先初始化 default-mock。`);
     }
-    const values = await this.localValues();
-    const manifestPath = resolve(
-      this.projectRoot,
-      values.E2E_DEPLOYMENT_MANIFEST ?? 'config/deployments/base-sepolia-v0.3.1-260729.json',
-    );
-    const manifest = await loadDeploymentManifest(manifestPath);
+    const binding = loadEnvironmentBinding(this.projectRoot, environment as EnvironmentName);
+    await assertRuntimeEnvironmentBinding({
+      environment: environment as EnvironmentName,
+      chainId: binding.binding.environmentChainId,
+      rpcUrl: settings.rpcUrl,
+      deploymentManifestPath: binding.manifestPath,
+      deploymentId: binding.binding.deploymentId,
+      deploymentRelease: binding.binding.release,
+      requestTimeoutMs: 20_000,
+    }, this.projectRoot);
+    const manifest = binding.manifest;
     const targets: OracleTargetContext[] = [
       { role: 'index', oracle: resource.oracle.address, token: resource.token.address },
       { role: 'collateral', oracle: resource.collateralOracle.address, token: resource.collateralToken.address },

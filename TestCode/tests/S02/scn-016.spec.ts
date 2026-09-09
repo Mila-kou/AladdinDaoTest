@@ -20,7 +20,7 @@ async function rawRpc(url: string, method: string, params: readonly unknown[] = 
 }
 
 test.describe('S02 策略下单与订单管理', () => {
-  test('SCN-016 括号单中 SL 先触发并限制损失｜StopLossDecrease long @p0 @tx @serial', async ({}, testInfo) => {
+  test('SCN-016 多头开仓时同时附带 TP/SL，SL 先触发并限制损失｜StopLossDecrease long @p0 @tx @serial', async ({}, testInfo) => {
     // 市价开多 → 挂 SL（StopLossDecrease，P−10%）→ 推价下穿触发 → Keeper 执行止损全平（亏损路径）。
     test.setTimeout(360_000);
     test.skip(testInfo.project.name !== 'tx-fork', 'SCN-016 在 tx-fork 执行（06-策略下单矩阵）');

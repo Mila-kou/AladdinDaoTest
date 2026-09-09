@@ -1,44 +1,44 @@
-export const testProjectValues = [
-  'dev-readonly',
-  'tx-fork',
-  'oracle-fork',
-  'time-fork',
-  'base-sepolia',
-] as const;
+import {
+  executionModeValues,
+  marketCompatibilityValues,
+  marketModeValues,
+  mockResourceAliasValues,
+  oracleModeValues,
+  signingModeValues,
+  testProjectValues,
+  timeModeValues,
+  type ExecutionMode,
+  type MarketCompatibility,
+  type MarketMode,
+  type MockResourceAlias,
+  type OracleMode,
+  type SigningMode,
+  type TestEnvironmentDefinition,
+  type TestProject,
+  type TimeMode,
+} from '../domain/test-environment.js';
 
-export const marketModeValues = ['deployed-market', 'mock-market', 'not-applicable'] as const;
-export const oracleModeValues = ['deployed-oracle', 'mock-oracle', 'not-applicable'] as const;
-export const marketCompatibilityValues = [
-  'mock-only',
-  'mock-and-deployed',
-  'deployed-only',
-  'not-applicable',
-] as const;
-export const timeModeValues = ['normal-block-time', 'controllable-time', 'not-applicable'] as const;
-export const signingModeValues = ['readonly', 'browser-wallet-keeper', 'trader-keeper-private-key'] as const;
-/** 看板预设；实际 Bundle Alias 允许按命名规则扩展。 */
-export const mockResourceAliasValues = ['default-mock', 'none'] as const;
-export const executionModeValues = ['automated', 'manual'] as const;
-
-export type TestProject = typeof testProjectValues[number];
-export type MarketMode = typeof marketModeValues[number];
-export type OracleMode = typeof oracleModeValues[number];
-export type MarketCompatibility = typeof marketCompatibilityValues[number];
-export type TimeMode = typeof timeModeValues[number];
-export type SigningMode = typeof signingModeValues[number];
-export type MockResourceAlias = string;
-export type ExecutionMode = typeof executionModeValues[number];
-
-export interface TestEnvironmentDefinition {
-  readonly targetProject: TestProject;
-  readonly marketMode: MarketMode;
-  readonly oracleMode: OracleMode;
-  readonly marketCompatibility: MarketCompatibility;
-  readonly timeMode: TimeMode;
-  readonly signingMode: SigningMode;
-  readonly mockResourceAlias: MockResourceAlias;
-  readonly environmentSetup: string;
-}
+export {
+  executionModeValues,
+  marketCompatibilityValues,
+  marketModeValues,
+  mockResourceAliasValues,
+  oracleModeValues,
+  signingModeValues,
+  testProjectValues,
+  timeModeValues,
+};
+export type {
+  ExecutionMode,
+  MarketCompatibility,
+  MarketMode,
+  MockResourceAlias,
+  OracleMode,
+  SigningMode,
+  TestEnvironmentDefinition,
+  TestProject,
+  TimeMode,
+};
 
 const DEV_READONLY_IDS = new Set([
   'SCN-001', 'SCN-002', 'SCN-003', 'SCN-004', 'SCN-007', 'SCN-063', 'SCN-064',
@@ -164,7 +164,7 @@ function setupInitialization(input: EnvironmentInput): string[] {
     items.push(`通过资源别名 ${input.mockResourceAlias} 解析 bundleId、Market、Index Token/Oracle、USDC/Oracle，测试代码禁止硬编码地址`);
     items.push('初始化市场流动性及本场景需要的 OI、Funding、Spread、Grace 和风控参数');
   } else if (input.marketMode === 'deployed-market') {
-    items.push('使用 base_sepolia_v0.3.1_260729 已部署市场、Token、Oracle 和 ABI');
+    items.push(`使用 config/environment-bindings.json 为 ${input.targetProject} 绑定的已部署市场、Token、Oracle 和 ABI`);
   }
   if (input.oracleMode === 'mock-oracle') {
     items.push('测试步骤必须列明价格初值、目标值、更新时间和恢复值');

@@ -151,6 +151,10 @@ export async function runDoctor(): Promise<number> {
       });
       checks.push({ name: 'RPC 最新区块', status: 'PASS', detail: blockNumber.toString() });
 
+      const syntheticIndexTokens = new Set(
+        manifest.markets.filter((market) => market.synthetic)
+          .map((market) => market.indexToken.toLowerCase()),
+      );
       for (const item of getDeploymentAddresses(manifest)) {
         if (item.address.toLowerCase() === ZERO_ADDRESS) {
           checks.push({ name: item.name, status: 'FAIL', detail: '仍为示例零地址' });
@@ -159,10 +163,15 @@ export async function runDoctor(): Promise<number> {
 
         try {
           const bytecode = await client.getBytecode({ address: getAddress(item.address) });
+          const syntheticIdentifier = syntheticIndexTokens.has(item.address.toLowerCase());
           checks.push({
             name: item.name,
-            status: bytecode && bytecode !== '0x' ? 'PASS' : 'FAIL',
-            detail: bytecode && bytecode !== '0x' ? 'bytecode found' : 'no bytecode',
+            status: bytecode && bytecode !== '0x' || syntheticIdentifier ? 'PASS' : 'FAIL',
+            detail: bytecode && bytecode !== '0x'
+              ? 'bytecode found'
+              : syntheticIdentifier
+                ? 'synthetic index identifier（按设计无 bytecode）'
+                : 'no bytecode',
           });
         } catch (error) {
           checks.push({

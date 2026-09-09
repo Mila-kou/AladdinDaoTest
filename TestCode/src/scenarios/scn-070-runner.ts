@@ -1,6 +1,3 @@
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
-
 import {
   createPublicClient,
   createWalletClient,
@@ -21,9 +18,12 @@ import {
 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 
-import { loadDeploymentManifest, type DeploymentManifest } from '../config/deployment.js';
+import { loadDeploymentAbi, loadDeploymentManifest, type DeploymentManifest } from '../config/deployment.js';
+import { assertRuntimeEnvironmentBinding } from '../config/environment-binding.js';
 import { resolveMockMarketBundle, type MockResourceRecord } from '../config/mock-resources.js';
 import type { RuntimeConfig } from '../config/runtime.js';
+import type { ResolvedTestEnvironment } from '../domain/test-environment.js';
+import { assertRuntimeMatchesResolvedEnvironment } from '../execution/runtime-environment.js';
 import { freshOracleTimestamp } from '../drivers/mock-oracle.js';
 import {
   SCN070_CASES,
@@ -235,16 +235,6 @@ async function rawRpc(
     throw error;
   }
   return body.result;
-}
-
-async function loadAbi(manifest: DeploymentManifest, name: string): Promise<Abi> {
-  const directory = manifest.source?.abiDirectory;
-  if (!directory) throw new Error('Deployment manifest 缺少 source.abiDirectory');
-  const filename = manifest.abiFiles[name] ?? `${name}.json`;
-  const source = await readFile(resolve(process.cwd(), directory, filename), 'utf8');
-  const parsed = JSON.parse(source) as unknown;
-  if (!Array.isArray(parsed)) throw new Error(`${filename} 不是 ABI 数组`);
-  return parsed as Abi;
 }
 
 function keyBase(name: string): Hex {
@@ -491,8 +481,8 @@ interface IndexPriceWrite {
  * min = min(feed, stable)、max = max(feed, stable)；开多/平空按 max、开空/平多按 min 算执行价。
  * 本 runner 的边界模型用 Reader.getExecutionPrice(min = max = feed) 推导 A 与 E，
  * 因此每次改 feed 都必须把锚同步到同一内部价，使链上 min == max == feed；
- * 否则锚（default-mock 初始化为 60060）与基线 60000 劈开成 [60000, 60060]，
- * 开多等号边界按 max=60060 成交价 > A → OrderNotFulfillableAtAcceptablePrice 静默取消
+ * 否则锚（default-mock 初始化为 2030）与基线 2000 劈开成 [2000, 2030]，
+ * 开多等号边界按 max=2030 成交价 > A → OrderNotFulfillableAtAcceptablePrice 静默取消
  *（2026-08-13 oracle-fork FAIL 根因；锚机理见 fx100-verify-handbook traps §11）。
  * 锚写入走 admin（CONTROLLER）直写 DataStore；每个数据集的 evm_revert 会一并回滚。
  */
@@ -1139,7 +1129,10 @@ async function runBoundaryCase(
   };
 }
 
-async function buildContext(runtime: RuntimeConfig): Promise<ScenarioContext> {
+async function buildContext(
+  runtime: RuntimeConfig,
+  resolvedEnvironment?: ResolvedTestEnvironment,
+): Promise<ScenarioContext> {
   if (runtime.environment !== 'oracle-fork') {
     throw new Error(`SCN-070 只能在 oracle-fork 执行，当前 ${runtime.environment}`);
   }
@@ -1159,8 +1152,10 @@ async function buildContext(runtime: RuntimeConfig): Promise<ScenarioContext> {
     throw new Error('SCN-070 的 E2E_SECONDARY_TEST_PRIVATE_KEY 与 E2E_KEEPER_ACCOUNT 不匹配');
   }
   const manifest = await loadDeploymentManifest(runtime.deploymentManifestPath);
-  const mockResourceAlias = process.env.E2E_MARKET_RESOURCE_ALIAS ?? 'default-mock';
-  const resource = await resolveMockMarketBundle('oracle-fork', mockResourceAlias);
+  const mockResourceAlias = resolvedEnvironment?.mockResourceAlias
+    ?? process.env.E2E_MARKET_RESOURCE_ALIAS
+    ?? 'default-mock';
+  const resource = await resolveMockMarketBundle(runtime.environment, mockResourceAlias);
   const registered = resource.market?.status === 'registered'
     ? resource.market.marketIndex
     : undefined;
@@ -1197,12 +1192,12 @@ async function buildContext(runtime: RuntimeConfig): Promise<ScenarioContext> {
   const publicClient = createPublicClient({ transport: rpcTransport, pollingInterval: 500 });
   const adminPublicClient = createPublicClient({ transport: adminTransport, pollingInterval: 500 });
   const abis = {
-    exchangeRouter: await loadAbi(manifest, 'ExchangeRouter'),
-    orderHandler: await loadAbi(manifest, 'OrderHandler'),
-    reader: await loadAbi(manifest, 'Reader'),
-    dataStore: await loadAbi(manifest, 'DataStore'),
-    erc20: await loadAbi(manifest, 'ERC20'),
-    eventEmitter: await loadAbi(manifest, 'EventEmitter'),
+    exchangeRouter: await loadDeploymentAbi(manifest, 'ExchangeRouter'),
+    orderHandler: await loadDeploymentAbi(manifest, 'OrderHandler'),
+    reader: await loadDeploymentAbi(manifest, 'Reader'),
+    dataStore: await loadDeploymentAbi(manifest, 'DataStore'),
+    erc20: await loadDeploymentAbi(manifest, 'ERC20'),
+    eventEmitter: await loadDeploymentAbi(manifest, 'EventEmitter'),
   };
   const temporaryContext = {
     runtime,
@@ -1299,9 +1294,20 @@ async function buildContext(runtime: RuntimeConfig): Promise<ScenarioContext> {
   return context;
 }
 
-export async function runScn070(runtime: RuntimeConfig): Promise<Scn070Evidence> {
+export async function runScn070(
+  runtime: RuntimeConfig,
+  options: { readonly resolvedEnvironment?: ResolvedTestEnvironment } = {},
+): Promise<Scn070Evidence> {
+  if (options.resolvedEnvironment) {
+    assertRuntimeMatchesResolvedEnvironment(runtime, options.resolvedEnvironment);
+    if (options.resolvedEnvironment.marketMode !== 'mock-market'
+      || options.resolvedEnvironment.oracleMode !== 'mock-oracle') {
+      throw new Error('SCN-070 需要 mock-market + mock-oracle');
+    }
+  }
+  await assertRuntimeEnvironmentBinding(runtime);
   validateScn070Matrix();
-  const context = await buildContext(runtime);
+  const context = await buildContext(runtime, options.resolvedEnvironment);
   const cases: Scn070CaseEvidence[] = [];
   const adminUrl = runtime.adminRpcUrl ?? runtime.rpcUrl;
 

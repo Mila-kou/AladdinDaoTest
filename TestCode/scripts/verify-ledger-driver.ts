@@ -18,6 +18,8 @@ import {
   takeLedgerSnapshot,
 } from '../src/drivers/ledger.js';
 import { resolveMockMarketBundle } from '../src/config/mock-resources.js';
+import { loadRuntimeConfig } from '../src/config/runtime.js';
+import { assertRuntimeEnvironmentBinding } from '../src/config/environment-binding.js';
 
 dotenv.config({ path: '.env', quiet: true });
 dotenv.config({ path: '.env.local', quiet: true, override: true });
@@ -27,9 +29,12 @@ function legacyPath(...parts: string[]): string {
 }
 
 async function main(): Promise<void> {
-  const rpcUrl = process.env.E2E_TX_FORK_RPC_URL;
-  const trader = process.env.E2E_TEST_ACCOUNT;
-  if (!rpcUrl || !trader) throw new Error('需要 E2E_TX_FORK_RPC_URL 与 E2E_TEST_ACCOUNT');
+  const runtime = loadRuntimeConfig();
+  if (runtime.environment !== 'tx-fork') throw new Error(`verify-ledger-driver 只支持 tx-fork，当前为 ${runtime.environment}`);
+  await assertRuntimeEnvironmentBinding(runtime);
+  const rpcUrl = runtime.rpcUrl;
+  const trader = runtime.testAccount;
+  if (!trader) throw new Error('需要 E2E_TEST_ACCOUNT');
 
   const [keysModule, ledgerModule, rpcModule, deploymentModule] = await Promise.all([
     import(pathToFileURL(legacyPath('tool/onchain-tx/lib/keys.mjs')).href),
@@ -65,7 +70,8 @@ async function main(): Promise<void> {
   }
 
   // ② 同区块快照对拍
-  const deploymentDir = resolve(process.cwd(), '../Github/fx100-contracts@release-v0.3.1/base_sepolia_v0.3.1_260729');
+  const deploymentDir = runtime.deploymentDirectory;
+  if (!deploymentDir) throw new Error('绑定 manifest 缺少 source.deploymentDirectory');
   const baseDeployment = deploymentModule.loadDeployment(deploymentDir);
   const deployment = { ...baseDeployment, addresses: { ...baseDeployment.addresses, usdc } };
   const rpc = new rpcModule.Rpc(rpcUrl);

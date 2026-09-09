@@ -9,11 +9,9 @@
 // 取值类型未能从源码推断时走「探测法」：uint/int/bool/address/bytes32 全读一遍，
 // 报告里标 typeSource=probe 并列出所有非零读数，由人判定。宁可多列，不可静默假设。
 //
-// 用法：
-//   node dump-config.mjs                                   # 默认部署 + latest block
-//   node dump-config.mjs --block 44881000                  # 钉块
-//   node dump-config.mjs --rpc https://... --out ../../artifacts/parameter-cache
-//   node dump-config.mjs --only-set                        # 只输出非默认值
+// 用法（deployment / registry / expected-chain-id 必填，避免跨环境读取默认部署或旧版本 key）：
+//   node dump-config.mjs --deployment <deployed_addresses.json> --registry <versioned-registry.json> --expected-chain-id 99911 --rpc <url>
+//   node dump-config.mjs --deployment <path> --deployment-name <manifest.name> --registry <path> --expected-chain-id 99911 --block 44881000
 
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, resolve, dirname, basename } from "node:path";
@@ -35,10 +33,7 @@ import {
 import { humanize, isUnset } from "./lib/hints.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const CONTRACTS = resolve(HERE, "../../../Github/fx100-contracts@release-v0.3.1");
-const DEFAULT_DEPLOYMENT = join(CONTRACTS, "base_sepolia_v0.3.1_260729/deployed_addresses.json");
 const DEFAULT_OUT = resolve(HERE, "../../artifacts/parameter-cache");
-const DEFAULT_RPC = process.env.FX100_RPC_URL ?? "https://sepolia.base.org";
 
 const WNT = "0x4200000000000000000000000000000000000006"; // Base WETH
 const BASE_SEPOLIA_SYNTHETIC_BTC = "0x0555e30da8f98308edb960aa94c0db47230d2b9c";
@@ -406,7 +401,7 @@ function renderMarkdown(snapshot) {
   lines.push(`# fx100 合约参数快照 — ${meta.deploymentName}`);
   lines.push("");
   lines.push(`> 本文件由 \`TestCode/tools/config-dump/dump-config.mjs\` 生成，请勿手工编辑。`);
-  lines.push(`> 重新生成：\`node dump-config.mjs --block ${meta.blockNumber}\`（钉同一块可复现本表）`);
+  lines.push(`> 重新生成时必须由环境绑定表显式传入 deployment、registry 与 expected-chain-id；钉定 block ${meta.blockNumber} 可复现本表。`);
   lines.push("");
   lines.push("## 快照坐标");
   lines.push("");
@@ -503,17 +498,24 @@ function renderMarkdown(snapshot) {
 
 async function main() {
   const args = parseArgs();
-  const rpcUrl = args.rpc ?? DEFAULT_RPC;
+  const rpcUrl = args.rpc ?? process.env.FX100_RPC_URL;
+  if (!rpcUrl) throw new Error("缺少 --rpc 或 FX100_RPC_URL；参数采集不再回退公共 RPC。");
+  if (!args.deployment) throw new Error("缺少 --deployment <deployed_addresses.json>；参数采集不再回退固定 v0.3.1 部署。");
+  if (!args.registry) throw new Error("缺少 --registry <versioned-registry.json>；参数采集不再回退固定版本 key registry。");
+  if (!args["expected-chain-id"]) throw new Error("缺少 --expected-chain-id；必须显式绑定目标环境 Chain ID。");
   const rpcLabel = args["rpc-label"] ?? maskRpcUrl(rpcUrl);
-  const deploymentPath = resolve(args.deployment ?? DEFAULT_DEPLOYMENT);
+  const deploymentPath = resolve(args.deployment);
   const outDir = resolve(args.out ?? DEFAULT_OUT);
-  const registryPath = resolve(args.registry ?? join(HERE, "registry.json"));
+  const registryPath = resolve(args.registry);
   const onlySet = args.flags.has("only-set");
   const maxCalls = Number(args["max-calls"] ?? 40000);
 
   const registry = JSON.parse(readFileSync(registryPath, "utf8"));
   const addresses = JSON.parse(readFileSync(deploymentPath, "utf8"));
-  const deploymentName = basename(dirname(deploymentPath));
+  const deploymentName = args["deployment-name"] ?? basename(dirname(deploymentPath));
+  if (!/^[A-Za-z0-9._-]+$/.test(deploymentName)) {
+    throw new Error(`--deployment-name 只允许字母、数字、.、_、-：${deploymentName}`);
+  }
   const dataStore = addresses["Fx100Base#DataStore"];
   if (!dataStore) throw new Error(`deployed_addresses.json 里没有 Fx100Base#DataStore：${deploymentPath}`);
 
@@ -525,8 +527,11 @@ async function main() {
   console.log(`DataStore  ${dataStore}`);
 
   const chainId = await rpc.chainId();
-  const expectedChainId = args["expected-chain-id"] ? Number(args["expected-chain-id"]) : null;
-  if (expectedChainId !== null && chainId !== expectedChainId) {
+  const expectedChainId = Number(args["expected-chain-id"]);
+  if (!Number.isSafeInteger(expectedChainId) || expectedChainId <= 0) {
+    throw new Error(`--expected-chain-id 必须为正整数：${args["expected-chain-id"]}`);
+  }
+  if (chainId !== expectedChainId) {
     throw new Error(`chainId 不匹配：RPC=${chainId}，期望=${expectedChainId}`);
   }
   const blockNumber = args.block ? Number(args.block) : await rpc.blockNumber();

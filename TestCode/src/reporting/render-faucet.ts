@@ -93,6 +93,11 @@ export function renderFaucetHtml(): string {
       .faucet-monitor-actions { align-items:stretch; flex-direction:column; }
       .faucet-auto-form { grid-template-columns:1fr; }
     }
+    body:not(.noise-embed) .noise-panel { display:none; }
+    body.noise-embed { background:transparent; }
+    body.noise-embed main { width:100%; margin:0; padding:0; }
+    body.noise-embed .top-nav, body.noise-embed header, body.noise-embed .faucet-panel, body.noise-embed .funding-panel { display:none; }
+    body.noise-embed .noise-panel { margin:0; border:0; box-shadow:none; padding:0; background:transparent; }
   `;
 
   const content = `
@@ -184,6 +189,8 @@ export function renderFaucetHtml(): string {
   const script = `
 (async function () {
   'use strict';
+  const noiseEmbed = new URLSearchParams(location.search).get('embed') === 'noise';
+  if (noiseEmbed) document.body.classList.add('noise-embed');
   const fundingEnvironment = document.getElementById('fund-environment');
   const fundingAccount = document.getElementById('fund-account');
   const fundingAmount = document.getElementById('fund-amount');
@@ -729,11 +736,16 @@ export function renderFaucetHtml(): string {
   window.setInterval(function () { if (!document.hidden) refreshFaucetBalance(); }, 30_000);
   window.setInterval(function () { if (!document.hidden) loadFaucetServiceStatus(false); }, 5_000);
   document.getElementById('faucet-page').dataset.pageReady = 'true';
+  if (noiseEmbed && window.parent !== window) {
+    const reportHeight = function () { window.parent.postMessage({ type:'fx100-noise-height', height:document.documentElement.scrollHeight }, location.origin); };
+    new ResizeObserver(reportHeight).observe(document.querySelector('.noise-panel'));
+    reportHeight();
+  }
 })();
 `;
 
   return renderPageShell({
-    title: 'FX100 Faucet & 交易',
+    title: 'FX100 Faucet USDC',
     subtitle: 'Base Sepolia Faucet 余额监控、低余额告警与自动补款、Fund USDC、多 Trader 模拟交易铺底。测试期运维工具，与测试结果数据无耦合；上线后如不再需要可整页下线。',
     active: 'faucet',
     readyId: 'faucet-page',

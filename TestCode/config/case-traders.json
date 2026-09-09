@@ -1,12 +1,14 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-24T03:27:31.848Z",
-  "rule": "SCN-0NN → traderIndex NN（花名册 Trader 编号 1 基）；SCN-B32-0N → 80+N。仅含地址与编号，不含任何私钥；私钥束在本机 config/noise-traders.secret.json。",
+  "generatedAt": "2026-09-02T15:11:25.944Z",
+  "rule": "SCN-0NN → traderIndex NN（花名册 Trader 编号 1 基）；SCN-B32-0N → 80+N；CT/XT/FT 按 Trade 矩阵 A/B 节映射表登记的 T<n> 落地（可与 SCN 复用同一 Trader，探针行可共用）。仅含地址与编号，不含任何私钥；私钥束在本机 config/noise-traders.secret.json。",
   "source": {
     "roster": "config/noise-traders.json",
     "rosterSavedAt": "2026-08-24T03:27:27.248Z",
     "rosterCount": 100,
-    "checklist": "TestCase/E2E/SCENARIO-CHECKLIST.md"
+    "checklist": "TestCase/E2E/SCENARIO-CHECKLIST.md",
+    "b32Cases": "TestCase/E2E/versions/v0.3.2/cases/SCN-B32.md",
+    "tradeMatrix": "TestCase/E2E/versions/v0.3.2/Trade-测试用例矩阵.md"
   },
   "assignments": {
     "SCN-001": {
@@ -536,6 +538,234 @@
       "traderIndex": 88,
       "address": "0x0E77f949560518B1D86EC38cb186E715f67bB6cf",
       "label": "Trader88"
+    },
+    "CT-BASE-005": {
+      "scenarioId": "CT-BASE-005",
+      "traderIndex": 100,
+      "address": "0x7a23500e4807354d75652e2cC7ca2650B10115dB",
+      "label": "Trader100"
+    },
+    "XT-BASE-009": {
+      "scenarioId": "XT-BASE-009",
+      "traderIndex": 100,
+      "address": "0x7a23500e4807354d75652e2cC7ca2650B10115dB",
+      "label": "Trader100"
+    },
+    "XT-MKT-OPEN-001": {
+      "scenarioId": "XT-MKT-OPEN-001",
+      "traderIndex": 9,
+      "address": "0x2fd6F79c404B17d68FDc111f8EF8C93891682624",
+      "label": "Trader9"
+    },
+    "XT-MKT-OPEN-002": {
+      "scenarioId": "XT-MKT-OPEN-002",
+      "traderIndex": 65,
+      "address": "0xC402eb4e767c5F85e2197a752b2e593171783C71",
+      "label": "Trader65"
+    },
+    "XT-MKT-LEV-003": {
+      "scenarioId": "XT-MKT-LEV-003",
+      "traderIndex": 5,
+      "address": "0xe32CFC8F6AB02AC6F5bC0345dc896072Ef287395",
+      "label": "Trader5"
+    },
+    "XT-MKT-LEV-004": {
+      "scenarioId": "XT-MKT-LEV-004",
+      "traderIndex": 89,
+      "address": "0xed66c8C7B589CEC33e0850ADeB6342B6e2B29162",
+      "label": "Trader89"
+    },
+    "XT-MKT-LEV-005": {
+      "scenarioId": "XT-MKT-LEV-005",
+      "traderIndex": 33,
+      "address": "0x4715c16a87833f7C00Cf7df8669A34CF84ED162B",
+      "label": "Trader33"
+    },
+    "XT-MKT-LEV-006": {
+      "scenarioId": "XT-MKT-LEV-006",
+      "traderIndex": 90,
+      "address": "0x1928c42d1366d618DB7Fb5d687e83e4e314a18AB",
+      "label": "Trader90"
+    },
+    "FT-MKT-LEV-007": {
+      "scenarioId": "FT-MKT-LEV-007",
+      "traderIndex": 100,
+      "address": "0x7a23500e4807354d75652e2cC7ca2650B10115dB",
+      "label": "Trader100"
+    },
+    "FT-MKT-LEV-008": {
+      "scenarioId": "FT-MKT-LEV-008",
+      "traderIndex": 100,
+      "address": "0x7a23500e4807354d75652e2cC7ca2650B10115dB",
+      "label": "Trader100"
+    },
+    "XT-MKT-COL-009": {
+      "scenarioId": "XT-MKT-COL-009",
+      "traderIndex": 34,
+      "address": "0xE44B303a37cA7F92a467c56835B5EaC2d78A97Ed",
+      "label": "Trader34"
+    },
+    "XT-MKT-COL-010": {
+      "scenarioId": "XT-MKT-COL-010",
+      "traderIndex": 91,
+      "address": "0x485aDeB62C1FC53d8907d121d09089A25Aba6248",
+      "label": "Trader91"
+    },
+    "XT-MKT-COL-011": {
+      "scenarioId": "XT-MKT-COL-011",
+      "traderIndex": 92,
+      "address": "0x279034F80D88b6ACa42Ab1D63320b3BF4a1f4F10",
+      "label": "Trader92"
+    },
+    "FT-MKT-COL-012": {
+      "scenarioId": "FT-MKT-COL-012",
+      "traderIndex": 100,
+      "address": "0x7a23500e4807354d75652e2cC7ca2650B10115dB",
+      "label": "Trader100"
+    },
+    "XT-MKT-TP-013": {
+      "scenarioId": "XT-MKT-TP-013",
+      "traderIndex": 93,
+      "address": "0x65E78AFA02850D9343A1AcAb244810bE4736949f",
+      "label": "Trader93"
+    },
+    "XT-MKT-SL-014": {
+      "scenarioId": "XT-MKT-SL-014",
+      "traderIndex": 94,
+      "address": "0xb5d77121327deb6a096D627202C4bCBE23998ADC",
+      "label": "Trader94"
+    },
+    "XT-MKT-TPSL-015": {
+      "scenarioId": "XT-MKT-TPSL-015",
+      "traderIndex": 15,
+      "address": "0x772e4264b1CD75CbdDd5C4E37b6a58Bb34E2cc46",
+      "label": "Trader15"
+    },
+    "XT-MKT-TPSL-016": {
+      "scenarioId": "XT-MKT-TPSL-016",
+      "traderIndex": 66,
+      "address": "0x2b5E7a2D0d15Adf9Bf5227fCEe3fe0F9EC6AaBb4",
+      "label": "Trader66"
+    },
+    "FT-MKT-TPSL-017": {
+      "scenarioId": "FT-MKT-TPSL-017",
+      "traderIndex": 100,
+      "address": "0x7a23500e4807354d75652e2cC7ca2650B10115dB",
+      "label": "Trader100"
+    },
+    "XT-MKT-PREC-018": {
+      "scenarioId": "XT-MKT-PREC-018",
+      "traderIndex": 52,
+      "address": "0x1647744222a8FB9e03AA751Ac7da4D05F4fA1161",
+      "label": "Trader52"
+    },
+    "XT-MKT-PREC-019": {
+      "scenarioId": "XT-MKT-PREC-019",
+      "traderIndex": 32,
+      "address": "0x8Eb46e63424439E4a5CcA7b845d5F6ba9aedE4fC",
+      "label": "Trader32"
+    },
+    "XT-MKT-MODE-020": {
+      "scenarioId": "XT-MKT-MODE-020",
+      "traderIndex": 54,
+      "address": "0x627B1355AEBbE39C6a5774F3c5C57Ff88A106642",
+      "label": "Trader54"
+    },
+    "XT-LMT-OPEN-001": {
+      "scenarioId": "XT-LMT-OPEN-001",
+      "traderIndex": 10,
+      "address": "0x53bf5f02907F476Aae9dDF02f301d4cc51FA56AB",
+      "label": "Trader10"
+    },
+    "XT-LMT-OPEN-002": {
+      "scenarioId": "XT-LMT-OPEN-002",
+      "traderIndex": 11,
+      "address": "0x363172f48786c7aC6b5bdd6a7a23Ba0180e3931a",
+      "label": "Trader11"
+    },
+    "XT-LMT-LEV-003": {
+      "scenarioId": "XT-LMT-LEV-003",
+      "traderIndex": 95,
+      "address": "0x8a0913BF339b76CE4652bd6e14e255386Ae20D03",
+      "label": "Trader95"
+    },
+    "XT-LMT-LEV-004": {
+      "scenarioId": "XT-LMT-LEV-004",
+      "traderIndex": 96,
+      "address": "0x82fD28F07C3F4Fc22A889B81fAE7d951610585A7",
+      "label": "Trader96"
+    },
+    "XT-LMT-LEV-005": {
+      "scenarioId": "XT-LMT-LEV-005",
+      "traderIndex": 97,
+      "address": "0x9Da4B6181ee7f0c43A1b520441cB4027871100F0",
+      "label": "Trader97"
+    },
+    "XT-LMT-LEV-006": {
+      "scenarioId": "XT-LMT-LEV-006",
+      "traderIndex": 98,
+      "address": "0x83C283EB122585a4692Dbe42901aa6778d3BC2Bf",
+      "label": "Trader98"
+    },
+    "XT-LMT-TRG-007": {
+      "scenarioId": "XT-LMT-TRG-007",
+      "traderIndex": 69,
+      "address": "0x0d940f94CC4D6af8e873A13e218508b077eFf999",
+      "label": "Trader69"
+    },
+    "XT-LMT-TRG-008": {
+      "scenarioId": "XT-LMT-TRG-008",
+      "traderIndex": 99,
+      "address": "0xD7AAFcEbF14A31B166ded3020F3256d1F70eC10F",
+      "label": "Trader99"
+    },
+    "XT-LMT-TP-009": {
+      "scenarioId": "XT-LMT-TP-009",
+      "traderIndex": 16,
+      "address": "0xFe4607bfc13B2747c7f87D48f572F039Ff819a8D",
+      "label": "Trader16"
+    },
+    "XT-LMT-TP-010": {
+      "scenarioId": "XT-LMT-TP-010",
+      "traderIndex": 67,
+      "address": "0x5d2461EaAF78D49Ed99b3bEabD9edC5A7f1458cc",
+      "label": "Trader67"
+    },
+    "FT-LMT-VAL-011": {
+      "scenarioId": "FT-LMT-VAL-011",
+      "traderIndex": 100,
+      "address": "0x7a23500e4807354d75652e2cC7ca2650B10115dB",
+      "label": "Trader100"
+    },
+    "XT-LMT-TIME-012": {
+      "scenarioId": "XT-LMT-TIME-012",
+      "traderIndex": 13,
+      "address": "0x8282DB469AE3fD9eAF975ACA1b34744C01087657",
+      "label": "Trader13"
+    },
+    "XT-LMT-UPD-013": {
+      "scenarioId": "XT-LMT-UPD-013",
+      "traderIndex": 17,
+      "address": "0x66828A98a1f8272F07709AfF4490090e7e013b7b",
+      "label": "Trader17"
+    },
+    "XT-LMT-CAN-014": {
+      "scenarioId": "XT-LMT-CAN-014",
+      "traderIndex": 18,
+      "address": "0xe4160214E982a6B8176e4BEC4667b26c653C4455",
+      "label": "Trader18"
+    },
+    "XT-LMT-ACC-015": {
+      "scenarioId": "XT-LMT-ACC-015",
+      "traderIndex": 70,
+      "address": "0xCBc1dD8DbD1D0342e854D1eCb4126928f2286725",
+      "label": "Trader70"
+    },
+    "XT-LMT-PREC-016": {
+      "scenarioId": "XT-LMT-PREC-016",
+      "traderIndex": 31,
+      "address": "0x66220dE6b77A4fA331b5B190Ef44e550c1FfDED7",
+      "label": "Trader31"
     }
   }
 }

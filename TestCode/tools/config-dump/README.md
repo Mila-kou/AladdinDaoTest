@@ -24,12 +24,16 @@
 ```bash
 cd TestCode/tools/config-dump
 
-node build-registry.mjs      # 换合约分支 / 合约改了 key 之后才需要重跑
-node dump-config.mjs         # 取数（默认 base_sepolia_v0.3.1_260729 + latest block）
-node check-coverage.mjs      # 核对清单缺口
-node group-by-module.mjs     # 按模块汇总成 CSV
-node group-by-module.mjs --only-set   # 只要已设置的那 119 条
+node build-registry.mjs --contracts <绑定版本的合约仓> --out <registry.json>
+node dump-config.mjs --deployment <deployed_addresses.json> --deployment-name <manifest.name> --registry <registry.json> --expected-chain-id <环境ChainID> --rpc <RPC>
+node check-coverage.mjs --snapshot <params.json> # 核对清单缺口
+node group-by-module.mjs --snapshot <params.json> --out <params-by-module.csv>
+node group-by-module.mjs --snapshot <params.json> --out <csv> --only-set
 ```
+
+日常使用无需手拼上述参数：看板参数页会从 `config/environment-bindings.json` 解析当前环境的
+manifest、deployed addresses、版本化 registry 和 Chain ID，并把缓存隔离到
+`artifacts/parameter-cache/<environment>/<manifest.name>.*`。
 
 ## group-by-module.mjs — 按功能模块汇总
 
@@ -69,10 +73,13 @@ uint/int/bool/address/bytes32 各读一遍**各出一行**——1982 行里 672 
 
 | 参数 | 默认 | 说明 |
 |---|---|---|
-| `--rpc <url>` | `$FX100_RPC_URL` 或 `https://sepolia.base.org` | 公共 RPC 够用（走 Multicall3），但私有 RPC 更稳 |
+| `--rpc <url>` | 必填（或 `$FX100_RPC_URL`） | 不回退公共 RPC，避免读取错误网络 |
 | `--rpc-label <名称>` | 脱敏后的 RPC Host | 写入日志和快照的安全展示名；私有 Fork 建议传项目名，不记录技术 ID |
 | `--block <n>` | latest | **复现快照必须钉块**；不钉块两次运行结果不可比 |
-| `--deployment <path>` | `base_sepolia_v0.3.1_260729/deployed_addresses.json` | 换部署产物 |
+| `--deployment <path>` | 必填 | 与环境绑定 manifest 对应的部署地址文件 |
+| `--deployment-name <name>` | 部署目录名 | 建议传绑定 manifest 的 `name`，保证缓存名稳定 |
+| `--registry <path>` | 工具目录的 `registry.json` | 应传环境绑定中与合约 commit 对应的版本化 registry |
+| `--expected-chain-id <n>` | 必填 | RPC 实际 Chain ID，不匹配立即停止 |
 | `--out <dir>` | `../../artifacts/parameter-cache` | 输出目录 |
 | `--only-set` | 否 | 只输出非默认值（默认连未设置项一起输出——`orderBookDepth = 0` 这种「没设」本身就是 CFG 用例要抓的结论） |
 | `--batch-size <n>` / `--max-calls <n>` | 25 / 40000 | 退回逐条批量时的批大小；读取项数上限保护 |
@@ -181,7 +188,7 @@ Multicall3 不可用时自动退回逐条批量，并对被限流的条目做指
 ## 换部署 / 换分支时
 
 1. 合约分支变了 → 先 `node build-registry.mjs --contracts <新路径>`（registry 跟着分支走）
-2. 部署产物变了 → `node dump-config.mjs --deployment <新的 deployed_addresses.json>`
+2. 部署产物变了 → 更新环境绑定，再用绑定的 deployment/registry/Chain ID 执行 `dump-config.mjs`
 3. 取数清单更新了 → 改 `checklist-取数清单.json` 再跑 `check-coverage.mjs`
 
 `registry.json` 里记了生成时的合约 branch/commit，快照 `meta.contracts` 会带上，便于回溯是哪版源码生成的。

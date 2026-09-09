@@ -4,11 +4,11 @@
 
 | 项 | 值（随 CURRENT.json 同步） |
 |---|---|
-| 主测合约 | `primary`：v0.3.2 · `Github/fx100-contracts@release-v0.3.2` · HEAD 13880f2 · 交付物 `Docs/contract-releases/v0.3.2/` · 准入 **NOT_READY** |
+| 主测合约 | `primary`：v0.3.2 · `Github/fx100-contracts@release-v0.3.2` · HEAD 13880f2 · 交付物 `Docs/contract-releases/v0.3.2/` · 总开关准入 **NOT_READY**；分环境 `admissionScope`（2026-09-03）：**tx-fork:contract READY_FOR_SYSTEM_TEST**（依据 `TestCode/tests/A` 正式批次 `TestCode/artifacts/runs/2026-09-02T161000-175Z` CT-BASE-001～008 全 PASS），tx-fork:frontend / oracle-fork / time-fork NOT_READY |
 | 对比基线 | `comparison`：v0.3.1 · `Github/fx100-contracts@release-v0.3.1` · HEAD d9a7fd2 |
 | 前端 | `Github/fx100-apps@develop` |
-| 已知部署 | `base-sepolia@v0.3.1`（84532，参数导出 `TestCase/project/fx100/config/base_sepolia_v0.3.1_260729.params.json`）；**v0.3.2 无部署** |
-| 测试环境 | tx-fork 99911 / oracle-fork 99912（均 fork 自 base-sepolia@v0.3.1）；time-fork 99913 **待手建** |
+| 已知部署 | `base-sepolia@v0.3.1`（84532，参数导出 `TestCase/config/v0.3.1/base-sepolia/260729/parameters.json`）；`tx-fork@v0.3.2`（99911，`release/v0.3.2@13880f2`，清单 `TestCode/config/deployments/tx-fork-v0.3.2-260902.json`，正式参数快照 `TestCase/config/v0.3.2/tx-fork/260902/parameters.json`） |
+| 测试环境 | tx-fork 99911：**tx-fork@v0.3.2**（vnet 5bd030ca，manifest `tx-fork-v0.3.2-260902-2305`，Mock 市场 #3；2026-09-02 晚重建后重部署）；oracle-fork 99912 / time-fork 99913：**base-sepolia@v0.3.1**（ready） |
 | 排除项 | `Github/fx100-contracts@soso-test`（暂不纳入） |
 
 ## 约定

@@ -35,8 +35,8 @@ export function renderParametersHtml(reference: ParameterReference, generatedAt:
     <div class="action-row">
       <button id="refresh-oracle-timestamp" type="button">刷新时间戳（价格不变）</button>
       <label>目标<select id="oracle-target"><option value="index">Index Oracle</option><option value="collateral">USDC Oracle</option><option value="both">两个都改</option></select></label>
-      <label>Min 价（USD，写 MockOracle answer）<input id="oracle-min-price" type="text" inputmode="decimal" autocomplete="off" placeholder="例如 60000"></label>
-      <label>Max 价（USD，写 STABLE_PRICE；留空 = Min）<input id="oracle-max-price" type="text" inputmode="decimal" autocomplete="off" placeholder="例如 60060"></label>
+      <label>Min 价（USD，写 MockOracle answer）<input id="oracle-min-price" type="text" inputmode="decimal" autocomplete="off" placeholder="例如 2000"></label>
+      <label>Max 价（USD，写 STABLE_PRICE；留空 = Min）<input id="oracle-max-price" type="text" inputmode="decimal" autocomplete="off" placeholder="例如 2030"></label>
       <button id="set-oracle-price" type="button">设置 Min / Max</button>
     </div>
     <p id="oracle-status" class="muted action-status"></p>

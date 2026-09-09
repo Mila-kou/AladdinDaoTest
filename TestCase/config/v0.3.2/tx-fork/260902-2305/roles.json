@@ -1,0 +1,38 @@
+{
+  "generatedAt": "2026-09-02T15:29:11.749Z",
+  "deploymentId": "tx-fork-v032-260902r4",
+  "chainId": 99911,
+  "dataStore": "0x6212A7361276915108aDe471caBF03484c5C2380",
+  "defaultAdminRoleMember0": "0x75AC424036F140E07b50B651BBe307467462749E",
+  "grants": [
+    {
+      "role": "ORDER_KEEPER",
+      "account": "0x542fe841228416F6a3D65eb534a90Ebc5cc36354"
+    },
+    {
+      "role": "FROZEN_ORDER_KEEPER",
+      "account": "0x542fe841228416F6a3D65eb534a90Ebc5cc36354"
+    },
+    {
+      "role": "LIQUIDATION_KEEPER",
+      "account": "0x542fe841228416F6a3D65eb534a90Ebc5cc36354"
+    },
+    {
+      "role": "ADL_KEEPER",
+      "account": "0x542fe841228416F6a3D65eb534a90Ebc5cc36354"
+    },
+    {
+      "role": "CONTROLLER",
+      "account": "0xf82CF35C5c0019861c2cDC65041C8Ac32970D403"
+    },
+    {
+      "role": "CONFIG_KEEPER",
+      "account": "0xf82CF35C5c0019861c2cDC65041C8Ac32970D403"
+    },
+    {
+      "role": "MARKET_KEEPER",
+      "account": "0xf82CF35C5c0019861c2cDC65041C8Ac32970D403"
+    }
+  ],
+  "note": "Ignition bootstrap 角色（DEFAULT_ADMIN/CONTROLLER/CONFIG_KEEPER 等）仍留在首次一次性 deployer 上，未回收（02 §9.3）；fork 上经 Admin RPC 免签名可随时代行。"
+}

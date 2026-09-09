@@ -22,10 +22,17 @@ Fork 上的交易和链上数据核对默认使用 `default-mock` Market Bundle�
 cd TestCode
 npm install
 cp .env.example .env.local
-npm run config:validate -- ./config/deployments/base-sepolia-v0.3.1-260729.json
+npm run config:validate       # 校验 5 个环境的 deployment/release/chain/manifest 绑定
+npm run config:print          # 查看当前环境实际采用的绑定（RPC 只显示脱敏地址）
 npm run doctor
 npm run typecheck
 ```
+
+Deployment manifest 不再由 `.env.local` 的单个 `E2E_DEPLOYMENT_MANIFEST` 选择。唯一选择入口是
+[`config/environment-bindings.json`](config/environment-bindings.json)：每个环境分别登记 `deploymentId`、
+manifest、合约版本与 commit、环境 Chain ID、部署链 Chain ID、ABI/bytecode 目录和参数 registry。
+运行前会同时核对绑定表、manifest、`CURRENT.json environments.*.forkOf`、RPC `eth_chainId`，并检查
+DataStore/Reader/Config 的 bytecode；任一不一致直接停止，不发送交易。遗留的全局 manifest 环境变量会被忽略。
 
 首次在本机运行浏览器测试前执行：
 
@@ -45,7 +52,10 @@ npm run playwright:install
 
 三个字段在 `src/reporting/schema.ts` 均为 optional，历史产物不受影响。主看板与 `/runs` 页头显示「目标基线 vX（CURRENT.json）｜环境基线 vY」（目标基线在渲染时实时读登记；环境基线取运行记录），不一致时给出醒目徽章「环境基线 ≠ 目标基线：本批不充当目标版本回归材料」；`summary.md` 第二行同步写出；`/api/version` 返回 `release / releaseSource / targetRelease / releaseMismatch / currentTargetRelease / baselineRegistry`。`/runs` 页「版本 / Release」输入框默认值取 `CURRENT.json` 环境映射的部署标签（各环境唯一时），保证「批次 release = 环境实际部署版本」；改 `.env.local` 的 `E2E_RELEASE` 只影响无映射环境的回退值。
 
-切换测试版本的步骤：只改 `CURRENT.json`（`primary` / `deployments` / `environments.*.forkOf`），然后在本目录运行基线引用 lint：
+切换“目标测试版本”只改 `CURRENT.json primary`。切换某个环境的“实际部署”必须让
+`CURRENT.json environments.*.forkOf` 与 `config/environment-bindings.json` 同步；推荐只通过
+`npm run deploy:contracts` 完成，它会原子更新 manifest、环境绑定、CURRENT 登记和参数快照。
+随后在本目录运行基线引用 lint：
 
 ```bash
 npm run baseline:lint                 # 有过期引用退出码 1（默认）
@@ -62,6 +72,7 @@ TestCode/
 ├── abi/                         # 固定版本 ABI，后续由项目方提供
 ├── config/
 │   ├── deployments/             # 已部署地址和市场清单
+│   ├── environment-bindings.json # 环境 → 实际部署/manifest/release/commit 的机器可读绑定
 │   ├── environments/            # 五类执行环境定义
 │   └── markets/                 # Synthetic Market 参数 Profile
 ├── contracts/                   # Mock Token / Mock Oracle 接入约定
@@ -96,6 +107,7 @@ TestCode/
 - [后续用例实施约定](docs/03-后续用例实施约定.md)
 - [测试结果与看板](docs/04-测试结果与看板.md)
 - [Market Bundle 与 Keeper 执行模式](docs/05-Market-Bundle与Keeper执行模式.md)
+- [链上交易核对执行器（贴 tx hash 核对：`npm run verify:tx` / 看板逐条引导 / 结论进 results.md 与台账）](docs/09-链上交易核对执行器.md)
 
 ## 默认 Mock 资源
 
@@ -118,7 +130,7 @@ MockBTC 参考市场读取、复制并逐项回读，最终一起写入 `config/
 ```bash
 # 一键创建 Tenderly Virtual TestNet（固定 Chain ID：tx-fork 99911 / oracle-fork 99912 / time-fork 99913）
 # 前置：.env.local 或环境页 ① 配好 E2E_TENDERLY_ACCESS_TOKEN（可选 E2E_TENDERLY_ACCOUNT_SLUG / E2E_TENDERLY_PROJECT_SLUG，留空从已配置的 Fork RPC 推导）
-# 创建后自动：eth_chainId 校验 → 回填 .env.local 的 RPC / Admin RPC / WSS / Chain ID → 登记 config/tenderly-vnets.json 与 Docs/contract-releases/CURRENT.json
+# 创建后自动：eth_chainId 校验 → 回填 RPC / Admin RPC / WSS / Chain ID → 环境绑定复位到 Base 部署 → 登记 tenderly-vnets.json 与 CURRENT.json
 npm run env:vnet:create -- --env time-fork                 # 可加 --block <十进制区块> 钉死 fork 点；--dry-run 只打印请求体
 npm run env:vnet:list                                      # 本地登记（无凭证）
 npm run env:vnet:delete -- --env time-fork                 # 删除该环境最近一次创建的 VNet（CI/临时环境务必清理，避免配额堆满）
@@ -238,7 +250,8 @@ npm run dashboard:serve
 - `http://localhost:4173/test-cases`：80 条测试用例查看、按计划 Project / 市场兼容性筛选与编辑；每条用例显示默认市场资源、标准 Market 兼容性、时间能力、签名方式和 Mock 资源别名；
 - `http://localhost:4173/runs`：创建版本化测试运行；支持单条、部分、全部用例，默认使用用例的 Mock 资源，也可对兼容用例切换标准 Market；同时支持默认/覆盖环境和新 RPC；
 - `http://localhost:4173/environments`：按顺序分步配置——①Fork 与 RPC（含 Tenderly Virtual TestNet 建法指引与自定义 Chain ID 提示，填好即存）→ ②Trade/账户/高级配置（默认折叠，需修改自行展开）→ ③Mock Market Bundle 初始化 → ④环境检查（验收）。选择 `base-sepolia` 时隐藏 ③，只维护已有部署需要的配置；Mock Oracle 价格与参数直写在"合约参数"页；
-- `http://localhost:4173/faucet`：**Faucet & 交易** 运维工具页：Base Sepolia Faucet 余额监控、低余额告警与自动补款、Fund USDC，以及**造数据计划**（最多 100 个 Trader：地址自动派生或粘贴覆盖 → 逐个注资 ETH/USDC + Router 授权 → 按网格规则批量下单：fixed 固定 / linear 线性递增 / ratio 等比递增，多空可交替；三种编辑方式——预设生成器、规则表格、高级 JSON 双向同步；展开预览逐单清单后再执行；后台任务 + 实时日志 + 历史任务表；计划保存在 `config/noise-plan.json`；交易不做核验；纪律：批次前铺底，并发会被窗口纯净度断言拦截）。测试期专用，与测试结果数据无耦合，上线后如不再需要可整页下线；
+- `http://localhost:4173/deployments`：**版本、环境与合约地址**独立页；按版本和环境筛选 Trade 页面入口、Deployment、核心/扩展合约、运行时 Mock 资源与 Market 地址；
+- `http://localhost:4173/faucet`：**Faucet USDC** 运维工具页：Base Sepolia Faucet 余额监控、低余额告警与自动补款、Fund USDC，以及**造数据计划**（最多 100 个 Trader：地址自动派生或粘贴覆盖 → 逐个注资 ETH/USDC + Router 授权 → 按网格规则批量下单：fixed 固定 / linear 线性递增 / ratio 等比递增，多空可交替；三种编辑方式——预设生成器、规则表格、高级 JSON 双向同步；展开预览逐单清单后再执行；后台任务 + 实时日志 + 历史任务表；计划保存在 `config/noise-plan.json`；交易不做核验；纪律：批次前铺底，并发会被窗口纯净度断言拦截）。测试期专用，与测试结果数据无耦合，上线后如不再需要可整页下线；
 - `http://localhost:4173/parameters`：合约参数清单与筛选；私有 Fork 环境额外提供 **Mock Oracle 价格面板**（实时读数 + 刷新时间戳/设置新价格）与**单参数直写**（每行"修改"按钮 → DataStore 直写 + 回读核对；改动不自动恢复，页面有显著警示）；
 - `http://localhost:4173/formulas`：合约核心公式和精度口径；
 - `http://localhost:4173/page-formulas`：需求总结中的页面数据计算公式。
@@ -281,6 +294,7 @@ npm run dashboard:serve -- --dir artifacts/fixture-dashboard --port 4173
 - `summary.md`：适合 CI、PR 和清单回填的摘要；
 - `dashboard.html`：无需服务端、无需网络的离线看板；
 - `executions.html`：逐用例执行详情、数据核对公式和交易证据；
+- `deployments.html`：按版本、环境分组的页面入口、合约、Mock 资源与 Market 地址；
 - `parameters.html`：由系统参数 CSV 生成的可筛选资料页；
 - `formulas.html`：由核心计算公式 Markdown 生成的阅读页；
 - `page-formulas.html`：由需求总结中的页面字段计算公式生成；
@@ -380,8 +394,8 @@ flags 一览：
 | S02 | `tests/S02/scn-011.spec.ts` | SCN-011 现价上方限价开空 LimitIncrease short | tx-fork |
 | S02 | `tests/S02/scn-012.spec.ts` | SCN-012 突破追多 StopIncrease long | tx-fork |
 | S02 | `tests/S02/scn-013.spec.ts` | SCN-013 破位追空 StopIncrease short | tx-fork |
-| S02 | `tests/S02/scn-015.spec.ts` | SCN-015 括号单 TP 先触发 LimitDecrease long | tx-fork |
-| S02 | `tests/S02/scn-016.spec.ts` | SCN-016 括号单 SL 先触发 StopLossDecrease long | tx-fork |
+| S02 | `tests/S02/scn-015.spec.ts` | SCN-015 多头开仓时同时附带 TP/SL，TP 先触发 LimitDecrease long | tx-fork |
+| S02 | `tests/S02/scn-016.spec.ts` | SCN-016 多头开仓时同时附带 TP/SL，SL 先触发 StopLossDecrease long | tx-fork |
 | S03 | `tests/S03/scn-022.spec.ts` | SCN-022 纯价格 PnL 与实际可得差异（盈利全平双向数据集；可选前端显示值采集） | tx-fork |
 | S03 | `tests/S03/scn-023.spec.ts` | SCN-023 盈利分批兑现（部分平 50% 后清仓） | tx-fork |
 | S03 | `tests/S03/scn-024.spec.ts` | SCN-024 紧急全部平仓（亏损全平双向数据集） | tx-fork |

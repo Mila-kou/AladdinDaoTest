@@ -144,6 +144,10 @@ export const scenarioResultSchema = z.object({
   environment: z.string().min(1),
   status: resultStatusSchema,
   checkResult: z.string().min(1),
+  /** 创建本次执行的看板批次；历史/命令行直跑结果可以没有。 */
+  batchId: z.string().min(1).optional(),
+  /** 保存本条结果的 artifacts/runs/<id> 目录名。 */
+  resultRunId: z.string().min(1).optional(),
   executionLinks: z.array(executionLinkSchema),
   executionEvidence: executionEvidenceSchema.optional(),
   executedAt: z.string().datetime(),

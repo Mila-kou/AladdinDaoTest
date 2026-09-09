@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-01T11:04:54.113Z",
+  "updatedAt": "2026-09-02T09:09:02.886Z",
   "environments": {
     "oracle-fork": {
       "token": {
@@ -10,9 +10,9 @@
       },
       "oracle": {
         "description": "FXMOCK / USD",
-        "decimals": 8,
-        "minPrice": "60000",
-        "maxPrice": "60060",
+        "decimals": 18,
+        "minPrice": "2000",
+        "maxPrice": "2030",
         "heartbeatDuration": "86400"
       },
       "collateralOracle": {
@@ -84,9 +84,9 @@
       },
       "oracle": {
         "description": "FXMOCK / USD",
-        "decimals": 8,
-        "minPrice": "60000",
-        "maxPrice": "60060",
+        "decimals": 18,
+        "minPrice": "2000",
+        "maxPrice": "2030",
         "heartbeatDuration": "86400"
       },
       "collateralOracle": {
@@ -123,6 +123,10 @@
         "PRICE_IMPACT_PARAMETER": "600000000000000000",
         "POSITION_FEE_FACTOR(true)": "500000000000000000000000000",
         "POSITION_FEE_FACTOR(false)": "200000000000000000000000000",
+        "MIN_DYNAMIC_SPREAD(true)": "0",
+        "MIN_DYNAMIC_SPREAD(false)": "0",
+        "MAX_DYNAMIC_SPREAD(true)": "1000000000000000000",
+        "MAX_DYNAMIC_SPREAD(false)": "1000000000000000000",
         "SKEW_IMPACT_FACTOR": "2500000000000000",
         "MIN_SKEW_IMPACT": "-5000000000000000",
         "MAX_SKEW_IMPACT": "5000000000000000",
@@ -130,11 +134,7 @@
         "FUNDING_FLOOR_FACTOR": "3472222222222222222222",
         "FUNDING_BASE_FACTOR": "45278306284880771182141",
         "MIN_FUNDING_FACTOR_PER_SECOND": "-8722571029934043632673",
-        "MAX_FUNDING_FACTOR_PER_SECOND": "35320839675291730086250",
-        "MIN_DYNAMIC_SPREAD(true)": "0",
-        "MIN_DYNAMIC_SPREAD(false)": "0",
-        "MAX_DYNAMIC_SPREAD(true)": "1000000000000000000",
-        "MAX_DYNAMIC_SPREAD(false)": "1000000000000000000"
+        "MAX_FUNDING_FACTOR_PER_SECOND": "35320839675291730086250"
       },
       "funding": {
         "nativeBalanceEth": "10",
@@ -162,9 +162,9 @@
       },
       "oracle": {
         "description": "FXMOCK / USD",
-        "decimals": 8,
-        "minPrice": "60000",
-        "maxPrice": "60060",
+        "decimals": 18,
+        "minPrice": "2000",
+        "maxPrice": "2030",
         "heartbeatDuration": "86400"
       },
       "collateralOracle": {
@@ -202,9 +202,9 @@
       },
       "oracle": {
         "description": "FXMOCK / USD",
-        "decimals": 8,
-        "minPrice": "60000",
-        "maxPrice": "60060",
+        "decimals": 18,
+        "minPrice": "2000",
+        "maxPrice": "2030",
         "heartbeatDuration": "86400"
       },
       "collateralOracle": {
@@ -242,9 +242,9 @@
       },
       "oracle": {
         "description": "FXMOCK / USD",
-        "decimals": 8,
-        "minPrice": "60000",
-        "maxPrice": "60060",
+        "decimals": 18,
+        "minPrice": "2000",
+        "maxPrice": "2030",
         "heartbeatDuration": "86400"
       },
       "collateralOracle": {

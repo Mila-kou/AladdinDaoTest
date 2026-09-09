@@ -7,7 +7,7 @@
 //    仓位不影响核对（期望模型全部基于 before 快照的增量）。
 //
 // 用法：
-//   npm run env:noise:trades -- --plan <plan.json>  # 按造数据计划执行（页面「Faucet & 交易」编辑保存的 JSON）
+//   npm run env:noise:trades -- --plan <plan.json>  # 按造数据计划执行（页面「测试环境」编辑保存的 JSON）
 //   npm run env:noise:trades                        # 无计划：兼容模式，3 个内置 trader × 2 单伪随机，留仓
 //   npm run env:noise:trades -- --orders 4          # 兼容模式：每 trader 4 单
 //   npm run env:noise:trades -- --traders 0xA,0xB   # 兼容模式：指定 trader（或配 E2E_NOISE_TRADER_ACCOUNTS）
@@ -21,6 +21,8 @@ import { createPublicClient, createWalletClient, defineChain, getAddress, http, 
 import { privateKeyToAccount } from 'viem/accounts';
 
 import { resolveMockMarketBundle } from '../src/config/mock-resources.js';
+import { loadRuntimeConfig } from '../src/config/runtime.js';
+import { assertRuntimeEnvironmentBinding } from '../src/config/environment-binding.js';
 import { expandPlan, noisePlanSchema, planTraders, summarizePlan, type NoisePlan, type PlannedOrder, type TraderWalletBundle } from '../src/domain/noise-plan.js';
 import {
   cumulativeOpenCostsKey,
@@ -131,10 +133,13 @@ function signingBroadcaster(input: {
 }
 
 async function main(): Promise<void> {
-  const rpcUrl = process.env.E2E_TX_FORK_RPC_URL;
-  const adminRpcUrl = process.env.E2E_TX_FORK_ADMIN_RPC_URL ?? rpcUrl;
-  const keeperAccount = process.env.E2E_KEEPER_ACCOUNT;
-  if (!rpcUrl || !keeperAccount) throw new Error('需要 E2E_TX_FORK_RPC_URL 与 E2E_KEEPER_ACCOUNT');
+  const runtime = loadRuntimeConfig();
+  if (runtime.environment !== 'tx-fork') throw new Error(`模拟交易只支持 tx-fork，当前为 ${runtime.environment}`);
+  await assertRuntimeEnvironmentBinding(runtime);
+  const rpcUrl = runtime.rpcUrl;
+  const adminRpcUrl = runtime.adminRpcUrl ?? runtime.rpcUrl;
+  const keeperAccount = runtime.keeperAccount;
+  if (!keeperAccount) throw new Error('需要 E2E_KEEPER_ACCOUNT');
 
   // 计划模式（页面/JSON）优先；无计划则退回兼容模式（内置伪随机）
   const planPath = argValue('--plan');
@@ -169,7 +174,8 @@ async function main(): Promise<void> {
     import(pathToFileURL(legacyPath('tool/onchain-tx/lib/keys.mjs')).href),
     import('../src/scenarios/scn-009-runner.js'),
   ]);
-  const deploymentDir = resolve(process.cwd(), '../Github/fx100-contracts@release-v0.3.1/base_sepolia_v0.3.1_260729');
+  const deploymentDir = runtime.deploymentDirectory;
+  if (!deploymentDir) throw new Error('绑定 manifest 缺少 source.deploymentDirectory');
   const baseDeployment = deploymentModule.loadDeployment(deploymentDir);
   const deployment = { ...baseDeployment, addresses: { ...baseDeployment.addresses, usdc } };
   const secrets = await loadWalletSecrets();
@@ -197,14 +203,8 @@ async function main(): Promise<void> {
   }
   console.log('✔ Mock Oracle 时间戳已刷新');
 
-  // Keeper 执行走 impersonation（noise 交易不需要真实签名证据）
-  const runtimeLike = {
-    rpcUrl,
-    adminRpcUrl,
-    requestTimeoutMs: 30_000,
-  } as never;
   const providers = await runnerModule.inlineOracleProviders(
-    { ...(runtimeLike as object), rpcUrl } as never,
+    runtime as never,
     deployment as never,
     bundle.token!.address,
   );

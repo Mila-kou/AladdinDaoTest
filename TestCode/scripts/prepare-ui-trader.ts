@@ -17,12 +17,11 @@
  *   E2E_ENV=tx-fork E2E_TRADER_PROFILE=ui E2E_UI_COLLECT=true \
  *   E2E_ENV_PRIORITY_KEYS=E2E_ENV,E2E_TRADER_PROFILE npx playwright test tests/S03/scn-022.spec.ts --project=tx-fork
  */
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-
 import { createPublicClient, encodeFunctionData, getAddress, http, maxUint256, parseAbi, parseEther, parseUnits, toHex } from 'viem';
 
 import { loadRuntimeConfig } from '../src/config/runtime.js';
+import { loadDeploymentManifest } from '../src/config/deployment.js';
+import { assertRuntimeEnvironmentBinding } from '../src/config/environment-binding.js';
 
 /** 兜底：合成地址（仅 impersonation 可用）；正式用法是 .env.local 的 E2E_UI_TEST_ACCOUNT（配套 E2E_UI_TEST_PRIVATE_KEY，private-key 模式出 PASS 级证据） */
 export const DEFAULT_UI_TRADER = '0xF100000000000000000000000000000000000d01' as const;
@@ -43,13 +42,14 @@ async function rpc(url: string, method: string, params: unknown[]): Promise<unkn
 
 async function main() {
   const runtime = loadRuntimeConfig();
+  await assertRuntimeEnvironmentBinding(runtime);
   if (!runtime.adminRpcUrl) throw new Error(`环境 ${runtime.environment} 未配置 admin RPC，无法注资/免签授权`);
   const argIndex = process.argv.indexOf('--account');
   const account = getAddress(argIndex >= 0 ? process.argv[argIndex + 1]! : (process.env.E2E_UI_TEST_ACCOUNT ?? DEFAULT_UI_TRADER));
   console.log(`UI trader = ${account}${argIndex >= 0 ? '（--account）' : process.env.E2E_UI_TEST_ACCOUNT ? '（.env.local E2E_UI_TEST_ACCOUNT）' : '（兜底合成地址，仅 impersonation）'}`);
-  const deployed = JSON.parse(readFileSync(resolve(process.cwd(), '../Github/fx100-contracts@release-v0.3.1/base_sepolia_v0.3.1_260729/deployed_addresses.json'), 'utf8')) as Record<string, string>;
-  const usdc = getAddress(deployed['Fx100Usdc#MockUSDC']!);
-  const router = getAddress(deployed['Fx100Base#Router']!);
+  const manifest = await loadDeploymentManifest(runtime.deploymentManifestPath);
+  const usdc = getAddress(manifest.additionalContracts.mockUsdc ?? (() => { throw new Error('绑定 manifest 缺少 mockUsdc'); })());
+  const router = getAddress(manifest.additionalContracts.router ?? (() => { throw new Error('绑定 manifest 缺少 router'); })());
   const client = createPublicClient({ transport: http(runtime.rpcUrl, { timeout: 30_000 }) });
 
   const [ethBefore, decimals] = await Promise.all([client.getBalance({ address: account }), client.readContract({ address: usdc, abi: erc20Abi, functionName: 'decimals' })]);

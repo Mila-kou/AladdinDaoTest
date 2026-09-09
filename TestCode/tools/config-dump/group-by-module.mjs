@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // 把 dump-config.mjs 产出的参数快照按**功能模块**归类，落一份 CSV。
 //
-//   node group-by-module.mjs                          # 默认读最新部署快照
+//   node group-by-module.mjs --snapshot <参数快照.json>
 //   node group-by-module.mjs --deployment <名字>
 //   node group-by-module.mjs --only-set               # 只要已设置的（119 条那批）
 //
@@ -17,7 +17,6 @@ import { humanize } from "./lib/hints.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CONFIG_DIR = resolve(HERE, "../../artifacts/parameter-cache");
-const DEFAULT_DEPLOYMENT = "base_sepolia_v0.3.1_260729";
 
 /**
  * 功能模块归类规则：**有序**匹配，先具体后宽泛，命中即止。
@@ -60,7 +59,7 @@ const CONFIDENCE = {
 };
 
 function parseArgs() {
-  const out = { deployment: DEFAULT_DEPLOYMENT };
+  const out = {};
   const argv = process.argv.slice(2);
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === "--deployment") out.deployment = argv[++i];
@@ -78,6 +77,9 @@ const csvCell = (v) => {
 
 function main() {
   const args = parseArgs();
+  if (!args.snapshot && !args.deployment) {
+    throw new Error("缺少 --snapshot 或 --deployment；不再回退固定 v0.3.1 参数快照。");
+  }
   const snapshotPath = args.snapshot
     ? resolve(args.snapshot)
     : resolve(CONFIG_DIR, `${args.deployment}.params.json`);

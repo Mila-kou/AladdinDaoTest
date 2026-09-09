@@ -1,12 +1,11 @@
-import { readFile } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
-
-import dotenv from 'dotenv';
 import { createPublicClient, encodeFunctionData, getAddress, http, parseAbi } from 'viem';
 import { z } from 'zod';
 
 import { environments, type EnvironmentName } from '../../config/environments/catalog.js';
-import { loadDeploymentManifest } from '../config/deployment.js';
+import {
+  assertRuntimeEnvironmentBinding,
+  loadEnvironmentBinding,
+} from '../config/environment-binding.js';
 import { sendAdminTransaction } from '../drivers/admin-rpc.js';
 import { readEnvironmentSettings } from './environment-settings.js';
 
@@ -54,17 +53,17 @@ function parseValue(valueType: 'uint' | 'int' | 'bool' | 'address', value: strin
 export class ParameterWriteManager {
   constructor(private readonly projectRoot: string) {}
 
-  private async manifestAddresses(): Promise<{ dataStore: string; config: string }> {
-    const values = {
-      ...dotenv.parse(await readFile(join(this.projectRoot, '.env'), 'utf8').catch(() => '')),
-      ...dotenv.parse(await readFile(join(this.projectRoot, '.env.local'), 'utf8').catch(() => '')),
-    } as Record<string, string>;
-    const manifestPath = resolve(
-      this.projectRoot,
-      values.E2E_DEPLOYMENT_MANIFEST ?? 'config/deployments/base-sepolia-v0.3.1-260729.json',
-    );
-    const manifest = await loadDeploymentManifest(manifestPath);
-    return { dataStore: manifest.contracts.dataStore, config: manifest.contracts.config };
+  private manifestAddresses(environment: EnvironmentName): {
+    dataStore: string;
+    config: string;
+    binding: ReturnType<typeof loadEnvironmentBinding>;
+  } {
+    const binding = loadEnvironmentBinding(this.projectRoot, environment);
+    return {
+      dataStore: binding.manifest.contracts.dataStore,
+      config: binding.manifest.contracts.config,
+      binding,
+    };
   }
 
   async write(raw: unknown) {
@@ -75,7 +74,16 @@ export class ParameterWriteManager {
     const settings = await readEnvironmentSettings(this.projectRoot, input.environment as EnvironmentName);
     if (!settings.rpcUrl) throw new Error(`${input.environment} 未配置 RPC。`);
     const adminRpcUrl = settings.adminRpcUrl ?? settings.rpcUrl;
-    const addresses = await this.manifestAddresses();
+    const addresses = this.manifestAddresses(input.environment as EnvironmentName);
+    await assertRuntimeEnvironmentBinding({
+      environment: input.environment as EnvironmentName,
+      chainId: addresses.binding.binding.environmentChainId,
+      rpcUrl: settings.rpcUrl,
+      deploymentManifestPath: addresses.binding.manifestPath,
+      deploymentId: addresses.binding.binding.deploymentId,
+      deploymentRelease: addresses.binding.binding.release,
+      requestTimeoutMs: 20_000,
+    }, this.projectRoot);
     const client = createPublicClient({ transport: http(settings.rpcUrl, { timeout: 20_000 }) });
     const dataStore = getAddress(addresses.dataStore);
     const key = input.key as `0x${string}`;

@@ -1,4 +1,0 @@
-interface:
-  display_name: "FX100 合约版本测试流程"
-  short_description: "固化合约版本差异、部署、功能、参数及边界测试准备流程"
-  default_prompt: "使用 $fx100-contract-release-workflow 分析当前主测合约版本并完成全部测试准入材料。"

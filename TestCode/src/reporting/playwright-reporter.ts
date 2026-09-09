@@ -213,6 +213,8 @@ function makeScenarioResult(
     environment,
     status,
     checkResult,
+    ...(process.env.E2E_BATCH_ID ? { batchId: cleanRunId(process.env.E2E_BATCH_ID) } : {}),
+    ...(process.env.E2E_RUN_ID ? { resultRunId: cleanRunId(process.env.E2E_RUN_ID) } : {}),
     executionLinks: executionLinks(finalResult),
     executedAt: finalResult.startTime.toISOString(),
     expectedStatus: test.expectedStatus,

@@ -1,6 +1,3 @@
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
-
 import {
   createPublicClient,
   defineChain,
@@ -11,14 +8,13 @@ import {
   keccak256,
   parseAbi,
   parseAbiParameters,
-  type Abi,
   type Address,
 } from 'viem';
 import { z } from 'zod';
 
 import { defaultMockMarketProfile, defaultMockParameterKey, defaultMockParameterLabel } from '../config/default-mock-market.js';
-import { loadDeploymentManifest } from '../config/deployment.js';
-import { readEnvironmentConfiguration } from './environment-configuration.js';
+import { loadEnvironmentBinding } from '../config/environment-binding.js';
+import { loadDeploymentAbi } from '../config/deployment.js';
 import { readEnvironmentSettings } from './environment-settings.js';
 import { environmentNames, type EnvironmentName } from '../../config/environments/catalog.js';
 
@@ -27,7 +23,6 @@ const copyRequestSchema = listRequestSchema.extend({
   indexToken: z.string().regex(/^0x[0-9a-fA-F]{40}$/, 'Index Token 地址格式不正确。'),
 });
 
-interface Artifact { readonly abi: Abi; }
 interface MarketProps {
   readonly marketIndex: bigint;
   readonly vault: Address;
@@ -49,20 +44,14 @@ function bytes32Text(value: unknown): string {
   try { return hexToString(value as `0x${string}`, { size: 32 }).replace(/\0+$/, ''); } catch { return ''; }
 }
 
-async function artifact(path: string): Promise<Artifact> {
-  return JSON.parse(await readFile(resolve(process.cwd(), path), 'utf8')) as Artifact;
-}
-
 async function context(projectRoot: string, environment: EnvironmentName) {
   const settings = await readEnvironmentSettings(projectRoot, environment);
   if (!settings.rpcUrl) throw new Error(`${environment} 尚未配置 RPC，无法读取链上 Market。`);
-  const configuration = await readEnvironmentConfiguration(projectRoot, environment);
-  const manifestField = configuration.fields.find((field) => field.key === 'E2E_DEPLOYMENT_MANIFEST');
-  if (!manifestField?.value) throw new Error('未配置 Deployment Manifest，无法定位 Reader 与 DataStore。');
-  const manifest = await loadDeploymentManifest(resolve(projectRoot, manifestField.value));
-  const [dataStoreArtifact, readerArtifact] = await Promise.all([
-    artifact('../Github/fx100-contracts@release-v0.3.1/out/DataStore.sol/DataStore.json'),
-    artifact('../Github/fx100-contracts@release-v0.3.1/out/Reader.sol/Reader.json'),
+  const binding = loadEnvironmentBinding(projectRoot, environment);
+  const manifest = binding.manifest;
+  const [dataStoreAbi, readerAbi] = await Promise.all([
+    loadDeploymentAbi(manifest, 'DataStore', projectRoot),
+    loadDeploymentAbi(manifest, 'Reader', projectRoot),
   ]);
   const chain = defineChain({
     id: settings.chainId ?? manifest.chainId,
@@ -74,8 +63,8 @@ async function context(projectRoot: string, environment: EnvironmentName) {
     manifest,
     dataStore: getAddress(manifest.contracts.dataStore),
     reader: getAddress(manifest.contracts.reader),
-    dataStoreArtifact,
-    readerArtifact,
+    dataStoreAbi,
+    readerAbi,
     client: createPublicClient({ chain, transport: http(settings.rpcUrl, { timeout: 30_000 }) }),
   };
 }
@@ -85,7 +74,7 @@ async function markets(projectRoot: string, environment: EnvironmentName): Promi
   const marketListKey = keccak256(encodeAbiParameters(parseAbiParameters('string'), ['MARKET_LIST']));
   const marketCount = await source.client.readContract({
     address: source.dataStore,
-    abi: source.dataStoreArtifact.abi,
+    abi: source.dataStoreAbi,
     functionName: 'getUintCount',
     args: [marketListKey],
   }) as bigint;
@@ -93,7 +82,7 @@ async function markets(projectRoot: string, environment: EnvironmentName): Promi
   for (let marketIndex = 1n; marketIndex <= marketCount; marketIndex += 1n) {
     const market = await source.client.readContract({
       address: source.reader,
-      abi: source.readerArtifact.abi,
+      abi: source.readerAbi,
       functionName: 'getMarket',
       args: [source.dataStore, marketIndex],
     }) as MarketProps;
@@ -150,7 +139,7 @@ export class DefaultMarketSourceManager {
     for (const parameter of defaultMockMarketProfile.parameters) {
       const value = await source.client.readContract({
         address: source.dataStore,
-        abi: source.dataStoreArtifact.abi,
+        abi: source.dataStoreAbi,
         functionName: parameter.valueType === 'int' ? 'getInt' : 'getUint',
         args: [defaultMockParameterKey(parameter, market.marketIndex)],
       }) as bigint;

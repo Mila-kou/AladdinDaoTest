@@ -5,6 +5,10 @@ import dotenv from 'dotenv';
 import { z } from 'zod';
 
 import { environmentNames, environments, type EnvironmentName } from '../../config/environments/catalog.js';
+import {
+  loadEnvironmentBinding,
+  updateEnvironmentBinding,
+} from '../config/environment-binding.js';
 import { readEnvironmentSettings, saveEnvironmentSettings } from './environment-settings.js';
 
 /**
@@ -20,7 +24,8 @@ import { readEnvironmentSettings, saveEnvironmentSettings } from './environment-
  *
  * 创建后：① 用 eth_chainId 校验固定编号；② 回填 .env.local 的 RPC / Admin RPC / WSS / Chain ID（saveEnvironmentSettings）；
  * ③ 在 config/tenderly-vnets.json 登记无凭证的记录（environment id 用于删除，只存 RPC 主机名）；
- * ④ 回写 Docs/contract-releases/CURRENT.json 的 environments.<env>（status/chainId/forkBlockNumber/forkOf）。
+ * ④ 将 config/environment-bindings.json 的本环境复位到 Base 部署；
+ * ⑤ 回写 Docs/contract-releases/CURRENT.json 的 environments.<env>（status/chainId/forkBlockNumber/forkOf）。
  */
 const API_BASE = 'https://api.tenderly.co/api/public/v1';
 /** Base Sepolia：fx100 v0.3.x 部署基线，所有 Fork 的 Parent Network */
@@ -211,7 +216,14 @@ export class TenderlyForkManager {
   /** 回写基线登记：environments.<env> 的 status/chainId/forkBlockNumber/forkOf/note；失败只告警不阻断创建。 */
   private async updateBaselineRegistry(
     environment: ForkEnvironment,
-    patch: { chainId: number; forkBlockNumber?: number; environmentId?: string; status: 'ready' | 'pending'; note: string },
+    patch: {
+      chainId: number;
+      forkBlockNumber?: number;
+      environmentId?: string;
+      status: 'ready' | 'pending';
+      note: string;
+      resetToBaseDeployment?: boolean;
+    },
   ): Promise<{ updated: boolean; note?: string }> {
     const path = resolve(this.projectRoot, BASELINE_REGISTRY_PATH);
     try {
@@ -220,7 +232,10 @@ export class TenderlyForkManager {
       const current = environmentsNode[environment] ?? {};
       const deployments = Array.isArray(registry.deployments) ? registry.deployments as Array<Record<string, unknown>> : [];
       const baseSepolia = deployments.filter((item) => Number(item.chainId) === PARENT_NETWORK_ID);
-      const forkOf = current.forkOf ?? (baseSepolia.length === 1 ? baseSepolia[0]!.id : null);
+      const baseDeploymentId = baseSepolia.length === 1 ? baseSepolia[0]!.id : null;
+      // 新建 VNet 是从 Base Sepolia parent 重开，不含旧 VNet 上的私有部署。
+      // 因此创建时必须把 forkOf 复位到 Base 部署；保留旧 forkOf 会让 v0.3.2 地址静默指向空 bytecode。
+      const forkOf = patch.resetToBaseDeployment ? baseDeploymentId : (current.forkOf ?? baseDeploymentId);
       environmentsNode[environment] = {
         ...current,
         chainId: patch.chainId,
@@ -313,6 +328,11 @@ export class TenderlyForkManager {
     // 主 RPC 与 Admin RPC 都用 Admin RPC：私有 Fork 上普通读写与 cheatcode（evm_snapshot/evm_revert/setStorageAt）同一端点
     const wssUrl = adminRpc.replace(/^https:/, 'wss:');
     await saveEnvironmentSettings(this.projectRoot, environment, { rpcUrl: adminRpc, adminRpcUrl: adminRpc, wssUrl, chainId });
+    const baseBinding = loadEnvironmentBinding(this.projectRoot, 'base-sepolia').binding;
+    await updateEnvironmentBinding(this.projectRoot, environment, {
+      ...baseBinding,
+      environmentChainId: chainId,
+    });
     const rpcHost = new URL(adminRpc).host;
     const record: TenderlyVNetRecord = {
       environment,
@@ -334,6 +354,7 @@ export class TenderlyForkManager {
         ...(forkBlockNumber !== undefined ? { forkBlockNumber } : {}),
         environmentId,
         status: 'ready',
+        resetToBaseDeployment: true,
         note: `${new Date().toISOString().slice(0, 10)} 由 TestCode 通过 Tenderly Virtual TestNet API 自动创建（chain ${chainId}，fork Base Sepolia${forkBlockNumber !== undefined ? ` @${forkBlockNumber}` : ''}）`,
       });
     return {

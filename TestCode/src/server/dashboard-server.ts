@@ -18,6 +18,11 @@ import { baselineRegistryDisplayPath, targetRelease } from '../config/baseline.j
 import { validateTestRunArtifact, type TestRunArtifact } from '../reporting/schema.js';
 import { saveTestCaseOverride } from '../reporting/test-case-overrides.js';
 import { attachExecutions, loadTestCases, type TestCaseView } from '../reporting/test-cases.js';
+import {
+  buildVersionRunCaseDefinitions,
+  isFunctionalCaseId,
+  loadVersionCases,
+} from '../reporting/version-cases.js';
 import { listParameterEnvironments, queryParameters } from './parameter-query.js';
 import { RunBatchManager } from './run-batches.js';
 import { KeeperServiceManager } from './keeper-service.js';
@@ -55,12 +60,21 @@ import {
   type EnvironmentName,
 } from '../../config/environments/catalog.js';
 import {
+  explorerLinkStatus,
+  findBlockExplorerBaseUrl,
+  findForkDisplayName,
+  findTransactionExplorerUrl,
+  resolveBlockExplorerBaseUrl,
+  transactionExplorerUrl,
+} from '../config/transaction-links.js';
+import {
   appendVersionResults,
   createManualBatch,
   readVersionResults,
   VersionResultsError,
   writeManualBatchSummary,
 } from './version-results.js';
+import { createVerifyTxRoutes, VERIFY_TX_ROUTES } from './verify-tx-routes.js';
 
 export interface DashboardServerOptions {
   readonly host: string;
@@ -96,6 +110,59 @@ function send(
     'Content-Length': Buffer.byteLength(body),
   });
   response.end(headOnly ? undefined : body);
+}
+
+function recordValue(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function findFunctionalTransaction(
+  value: unknown,
+  wanted: string,
+  depth = 0,
+): Record<string, unknown> | undefined {
+  if (depth > 24) return undefined;
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = findFunctionalTransaction(item, wanted, depth + 1);
+      if (found) return found;
+    }
+    return undefined;
+  }
+  if (!recordValue(value)) return undefined;
+  const matchingHash = Object.entries(value).some(([key, candidate]) =>
+    typeof candidate === 'string'
+    && candidate.toLowerCase() === wanted
+    && (key === 'txHash' || key === 'transactionHash' || key === 'hash' || /TxHash$/.test(key)),
+  );
+  if (matchingHash) return value;
+  for (const child of Object.values(value)) {
+    const found = findFunctionalTransaction(child, wanted, depth + 1);
+    if (found) return found;
+  }
+  return undefined;
+}
+
+function resolveEvidenceTransactionLink(
+  projectRoot: string,
+  environment: string,
+  evidence: unknown,
+  hash: string,
+): { transactionUrl?: string; transactionLinkStatus: 'available' | 'missing' } {
+  const savedUrl = findTransactionExplorerUrl(evidence, hash);
+  const savedBaseUrl = findBlockExplorerBaseUrl(evidence);
+  const baseUrl = savedBaseUrl ?? resolveBlockExplorerBaseUrl(
+    projectRoot,
+    environment,
+    undefined,
+    findForkDisplayName(evidence),
+  );
+  const candidate = savedUrl ?? (baseUrl ? transactionExplorerUrl(baseUrl, hash) : undefined);
+  const transactionLinkStatus = explorerLinkStatus(projectRoot, candidate);
+  return {
+    transactionLinkStatus,
+    ...(candidate && transactionLinkStatus === 'available' ? { transactionUrl: candidate } : {}),
+  };
 }
 
 function sendJson(response: ServerResponse, status: number, body: unknown, headOnly = false): void {
@@ -150,6 +217,22 @@ async function readTestCaseViews(
   return attachExecutions(definitions, artifact.results);
 }
 
+async function readRunCaseViews(
+  artifactDirectory: string,
+  projectRoot: string,
+): Promise<TestCaseView[]> {
+  const [artifact, versionCases] = await Promise.all([
+    readArtifact(artifactDirectory),
+    loadVersionCases(projectRoot),
+  ]);
+  const catalogPath = resolve(projectRoot, artifact.source.catalogPath);
+  const scenarios = await loadTestCases(artifact.catalog, catalogPath);
+  return attachExecutions(
+    [...scenarios, ...buildVersionRunCaseDefinitions(versionCases)],
+    artifact.results,
+  );
+}
+
 function isSameOriginRequest(request: IncomingMessage): boolean {
   const origin = request.headers.origin;
   if (!origin || !request.headers.host) return false;
@@ -178,7 +261,7 @@ export async function startDashboardServer(options: DashboardServerOptions) {
   ]);
   const runManager = await RunBatchManager.create({
     projectRoot,
-    getCases: () => readTestCaseViews(artifactDirectory, projectRoot),
+    getCases: () => readRunCaseViews(artifactDirectory, projectRoot),
   });
   const keeperServiceManager = new KeeperServiceManager(projectRoot);
   const tenderlyForkManager = new TenderlyForkManager(projectRoot);
@@ -205,6 +288,7 @@ export async function startDashboardServer(options: DashboardServerOptions) {
     faucetBalanceMonitor,
     usdcFundingManager,
   );
+  const verifyTxRoutes = createVerifyTxRoutes({ projectRoot, helpers: { isSameOriginRequest, sendJson } });
 
   const server = createServer(async (request: IncomingMessage, response: ServerResponse) => {
     const method = request.method ?? 'GET';
@@ -229,6 +313,8 @@ export async function startDashboardServer(options: DashboardServerOptions) {
         '/runs.html': 'runs.html',
         '/environments': 'environments.html',
         '/environments.html': 'environments.html',
+        '/deployments': 'deployments.html',
+        '/deployments.html': 'deployments.html',
         '/faucet': 'faucet.html',
         '/faucet.html': 'faucet.html',
         '/parameters': 'parameters.html',
@@ -995,6 +1081,9 @@ export async function startDashboardServer(options: DashboardServerOptions) {
         return;
       }
 
+      // —— 按 tx hash 核对（/api/verify-tx）与证据挂到手工批次（/api/manual-runs/attach）：见 verify-tx-routes.ts ——
+      if (await verifyTxRoutes.handle(request, response, url, method)) return;
+
       if (url.pathname === '/api/reconciliation-fields' && (method === 'GET' || method === 'HEAD')) {
         const ledger = await loadReconciliationLedger(projectRoot);
         if (!ledger) {
@@ -1079,8 +1168,8 @@ export async function startDashboardServer(options: DashboardServerOptions) {
         const body = (await readJsonBody(request) ?? {}) as { id?: unknown; project?: unknown };
         const id = typeof body.id === 'string' ? body.id : '';
         const project = typeof body.project === 'string' ? body.project : '';
-        if (!/^SCN-\d{3}$/.test(id) || !project) {
-          sendJson(response, 400, { error: '需要 id（SCN-xxx）与 project。' });
+        if ((!/^SCN-\d{3}$/.test(id) && !isFunctionalCaseId(id)) || !project) {
+          sendJson(response, 400, { error: '需要有效的用例 id 与 project。' });
           return;
         }
         const artifact = await readArtifact(artifactDirectory);
@@ -1126,14 +1215,55 @@ export async function startDashboardServer(options: DashboardServerOptions) {
             (item) => item.txHash.toLowerCase() === wanted,
           );
           if (transaction) {
+            const link = resolveEvidenceTransactionLink(
+              projectRoot,
+              result.project,
+              result.executionEvidence,
+              transaction.txHash,
+            );
             sendJson(response, 200, {
-              runId: artifact.run.id,
+              batchId: result.batchId ?? null,
+              runId: result.resultRunId ?? artifact.run.id,
               scenario: { id: result.id, title: result.scenarioTitle, project: result.project },
-              transaction,
+              transaction: { ...transaction, ...link },
+              ...link,
               evidenceSource: result.executionEvidence?.sourcePath,
-              note: 'Tenderly 私有 Fork 的本地持久证据；交易是否仍可由 RPC 查询取决于 Fork 是否被重置。',
+              note: link.transactionLinkStatus === 'available'
+                ? '本地持久证据已关联实际发送交易的浏览器链接。'
+                : '本地交易证据仍保留，但原 Fork 已删除或无法确认，真实链接已缺失。',
             }, headOnly);
             return;
+          }
+          for (const attachment of result.attempts.flatMap((attempt) => attempt.attachments)) {
+            if (!isFunctionalCaseId(result.id) || attachment.contentType !== 'application/json' || !attachment.path) continue;
+            try {
+              const raw = JSON.parse(await readFile(resolve(projectRoot, attachment.path), 'utf8')) as unknown;
+              const functionalTransaction = findFunctionalTransaction(
+                raw,
+                wanted,
+              );
+              if (!functionalTransaction) continue;
+              const link = resolveEvidenceTransactionLink(
+                projectRoot,
+                result.project,
+                raw,
+                transactionMatch[1]!,
+              );
+              sendJson(response, 200, {
+                batchId: result.batchId ?? null,
+                runId: result.resultRunId ?? artifact.run.id,
+                scenario: { id: result.id, title: result.scenarioTitle, project: result.project },
+                transaction: { ...functionalTransaction, ...link },
+                ...link,
+                evidenceSource: attachment.path,
+                note: link.transactionLinkStatus === 'available'
+                  ? '功能用例本地证据已关联实际发送交易的浏览器链接。'
+                  : '功能用例本地交易证据仍保留，但原 Fork 已删除或无法确认，真实链接已缺失。',
+              }, headOnly);
+              return;
+            } catch {
+              // 附件缺失或不是有效 JSON 时继续查找其他证据。
+            }
           }
         }
         sendJson(response, 404, { error: 'Transaction evidence not found' }, headOnly);
@@ -1161,7 +1291,7 @@ export async function startDashboardServer(options: DashboardServerOptions) {
             generatedAt: artifact.source.generatedAt,
             catalogSize: artifact.catalog.length,
             resultCount: artifact.results.length,
-            pages: ['/', '/executions', '/test-cases', '/runs', '/environments', '/faucet', '/parameters', '/formulas', '/page-formulas', '/reconciliation-console'],
+            pages: ['/', '/executions', '/test-cases', '/runs', '/environments', '/deployments', '/faucet', '/parameters', '/formulas', '/page-formulas', '/reconciliation-console'],
             parameterApis: ['/api/parameter-environments', '/api/parameters?environment=tx-fork'],
             runApis: [
               '/api/environments',
@@ -1191,6 +1321,7 @@ export async function startDashboardServer(options: DashboardServerOptions) {
               '/api/version-results/append',
               '/api/manual-batches',
               '/api/manual-batches/:id/summary',
+              ...VERIFY_TX_ROUTES,
             ],
             capabilities: {
               environmentInitialization: true,
@@ -1209,6 +1340,7 @@ export async function startDashboardServer(options: DashboardServerOptions) {
               noiseTrades: true,
               telegramNotifications: true,
               versionResultWorkbench: true,
+              txVerify: true,
             },
           },
           headOnly,

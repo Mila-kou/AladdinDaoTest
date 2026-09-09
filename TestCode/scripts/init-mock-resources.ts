@@ -1,6 +1,3 @@
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
-
 import {
   createPublicClient,
   createWalletClient,
@@ -21,7 +18,11 @@ import {
   defaultMockParameterKey,
   defaultMockParameterLabel,
 } from '../src/config/default-mock-market.js';
-import { loadDeploymentManifest } from '../src/config/deployment.js';
+import { loadContractArtifact, type ContractArtifact } from '../src/config/deployment.js';
+import {
+  assertRuntimeEnvironmentBinding,
+  loadEnvironmentBinding,
+} from '../src/config/environment-binding.js';
 import {
   isCompleteMockMarketBundle,
   isMockResourceEnvironment,
@@ -41,11 +42,6 @@ function argument(name: string): string | undefined {
   return index >= 0 ? process.argv[index + 1] : undefined;
 }
 
-interface FoundryArtifact {
-  readonly abi: Abi;
-  readonly bytecode: { readonly object: Hex };
-}
-
 interface MarketProps {
   readonly marketIndex: bigint;
   readonly vault: Address;
@@ -53,8 +49,11 @@ interface MarketProps {
   readonly collateralToken: Address;
 }
 
-async function artifact(path: string): Promise<FoundryArtifact> {
-  return JSON.parse(await readFile(resolve(process.cwd(), path), 'utf8')) as FoundryArtifact;
+function requiredBytecode(artifact: ContractArtifact, name: string): Hex {
+  if (!artifact.bytecode || artifact.bytecode === '0x') {
+    throw new Error(`${name} artifact 缺少可部署 bytecode：${artifact.path}`);
+  }
+  return artifact.bytecode;
 }
 
 async function rpcCall(rpcUrl: string, method: string, params: readonly unknown[] = []): Promise<unknown> {
@@ -172,6 +171,7 @@ async function main(): Promise<void> {
   const forceSharedCollateral = process.argv.includes('--force-shared-collateral');
   const current = (await loadMockResourceRegistry()).resources[requestedProject];
   const runtime = loadRuntimeConfig();
+  await assertRuntimeEnvironmentBinding(runtime);
   if (!runtime.adminAccount || !runtime.adminRpcUrl) {
     throw new Error(`${requestedProject} 初始化需要 E2E_ADMIN_ACCOUNT 和 Admin RPC URL。`);
   }
@@ -183,17 +183,17 @@ async function main(): Promise<void> {
     return;
   }
 
-  const manifest = await loadDeploymentManifest(runtime.deploymentManifestPath);
-  const contractRoot = '../Github/fx100-contracts@release-v0.3.1/out';
+  const binding = loadEnvironmentBinding(process.cwd(), runtime.environment);
+  const manifest = binding.manifest;
   const [tokenArtifact, oracleArtifact, marketFactoryArtifact, dataStoreArtifact, configArtifact, vaultArtifact, readerArtifact, chainlinkProviderArtifact] = await Promise.all([
-    artifact(`${contractRoot}/MockAssetContracts.sol/MockToken.json`),
-    artifact(`${contractRoot}/MockAssetContracts.sol/MockChainlinkOracle.json`),
-    artifact(`${contractRoot}/MarketFactory.sol/MarketFactory.json`),
-    artifact(`${contractRoot}/DataStore.sol/DataStore.json`),
-    artifact(`${contractRoot}/Config.sol/Config.json`),
-    artifact(`${contractRoot}/LPVault.sol/LPVault.json`),
-    artifact(`${contractRoot}/Reader.sol/Reader.json`),
-    artifact(`${contractRoot}/ChainlinkPriceFeedProvider.sol/ChainlinkPriceFeedProvider.json`),
+    loadContractArtifact(binding.artifactDirectory, 'MockToken'),
+    loadContractArtifact(binding.artifactDirectory, 'MockChainlinkOracle'),
+    loadContractArtifact(binding.artifactDirectory, 'MarketFactory'),
+    loadContractArtifact(binding.artifactDirectory, 'DataStore'),
+    loadContractArtifact(binding.artifactDirectory, 'Config'),
+    loadContractArtifact(binding.artifactDirectory, 'LPVault'),
+    loadContractArtifact(binding.artifactDirectory, 'Reader'),
+    loadContractArtifact(binding.artifactDirectory, 'ChainlinkPriceFeedProvider'),
   ]);
 
   const chain = defineChain({
@@ -254,7 +254,7 @@ async function main(): Promise<void> {
   try {
     const tokenTxHash = await sendAndWait('Mock Token 部署', publicClient, deployerWallet.deployContract({
       abi: tokenArtifact.abi,
-      bytecode: tokenArtifact.bytecode.object,
+      bytecode: requiredBytecode(tokenArtifact, 'MockToken'),
       args: [
         initializationProfile.token.name,
         initializationProfile.token.symbol,
@@ -267,7 +267,7 @@ async function main(): Promise<void> {
 
     const oracleTxHash = await sendAndWait('Mock Oracle 部署', publicClient, deployerWallet.deployContract({
       abi: oracleArtifact.abi,
-      bytecode: oracleArtifact.bytecode.object,
+      bytecode: requiredBytecode(oracleArtifact, 'MockChainlinkOracle'),
       args: [initializationProfile.oracle.description, initializationProfile.oracle.decimals],
     }));
     const oracleReceipt = await publicClient.getTransactionReceipt({ hash: oracleTxHash });
@@ -381,7 +381,7 @@ async function main(): Promise<void> {
     } else {
       const collateralOracleTxHash = await sendAndWait('Mock USDC Oracle 部署', publicClient, deployerWallet.deployContract({
         abi: oracleArtifact.abi,
-        bytecode: oracleArtifact.bytecode.object,
+        bytecode: requiredBytecode(oracleArtifact, 'MockChainlinkOracle'),
         args: [initializationProfile.collateralOracle.description, initializationProfile.collateralOracle.decimals],
       }));
       const collateralOracleReceipt = await publicClient.getTransactionReceipt({ hash: collateralOracleTxHash });

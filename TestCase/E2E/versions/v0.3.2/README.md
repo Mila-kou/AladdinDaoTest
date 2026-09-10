@@ -1,10 +1,12 @@
-# FX100 v0.3.2 Trade 功能需求与测试主目录
+# FX100 v0.3.2 Trade 测试用例与结果目录
 
 > 基线以 [`Docs/contract-releases/CURRENT.json`](../../../../Docs/contract-releases/CURRENT.json) 为唯一事实源。本目录不把历史 v0.3.1 PASS 继承为 v0.3.2 PASS。
+>
+> **2026-09-10 目录重组**：本目录只保留测试用例与结果——`Trade-测试用例矩阵.md`（用例 ID 唯一登记处）、`results.md`、`applicability.md`、`expectation-overrides.md`、`cases/`。功能分析、主题文档、需求冲突台账与 Relay 专项已迁到 [`Docs/v0.3.2/功能分析流程/`](../../../../Docs/v0.3.2/功能分析流程/README.md)，下表链接已指向新位置。
 
 ## 1. 目的
 
-本目录先说明 v0.3.2 Trade **是什么、用户能做什么、合约如何处理、前端应如何表现**，再把功能需求映射到测试用例。它不是脚本索引，也不以脚本执行速度代表功能覆盖完整度。
+功能分析文档（`Docs/v0.3.2/功能分析流程/`）先说明 v0.3.2 Trade **是什么、用户能做什么、合约如何处理、前端应如何表现**，本目录再把功能需求映射到测试用例并登记结果。它不是脚本索引，也不以脚本执行速度代表功能覆盖完整度。
 
 测试结论分三层记录：
 
@@ -20,18 +22,18 @@
 |---|---|
 | [cases/IT-VAULT-MARKET.md](cases/IT-VAULT-MARKET.md) | v0.3.2 的 4 条 Vault/Market 域级集成用例 |
 | [ContractCodeSummary v0.3.2](../../ContractCodeSummary/v0.3.2/README.md) | v0.3.2 公式、模块与参数定义 |
-| [00-Trade功能总览.md](00-Trade功能总览.md) | Trade 边界、参与者、功能域和总流程 |
-| [01-Order字段与状态.md](01-Order字段与状态.md) | v0.3.2 Order 全字段、业务含义、前端来源和核对规则 |
-| [02-订单类型与交易流程.md](02-订单类型与交易流程.md) | 独立订单类型测试子模块：7 种 OrderType、ADL、Market/Limit/Stop、TP/SL，以及创建/触发/执行/取消/冻结流程 |
-| [Standard-Relay-Flash-OneClick-(v0.3.2).md](Standard-Relay-Flash-OneClick-(v0.3.2).md) | Standard、直接 Relay/Gasless 与 Flash One-Click/1CT 的入口、切换、签名、会话、费用、任务状态、动作覆盖与当前 GAP |
-| [Trade-需求来源与冲突台账-(v0.3.2).md](Trade-需求来源与冲突台账-(v0.3.2).md) | Relay、Express、Flash/1CT 与 Standard 的需求时间线、已裁决口径、实现差距和待产品/安全裁决项 |
-| [03-Fee-Funding-清算-ADL-Oracle.md](03-Fee-Funding-清算-ADL-Oracle.md) | 兼容入口；Fee、Oracle、跨域证据与四份专项文档导航 |
-| [dynamicSpread-(v0.3.2).md](dynamicSpread-(v0.3.2).md) | 有符号成交点差的组成公式、影响数据、前端/Keeper 责任与边界值 |
-| [Funding-(v0.3.2).md](Funding-(v0.3.2).md) | Funding 完整生命周期：参数、指数/EMA、Reader 预览、逐仓结算、领取、资金路由与边界 |
-| [Liquidation-(v0.3.2).md](Liquidation-(v0.3.2).md) | 清算完整生命周期：Grace、风险判定、Keeper/前端清算价、强平执行、费用、资不抵债早退与证据 |
-| [ADL-(v0.3.2).md](ADL-(v0.3.2).md) | ADL 完整生命周期：secondary 状态启停、primary 执行门槛、内部订单、严格改善、Keeper 与资不抵债 |
-| [04-前端Trade操作清单.md](04-前端Trade操作清单.md) | 用户在 Trade 页面可能执行的操作与前端要求 |
-| [Trade-测试用例矩阵.md](Trade-测试用例矩阵.md) | v0.3.2 交易与订单原子用例共 239 条：部署与交易基线 9 条、市价开仓与市价关仓 55 条、市价加仓、杠杆/保证金调整、市价部分减仓与账本 34 条、限价开仓 16 条、主单取消级联 2 条、TP/SL 与清算保护期 20 条、清算保护期结束后的关闭并重新开仓 19 条、订单类型 16 条、其他跨域 68 条；其中 C 节 Relay/1CT 专项 42 条、D 节前端状态/错误/事件适配 7 条（OC-24～26 在 D 节） |
+| [00-Trade功能总览.md](../../../../Docs/v0.3.2/功能分析流程/00-Trade功能总览.md) | Trade 边界、参与者、功能域和总流程 |
+| [01-Order字段与状态.md](../../../../Docs/v0.3.2/功能分析流程/01-Order字段与状态.md) | v0.3.2 Order 全字段、业务含义、前端来源和核对规则 |
+| [02-订单类型与交易流程.md](../../../../Docs/v0.3.2/功能分析流程/02-订单类型与交易流程.md) | 独立订单类型测试子模块：7 种 OrderType、ADL、Market/Limit/Stop、TP/SL，以及创建/触发/执行/取消/冻结流程 |
+| [Standard-Relay-Flash-OneClick-(v0.3.2).md](<../../../../Docs/v0.3.2/功能分析流程/专项-Relay/Standard-Relay-Flash-OneClick-(v0.3.2).md>) | Standard、直接 Relay/Gasless 与 Flash One-Click/1CT 的入口、切换、签名、会话、费用、任务状态、动作覆盖与当前 GAP |
+| [Trade-需求来源与冲突台账-(v0.3.2).md](<../../../../Docs/v0.3.2/功能分析流程/Trade-需求来源与冲突台账-(v0.3.2).md>) | Relay、Express、Flash/1CT 与 Standard 的需求时间线、已裁决口径、实现差距和待产品/安全裁决项 |
+| [03-Fee-Funding-清算-ADL-Oracle.md](../../../../Docs/v0.3.2/功能分析流程/03-Fee-Funding-清算-ADL-Oracle.md) | 兼容入口；Fee、Oracle、跨域证据与四份专项文档导航 |
+| [dynamicSpread-(v0.3.2).md](<../../../../Docs/v0.3.2/功能分析流程/dynamicSpread-(v0.3.2).md>) | 有符号成交点差的组成公式、影响数据、前端/Keeper 责任与边界值 |
+| [Funding-(v0.3.2).md](<../../../../Docs/v0.3.2/功能分析流程/Funding-(v0.3.2).md>) | Funding 完整生命周期：参数、指数/EMA、Reader 预览、逐仓结算、领取、资金路由与边界 |
+| [Liquidation-(v0.3.2).md](<../../../../Docs/v0.3.2/功能分析流程/Liquidation-(v0.3.2).md>) | 清算完整生命周期：Grace、风险判定、Keeper/前端清算价、强平执行、费用、资不抵债早退与证据 |
+| [ADL-(v0.3.2).md](<../../../../Docs/v0.3.2/功能分析流程/ADL-(v0.3.2).md>) | ADL 完整生命周期：secondary 状态启停、primary 执行门槛、内部订单、严格改善、Keeper 与资不抵债 |
+| [04-前端Trade操作清单.md](../../../../Docs/v0.3.2/功能分析流程/04-前端Trade操作清单.md) | 用户在 Trade 页面可能执行的操作与前端要求 |
+| [Trade-测试用例矩阵.md](Trade-测试用例矩阵.md) | v0.3.2 交易与订单原子用例共 257 条：部署与交易基线 9 条、市价开仓与市价关仓 55 条、市价加仓、杠杆/保证金调整、市价部分减仓与账本 34 条、限价开仓 16 条、主单取消级联 2 条、TP/SL 与清算保护期 20 条、清算保护期结束后的关闭并重新开仓 19 条、订单类型 16 条、其他跨域 86 条；其中 C 节 Relay/1CT 专项 60 条（2026-09-10 新增安全 / 开关 / 速度 / 压力 18 条）、D 节前端状态/错误/事件适配 7 条（OC-24～26 在 D 节） |
 | [05-重要参数边界场景.md](../../../../Docs/contract-releases/v0.3.2/05-重要参数边界场景.md) | v0.3.2 参数边界与精确期望值来源 |
 | [CMB-LONG.md](../../manual-cases/v2/CMB-LONG.md) | 保护期、TP/SL、减仓和 Standard/One-Click 组合用例 |
 

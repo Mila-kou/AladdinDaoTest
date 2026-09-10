@@ -229,9 +229,9 @@ Order Keeper
 - 市场之间改变的是 Market `vault`、`indexToken`、Oracle 价格输入，以及按 `marketIndex` 隔离的配置、OI、Funding、Position 和风险数据；不是 Router/Handler 合约地址。
 - Increase/Decrease Executor 的分流依据是 `orderType`，不是 `marketIndex`。
 
-源码证据：[`ExchangeRouter.createOrder`](../../../../Github/fx100-contracts@release-v0.3.2/src/router/ExchangeRouter.sol)、[`OrderHandler.createOrder/executeOrder`](../../../../Github/fx100-contracts@release-v0.3.2/src/exchange/OrderHandler.sol)、[`BaseOrderHandler._getExecuteOrderParams`](../../../../Github/fx100-contracts@release-v0.3.2/src/exchange/BaseOrderHandler.sol)、[`OrderUtils.createOrder`](../../../../Github/fx100-contracts@release-v0.3.2/src/order/OrderUtils.sol)、[`OrderStoreUtils`](../../../../Github/fx100-contracts@release-v0.3.2/src/order/OrderStoreUtils.sol)。部署地址不写死在用例中，每轮从 [`CURRENT.json`](../../../../Docs/contract-releases/CURRENT.json) 及其指向的 manifest 读取。
+源码证据：[`ExchangeRouter.createOrder`](../../../Github/fx100-contracts@release-v0.3.2/src/router/ExchangeRouter.sol)、[`OrderHandler.createOrder/executeOrder`](../../../Github/fx100-contracts@release-v0.3.2/src/exchange/OrderHandler.sol)、[`BaseOrderHandler._getExecuteOrderParams`](../../../Github/fx100-contracts@release-v0.3.2/src/exchange/BaseOrderHandler.sol)、[`OrderUtils.createOrder`](../../../Github/fx100-contracts@release-v0.3.2/src/order/OrderUtils.sol)、[`OrderStoreUtils`](../../../Github/fx100-contracts@release-v0.3.2/src/order/OrderStoreUtils.sol)。部署地址不写死在用例中，每轮从 [`CURRENT.json`](../../contract-releases/CURRENT.json) 及其指向的 manifest 读取。
 
-两种产品模式、三条技术提交路径及其 signer、`tx.from`、Router、Relay task、费用和切换规则见 [Standard-Relay-Flash-OneClick-(v0.3.2).md](Standard-Relay-Flash-OneClick-(v0.3.2).md)。
+两种产品模式、三条技术提交路径及其 signer、`tx.from`、Router、Relay task、费用和切换规则见 [Standard-Relay-Flash-OneClick-(v0.3.2).md](<专项-Relay/Standard-Relay-Flash-OneClick-(v0.3.2).md>)。
 
 #### 测试断言
 

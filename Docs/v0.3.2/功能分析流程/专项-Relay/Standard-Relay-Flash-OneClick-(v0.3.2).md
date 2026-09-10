@@ -1,6 +1,6 @@
 # v0.3.2 前端 Trade：两种产品模式与三条技术提交路径
 
-> 基线以 [`Docs/contract-releases/CURRENT.json`](../../../../Docs/contract-releases/CURRENT.json) 为唯一事实源。需求点编号（RQ-RELAY-01～49）与安全 / 速度 / 压力分析见 [专项-Relay-③需求与分析](<../../../../Docs/v0.3.2/专项-Relay-③需求与分析.md>)；③ 的状态列引用本文，本文 §10 的 GAP 解除条件仍以本文为准。本文同时描述产品应有行为与 CURRENT 登记前端的静态实现现状；“源码存在”不等于已经在 v0.3.2 环境验收通过。需求先后关系、已覆盖旧口径和待决项统一见 [Trade 需求来源与冲突台账](Trade-需求来源与冲突台账-(v0.3.2).md)。
+> 基线以 [`Docs/contract-releases/CURRENT.json`](../../../contract-releases/CURRENT.json) 为唯一事实源。需求点编号（RQ-RELAY-01～49）与安全 / 速度 / 压力分析见 [专项-Relay-③需求与分析](<专项-Relay-③需求与分析.md>)；③ 的状态列引用本文，本文 §10 的 GAP 解除条件仍以本文为准。本文同时描述产品应有行为与 CURRENT 登记前端的静态实现现状；“源码存在”不等于已经在 v0.3.2 环境验收通过。需求先后关系、已覆盖旧口径和待决项统一见 [Trade 需求来源与冲突台账](<../Trade-需求来源与冲突台账-(v0.3.2).md>)。
 
 ## 1. 结论先行
 
@@ -349,7 +349,7 @@ Relay Router 通过底层 `Router.pluginTransfer` 拉取 collateral 与 Relay Fe
 - 1CT 的“无逐笔钱包弹窗”应表述为 setup 与首次必要 Permit 完成后的稳态体验。
 - 切到 Standard、断开 1CT 或删除浏览器 session 都不会撤销 `Router` 的 ERC-20 allowance；当前签的是 `MAX_UINT256`，其信任边界包含所有被治理授予 `ROUTER_PLUGIN` 的合约，前端应单独说明和提供 allowance 管理入口。
 
-完整 Relay Fee 合约公式与边界见 [02-订单类型与交易流程.md](02-订单类型与交易流程.md#5-relay-fee-流程与功能点)。
+完整 Relay Fee 合约公式与边界见 [02-订单类型与交易流程.md](../02-订单类型与交易流程.md#5-relay-fee-流程与功能点)。
 
 ### 7.4 1CT 费用权限的当前安全边界
 
@@ -360,7 +360,7 @@ Relay Router 通过底层 `Router.pluginTransfer` 拉取 collateral 与 Relay Fe
 
 `MAX_RELAY_SWAP_WNT_CAP` 非零时能限制一次 Relay 调用的 native fee，但它是全局 WNT cap，不按 subaccount 身份限制、为 0 时跳过、也不能阻止重复小额调用。因此不能把它当成上述两个专属保护已经实现。前端当前创建订单时通常把 callback 设为零、并限制签署的费用上限，这些是有价值的 UI 缓解，但不能代替合约对任意合法签名 payload 的强制约束。
 
-安全验收必须以 [v0.3.2 Bug 注册表 R8-B02 与 R8-B21](../../../../Docs/v0.3.2/需求文档/2026-08-12_Bug-注册表（R1~R8，含Zenith专题）.md#r8-b02) 为依据：分别覆盖全局 WNT cap 为 0/非 0、子账户专属 USD cap、恶意 gas price、重复调用、非空 callback、大额 execution fee 和主账户/攻击者余额守恒。
+安全验收必须以 [v0.3.2 Bug 注册表 R8-B02 与 R8-B21](../../需求文档/2026-08-12_Bug-注册表（R1~R8，含Zenith专题）.md#r8-b02) 为依据：分别覆盖全局 WNT cap 为 0/非 0、子账户专属 USD cap、恶意 gas price、重复调用、非空 callback、大额 execution fee 和主账户/攻击者余额守恒。
 
 ## 8. Relay task 与 Order 生命周期必须分开
 
@@ -452,11 +452,11 @@ Relay task 的服务端 TTL 当前为 1 小时；前端约 3 分钟轮询超时�
 | P2 | 非支持链上保存的 1CT 偏好不会改写，页面也没有清晰显示“有效路径已回退 Standard” | 选中态与实际路由可能不一致 | 单独展示偏好模式与有效模式，或在不可用时显式切换并告知 |
 | P1 | 构建期开关和 Router 地址通过不代表 Relay API、Relayer 资金/角色、Oracle 和 Keeper 就绪 | 运行时才暴露失败 | 将依赖健康检查纳入环境准入和页面可用性提示 |
 
-这些 GAP 是静态代码对照结论，不是链上执行结果；正式状态仍按 [results.md](results.md) 的执行证据登记。
+这些 GAP 是静态代码对照结论，不是链上执行结果；正式状态仍按 [results.md](../../../../TestCase/E2E/versions/v0.3.2/results.md) 的执行证据登记。
 
 ## 11. 测试设计清单
 
-以下为功能点级验收清单。正式自动化或手工执行时，应映射到 [Trade-测试用例矩阵.md](Trade-测试用例矩阵.md) 中的 FT/XT Case ID，并补齐六字段与推导值。
+以下为功能点级验收清单。正式自动化或手工执行时，应映射到 [Trade-测试用例矩阵.md](../../../../TestCase/E2E/versions/v0.3.2/Trade-测试用例矩阵.md) 中的 FT/XT Case ID，并补齐六字段与推导值。
 
 ### 11.1 模式入口与切换
 

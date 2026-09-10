@@ -2,7 +2,7 @@
 
 > 对象：FX100 v0.3.2 的 Relay / Gasless / Flash One-Click（1CT）/ 子账户功能，横跨合约、前端 + SDK、Keeper 三层
 > 面向：测试 / 开发 / 安全。本册是这一专项的**需求唯一汇总**，需求点编号 `RQ-RELAY-NN` 只在本册定义与维护
-> 基线：[`CURRENT.json`](../contract-releases/CURRENT.json) 为唯一事实源；源码锚点 合约 `fx100-contracts@release-v0.3.2`（`13880f2`）、前端与 Keeper `fx100-apps@develop`（`b4331c15`，2026-09-09）
+> 基线：[`CURRENT.json`](../../../contract-releases/CURRENT.json) 为唯一事实源；源码锚点 合约 `fx100-contracts@release-v0.3.2`（`13880f2`）、前端与 Keeper `fx100-apps@develop`（`b4331c15`，2026-09-09）
 > 状态：2026-09-10；矩阵登记 60 条用例，**全部 NOT_RUN**；`tx-fork:frontend` 准入 NOT_READY
 > 锚点之后的漂移（2026-09-09 核对 origin）：CURRENT 于 2026-09-09 晚间把前端 head 前进到 `3bc42814`（3 个提交只改 reports 缺口扫描、钱包 chain-resync guard、Sentry 脱敏，未触及 relay / Flash / Keeper 任何文件，`git diff --name-only b4331c15..3bc42814` 已核对），本册 `b4331c15` 的行号锚点对 relay 文件仍逐行有效，可视同 `3bc42814`。 另，`apps/keeper` 源码在 develop 与 staging 完全一致；当天三条 relay 相关的**前端**修复只在 staging（`e0b14929` 修 Flash 重复计执行费、`41dbbb27` 余额不足文案翻译、`b36943a6` 上限文案），develop 合入前本册不改
 >
@@ -19,14 +19,14 @@
 > | 事项 | 唯一登记处 |
 > |---|---|
 > | 需求点（来源、状态、对应用例） | 本册「需求点唯一汇总」 |
-> | 用例 ID 与六字段（含本轮新增 18 条） | [Trade 测试用例矩阵 §5-C](<../../TestCase/E2E/versions/v0.3.2/Trade-测试用例矩阵.md>)（60 条）；本册只做分组引用 |
-> | 需求冲突与裁决（DEC-TRADE-xxx） | [Trade 需求来源与冲突台账](<../../TestCase/E2E/versions/v0.3.2/Trade-需求来源与冲突台账-(v0.3.2).md>) |
-> | 缺陷（R8-Bxx） | [Bug 注册表](<需求文档/2026-08-12_Bug-注册表（R1~R8，含Zenith专题）.md>) |
-> | 执行结果 | [results.md](<../../TestCase/E2E/versions/v0.3.2/results.md>) |
-> | 合约逐函数说明 | [Relay 合约代码流程与函数说明](<合约文档/Relay合约代码流程与函数说明.md>) |
-> | 前端三条路径与 Max 精确公式；22 项 GAP 的解除条件 | [Standard-Relay-Flash-OneClick (v0.3.2)](<../../TestCase/E2E/versions/v0.3.2/Standard-Relay-Flash-OneClick-(v0.3.2).md>)（RQ 状态列引用它，解除条件以它为准） |
-> | 单条用例展开稿 | 矩阵 `cases/` 子目录，如 [FT-RELAY-011](<../../TestCase/E2E/versions/v0.3.2/cases/FT-RELAY-011.md>) |
-> | 实测证据（真实部署上的活样本） | [Relay 余额门与 Max 死区实测补充](<../../TestCase/E2E/versions/v0.3.2/Relay余额门与Max死区-实测补充-(v0.3.2).md>)、`TestCase/E2E/manual-runs/`、`bugs/v0.3.1/BUG-FE-MAXRESERVE-025` |
+> | 用例 ID 与六字段（含本轮新增 18 条） | [Trade 测试用例矩阵 §5-C](<../../../../TestCase/E2E/versions/v0.3.2/Trade-测试用例矩阵.md>)（60 条）；本册只做分组引用 |
+> | 需求冲突与裁决（DEC-TRADE-xxx） | [Trade 需求来源与冲突台账](<../Trade-需求来源与冲突台账-(v0.3.2).md>) |
+> | 缺陷（R8-Bxx） | [Bug 注册表](<../../需求文档/2026-08-12_Bug-注册表（R1~R8，含Zenith专题）.md>) |
+> | 执行结果 | [results.md](<../../../../TestCase/E2E/versions/v0.3.2/results.md>) |
+> | 合约逐函数说明 | [Relay 合约代码流程与函数说明](<Relay合约代码流程与函数说明.md>) |
+> | 前端三条路径与 Max 精确公式；22 项 GAP 的解除条件 | [Standard-Relay-Flash-OneClick (v0.3.2)](<Standard-Relay-Flash-OneClick-(v0.3.2).md>)（RQ 状态列引用它，解除条件以它为准） |
+> | 单条用例展开稿 | 矩阵 `cases/` 子目录，如 [FT-RELAY-011](<../../../../TestCase/E2E/versions/v0.3.2/cases/FT-RELAY-011.md>) |
+> | 实测证据（真实部署上的活样本） | [Relay 余额门与 Max 死区实测补充](<Relay余额门与Max死区-实测补充-(v0.3.2).md>)、`TestCase/E2E/manual-runs/`、`bugs/v0.3.1/BUG-FE-MAXRESERVE-025` |
 >
 > 图例：实线 = 正常流转；虚线 = 异步或后台；红色节点 = 会 revert / 拒绝；黄色 = 待裁决或 GAP。
 
@@ -40,9 +40,9 @@
 
 | RQ | 需求点 | 来源 | 状态 | 对应用例 |
 |---|---|---|---|---|
-| RQ-RELAY-01 | 用户离线 EIP-712 签名，第三方代发，用户不持 ETH | [06-10 Express Mode 批准稿](<../V0.3.1/需求文档/2026-06-10_FX100-Express-Mode-架构分析-前端指南-产品风控-测试规格.md>) | 已实现 | CT-RELAY-AUTH-014、XT-RELAY-010、XT-FLASH-004 |
-| RQ-RELAY-02 | 跑腿费以全局抵押品 Token 计价，按实际 gas + 固定基数 + calldata + 倍率折算，两次向上取整，不超过用户签的 `maxFeeAmount`；v0.3.2 起 `feeToken` 必须等于 `COLLATERAL_TOKEN` | 06-10；[01 代码变化 §7](<../contract-releases/v0.3.2/01-代码变化分析.md>) | 已实现 | CT-RELAY-001/002/003/005/006/009 |
-| RQ-RELAY-03 | 治理级单笔 WNT 上限 `MAX_RELAY_SWAP_WNT_CAP`；`cap = 0` 表示不设限；部署脚本必填 | [06-14 执行费豁免 + B1 §十](<../V0.3.1/需求文档/2026-07-22_FX100-执行费豁免前移到创建期+免Gas开仓-改造规范(实施版-2026-06-14).md>) | 已实现（极性与补贴键相反） | CT-RELAY-007、XT-RELAY-LOAD-003 |
+| RQ-RELAY-01 | 用户离线 EIP-712 签名，第三方代发，用户不持 ETH | [06-10 Express Mode 批准稿](<../../../V0.3.1/需求文档/2026-06-10_FX100-Express-Mode-架构分析-前端指南-产品风控-测试规格.md>) | 已实现 | CT-RELAY-AUTH-014、XT-RELAY-010、XT-FLASH-004 |
+| RQ-RELAY-02 | 跑腿费以全局抵押品 Token 计价，按实际 gas + 固定基数 + calldata + 倍率折算，两次向上取整，不超过用户签的 `maxFeeAmount`；v0.3.2 起 `feeToken` 必须等于 `COLLATERAL_TOKEN` | 06-10；[01 代码变化 §7](<../../../contract-releases/v0.3.2/01-代码变化分析.md>) | 已实现 | CT-RELAY-001/002/003/005/006/009 |
+| RQ-RELAY-03 | 治理级单笔 WNT 上限 `MAX_RELAY_SWAP_WNT_CAP`；`cap = 0` 表示不设限；部署脚本必填 | [06-14 执行费豁免 + B1 §十](<../../../V0.3.1/需求文档/2026-07-22_FX100-执行费豁免前移到创建期+免Gas开仓-改造规范(实施版-2026-06-14).md>) | 已实现（极性与补贴键相反） | CT-RELAY-007、XT-RELAY-LOAD-003 |
 | RQ-RELAY-04 | calldata ≤ 50,000 字节 | 06-10 | 已实现 | CT-RELAY-008、XT-RELAY-LOAD-002 |
 | RQ-RELAY-05 | 白名单跑腿员免收跑腿费；gasless / subaccount 两个功能熔断开关 | 06-10 | 已实现 | CT-RELAY-004、CT-RELAY-OPS-001 |
 | RQ-RELAY-06 | 非补贴订单的 WNT 执行费由跑腿员垫付进 OrderVault，折进跑腿费向用户收回；执行期多退部分以原生币退给用户 `receiver` | 06-15 B1 定案 | 已实现 | XT-RELAY-010 |
@@ -52,8 +52,8 @@
 | RQ-RELAY-10 | 防重放：digest 一次性、relay deadline、`desChainId`、approval nonce 严格递增 | 06-10 | 已实现 | CT-RELAY-AUTH-014、CT-RELAY-SEC-005 |
 | RQ-RELAY-11 | 跑腿员须通过 `isKeeper` 白名单 | 06-10 | 待裁决 DEC-TRADE-002（CURRENT 无 ACL） | CT-RELAY-AUTH-014 |
 | RQ-RELAY-12 | Relay 动作 deadline 推荐 5 分钟、UI 不超 10 分钟 | 06-10 | 待裁决 DEC-TRADE-004（CURRENT 30 分钟） | XT-RELAY-LOAD-004 |
-| RQ-RELAY-13 | Relay 失败必须有明确提示；relay 取消必须可用；签名慢不应导致过期 | [07-02](<../V0.3.1/需求文档/2026-07-02_relay-cancel交易会失败.md>)、[07-21 FE-45](<../V0.3.1/需求文档/2026-07-21_Standard-relay-oracle-签慢过期分析-FE-45.md>)、[07-22](<../V0.3.1/需求文档/2026-07-22_relay失败以及失败后的提示.md>) | 已实现（30 分钟 deadline + 错误码映射） | FT-RELAY-QUOTE-020、XT-RELAY-PERF-003 |
-| RQ-RELAY-14 | Market 单超过 `REQUEST_EXPIRATION_TIME` 后可经 Standard / Relay 取消 | [OC-23](<需求文档/2026-08-04_OC-23-market-单永远无法取消，保证金被无限锁定（合约支持，是前端把入口关掉了）.md>) | 已实现 | 矩阵 B4；CT-RELAY-BATCH-017 |
+| RQ-RELAY-13 | Relay 失败必须有明确提示；relay 取消必须可用；签名慢不应导致过期 | [07-02](<../../../V0.3.1/需求文档/2026-07-02_relay-cancel交易会失败.md>)、[07-21 FE-45](<../../../V0.3.1/需求文档/2026-07-21_Standard-relay-oracle-签慢过期分析-FE-45.md>)、[07-22](<../../../V0.3.1/需求文档/2026-07-22_relay失败以及失败后的提示.md>) | 已实现（30 分钟 deadline + 错误码映射） | FT-RELAY-QUOTE-020、XT-RELAY-PERF-003 |
+| RQ-RELAY-14 | Market 单超过 `REQUEST_EXPIRATION_TIME` 后可经 Standard / Relay 取消 | [OC-23](<../../需求文档/2026-08-04_OC-23-market-单永远无法取消，保证金被无限锁定（合约支持，是前端把入口关掉了）.md>) | 已实现 | 矩阵 B4；CT-RELAY-BATCH-017 |
 
 ### B · 子账户与会话
 
@@ -61,15 +61,15 @@
 |---|---|---|---|---|
 | RQ-RELAY-15 | 小钥匙只能 create / update / cancel / batch；`receiver` 钉主账户，`cancellationReceiver` 只能是零或主账户；有效期 + 次数双限；链上可撤 | 06-10 | 已实现 | CT-FLASH-SCOPE-008、XT-FLASH-002 |
 | RQ-RELAY-16 | 子账户默认只授权 CREATE，UPDATE / CANCEL 手动开启 | 06-10 | 待裁决 DEC-TRADE-003（四个动作共用一个 actionType） | CT-FLASH-SCOPE-008 |
-| RQ-RELAY-17 | 随机本地 key、90 天、次数 = 链上已用 + 1,000,000、去 1 小时闲置锁、Stay connected 默认开 | [07-23 Flash 1CT 学 HL 优化](<../V0.3.1/需求文档/2026-07-23_Flash-1CT学HL优化-随机key与隐形默认交互.md>)（Closed） | 已实现 | FT-FLASH-SESSION-005 |
-| RQ-RELAY-18 | 命名槽（设备名）、同名覆盖、槽位上限、`removeSlot`、`revokeAll`、Reader 枚举、「我的交易设备」管理 UI | [07-20 Named Agent 最终方案](<需求文档/2026-07-20_FX100-Flash-1CT-Named-Agent-最终方案.md>) | 合约 4 槽 / `removeSlot` / `getSubaccountSlots` 已实现；`revokeAll` 与管理 UI GAP；槽数待裁决 DEC-TRADE-006 | XT-FLASH-002、FT-FLASH-003 |
-| RQ-RELAY-19 | v0.3.2 `SubaccountApproval` 含 `string slot`，旧签名失效；前端 / SDK / Keeper 同步 typed data、ABI、持久化 | [01 代码变化 §5](<../contract-releases/v0.3.2/01-代码变化分析.md>) | 合约已实现；前端 **GAP P0**（SDK 无 `slot`，Reader ABI 仍为 v0.3.1，紧急页读的 `SUBACCOUNT_LIST` 已删除） | FT-FLASH-003、FT-RELAY-MODE-023 |
-| RQ-RELAY-20 | `SUBACCOUNT_LIST` 删除，v0.3.1 授权升级后失效；迁移 / 重授权流程与用户通知由产品定 | [06 准入 C-1](<../contract-releases/v0.3.2/06-测试影响与准入结论.md>) | 待定 | SCN-B32-08③ |
-| RQ-RELAY-21 | Terms/Privacy 在连接钱包阶段；开启 1CT 前单独做版本化风险 `personal_sign`；同 owner 同版本续期不重签 | [07-28 同意与风险披露](<../V0.3.1/需求文档/2026-07-28_FX100-Flash-1CT-同意与风险披露(给前端+合规).md>)（Closed） | 已实现·漂移（弹窗仍强制勾 Terms；Settings 可绕过 consent） | FT-FLASH-CONSENT-006 |
+| RQ-RELAY-17 | 随机本地 key、90 天、次数 = 链上已用 + 1,000,000、去 1 小时闲置锁、Stay connected 默认开 | [07-23 Flash 1CT 学 HL 优化](<../../../V0.3.1/需求文档/2026-07-23_Flash-1CT学HL优化-随机key与隐形默认交互.md>)（Closed） | 已实现 | FT-FLASH-SESSION-005 |
+| RQ-RELAY-18 | 命名槽（设备名）、同名覆盖、槽位上限、`removeSlot`、`revokeAll`、Reader 枚举、「我的交易设备」管理 UI | [07-20 Named Agent 最终方案](<../../需求文档/2026-07-20_FX100-Flash-1CT-Named-Agent-最终方案.md>) | 合约 4 槽 / `removeSlot` / `getSubaccountSlots` 已实现；`revokeAll` 与管理 UI GAP；槽数待裁决 DEC-TRADE-006 | XT-FLASH-002、FT-FLASH-003 |
+| RQ-RELAY-19 | v0.3.2 `SubaccountApproval` 含 `string slot`，旧签名失效；前端 / SDK / Keeper 同步 typed data、ABI、持久化 | [01 代码变化 §5](<../../../contract-releases/v0.3.2/01-代码变化分析.md>) | 合约已实现；前端 **GAP P0**（SDK 无 `slot`，Reader ABI 仍为 v0.3.1，紧急页读的 `SUBACCOUNT_LIST` 已删除） | FT-FLASH-003、FT-RELAY-MODE-023 |
+| RQ-RELAY-20 | `SUBACCOUNT_LIST` 删除，v0.3.1 授权升级后失效；迁移 / 重授权流程与用户通知由产品定 | [06 准入 C-1](<../../../contract-releases/v0.3.2/06-测试影响与准入结论.md>) | 待定 | SCN-B32-08③ |
+| RQ-RELAY-21 | Terms/Privacy 在连接钱包阶段；开启 1CT 前单独做版本化风险 `personal_sign`；同 owner 同版本续期不重签 | [07-28 同意与风险披露](<../../../V0.3.1/需求文档/2026-07-28_FX100-Flash-1CT-同意与风险披露(给前端+合规).md>)（Closed） | 已实现·漂移（弹窗仍强制勾 Terms；Settings 可绕过 consent） | FT-FLASH-CONSENT-006 |
 | RQ-RELAY-22 | 风险文案必须真实，不得承诺「密钥绝不能移动资金」 | 台账 §4.1 P0 | GAP（与 R8-B02 / B21 矛盾） | FT-FLASH-RISK-007 |
-| RQ-RELAY-23 | 到期前 3 天提示，用户主动续期；「到期前自动重签」只是 backlog，不做后台静默签名 | [08-11](<需求文档/2026-08-11_subaccount-90天到期前可以自动重新签.md>)（Open/Low） | 提示已实现；自动重签不做 | FT-FLASH-SESSION-005 |
+| RQ-RELAY-23 | 到期前 3 天提示，用户主动续期；「到期前自动重签」只是 backlog，不做后台静默签名 | [08-11](<../../需求文档/2026-08-11_subaccount-90天到期前可以自动重新签.md>)（Open/Low） | 提示已实现；自动重签不做 | FT-FLASH-SESSION-005 |
 | RQ-RELAY-24 | 断开 1CT = 主钱包链上 `removeSubaccount` 成功后再清本地；拒签或失败不得伪装成功 | 07-23；版本文档 §5.4 | 已实现（不释放槽位、不清历史计数、不撤 Router 的 USDC 授权） | XT-FLASH-SEC-008、XT-FLASH-002 |
-| RQ-RELAY-25 | 上线只允许 1 个槽位是否可行（常量改 1 / 前端同名覆盖 / 改可配置三案） | [08-16 槽位上限讨论](<需求文档/2026-08-16_子账户槽位数量上限（MAX_SUBACCOUNT_SLOTS）设计讨论.md>) | 待裁决 DEC-TRADE-006；测试固定按 4 | XT-FLASH-002 |
+| RQ-RELAY-25 | 上线只允许 1 个槽位是否可行（常量改 1 / 前端同名覆盖 / 改可配置三案） | [08-16 槽位上限讨论](<../../需求文档/2026-08-16_子账户槽位数量上限（MAX_SUBACCOUNT_SLOTS）设计讨论.md>) | 待裁决 DEC-TRADE-006；测试固定按 4 | XT-FLASH-002 |
 
 ### C · 前端体验与模式
 
@@ -78,12 +78,12 @@
 | RQ-RELAY-26 | 用户只看到 Standard 与 Flash One-Click，默认 One-Click；纯 Relay 不是第三个公开模式 | 06-22 express 前端策略；07-23 | 已实现；历史 `flash` 值的迁移待裁决 DEC-TRADE-001 | FT-RELAY-LEGACY-024、XT-ORD-MODE-001 |
 | RQ-RELAY-27 | feature flag / 支持链 / RelayRouter 三重门任一不满足回到 Standard；偏好模式与实际模式可解释 | 版本文档 §3.2 | 已实现·漂移（回退时不改写本地偏好） | FT-RELAY-MODE-023 |
 | RQ-RELAY-28 | 主按钮「Enable Trading」→「Establish Connection」轻量弹窗，成功后不自动下单；Standard 旁显示「切换到一键交易」；即将过期只在 Settings 提示 | 07-23（Closed） | 已实现 | FT-FLASH-SESSION-005、FT-RELAY-SUBMIT-029 |
-| RQ-RELAY-29 | USDC 不够：Max 先预留本次 signed `maxFeeAmount` 再留 1 USDC；余额 < 业务金额 + cap 时显示 `Insufficient USDC for Relay Fee` + `Switch to Standard`；切换不自动提交、手填值保留、派生值重算 | [08-10 USDC 不够时如何发起 relay](<需求文档/2026-08-10_USDC不够时如何发起relay.md>)（Closed）；台账 §3 | 已实现（Max 为 0 时按钮无响应，GAP P0；2026-09-06 于 v0.3.1 部署实测复现，并补三条观察：按钮显示误导性「Enter Amount」、切 Standard 后提示与出口一起消失且 Standard 仍减 1 USDC、移动端无切换出口，见 [实测补充](<../../TestCase/E2E/versions/v0.3.2/Relay余额门与Max死区-实测补充-(v0.3.2).md>)） | FT-RELAY-USDC-015/016、FT-RELAY-MAX-018/019/025/026/028、FT-RELAY-SWITCH-022、FT-RELAY-QUOTE-027 |
+| RQ-RELAY-29 | USDC 不够：Max 先预留本次 signed `maxFeeAmount` 再留 1 USDC；余额 < 业务金额 + cap 时显示 `Insufficient USDC for Relay Fee` + `Switch to Standard`；切换不自动提交、手填值保留、派生值重算 | [08-10 USDC 不够时如何发起 relay](<../../需求文档/2026-08-10_USDC不够时如何发起relay.md>)（Closed）；台账 §3 | 已实现（Max 为 0 时按钮无响应，GAP P0；2026-09-06 于 v0.3.1 部署实测复现，并补三条观察：按钮显示误导性「Enter Amount」、切 Standard 后提示与出口一起消失且 Standard 仍减 1 USDC、移动端无切换出口，见 [实测补充](<Relay余额门与Max死区-实测补充-(v0.3.2).md>)） | FT-RELAY-USDC-015/016、FT-RELAY-MAX-018/019/025/026/028、FT-RELAY-SWITCH-022、FT-RELAY-QUOTE-027 |
 | RQ-RELAY-30 | 报价三值分离：显示值 1.2×、签名上限 3×（0.5～25 USDC）、实扣 `RelayFeePaid`；签名后送出前再复查 | 版本文档 §7.2 | 已实现；旧稿 10 USDC 硬顶 + 超 2 USDC 二次确认待裁决 DEC-TRADE-005 | FT-RELAY-CAP-021、FT-RELAY-QUOTE-020、FT-RELAY-011 |
 | RQ-RELAY-31 | Relay task 与 Order 生命周期分离；task `executed` ≠ 成交；轮询 3 分钟超时要显示超时 | 版本文档 §8 | 已实现（超时后无自动对账） | XT-RELAY-PERF-003 |
 | RQ-RELAY-32 | 提交锁：第一次点击同步占锁，取得 txHash 前不可重复提交 | 版本文档 §9 | 已实现 | FT-RELAY-SUBMIT-029/030 |
-| RQ-RELAY-33 | Standard 撤单 toast 与 Flash 一样能原地升级到终态 | [OC-26](<需求文档/2026-08-04_OC-26-标准钱包路径取消订单永远卡在-Cancel-Submitted（Flash-路径正常）.md>)（Closed） | 已实现 | 回归挂 SCN-018 |
-| RQ-RELAY-34 | Order Status 跟踪弹窗默认关闭 | [OC-24](<需求文档/2026-08-04_OC-24-Settings-的-Order-Status-建议默认关闭（对齐-HL-的一键成交体验）.md>) | 已实现 | 无专用用例 |
+| RQ-RELAY-33 | Standard 撤单 toast 与 Flash 一样能原地升级到终态 | [OC-26](<../../需求文档/2026-08-04_OC-26-标准钱包路径取消订单永远卡在-Cancel-Submitted（Flash-路径正常）.md>)（Closed） | 已实现 | 回归挂 SCN-018 |
+| RQ-RELAY-34 | Order Status 跟踪弹窗默认关闭 | [OC-24](<../../需求文档/2026-08-04_OC-24-Settings-的-Order-Status-建议默认关闭（对齐-HL-的一键成交体验）.md>) | 已实现 | 无专用用例 |
 | RQ-RELAY-35 | 移动端能完成 setup / renew | 台账 §4.1 P1 | GAP（handler 在、弹窗未渲染） | 无（登记 GAP） |
 | RQ-RELAY-36 | 关闭并重新开仓、Cancel All 走共享的 1CT setup / renew 门 | 版本文档 §6 | GAP | FT-FLASH-ROLL-009～011/013、XT-FLASH-ROLL-012、CT-RELAY-BATCH-017 |
 
@@ -97,18 +97,18 @@
 | RQ-RELAY-40 | 子账户订单的 `uiFeeReceiver` 钉主账户 | Zenith #24 / R8-B24 | 缺口 P2（`MAX_UI_FEE_FACTOR = 0` 时休眠） | CT-RELAY-SEC-002 |
 | RQ-RELAY-41 | 豁免单的 auto top-up 只按实际消耗报销 | Zenith #26 / R8-B26 | 缺口 P1（`SubaccountRouter` 路径） | CT-RELAY-SEC-003 |
 | RQ-RELAY-42 | approval 里签的 `integrationId` 必须写入生效 | Zenith #27 / R8-B27 | 缺口 P1 | CT-RELAY-SEC-004 |
-| RQ-RELAY-43 | 小钥匙静态弱加密可接受；安全靠只能下单、过期、次数、可撤销四道锁；撤销后旧 key 立即不可用 | [07-26 Flash 安全评审](<../V0.3.1/需求文档/2026-07-26_flash-mode-security-review.md>) | 已实现 / 接受 | XT-FLASH-SEC-008 |
+| RQ-RELAY-43 | 小钥匙静态弱加密可接受；安全靠只能下单、过期、次数、可撤销四道锁；撤销后旧 key 立即不可用 | [07-26 Flash 安全评审](<../../../V0.3.1/需求文档/2026-07-26_flash-mode-security-review.md>) | 已实现 / 接受 | XT-FLASH-SEC-008 |
 | RQ-RELAY-44 | Permit 只授权给 `Router`；Permit 失败静默由 allowance 兜底；Permit 签名不落盘 | 版本文档 §7.3 | 已实现 | XT-RELAY-SEC-006 |
 
 ### E · 运维、性能与准入
 
 | RQ | 需求点 | 来源 | 状态 | 对应用例 |
 |---|---|---|---|---|
-| RQ-RELAY-45 | relay 服务纳入监控与备份，含 RPC、gas 监控 | [08-10 Dev 中心化服务监控和备份](<需求文档/2026-08-10_Dev中心化服务的监控和备份.md>) | GAP（Keeper 无任何时延指标） | XT-RELAY-PERF-001 |
-| RQ-RELAY-46 | 大量跑腿员为大量用户代付的规模化场景 | [07-30 业务测试总览 §十一](<需求文档/2026-07-30_业务测试总览（面向业务评审）.md>) | 未覆盖 | XT-RELAY-LOAD-001～006 |
-| RQ-RELAY-47 | Keeper 定时刷新 `latestRecordedPrices`，保证跑腿费取价不过期 | [08-01 Recorded Price Keeper](<需求文档/2026-08-01_Recorded-Price-Keeper-定时刷新-latestRecordedPrices（给Keeper工程师）.md>) | 已实现 | XT-RELAY-LOAD-006 |
+| RQ-RELAY-45 | relay 服务纳入监控与备份，含 RPC、gas 监控 | [08-10 Dev 中心化服务监控和备份](<../../需求文档/2026-08-10_Dev中心化服务的监控和备份.md>) | GAP（Keeper 无任何时延指标） | XT-RELAY-PERF-001 |
+| RQ-RELAY-46 | 大量跑腿员为大量用户代付的规模化场景 | [07-30 业务测试总览 §十一](<../../需求文档/2026-07-30_业务测试总览（面向业务评审）.md>) | 未覆盖 | XT-RELAY-LOAD-001～006 |
+| RQ-RELAY-47 | Keeper 定时刷新 `latestRecordedPrices`，保证跑腿费取价不过期 | [08-01 Recorded Price Keeper](<../../需求文档/2026-08-01_Recorded-Price-Keeper-定时刷新-latestRecordedPrices（给Keeper工程师）.md>) | 已实现 | XT-RELAY-LOAD-006 |
 | RQ-RELAY-48 | `tx-fork:frontend` 准入依赖 C-2：前端 / SDK 切 v0.3.2 ABI、签名服务新 EIP-712 域 | 06 准入 §0、C-2 | NOT_READY | FT-RELAY-MODE-023 |
-| RQ-RELAY-49 | Keeper 单机 systemd、私钥明文 env、无多实例冗余 | [08-17 中心化风险盘点](<需求文档/2026-08-17_FX100-中心化风险全量盘点（合约角色+链下基础设施+外部依赖）.md>) | 风险登记 | XT-RELAY-LOAD-005 |
+| RQ-RELAY-49 | Keeper 单机 systemd、私钥明文 env、无多实例冗余 | [08-17 中心化风险盘点](<../../需求文档/2026-08-17_FX100-中心化风险全量盘点（合约角色+链下基础设施+外部依赖）.md>) | 风险登记 | XT-RELAY-LOAD-005 |
 
 ---
 
@@ -608,9 +608,9 @@ flowchart TD
 
 ## 9. 来源索引
 
-- 合约：[Relay 合约代码流程与函数说明](<合约文档/Relay合约代码流程与函数说明.md>)；[01 代码变化分析](<../contract-releases/v0.3.2/01-代码变化分析.md>)；[03 合约功能说明 §3.10](<../contract-releases/v0.3.2/03-合约功能说明.md>)；[06 测试影响与准入结论](<../contract-releases/v0.3.2/06-测试影响与准入结论.md>)
-- 前端：[Standard-Relay-Flash-OneClick (v0.3.2)](<../../TestCase/E2E/versions/v0.3.2/Standard-Relay-Flash-OneClick-(v0.3.2).md>)；[Trade 测试用例矩阵 §5-C](<../../TestCase/E2E/versions/v0.3.2/Trade-测试用例矩阵.md>)；[Trade 需求来源与冲突台账](<../../TestCase/E2E/versions/v0.3.2/Trade-需求来源与冲突台账-(v0.3.2).md>)
-- Keeper：[Keeper 代码分析报告 §3.5](<../keeper/2026-08-23_Keeper代码分析报告（fx100-apps@develop）.md>)；[Keeper 执行速度 / 效率 / 准确率分析](<../keeper/2026-09-03_Keeper执行速度-效率-准确率分析.md>)
+- 合约：[Relay 合约代码流程与函数说明](<Relay合约代码流程与函数说明.md>)；[01 代码变化分析](<../../../contract-releases/v0.3.2/01-代码变化分析.md>)；[03 合约功能说明 §3.10](<../../../contract-releases/v0.3.2/03-合约功能说明.md>)；[06 测试影响与准入结论](<../../../contract-releases/v0.3.2/06-测试影响与准入结论.md>)
+- 前端：[Standard-Relay-Flash-OneClick (v0.3.2)](<Standard-Relay-Flash-OneClick-(v0.3.2).md>)；[Trade 测试用例矩阵 §5-C](<../../../../TestCase/E2E/versions/v0.3.2/Trade-测试用例矩阵.md>)；[Trade 需求来源与冲突台账](<../Trade-需求来源与冲突台账-(v0.3.2).md>)
+- Keeper：[Keeper 代码分析报告 §3.5](<../../../keeper/2026-08-23_Keeper代码分析报告（fx100-apps@develop）.md>)；[Keeper 执行速度 / 效率 / 准确率分析](<../../../keeper/2026-09-03_Keeper执行速度-效率-准确率分析.md>)
 - 需求原文：「需求点唯一汇总」各行的来源列
-- 缺陷：[Bug 注册表 R8-B02 / B05 / B21 / B24 / B26 / B27](<需求文档/2026-08-12_Bug-注册表（R1~R8，含Zenith专题）.md>)；[Zenith 审计发现全量镜像](<需求文档/2026-08-12_Zenith-审计发现全量镜像（GitHub-Issues同步，30条原文）.md>)
+- 缺陷：[Bug 注册表 R8-B02 / B05 / B21 / B24 / B26 / B27](<../../需求文档/2026-08-12_Bug-注册表（R1~R8，含Zenith专题）.md>)；[Zenith 审计发现全量镜像](<../../需求文档/2026-08-12_Zenith-审计发现全量镜像（GitHub-Issues同步，30条原文）.md>)
 - 实现核对入口：合约 `src/router/relay/*`、`src/subaccount/SubaccountUtils.sol`、`src/router/SubaccountRouter.sol`、`test/integration/{RelayCreateOrder,SubaccountRelayCreateOrder,SubaccountSlots}.t.sol`；SDK `packages/sdk/src/relay/*`、`packages/sdk/src/flash/subaccountCrypto.ts`；前端 `apps/fx-base-app/src/{state/ui/flash.ts,state/derived/flash.ts,hooks/trade/useFlashOrderGate.ts,hooks/account/useSubaccountSession.ts,hooks/account/useFlashSessionStatus.ts,lib/flash/*,lib/orders/submitFlash*.ts,lib/orders/relayFeeCapGuard.ts,lib/relay/*,app/api/relay/*}`；Keeper `apps/keeper/src/entrypoints/relWorker.ts`、`apps/keeper/src/domain/relay/*`、`apps/keeper/src/domain/prices/recordedPriceRefresh.ts`

@@ -1,6 +1,6 @@
 # v0.3.2 ADL 完整功能、影响数据与边界
 
-> 版本基线只认 [`Docs/contract-releases/CURRENT.json`](../../../../Docs/contract-releases/CURRENT.json)。ADL 是协议级风险处置，不是用户订单或清算的别名；前端和事件必须保留 `SecondaryOrderType.Adl` 身份。
+> 版本基线只认 [`Docs/contract-releases/CURRENT.json`](../../contract-releases/CURRENT.json)。ADL 是协议级风险处置，不是用户订单或清算的别名；前端和事件必须保留 `SecondaryOrderType.Adl` 身份。
 
 ## 1. 范围与核心结论
 
@@ -212,11 +212,11 @@ flowchart TD
 
 ### 6.1 合约事实源
 
-- 状态启停、内部订单、新鲜度：[`AdlUtils.sol`](../../../../Github/fx100-contracts@release-v0.3.2/src/adl/AdlUtils.sol)。
-- 权限、执行前门槛、secondary type 与 post-ratio：[`AdlHandler.sol`](../../../../Github/fx100-contracts@release-v0.3.2/src/exchange/AdlHandler.sol)。
-- 全局比例：[`MarketUtils.sol`](../../../../Github/fx100-contracts@release-v0.3.2/src/market/MarketUtils.sol) `getNetObligation` / `getGlobalNetObligationRatio`。
-- 成交与负 spread 下限：[`PositionUtils.sol`](../../../../Github/fx100-contracts@release-v0.3.2/src/position/PositionUtils.sol)。
-- 风控集成参考：[`RiskControl.t.sol`](../../../../Github/fx100-contracts@release-v0.3.2/test/integration/RiskControl.t.sol)、[`PositionPricing.t.sol`](../../../../Github/fx100-contracts@release-v0.3.2/test/integration/PositionPricing.t.sol)。
+- 状态启停、内部订单、新鲜度：[`AdlUtils.sol`](../../../Github/fx100-contracts@release-v0.3.2/src/adl/AdlUtils.sol)。
+- 权限、执行前门槛、secondary type 与 post-ratio：[`AdlHandler.sol`](../../../Github/fx100-contracts@release-v0.3.2/src/exchange/AdlHandler.sol)。
+- 全局比例：[`MarketUtils.sol`](../../../Github/fx100-contracts@release-v0.3.2/src/market/MarketUtils.sol) `getNetObligation` / `getGlobalNetObligationRatio`。
+- 成交与负 spread 下限：[`PositionUtils.sol`](../../../Github/fx100-contracts@release-v0.3.2/src/position/PositionUtils.sol)。
+- 风控集成参考：[`RiskControl.t.sol`](../../../Github/fx100-contracts@release-v0.3.2/test/integration/RiskControl.t.sol)、[`PositionPricing.t.sol`](../../../Github/fx100-contracts@release-v0.3.2/test/integration/PositionPricing.t.sol)。
 
 ### 6.2 Keeper
 

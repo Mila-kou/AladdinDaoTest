@@ -1,6 +1,6 @@
 # v0.3.2 dynamicSpread 功能、影响数据与边界
 
-> 版本基线只认 [`Docs/contract-releases/CURRENT.json`](../../../../Docs/contract-releases/CURRENT.json)。本文描述 v0.3.2 的功能和测试判定口径，不把历史版本结论继承为当前版本 PASS。
+> 版本基线只认 [`Docs/contract-releases/CURRENT.json`](../../contract-releases/CURRENT.json)。本文描述 v0.3.2 的功能和测试判定口径，不把历史版本结论继承为当前版本 PASS。
 
 ## 1. 范围与核心结论
 
@@ -185,10 +185,10 @@ dynamicSpread = clamp(rawSpread, min, max)
 
 ### 6.1 合约事实源
 
-- 核心公式：[`PositionPricingUtils.sol`](../../../../Github/fx100-contracts@release-v0.3.2/src/pricing/PositionPricingUtils.sol)。
-- Increase/Decrease 价格侧与特殊订单规则：[`PositionUtils.sol`](../../../../Github/fx100-contracts@release-v0.3.2/src/position/PositionUtils.sol)。
-- 实际值证据：[`PositionEventUtils.sol`](../../../../Github/fx100-contracts@release-v0.3.2/src/position/PositionEventUtils.sol) 中 `PositionIncrease.intItems[1]`、`PositionDecrease.intItems[3]`。
-- Reader 返回类型：[`ReaderPricingUtils.sol`](../../../../Github/fx100-contracts@release-v0.3.2/src/reader/ReaderPricingUtils.sol) 的 `int256 dynamicSpread`。
+- 核心公式：[`PositionPricingUtils.sol`](../../../Github/fx100-contracts@release-v0.3.2/src/pricing/PositionPricingUtils.sol)。
+- Increase/Decrease 价格侧与特殊订单规则：[`PositionUtils.sol`](../../../Github/fx100-contracts@release-v0.3.2/src/position/PositionUtils.sol)。
+- 实际值证据：[`PositionEventUtils.sol`](../../../Github/fx100-contracts@release-v0.3.2/src/position/PositionEventUtils.sol) 中 `PositionIncrease.intItems[1]`、`PositionDecrease.intItems[3]`。
+- Reader 返回类型：[`ReaderPricingUtils.sol`](../../../Github/fx100-contracts@release-v0.3.2/src/reader/ReaderPricingUtils.sol) 的 `int256 dynamicSpread`。
 
 Reader 的通用预估按普通 Increase/Decrease 语义执行，并返回 clamp 后的 final spread。清算和 ADL 的 floor-at-0 应以真实特殊订单路径或其仓位事件为准，不能只调用通用 Reader 得出结论。
 
@@ -200,13 +200,13 @@ Keeper 输入是订单执行上下文和 Oracle 报告，不包含 dynamicSpread
 
 截至 2026-09-05 的 v0.3.2 配套代码静态核对，以下项必须通过 FT/XT 用例确认，不能直接写 PASS：
 
-1. [`useExecutionPriceConfig.ts`](../../../../Github/fx100-apps@develop/apps/fx-base-app/src/hooks/trade/useExecutionPriceConfig.ts) 未完整读取 aggregate MIN/MAX clamp 配置。
-2. [`executionPrice.ts`](../../../../Github/fx100-apps@develop/apps/fx-base-app/src/lib/executionPrice.ts) 存在把 raw 直接 `max(0, raw)` 的旧口径，无法表达普通订单负点差和 MIN/MAX。
+1. [`useExecutionPriceConfig.ts`](../../../Github/fx100-apps@develop/apps/fx-base-app/src/hooks/trade/useExecutionPriceConfig.ts) 未完整读取 aggregate MIN/MAX clamp 配置。
+2. [`executionPrice.ts`](../../../Github/fx100-apps@develop/apps/fx-base-app/src/lib/executionPrice.ts) 存在把 raw 直接 `max(0, raw)` 的旧口径，无法表达普通订单负点差和 MIN/MAX。
 3. SDK Reader ABI 中若仍声明 `uint256 dynamicSpread`，负值会被错误解码；应与合约 `int256` 对齐。
 4. 本地 `Math.exp` 的溢出/抛错行为不等于合约 `x > 130e18` 直接封顶。
 5. TP/SL Decrease 的页面预估若跳过 FX100 spread，会与普通 Decrease 合约路径不一致。
 6. `executionPrice.ts` 的 OI/skew 换算明确把 tokenDelta 固定转换为 1e18 native-token scale，并以 `/1e30` 归一；这只覆盖其当前 18 位假设，不能证明 8 位 index token 与合约原始单位一致。
-7. 合约部署脚本 [`configureOracle.ts`](../../../../Github/fx100-contracts@release-v0.3.2/scripts/configureOracle.ts) 的 `getTokenDecimals` 又把所有非 USDC token 固定视为 18 位。因而“8 位市场尚未部署”是环境 `BLOCKED`，而“前端/配置脚本存在 18 位硬编码”是已静态确认的 `GAP`；两者必须分别记录。
+7. 合约部署脚本 [`configureOracle.ts`](../../../Github/fx100-contracts@release-v0.3.2/scripts/configureOracle.ts) 的 `getTokenDecimals` 又把所有非 USDC token 固定视为 18 位。因而“8 位市场尚未部署”是环境 `BLOCKED`，而“前端/配置脚本存在 18 位硬编码”是已静态确认的 `GAP`；两者必须分别记录。
 
 命名也必须分开：合约 Reader/事件的 `dynamicSpread` 是 final；当前前端 `spreadInfo.dynamicSpread` 是 raw 三项和，`spreadInfo.spread` 又是 `max(0, raw)`。报告不得把三者写成同一个字段。
 
@@ -273,4 +273,4 @@ Keeper 输入是订单执行上下文和 Oracle 报告，不包含 dynamicSpread
 - 清算/ADL 的实际点差必须从特殊订单仓位事件取得，通用 Reader 预估只能作普通交易对照。
 - 完成标准是“公式、事件、状态、资金、页面”五类证据一致，不以交易成功或脚本快速结束代替。
 
-详细数值 fixture 见 [`05-重要参数边界场景.md`](../../../../Docs/contract-releases/v0.3.2/05-重要参数边界场景.md) 与 [`cases/SCN-B32.md`](cases/SCN-B32.md)。
+详细数值 fixture 见 [`05-重要参数边界场景.md`](../../contract-releases/v0.3.2/05-重要参数边界场景.md) 与 [`cases/SCN-B32.md`](../../../TestCase/E2E/versions/v0.3.2/cases/SCN-B32.md)。

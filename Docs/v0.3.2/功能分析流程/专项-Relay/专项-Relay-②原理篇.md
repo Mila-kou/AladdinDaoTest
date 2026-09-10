@@ -2,7 +2,7 @@
 
 > 文档性质：源码解读 + 既有文档汇总，面向第一次接触 Relay 的读者。它不替代安全审计、测试结果或环境准入结论。
 >
-> 基线以 [`Docs/contract-releases/CURRENT.json`](../contract-releases/CURRENT.json) 为唯一事实源。本文源码锚点对应：合约 `fx100-contracts@release-v0.3.2`（commit `13880f2`）、前端与 Keeper `fx100-apps@develop`（commit `b4331c15`，2026-09-09）。develop 是移动分支，引用行号时以该 commit 为准。CURRENT 于 2026-09-09 晚间把前端 head 前进到 `3bc42814`（3 个提交只改 reports 缺口扫描、钱包 chain-resync guard、Sentry 脱敏，未触及 relay / Flash / Keeper 任何文件，`git diff --name-only b4331c15..3bc42814` 已核对），本册 `b4331c15` 的行号锚点对 relay 文件仍逐行有效，可视同 `3bc42814`。
+> 基线以 [`Docs/contract-releases/CURRENT.json`](../../../contract-releases/CURRENT.json) 为唯一事实源。本文源码锚点对应：合约 `fx100-contracts@release-v0.3.2`（commit `13880f2`）、前端与 Keeper `fx100-apps@develop`（commit `b4331c15`，2026-09-09）。develop 是移动分支，引用行号时以该 commit 为准。CURRENT 于 2026-09-09 晚间把前端 head 前进到 `3bc42814`（3 个提交只改 reports 缺口扫描、钱包 chain-resync guard、Sentry 脱敏，未触及 relay / Flash / Keeper 任何文件，`git diff --name-only b4331c15..3bc42814` 已核对），本册 `b4331c15` 的行号锚点对 relay 文件仍逐行有效，可视同 `3bc42814`。
 >
 > 阅读路线：只想弄懂「它是什么、怎么跑」看 §1～§4；想知道每一层具体做了什么看 §5～§7；要写用例或排查问题看 §8～§10；生词看 §11。
 >
@@ -195,7 +195,7 @@ Relay 代码集中在 `src/router/relay/`（注意源码在 `src/` 不是 `contr
 - **三个时间边界**都是 `block.timestamp > 截止值` 才失败，刚好等于截止值仍有效：relay deadline、approval deadline、小钥匙 expiresAt。
 - **Minified 兼容**：直接验签失败时，再把摘要包成 `Minified(bytes32 digest)` 验一次，给只能显示短摘要的钱包用。
 - **只支持 EOA 的 ECDSA 签名**，没有 ERC-1271，智能合约钱包不能用 Relay。
-- **1CT 首单的签名顺序**：主账户先签 Permit、再签授权票据，最后由小钥匙签动作。动作哈希绑定完整票据（含票据签名本身），所以小钥匙的签名必须最后生成。票据里 `maxAllowedCount = 0`、`expiresAt = 0` 表示「不修改」而不是「设为 0」；`shouldAdd = false` 不等于撤销。两个 Router 都有只读的 `get*Digest` 函数，让客户端拿到与链上完全一致的待签摘要。逐函数细节见 [Relay 合约代码流程与函数说明](<合约文档/Relay合约代码流程与函数说明.md>)。
+- **1CT 首单的签名顺序**：主账户先签 Permit、再签授权票据，最后由小钥匙签动作。动作哈希绑定完整票据（含票据签名本身），所以小钥匙的签名必须最后生成。票据里 `maxAllowedCount = 0`、`expiresAt = 0` 表示「不修改」而不是「设为 0」；`shouldAdd = false` 不等于撤销。两个 Router 都有只读的 `get*Digest` 函数，让客户端拿到与链上完全一致的待签摘要。逐函数细节见 [Relay 合约代码流程与函数说明](<Relay合约代码流程与函数说明.md>)。
 
 ### 5.3 小钥匙的五道锁
 
@@ -319,7 +319,7 @@ feeAmount     = ceil(nativeFee × WNT 二级价.max / feeToken 二级价.min)
 
 **平仓例外**：退出类动作对「估算不准」放行、对「余额确实不够」拦截（`isRelayFeeExitBlocked`）。理由是宁可让跑腿员白跑一次，也不能把没有 ETH 的用户困在平不了仓的处境。
 
-**Max 按钮预留 1 USDC**（2026-08-10 需求）：开仓、加仓、追加保证金点 Max 时，先扣掉本次签名的 `maxFeeAmount`，再额外留 1 USDC。结果为 0 时按钮当前直接无响应、不置灰、不清旧值，这是已登记的交互 GAP。2026-09-06 在 v0.3.1 部署上的实测还看到三条静态分析没有的观察：按钮此时显示「Enter Amount」这类误导性中性提示（`INVALID_PAY_AMOUNT` 路径）；切到 Standard 后提示与切换按钮一起消失，而 Standard 仍减 1 USDC，死区变成 `0 < B ≤ 1 USDC`；移动端开仓面板没有任何切换出口。见 [Relay 余额门与 Max 死区实测补充](<../../TestCase/E2E/versions/v0.3.2/Relay余额门与Max死区-实测补充-(v0.3.2).md>)。
+**Max 按钮预留 1 USDC**（2026-08-10 需求）：开仓、加仓、追加保证金点 Max 时，先扣掉本次签名的 `maxFeeAmount`，再额外留 1 USDC。结果为 0 时按钮当前直接无响应、不置灰、不清旧值，这是已登记的交互 GAP。2026-09-06 在 v0.3.1 部署上的实测还看到三条静态分析没有的观察：按钮此时显示「Enter Amount」这类误导性中性提示（`INVALID_PAY_AMOUNT` 路径）；切到 Standard 后提示与切换按钮一起消失，而 Standard 仍减 1 USDC，死区变成 `0 < B ≤ 1 USDC`；移动端开仓面板没有任何切换出口。见 [Relay 余额门与 Max 死区实测补充](<Relay余额门与Max死区-实测补充-(v0.3.2).md>)。
 
 余额不足分两种文案：余额本来够、只是被 Relay 预留挤掉，报 `INSUFFICIENT_RELAY_FEE`；余额本身不够，报 `INSUFFICIENT_BALANCE`。
 
@@ -435,7 +435,7 @@ Flash 取消由 relWorker 广播 `cancelOrder`，不需要垫付 WNT。Standard 
 
 ## 9. 已登记的安全缺口与待裁决项
 
-这些是静态代码结论，不是链上执行结果；正式状态以 [results.md](../../TestCase/E2E/versions/v0.3.2/results.md) 为准。
+这些是静态代码结论，不是链上执行结果；正式状态以 [results.md](../../../../TestCase/E2E/versions/v0.3.2/results.md) 为准。
 
 | 编号 | 一句话 | 状态 |
 |---|---|---|
@@ -445,7 +445,7 @@ Flash 取消由 relWorker 广播 `cancelOrder`，不需要垫付 WNT。Standard 
 | DEC-TRADE-001 | 旧 `flash` 本地值迁到 Standard 还是 1CT | 待裁决 |
 | DEC-TRADE-004 | relay deadline 30 分钟 vs 旧稿 5～10 分钟 | 待裁决 |
 | DEC-TRADE-005 | 签名上限 25 USDC vs 旧稿 10 USDC + 二次确认 | 待裁决 |
-| DEC-TRADE-006 | 4 槽还是 1 槽；是否加 `revokeAll`；[槽位上限设计讨论](<需求文档/2026-08-16_子账户槽位数量上限（MAX_SUBACCOUNT_SLOTS）设计讨论.md>)给出 A/B/C 三案 | 待裁决 |
+| DEC-TRADE-006 | 4 槽还是 1 槽；是否加 `revokeAll`；[槽位上限设计讨论](<../../需求文档/2026-08-16_子账户槽位数量上限（MAX_SUBACCOUNT_SLOTS）设计讨论.md>)给出 A/B/C 三案 | 待裁决 |
 | 最小权限偏差 | 初始批准稿要求子账户默认只授权 Create，Update/Cancel 手动开启；当前四个动作共用一个 actionType | 未被后续明确撤销 |
 
 ---
@@ -493,20 +493,20 @@ Flash 取消由 relWorker 广播 `cancelOrder`，不需要垫付 WNT。Standard 
 
 **工作区已有的两份细文档**（本文是它们的入门版，细节以它们为准）：
 
-- [Relay 合约代码流程与函数说明](合约文档/Relay合约代码流程与函数说明.md)：合约层逐函数说明、费用公式、v0.3.2 变化、GAP 与 18 条测试
-- [v0.3.2 前端 Trade：两种产品模式与三条技术提交路径](<../../TestCase/E2E/versions/v0.3.2/Standard-Relay-Flash-OneClick-(v0.3.2).md>)：前端模式切换规则、动作覆盖、费用与余额门的精确函数、异常恢复、22 项 GAP、测试设计清单
+- [Relay 合约代码流程与函数说明](Relay合约代码流程与函数说明.md)：合约层逐函数说明、费用公式、v0.3.2 变化、GAP 与 18 条测试
+- [v0.3.2 前端 Trade：两种产品模式与三条技术提交路径](<Standard-Relay-Flash-OneClick-(v0.3.2).md>)：前端模式切换规则、动作覆盖、费用与余额门的精确函数、异常恢复、22 项 GAP、测试设计清单
 
 **需求与设计来源**：
 
-- [Express Mode 架构分析（2026-06-10，v0.2.1 批准稿）](../V0.3.1/需求文档/2026-06-10_FX100-Express-Mode-架构分析-前端指南-产品风控-测试规格.md)：FX100 与 GMX 的对比、双轨 Relayer 设计
-- [执行费豁免前移到创建期 + 免 Gas 开仓（实施版）](<../V0.3.1/需求文档/2026-07-22_FX100-执行费豁免前移到创建期+免Gas开仓-改造规范(实施版-2026-06-14).md>)：跑腿员垫付 WETH 的 B1 方案定案、补贴阈值、`MAX_RELAY_SWAP_WNT_CAP` 极性
-- [Flash 模式产品说明 + 安全评审（2026-07-26）](../V0.3.1/需求文档/2026-07-26_flash-mode-security-review.md)：随机 key、90 天、去 1 小时锁的推导；注意其中 §1.1 描述的确定性派生已被随机 key 取代
-- [Flash 1CT 命名会话密钥最终方案](需求文档/2026-07-20_FX100-Flash-1CT-Named-Agent-最终方案.md)：4 槽命名模型的产品来源
-- [子账户槽位数量上限设计讨论](<需求文档/2026-08-16_子账户槽位数量上限（MAX_SUBACCOUNT_SLOTS）设计讨论.md>)
-- [USDC 不够时如何发起 relay](需求文档/2026-08-10_USDC不够时如何发起relay.md)：Max 预留 1 USDC 与切 Standard 的验收口径
-- [Bug 注册表 R8-B02 / R8-B21](<需求文档/2026-08-12_Bug-注册表（R1~R8，含Zenith专题）.md>)
-- [Trade 需求来源与冲突台账](<../../TestCase/E2E/versions/v0.3.2/Trade-需求来源与冲突台账-(v0.3.2).md>)：DEC-TRADE-001/004/005/006
-- [Keeper 代码分析报告 §3.5 中继](../keeper/2026-08-23_Keeper代码分析报告（fx100-apps@develop）.md)
+- [Express Mode 架构分析（2026-06-10，v0.2.1 批准稿）](../../../V0.3.1/需求文档/2026-06-10_FX100-Express-Mode-架构分析-前端指南-产品风控-测试规格.md)：FX100 与 GMX 的对比、双轨 Relayer 设计
+- [执行费豁免前移到创建期 + 免 Gas 开仓（实施版）](<../../../V0.3.1/需求文档/2026-07-22_FX100-执行费豁免前移到创建期+免Gas开仓-改造规范(实施版-2026-06-14).md>)：跑腿员垫付 WETH 的 B1 方案定案、补贴阈值、`MAX_RELAY_SWAP_WNT_CAP` 极性
+- [Flash 模式产品说明 + 安全评审（2026-07-26）](../../../V0.3.1/需求文档/2026-07-26_flash-mode-security-review.md)：随机 key、90 天、去 1 小时锁的推导；注意其中 §1.1 描述的确定性派生已被随机 key 取代
+- [Flash 1CT 命名会话密钥最终方案](../../需求文档/2026-07-20_FX100-Flash-1CT-Named-Agent-最终方案.md)：4 槽命名模型的产品来源
+- [子账户槽位数量上限设计讨论](<../../需求文档/2026-08-16_子账户槽位数量上限（MAX_SUBACCOUNT_SLOTS）设计讨论.md>)
+- [USDC 不够时如何发起 relay](../../需求文档/2026-08-10_USDC不够时如何发起relay.md)：Max 预留 1 USDC 与切 Standard 的验收口径
+- [Bug 注册表 R8-B02 / R8-B21](<../../需求文档/2026-08-12_Bug-注册表（R1~R8，含Zenith专题）.md>)
+- [Trade 需求来源与冲突台账](<../Trade-需求来源与冲突台账-(v0.3.2).md>)：DEC-TRADE-001/004/005/006
+- [Keeper 代码分析报告 §3.5 中继](../../../keeper/2026-08-23_Keeper代码分析报告（fx100-apps@develop）.md)
 
 **实现核对入口**（按本文引用的 commit）：
 

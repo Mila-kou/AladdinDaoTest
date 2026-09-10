@@ -22,7 +22,7 @@ related: BUG-FE-PCTBASE-026（同排百分比按钮三把尺）
 | 落入死区时 Max **静默无响应** | **✅ 成立，本单主项（S2）** —— 需求说要留 1 U，没说要一声不吭 |
 | 该死区总额在 relay 修复后**被动扩大且无人复核** | **✅ 成立** —— 见 §四时间线，属回归副作用，需产品复核而非直接判缺陷 |
 | 产品兜底路线「USDC 不足 → 走 Standard」可解此场景 | **❌ 不成立** —— 见 §六，路线在开仓表单里三处断裂：出口条件覆盖不到死区、切过去死区仍在、切过去反而更静默 |
-| 本单是「新发现」 | **❌ 否（2026-09-06 更正）** —— 核心症状已由 `versions/v0.3.2/Standard-Relay-Flash-OneClick-(v0.3.2).md` §10 登记为 **P0 GAP**，验收用例 **FT-RELAY-USDC-015** 已在矩阵登记（测试数据列即含 `1.48/1.50/1.500001U`）。本单降为**实测证据载体**，见 §十二 |
+| 本单是「新发现」 | **❌ 否（2026-09-06 更正）** —— 核心症状已由 `Docs/v0.3.2/功能分析流程/专项-Relay/Standard-Relay-Flash-OneClick-(v0.3.2).md` §10 登记为 **P0 GAP**，验收用例 **FT-RELAY-USDC-015** 已在矩阵登记（测试数据列即含 `1.48/1.50/1.500001U`）。本单降为**实测证据载体**，见 §十二 |
 
 ## 二、现象
 
@@ -102,7 +102,7 @@ expect(applyMaxUsdcReserve(500_000n)).toBe(0n);
 
 ## 五、原「需产品裁定两点」——已由 v0.3.2 需求文档回答（2026-09-06 更正）
 
-本节原提出两个问题，现已在 `versions/v0.3.2/Standard-Relay-Flash-OneClick-(v0.3.2).md` 找到答案，**不再需要产品裁定**：
+本节原提出两个问题，现已在 `Docs/v0.3.2/功能分析流程/专项-Relay/Standard-Relay-Flash-OneClick-(v0.3.2).md` 找到答案，**不再需要产品裁定**：
 
 | 原问题 | 答案 | 出处 |
 |---|---|---|
@@ -215,7 +215,7 @@ expect(applyMaxUsdcReserve(500_000n)).toBe(0n);
 
 据此 **D2（预留过严）撤回**。
 
-> ⚠️ **2026-09-06 更正**：我此前写的「该 1.0 无书面依据」**是错的，会误导**。依据确实存在，只是不在前端仓库里，而在本工作区的版本需求文档 `versions/v0.3.2/Standard-Relay-Flash-OneClick-(v0.3.2).md` §7.2 / §7.2.1 —— 那里把 `B−C−U` 定为唯一口径并给出精确函数与边界表。**准确表述应为**：该常量在 **fx100-apps 仓库内**无 why 注释（`feeEstimate.ts:8` 只讲 what；README / docs / CHANGELOG / commit body 皆无，而同文件 `MIN_MAX_FEE_USDC` 有 17 行论证 + `docs/flash-mode.md:400` 记载）——这是**仓库内文档缺失**，不是**需求缺失**。
+> ⚠️ **2026-09-06 更正**：我此前写的「该 1.0 无书面依据」**是错的，会误导**。依据确实存在，只是不在前端仓库里，而在本工作区的版本需求文档 `Docs/v0.3.2/功能分析流程/专项-Relay/Standard-Relay-Flash-OneClick-(v0.3.2).md` §7.2 / §7.2.1 —— 那里把 `B−C−U` 定为唯一口径并给出精确函数与边界表。**准确表述应为**：该常量在 **fx100-apps 仓库内**无 why 注释（`feeEstimate.ts:8` 只讲 what；README / docs / CHANGELOG / commit body 皆无，而同文件 `MIN_MAX_FEE_USDC` 有 17 行论证 + `docs/flash-mode.md:400` 记载）——这是**仓库内文档缺失**，不是**需求缺失**。
 
 另留档一条： `feeEstimate.ts:243` 的 *"See the README."* 是悬空指针——`lib/relay/README.md` 全文 112 行及其全部 5 个历史版本对 reserve/balance/gate 零命中。建议顺手补文档。
 
@@ -244,6 +244,6 @@ expect(applyMaxUsdcReserve(500_000n)).toBe(0n);
 1. **真实部署上的实测证据** —— 四张截图 + 链上余额，复现了 §7.2.1 预言的 `B=1,000→998.50` 与 `B=1.48→0` 两个数值，并补上静态对照给不出的一条：同一 1.48 U 下**手输 0.97 真实成交**；
 2. **三条静态对照未覆盖的观察** —— 死区态显示误导性的「Enter Amount」而非无提示；切 Standard 后解释性 UI 一并消失（反馈倒退）；`MobileOrderPanel` 完全没有出口。
 
-详见 `versions/v0.3.2/Relay余额门与Max死区-实测补充-(v0.3.2).md`。
+详见 `Docs/v0.3.2/功能分析流程/专项-Relay/Relay余额门与Max死区-实测补充-(v0.3.2).md`。
 
 **流程教训**：本单前两轮（9-agent + 5-agent 核验）在**未查 `versions/v0.3.2/` 需求文档与用例矩阵**的情况下从源码反推口径，重复了上游已有结论。立缺陷前应先查该版本的需求文档与矩阵。

@@ -2,7 +2,7 @@
 
 FX100 测试工作区，结构：
 
-- `Docs/` — FX100 文档根目录；版本分析统一放在 `Docs/contract-releases/<version>/`，需求归档放在 `Docs/Gordon-Notion需求文档归档/`
+- `Docs/` — FX100 文档根目录；合约版本分析统一放在 `Docs/contract-releases/<version>/`，各版本需求原文归档在 `Docs/<version>/需求文档/`（Gordon Notion 原始索引在 `Docs/Gordon-Notion需求文档归档/`），功能分析、主题生命周期、需求冲突台账与功能专项放 `Docs/<version>/功能分析流程/`（多份文件的专项单独一个 `专项-<功能>/` 子目录，按读者分册 ①业务说明 / ②原理篇 / ③需求与分析）；`TestCase/E2E/versions/<release>/` 只放用例矩阵、results、applicability、expectation-overrides 与 cases
 - `Github/` — 被测源码克隆。**目录命名规范：`<仓库名>@<分支名>`**（分支中的 `/` 换 `-`，如 `fx100-contracts@release-v0.3.2`）；同仓库其他分支用 git worktree 从既有克隆派生，不重复克隆
 - `TestCase/` — 测试用例文档。fx100 E2E 主入口 `TestCase/E2E/`：80 条 SCN 场景（`scenarios/S01~S08`）+ 总控清单 `SCENARIO-CHECKLIST.md`；单元测试用例设计在 [`TestCase/UT/`](TestCase/UT/README.md)
 - `TestCode/` — E2E 自动化独立工程（Playwright + 链上驱动 + 结果看板），入口 [`TestCode/README.md`](TestCode/README.md)；单元测试（Foundry）主副本与同步脚本在 [`TestCode/unit/`](TestCode/unit/README.md)——主副本存在本仓库自己的 git 历史里，**不要直接写进 `Github/` 下的合约克隆**（换版本会丢），执行前先跑 `node TestCode/unit/sync.mjs` 同步进当前 `CURRENT.json` 登记的合约 worktree 再跑 `forge test`

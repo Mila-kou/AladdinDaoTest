@@ -1,6 +1,6 @@
 # v0.3.2 Fee 与 Oracle（兼容入口）
 
-> 历史文件名保留，避免现有引用失效。Funding、Liquidation、ADL 和 dynamicSpread 已拆成独立主文档；本文件只维护 Fee、Oracle、跨域关系与导航。参数值必须从 [`Docs/contract-releases/CURRENT.json`](../../../../Docs/contract-releases/CURRENT.json) 对应部署运行时读取。
+> 历史文件名保留，避免现有引用失效。Funding、Liquidation、ADL 和 dynamicSpread 已拆成独立主文档；本文件只维护 Fee、Oracle、跨域关系与导航。参数值必须从 [`Docs/contract-releases/CURRENT.json`](../../contract-releases/CURRENT.json) 对应部署运行时读取。
 
 ## 1. 功能域关系
 
@@ -136,7 +136,7 @@ feeAmount = ceil(nativeFee × WNT.max / feeToken.min)
 - v0.3.2 的子账户专属 USD 上限键当前未接入收费路径；全局 WNT cap 只能在非零时限制单次 native fee，不能替代 1CT 专属保护。
 - Relay create/update 还需单测非空 callback + 大额 execution fee；当前 `shouldCapMaxExecutionFee=false` 是独立于 Relay Fee 的已知安全 GAP。
 
-完整字段与边界见 [02-订单类型与交易流程.md](02-订单类型与交易流程.md#5-relay-fee-流程与功能点)；两种产品模式、三条技术提交路径、签名主体、切换和任务状态见 [Standard-Relay-Flash-OneClick-(v0.3.2).md](Standard-Relay-Flash-OneClick-(v0.3.2).md)。
+完整字段与边界见 [02-订单类型与交易流程.md](02-订单类型与交易流程.md#5-relay-fee-流程与功能点)；两种产品模式、三条技术提交路径、签名主体、切换和任务状态见 [Standard-Relay-Flash-OneClick-(v0.3.2).md](<专项-Relay/Standard-Relay-Flash-OneClick-(v0.3.2).md>)。
 
 ### 3.7 Fee 总账
 
@@ -253,4 +253,4 @@ Grace 等号、清算成交价、remaining collateral 三条件、判定/执行�
 | ADL | XT-ADL-001、CT-ADL-004 |
 | Oracle/Acceptable Price | XT-ORD-LI-001/002、XT-ORD-SI-001/002、XT-ORD-LD-001/002、XT-ORD-SL-001/002、XT-ORD-MI-002、XT-PRICE-005 |
 
-详细步骤只在 [Trade & Order 测试用例矩阵](Trade-测试用例矩阵.md) 维护；功能文档只说明规则、影响面、边界和用例映射。
+详细步骤只在 [Trade & Order 测试用例矩阵](../../../TestCase/E2E/versions/v0.3.2/Trade-测试用例矩阵.md) 维护；功能文档只说明规则、影响面、边界和用例映射。

@@ -1,6 +1,6 @@
 # v0.3.2 Trade 需求来源、时间线与冲突台账
 
-> 环境、合约、前端和 Keeper 的固定基线只认 [`Docs/contract-releases/CURRENT.json`](../../../../Docs/contract-releases/CURRENT.json)。本文负责裁决需求口径，不把移动分支、历史部署或旧测试结果写成当前事实。
+> 环境、合约、前端和 Keeper 的固定基线只认 [`Docs/contract-releases/CURRENT.json`](../../contract-releases/CURRENT.json)。本文负责裁决需求口径，不把移动分支、历史部署或旧测试结果写成当前事实。
 
 ## 1. 裁决规则
 
@@ -8,7 +8,7 @@
 2. **产品期望**：同一主题由后续 `Closed/Approved` 的明确决定覆盖早期草案；同一文件前后矛盾时，采用其中标明“已定/最终/已实现”的后段决定。
 3. **未决需求**：`Open`、空白任务、讨论稿和建议项不覆盖已关闭决定，也不生成新的 PASS 期望。
 4. **安全事实**：可复现的资金或权限缺口优先于旧营销/风险文案。存在反例时，不得继续使用“绝不会转移资金”等绝对表述。
-5. **测试落地**：版本功能 ID 只在 [Trade-测试用例矩阵.md](Trade-测试用例矩阵.md) 创建；本台账只给出裁决状态和待办。
+5. **测试落地**：版本功能 ID 只在 [Trade-测试用例矩阵.md](../../../TestCase/E2E/versions/v0.3.2/Trade-测试用例矩阵.md) 创建；本台账只给出裁决状态和待办。
 
 执行结果只使用 `NOT_RUN`、`PASS`、`FAIL`、`BLOCKED`、`GAP`。其中 `GAP` 是需求、实现或测试面的结构性缺失；`BLOCKED` 是实现与测试面已存在、但环境或外部依赖阻止执行。两者不得合写；同一旅程按 CT、FT、XT 分层登记。
 
@@ -18,17 +18,17 @@
 
 | 日期 | 来源 | 状态 | 对当前测试的作用 |
 |---|---|---|---|
-| 2026-06-10 | [本地归档](../../../../Docs/V0.3.1/需求文档/2026-06-10_FX100-Express-Mode-架构分析-前端指南-产品风控-测试规格.md)、[Notion 原文](https://app.notion.com/p/FX100-Express-Mode-2026-06-10-37c3d7873f2c81909f5af4f06a81cef9) | v0.2.1 初始批准稿 | Relay/1CT、费用、Keeper 和安全约束的根需求；24h/100 次、5 分钟 deadline、Keeper 白名单等不能直接当 v0.3.2 当前值 |
+| 2026-06-10 | [本地归档](../../V0.3.1/需求文档/2026-06-10_FX100-Express-Mode-架构分析-前端指南-产品风控-测试规格.md)、[Notion 原文](https://app.notion.com/p/FX100-Express-Mode-2026-06-10-37c3d7873f2c81909f5af4f06a81cef9) | v0.2.1 初始批准稿 | Relay/1CT、费用、Keeper 和安全约束的根需求；24h/100 次、5 分钟 deadline、Keeper 白名单等不能直接当 v0.3.2 当前值 |
 | 2026-06-15 | Express B1 决策 | 已批准补充 | Relayer 垫付 WNT Execution Fee，用户以抵押品 Token 的 Relay Fee 偿付；要求 Relay create 的 Execution Fee cap 生效 |
-| 2026-06-22 | [本地归档](../../../../Docs/V0.3.1/需求文档/2026-06-22_express模式前端策略.md)、[Notion 原文](https://app.notion.com/p/express-3873d7873f2c801bbb81f0e0a51b78f1) | Review/P1；后续决定再次确认 | 最终用户只看到 One-Click 与 Standard，默认 One-Click；direct Relay 不是第三个公开模式 |
-| 2026-07-17～2026-07-23 | [Flash 安全评审](../../../../Docs/V0.3.1/需求文档/2026-07-26_flash-mode-security-review.md) 第三部分、[HL 优化本地归档](../../../../Docs/V0.3.1/需求文档/2026-07-23_Flash-1CT学HL优化-随机key与隐形默认交互.md)、[Notion 原文](https://app.notion.com/p/Flash-1CT-HL-key-review-feat-flash-1ct-hl-style-3a53d7873f2c81d0ad5ff44c0a53304a) | 产品已拍板、优化单 Closed | 随机本地 key、90 天、链上已用次数 +1,000,000、移除 1h 锁、Stay connected 默认开、建连后不自动下单 |
-| 2026-07-20 | [本地归档](../../../../Docs/v0.3.2/需求文档/2026-07-20_FX100-Flash-1CT-Named-Agent-最终方案.md)、[Notion 原文](https://app.notion.com/p/FX100-Flash-1CT-Named-Agent-3a33d7873f2c8117b564f6c93f42a446) | 设计方案，部分开放 | 给出命名随机 key、多设备、同名替换和管理 UI 意图；90 天授权以命名槽可覆盖，或 `revokeAll` 可发现、可撤销为安全前提；CURRENT 未形成完整管理面 |
-| 2026-07-28 | [1CT 同意与风险披露](../../../../Docs/V0.3.1/需求文档/2026-07-28_FX100-Flash-1CT-同意与风险披露(给前端+合规).md) | Closed，最终实现说明 | Terms/Privacy 在连接钱包阶段；开启 1CT 前另做版本化风险 `personal_sign`，同版本续期不重复签 |
-| 2026-08-04 | [OC-23 Market 超时撤单](../../../../Docs/v0.3.2/需求文档/2026-08-04_OC-23-market-单永远无法取消，保证金被无限锁定（合约支持，是前端把入口关掉了）.md)、[OC-24 Order Tracking](../../../../Docs/v0.3.2/需求文档/2026-08-04_OC-24-Settings-的-Order-Status-建议默认关闭（对齐-HL-的一键成交体验）.md)、[OC-25 交易通知](../../../../Docs/v0.3.2/需求文档/2026-08-04_OC-25-收藏市场缺少顶部跑马灯-+-缺少交易通知（关掉订单弹窗后没有任何即时反馈）.md)、[OC-26 Standard 撤单反馈](../../../../Docs/v0.3.2/需求文档/2026-08-04_OC-26-标准钱包路径取消订单永远卡在-Cancel-Submitted（Flash-路径正常）.md) | Closed；OC-26 High | Market 超时撤单、Order Tracking 默认关闭、toast 完整终态；Standard 撤单必须从 `Cancel Submitted` 更新到 `Order Canceled` 或错误态，不得 8 秒静默消失 |
-| 2026-08-10 | [USDC 不够时如何发起 Relay](../../../../Docs/v0.3.2/需求文档/2026-08-10_USDC不够时如何发起relay.md) | Closed/High；公式已按 CURRENT 裁决 | v0.3.2 使用 signed `maxFeeAmount` + 额外 1 USDC 两级预留；边界以本台账第 3 节和专项文档为准 |
-| 2026-08-11 | [90 天到期前自动重新签](../../../../Docs/v0.3.2/需求文档/2026-08-11_subaccount-90天到期前可以自动重新签.md) | Open/Low，正文为空 | 仅为 backlog，不覆盖“到期前提示、用户主动续签”；不得据此要求后台静默签名 |
+| 2026-06-22 | [本地归档](../../V0.3.1/需求文档/2026-06-22_express模式前端策略.md)、[Notion 原文](https://app.notion.com/p/express-3873d7873f2c801bbb81f0e0a51b78f1) | Review/P1；后续决定再次确认 | 最终用户只看到 One-Click 与 Standard，默认 One-Click；direct Relay 不是第三个公开模式 |
+| 2026-07-17～2026-07-23 | [Flash 安全评审](../../V0.3.1/需求文档/2026-07-26_flash-mode-security-review.md) 第三部分、[HL 优化本地归档](../../V0.3.1/需求文档/2026-07-23_Flash-1CT学HL优化-随机key与隐形默认交互.md)、[Notion 原文](https://app.notion.com/p/Flash-1CT-HL-key-review-feat-flash-1ct-hl-style-3a53d7873f2c81d0ad5ff44c0a53304a) | 产品已拍板、优化单 Closed | 随机本地 key、90 天、链上已用次数 +1,000,000、移除 1h 锁、Stay connected 默认开、建连后不自动下单 |
+| 2026-07-20 | [本地归档](../需求文档/2026-07-20_FX100-Flash-1CT-Named-Agent-最终方案.md)、[Notion 原文](https://app.notion.com/p/FX100-Flash-1CT-Named-Agent-3a33d7873f2c8117b564f6c93f42a446) | 设计方案，部分开放 | 给出命名随机 key、多设备、同名替换和管理 UI 意图；90 天授权以命名槽可覆盖，或 `revokeAll` 可发现、可撤销为安全前提；CURRENT 未形成完整管理面 |
+| 2026-07-28 | [1CT 同意与风险披露](<../../V0.3.1/需求文档/2026-07-28_FX100-Flash-1CT-同意与风险披露(给前端+合规).md>) | Closed，最终实现说明 | Terms/Privacy 在连接钱包阶段；开启 1CT 前另做版本化风险 `personal_sign`，同版本续期不重复签 |
+| 2026-08-04 | [OC-23 Market 超时撤单](../需求文档/2026-08-04_OC-23-market-单永远无法取消，保证金被无限锁定（合约支持，是前端把入口关掉了）.md)、[OC-24 Order Tracking](../需求文档/2026-08-04_OC-24-Settings-的-Order-Status-建议默认关闭（对齐-HL-的一键成交体验）.md)、[OC-25 交易通知](../需求文档/2026-08-04_OC-25-收藏市场缺少顶部跑马灯-+-缺少交易通知（关掉订单弹窗后没有任何即时反馈）.md)、[OC-26 Standard 撤单反馈](../需求文档/2026-08-04_OC-26-标准钱包路径取消订单永远卡在-Cancel-Submitted（Flash-路径正常）.md) | Closed；OC-26 High | Market 超时撤单、Order Tracking 默认关闭、toast 完整终态；Standard 撤单必须从 `Cancel Submitted` 更新到 `Order Canceled` 或错误态，不得 8 秒静默消失 |
+| 2026-08-10 | [USDC 不够时如何发起 Relay](../需求文档/2026-08-10_USDC不够时如何发起relay.md) | Closed/High；公式已按 CURRENT 裁决 | v0.3.2 使用 signed `maxFeeAmount` + 额外 1 USDC 两级预留；边界以本台账第 3 节和专项文档为准 |
+| 2026-08-11 | [90 天到期前自动重新签](../需求文档/2026-08-11_subaccount-90天到期前可以自动重新签.md) | Open/Low，正文为空 | 仅为 backlog，不覆盖“到期前提示、用户主动续签”；不得据此要求后台静默签名 |
 | 2026-08-12 | v0.3.2 Bug 注册表 R8-B02/R8-B21 | Reported | 证明 1CT Relay Fee cap 和 callback Execution Fee cap 存在资金转移风险，推翻旧绝对安全文案 |
-| 2026-08-16 | [子账户槽位数量讨论](../../../../Docs/v0.3.2/需求文档/2026-08-16_子账户槽位数量上限（MAX_SUBACCOUNT_SLOTS）设计讨论.md) | 讨论完成、未实施 | 1 槽/固定 slot/可配置是候选方案；当前合约测试仍必须按实际 4 槽 |
+| 2026-08-16 | [子账户槽位数量讨论](../需求文档/2026-08-16_子账户槽位数量上限（MAX_SUBACCOUNT_SLOTS）设计讨论.md) | 讨论完成、未实施 | 1 槽/固定 slot/可配置是候选方案；当前合约测试仍必须按实际 4 槽 |
 
 特别提醒：2026-07-26 的安全评审开头仍保留 24 小时、90 次、1 小时锁和默认不持久化的旧描述，但同一文件第三部分已经记录最终决定。测试不得按文件名日期机械采用开头旧值。
 

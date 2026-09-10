@@ -1,13 +1,13 @@
 # Relay 余额门与 Max 死区 —— 实测补充
 
-> **本文不是口径来源。** 口径以 [`Standard-Relay-Flash-OneClick-(v0.3.2).md`](Standard-Relay-Flash-OneClick-(v0.3.2).md) §7.2 / §7.2.1 / §10 为准，用例以 [`Trade-测试用例矩阵.md`](Trade-测试用例矩阵.md) 的 **FT-RELAY-USDC-015 / 016**、**FT-RELAY-MAX-018 / 019**、**FT-RELAY-SWITCH-022** 为准。
+> **本文不是口径来源。** 口径以 [`Standard-Relay-Flash-OneClick-(v0.3.2).md`](Standard-Relay-Flash-OneClick-(v0.3.2).md) §7.2 / §7.2.1 / §10 为准，用例以 [`Trade-测试用例矩阵.md`](../../../../TestCase/E2E/versions/v0.3.2/Trade-测试用例矩阵.md) 的 **FT-RELAY-USDC-015 / 016**、**FT-RELAY-MAX-018 / 019**、**FT-RELAY-SWITCH-022** 为准。
 >
 > 那些文档明确自述「**这些 GAP 是静态代码对照结论，不是链上执行结果**」。本文补的正是缺的那一半：**在真实部署上跑出来的证据**，外加三条静态对照没覆盖到的观察。
 >
-> 专项三册（业务说明 / 原理篇 / 需求与分析）在 `Docs/v0.3.2/专项-Relay-①②③`；③ 的 RQ-RELAY-29 引用本文作为实测证据，① 场景 4 / 场景 7 用人话转述了本文 §二与 §五。
+> 专项三册（业务说明 / 原理篇 / 需求与分析）在 `Docs/v0.3.2/功能分析流程/专项-Relay/`；③ 的 RQ-RELAY-29 引用本文作为实测证据，① 场景 4 / 场景 7 用人话转述了本文 §二与 §五。
 
 - **实测环境**：https://fx100-dev.vercel.app · Base Sepolia 84532 · **v0.3.1 部署（260729）** · 前端 `fx100-apps@develop`
-- **注意**：实测跑在 v0.3.1 部署上，本文归入 v0.3.2 是因为口径与用例归属该版本；正式结果仍按 [`results.md`](results.md) 登记
+- **注意**：实测跑在 v0.3.1 部署上，本文归入 v0.3.2 是因为口径与用例归属该版本；正式结果仍按 [`results.md`](../../../../TestCase/E2E/versions/v0.3.2/results.md) 登记
 - **日期**：2026-09-06 · 逐笔证据 `manual-runs/2026-08-28-基本功能smoke/OPERATION-LOG.md` LOG-087
 
 ---

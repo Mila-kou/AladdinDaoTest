@@ -1,6 +1,6 @@
 # v0.3.2 Liquidation（清算）完整功能、影响数据与边界
 
-> 版本基线只认 [`Docs/contract-releases/CURRENT.json`](../../../../Docs/contract-releases/CURRENT.json)。链上没有持久化的“清算价格”字段；最终事实是执行区块、同一 Oracle 报告下的 `isPositionLiquidatable` 判定和清算交易结果。
+> 版本基线只认 [`Docs/contract-releases/CURRENT.json`](../../contract-releases/CURRENT.json)。链上没有持久化的“清算价格”字段；最终事实是执行区块、同一 Oracle 报告下的 `isPositionLiquidatable` 判定和清算交易结果。
 
 ## 1. 范围与核心结论
 
@@ -258,11 +258,11 @@ flowchart TD
 
 ### 6.1 合约事实源
 
-- 入口、权限、Oracle 和执行链：[`LiquidationHandler.sol`](../../../../Github/fx100-contracts@release-v0.3.2/src/exchange/LiquidationHandler.sol)。
-- Grace 与内部订单：[`LiquidationUtils.sol`](../../../../Github/fx100-contracts@release-v0.3.2/src/liquidation/LiquidationUtils.sol)。
-- 清算成交价、remaining collateral 与三条件：[`PositionUtils.sol`](../../../../Github/fx100-contracts@release-v0.3.2/src/position/PositionUtils.sol) `isPositionLiquidatable`。
-- 实际费用和账本：[`PositionPricingUtils.sol`](../../../../Github/fx100-contracts@release-v0.3.2/src/pricing/PositionPricingUtils.sol)、[`DecreasePositionCollateralUtils.sol`](../../../../Github/fx100-contracts@release-v0.3.2/src/position/DecreasePositionCollateralUtils.sol)。
-- 全平、OI、事件：[`DecreasePositionUtils.sol`](../../../../Github/fx100-contracts@release-v0.3.2/src/position/DecreasePositionUtils.sol)。
+- 入口、权限、Oracle 和执行链：[`LiquidationHandler.sol`](../../../Github/fx100-contracts@release-v0.3.2/src/exchange/LiquidationHandler.sol)。
+- Grace 与内部订单：[`LiquidationUtils.sol`](../../../Github/fx100-contracts@release-v0.3.2/src/liquidation/LiquidationUtils.sol)。
+- 清算成交价、remaining collateral 与三条件：[`PositionUtils.sol`](../../../Github/fx100-contracts@release-v0.3.2/src/position/PositionUtils.sol) `isPositionLiquidatable`。
+- 实际费用和账本：[`PositionPricingUtils.sol`](../../../Github/fx100-contracts@release-v0.3.2/src/pricing/PositionPricingUtils.sol)、[`DecreasePositionCollateralUtils.sol`](../../../Github/fx100-contracts@release-v0.3.2/src/position/DecreasePositionCollateralUtils.sol)。
+- 全平、OI、事件：[`DecreasePositionUtils.sol`](../../../Github/fx100-contracts@release-v0.3.2/src/position/DecreasePositionUtils.sol)。
 
 本文以 v0.3.2 源码和运行时配置为测试主口径；历史公式材料如与本文或源码存在差异，以源码与本文件列出的分支/取整规则为准。
 

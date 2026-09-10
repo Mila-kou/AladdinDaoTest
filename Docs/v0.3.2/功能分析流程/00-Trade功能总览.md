@@ -78,7 +78,7 @@ flowchart LR
 - v0.3.2 Relay/1CT 的 6 位 USDC Max 统一按 `B>C+U ? B−C−U : 0`：`C` 是当次 signed `maxFeeAmount`，`U=1 USDC=1_000_000 raw` 是额外钱包预留。cap 命中 0.5U 下限时，余额必须严格大于 1.5U 才有正 Max；等于仍为 0。CURRENT 固定 raw reserve 也会作用到 Standard/未来非 6 位 payToken，属于作用域边界；Switch Standard 不自动提交，手填金额保持，Max/百分比派生金额会按新模式重算。
 - Relay task 只有 `pending → submitted → executed/failed`；`executed` 只表示 Relay Router 交易回执成功，不表示新建订单已成交。市价/条件单仍由后续 Order Keeper 生命周期处理，前端本地 timeout 也不能覆盖服务端或链上状态。
 
-三条提交路径、前端切换、1CT 会话、Relay Fee、动作覆盖和当前实现 GAP 统一见 [Standard-Relay-Flash-OneClick-(v0.3.2).md](Standard-Relay-Flash-OneClick-(v0.3.2).md)。
+三条提交路径、前端切换、1CT 会话、Relay Fee、动作覆盖和当前实现 GAP 统一见 [Standard-Relay-Flash-OneClick-(v0.3.2).md](<专项-Relay/Standard-Relay-Flash-OneClick-(v0.3.2).md>)。
 
 ## 5. 功能验收原则
 

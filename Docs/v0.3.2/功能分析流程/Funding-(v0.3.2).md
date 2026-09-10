@@ -1,6 +1,6 @@
 # v0.3.2 Funding 完整功能、影响数据与边界
 
-> 版本基线只认 [`Docs/contract-releases/CURRENT.json`](../../../../Docs/contract-releases/CURRENT.json)。本文将 Funding 的“市场指数累计”和“仓位资金结算”拆开说明；二者不能用同一条余额断言代替。
+> 版本基线只认 [`Docs/contract-releases/CURRENT.json`](../../contract-releases/CURRENT.json)。本文将 Funding 的“市场指数累计”和“仓位资金结算”拆开说明；二者不能用同一条余额断言代替。
 
 ## 1. 范围与核心结论
 
@@ -236,13 +236,13 @@ claimableFeeAmountKey(marketIndex, collateralToken, FUNDING_FEE_TYPE)
 
 ### 6.1 合约事实源
 
-- 指数、EMA、factor 和事件：[`MarketUtils.sol`](../../../../Github/fx100-contracts@release-v0.3.2/src/market/MarketUtils.sol) `updateFundingState` / `getNextFundingAmountPerSize`。
+- 指数、EMA、factor 和事件：[`MarketUtils.sol`](../../../Github/fx100-contracts@release-v0.3.2/src/market/MarketUtils.sol) `updateFundingState` / `getNextFundingAmountPerSize`。
 - 实际净额路由：同文件 `settleFundingFees`。
-- 仓位金额与舍入：同文件 `getFundingAmount`，以及 [`PositionPricingUtils.sol`](../../../../Github/fx100-contracts@release-v0.3.2/src/pricing/PositionPricingUtils.sol) `getFundingFees`。
-- Increase/Decrease 结算入口：[`IncreasePositionUtils.sol`](../../../../Github/fx100-contracts@release-v0.3.2/src/position/IncreasePositionUtils.sol)、[`DecreasePositionCollateralUtils.sol`](../../../../Github/fx100-contracts@release-v0.3.2/src/position/DecreasePositionCollateralUtils.sol)。
-- 更新顺序：[`ExecuteOrderUtils.sol`](../../../../Github/fx100-contracts@release-v0.3.2/src/order/ExecuteOrderUtils.sol)。
-- Reader 预估：[`ReaderUtils.sol`](../../../../Github/fx100-contracts@release-v0.3.2/src/reader/ReaderUtils.sol)、[`ReaderPositionUtils.sol`](../../../../Github/fx100-contracts@release-v0.3.2/src/reader/ReaderPositionUtils.sol)。
-- 协议领取：[`FeeUtils.sol`](../../../../Github/fx100-contracts@release-v0.3.2/src/fee/FeeUtils.sol)、[`FeeHandler.sol`](../../../../Github/fx100-contracts@release-v0.3.2/src/fee/FeeHandler.sol)。
+- 仓位金额与舍入：同文件 `getFundingAmount`，以及 [`PositionPricingUtils.sol`](../../../Github/fx100-contracts@release-v0.3.2/src/pricing/PositionPricingUtils.sol) `getFundingFees`。
+- Increase/Decrease 结算入口：[`IncreasePositionUtils.sol`](../../../Github/fx100-contracts@release-v0.3.2/src/position/IncreasePositionUtils.sol)、[`DecreasePositionCollateralUtils.sol`](../../../Github/fx100-contracts@release-v0.3.2/src/position/DecreasePositionCollateralUtils.sol)。
+- 更新顺序：[`ExecuteOrderUtils.sol`](../../../Github/fx100-contracts@release-v0.3.2/src/order/ExecuteOrderUtils.sol)。
+- Reader 预估：[`ReaderUtils.sol`](../../../Github/fx100-contracts@release-v0.3.2/src/reader/ReaderUtils.sol)、[`ReaderPositionUtils.sol`](../../../Github/fx100-contracts@release-v0.3.2/src/reader/ReaderPositionUtils.sol)。
+- 协议领取：[`FeeUtils.sol`](../../../Github/fx100-contracts@release-v0.3.2/src/fee/FeeUtils.sol)、[`FeeHandler.sol`](../../../Github/fx100-contracts@release-v0.3.2/src/fee/FeeHandler.sol)。
 
 ### 6.2 Keeper
 

@@ -100,7 +100,7 @@ OC-23 的遗留说明把“`REQUEST_EXPIRATION_TIME` 较长、`MAX_ORACLE_PRICE_
 
 - Relay 基础设施当前是自建 Relay API/worker，不把 Gelato 或旧 `oracleParams` 写入 v0.3.2 验收步骤。
 - Relay task 的 `executed` 只代表 Relay Router 交易 receipt 成功；Market/Limit/Stop/TP/SL 是否成交仍由后续 Order Keeper 与 Oracle 决定。
-- 当前 Relay action deadline 约 30 分钟，Permit deadline 约 1 小时，1CT Approval deadline 通常与 90 天 `expiresAt` 相同；三者不可混写。
+- 当前 Relay action deadline 约 30 分钟，Permit deadline 5 分钟（`lib/relay/permit.ts:145` = 300 秒，2026-09-10 按 `b4331c15` 核对；旧写法「约 1 小时」来自无引用的 SDK 常量，已作废），1CT Approval deadline 通常与 90 天 `expiresAt` 相同；三者不可混写。
 - 合约入口没有 Relay Keeper ACL。后端服务钱包是正常产品路径，但不是链上权限边界。
 - `slot` 当前允许空字符串，合约没有长度/非空校验；若产品要求可读且非空，应由前端与合约约束并另补边界，不能把现状写成“空 slot 会拒绝”。
 - `MAX_RELAY_SWAP_WNT_CAP` 是全局单次 native fee cap；不能替代子账户 USD cap，也不能阻止重复小额调用。

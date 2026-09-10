@@ -24,7 +24,9 @@
 > | 缺陷（R8-Bxx） | [Bug 注册表](<需求文档/2026-08-12_Bug-注册表（R1~R8，含Zenith专题）.md>) |
 > | 执行结果 | [results.md](<../../TestCase/E2E/versions/v0.3.2/results.md>) |
 > | 合约逐函数说明 | [Relay 合约代码流程与函数说明](<合约文档/Relay合约代码流程与函数说明.md>) |
-> | 前端三条路径与 Max 精确公式 | [Standard-Relay-Flash-OneClick (v0.3.2)](<../../TestCase/E2E/versions/v0.3.2/Standard-Relay-Flash-OneClick-(v0.3.2).md>) |
+> | 前端三条路径与 Max 精确公式；22 项 GAP 的解除条件 | [Standard-Relay-Flash-OneClick (v0.3.2)](<../../TestCase/E2E/versions/v0.3.2/Standard-Relay-Flash-OneClick-(v0.3.2).md>)（RQ 状态列引用它，解除条件以它为准） |
+> | 单条用例展开稿 | 矩阵 `cases/` 子目录，如 [FT-RELAY-011](<../../TestCase/E2E/versions/v0.3.2/cases/FT-RELAY-011.md>) |
+> | 实测证据（真实部署上的活样本） | [Relay 余额门与 Max 死区实测补充](<../../TestCase/E2E/versions/v0.3.2/Relay余额门与Max死区-实测补充-(v0.3.2).md>)、`TestCase/E2E/manual-runs/`、`bugs/v0.3.1/BUG-FE-MAXRESERVE-025` |
 >
 > 图例：实线 = 正常流转；虚线 = 异步或后台；红色节点 = 会 revert / 拒绝；黄色 = 待裁决或 GAP。
 
@@ -76,7 +78,7 @@
 | RQ-RELAY-26 | 用户只看到 Standard 与 Flash One-Click，默认 One-Click；纯 Relay 不是第三个公开模式 | 06-22 express 前端策略；07-23 | 已实现；历史 `flash` 值的迁移待裁决 DEC-TRADE-001 | FT-RELAY-LEGACY-024、XT-ORD-MODE-001 |
 | RQ-RELAY-27 | feature flag / 支持链 / RelayRouter 三重门任一不满足回到 Standard；偏好模式与实际模式可解释 | 版本文档 §3.2 | 已实现·漂移（回退时不改写本地偏好） | FT-RELAY-MODE-023 |
 | RQ-RELAY-28 | 主按钮「Enable Trading」→「Establish Connection」轻量弹窗，成功后不自动下单；Standard 旁显示「切换到一键交易」；即将过期只在 Settings 提示 | 07-23（Closed） | 已实现 | FT-FLASH-SESSION-005、FT-RELAY-SUBMIT-029 |
-| RQ-RELAY-29 | USDC 不够：Max 先预留本次 signed `maxFeeAmount` 再留 1 USDC；余额 < 业务金额 + cap 时显示 `Insufficient USDC for Relay Fee` + `Switch to Standard`；切换不自动提交、手填值保留、派生值重算 | [08-10 USDC 不够时如何发起 relay](<需求文档/2026-08-10_USDC不够时如何发起relay.md>)（Closed）；台账 §3 | 已实现（Max 为 0 时按钮无响应，GAP P0） | FT-RELAY-USDC-015/016、FT-RELAY-MAX-018/019/025/026/028、FT-RELAY-SWITCH-022、FT-RELAY-QUOTE-027 |
+| RQ-RELAY-29 | USDC 不够：Max 先预留本次 signed `maxFeeAmount` 再留 1 USDC；余额 < 业务金额 + cap 时显示 `Insufficient USDC for Relay Fee` + `Switch to Standard`；切换不自动提交、手填值保留、派生值重算 | [08-10 USDC 不够时如何发起 relay](<需求文档/2026-08-10_USDC不够时如何发起relay.md>)（Closed）；台账 §3 | 已实现（Max 为 0 时按钮无响应，GAP P0；2026-09-06 于 v0.3.1 部署实测复现，并补三条观察：按钮显示误导性「Enter Amount」、切 Standard 后提示与出口一起消失且 Standard 仍减 1 USDC、移动端无切换出口，见 [实测补充](<../../TestCase/E2E/versions/v0.3.2/Relay余额门与Max死区-实测补充-(v0.3.2).md>)） | FT-RELAY-USDC-015/016、FT-RELAY-MAX-018/019/025/026/028、FT-RELAY-SWITCH-022、FT-RELAY-QUOTE-027 |
 | RQ-RELAY-30 | 报价三值分离：显示值 1.2×、签名上限 3×（0.5～25 USDC）、实扣 `RelayFeePaid`；签名后送出前再复查 | 版本文档 §7.2 | 已实现；旧稿 10 USDC 硬顶 + 超 2 USDC 二次确认待裁决 DEC-TRADE-005 | FT-RELAY-CAP-021、FT-RELAY-QUOTE-020、FT-RELAY-011 |
 | RQ-RELAY-31 | Relay task 与 Order 生命周期分离；task `executed` ≠ 成交；轮询 3 分钟超时要显示超时 | 版本文档 §8 | 已实现（超时后无自动对账） | XT-RELAY-PERF-003 |
 | RQ-RELAY-32 | 提交锁：第一次点击同步占锁，取得 txHash 前不可重复提交 | 版本文档 §9 | 已实现 | FT-RELAY-SUBMIT-029/030 |
@@ -579,6 +581,8 @@ flowchart TD
 | R-6 关闭并重新开仓 | FT-FLASH-ROLL-009～013、XT-FLASH-ROLL-012 | 同 R-3 + 到期仓位 fixture |
 | R-7 速度 | XT-RELAY-PERF-001～003 | R-3 + 日志时间戳采集 + 可控出块 |
 | R-8 压力 | XT-RELAY-LOAD-001～006 | R-3 + 花名册 N 账户 + Admin RPC 设 gasprice + 本机 Redis + 时间推进 |
+
+测试账户余额准备（来自实测补充 §四）：跑 Flash 且要用 Max 时 USDC 建议 ≥ 20（免受 cap 波动干扰）、ETH 可为 0；跑 Standard 需 ETH ≥ 0.001（约 20 笔含一次 approve）；复现 Max 死区用 Flash 1.48 / 1.50 / 1.500001 USDC 与 Standard ≤ 1.0；复现 signed-cap 门用 < 0.5 USDC。现场三种「卡住」的判别（提交前跑腿费不足 / 点 Max 死区 / 提交后 keeper 跳单）见 ① 场景 7。
 
 ### 7.3 最小证据
 

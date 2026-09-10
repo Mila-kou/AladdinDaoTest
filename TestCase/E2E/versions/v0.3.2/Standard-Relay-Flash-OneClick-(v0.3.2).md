@@ -1,6 +1,6 @@
 # v0.3.2 前端 Trade：两种产品模式与三条技术提交路径
 
-> 基线以 [`Docs/contract-releases/CURRENT.json`](../../../../Docs/contract-releases/CURRENT.json) 为唯一事实源。本文同时描述产品应有行为与 CURRENT 登记前端的静态实现现状；“源码存在”不等于已经在 v0.3.2 环境验收通过。需求先后关系、已覆盖旧口径和待决项统一见 [Trade 需求来源与冲突台账](Trade-需求来源与冲突台账-(v0.3.2).md)。
+> 基线以 [`Docs/contract-releases/CURRENT.json`](../../../../Docs/contract-releases/CURRENT.json) 为唯一事实源。需求点编号（RQ-RELAY-01～49）与安全 / 速度 / 压力分析见 [专项-Relay-③需求与分析](<../../../../Docs/v0.3.2/专项-Relay-③需求与分析.md>)；③ 的状态列引用本文，本文 §10 的 GAP 解除条件仍以本文为准。本文同时描述产品应有行为与 CURRENT 登记前端的静态实现现状；“源码存在”不等于已经在 v0.3.2 环境验收通过。需求先后关系、已覆盖旧口径和待决项统一见 [Trade 需求来源与冲突台账](Trade-需求来源与冲突台账-(v0.3.2).md)。
 
 ## 1. 结论先行
 
@@ -342,7 +342,7 @@ loading、balance loading、balance unavailable、quote unavailable 和 `maxFeeA
 Relay Router 通过底层 `Router.pluginTransfer` 拉取 collateral 与 Relay Fee，因此前端可能需要 ERC-2612 Permit：
 
 - owner 必须是用户主账户，spender 必须是 `Router`。
-- 当前前端按需签 `MAX_UINT256` Permit，签名 deadline 约 1 小时，并缓存可用 Permit/allowance。
+- 当前前端按需签 `MAX_UINT256` Permit，签名 deadline 5 分钟（`lib/relay/permit.ts:145` = 300 秒，2026-09-10 按 `b4331c15` 核对；`lib/relay/README.md` 与 SDK `configs/flash.ts` 的「约 1 小时」常量无引用、已过期），并只在内存里缓存可用 Permit/allowance。
 - create 的 Permit 覆盖 `initialCollateralAmount + maxFeeAmount`；fee-only 动作至少要覆盖 `maxFeeAmount`。
 - Permit 被纳入 Relay payload 的签名哈希；错误 owner/spender 必须拒绝。合约会捕获 token 的 Permit 调用失败，所以若既有 allowance 已足够，Permit 本身失败后业务仍可能继续。
 - Permit 签名成功不等于订单已提交；后续 EIP-712、Keeper 或链上失败仍必须显示真实失败状态。

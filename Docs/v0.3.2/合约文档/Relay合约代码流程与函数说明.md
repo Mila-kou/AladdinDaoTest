@@ -3,6 +3,8 @@
 > 文档性质：源码解读与调用链说明，不替代安全审计、测试结果或环境准入结论。
 >
 > 版本基线以 [`Docs/contract-releases/CURRENT.json`](../../contract-releases/CURRENT.json) 为唯一事实源。本文是 **v0.3.2 源码快照**，源码锚点对应 `release/v0.3.2`、commit `13880f2416918f4fed3fea86d7f1023084a3ce0d`。
+>
+> 本文是合约层的逐函数详解层。入门与三层机制见 [专项-Relay-②原理篇](<../专项-Relay-②原理篇.md>)，需求点（RQ-RELAY-01～49）与安全 / 速度 / 压力分析见 [专项-Relay-③需求与分析](<../专项-Relay-③需求与分析.md>)；两册引用本文、不复述。
 
 ## 1. 结论先行
 

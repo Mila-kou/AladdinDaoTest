@@ -195,6 +195,7 @@ Relay 代码集中在 `src/router/relay/`（注意源码在 `src/` 不是 `contr
 - **三个时间边界**都是 `block.timestamp > 截止值` 才失败，刚好等于截止值仍有效：relay deadline、approval deadline、小钥匙 expiresAt。
 - **Minified 兼容**：直接验签失败时，再把摘要包成 `Minified(bytes32 digest)` 验一次，给只能显示短摘要的钱包用。
 - **只支持 EOA 的 ECDSA 签名**，没有 ERC-1271，智能合约钱包不能用 Relay。
+- **1CT 首单的签名顺序**：主账户先签 Permit、再签授权票据，最后由小钥匙签动作。动作哈希绑定完整票据（含票据签名本身），所以小钥匙的签名必须最后生成。票据里 `maxAllowedCount = 0`、`expiresAt = 0` 表示「不修改」而不是「设为 0」；`shouldAdd = false` 不等于撤销。两个 Router 都有只读的 `get*Digest` 函数，让客户端拿到与链上完全一致的待签摘要。逐函数细节见 [Relay 合约代码流程与函数说明](<合约文档/Relay合约代码流程与函数说明.md>)。
 
 ### 5.3 小钥匙的五道锁
 
@@ -318,7 +319,7 @@ feeAmount     = ceil(nativeFee × WNT 二级价.max / feeToken 二级价.min)
 
 **平仓例外**：退出类动作对「估算不准」放行、对「余额确实不够」拦截（`isRelayFeeExitBlocked`）。理由是宁可让跑腿员白跑一次，也不能把没有 ETH 的用户困在平不了仓的处境。
 
-**Max 按钮预留 1 USDC**（2026-08-10 需求）：开仓、加仓、追加保证金点 Max 时，先扣掉本次签名的 `maxFeeAmount`，再额外留 1 USDC。结果为 0 时按钮当前直接无响应、不置灰、不清旧值，这是已登记的交互 GAP。
+**Max 按钮预留 1 USDC**（2026-08-10 需求）：开仓、加仓、追加保证金点 Max 时，先扣掉本次签名的 `maxFeeAmount`，再额外留 1 USDC。结果为 0 时按钮当前直接无响应、不置灰、不清旧值，这是已登记的交互 GAP。2026-09-06 在 v0.3.1 部署上的实测还看到三条静态分析没有的观察：按钮此时显示「Enter Amount」这类误导性中性提示（`INVALID_PAY_AMOUNT` 路径）；切到 Standard 后提示与切换按钮一起消失，而 Standard 仍减 1 USDC，死区变成 `0 < B ≤ 1 USDC`；移动端开仓面板没有任何切换出口。见 [Relay 余额门与 Max 死区实测补充](<../../TestCase/E2E/versions/v0.3.2/Relay余额门与Max死区-实测补充-(v0.3.2).md>)。
 
 余额不足分两种文案：余额本来够、只是被 Relay 预留挤掉，报 `INSUFFICIENT_RELAY_FEE`；余额本身不够，报 `INSUFFICIENT_BALANCE`。
 

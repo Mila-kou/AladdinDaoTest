@@ -1,0 +1,44 @@
+{
+  "id": "2026-08-13T145542-048Z-FX100-20260813-2255",
+  "release": "FX100-20260813-2255",
+  "description": "",
+  "scope": "single",
+  "environmentMode": "override",
+  "marketSelection": "default",
+  "keeperMode": "inline",
+  "overrideEnvironment": "tx-fork",
+  "createdAt": "2026-08-13T14:55:42.048Z",
+  "status": "PARTIAL",
+  "rpcUpdatedEnvironments": [],
+  "cases": [
+    {
+      "id": "SCN-010",
+      "title": "现价下方限价开多",
+      "plannedEnvironment": "oracle-fork",
+      "resolvedEnvironment": "tx-fork",
+      "plannedMarketMode": "mock-market",
+      "resolvedMarketMode": "mock-market",
+      "resolvedOracleMode": "mock-oracle",
+      "resolvedMockResourceAlias": "default-mock",
+      "marketCompatibility": "mock-only",
+      "automated": true,
+      "specPath": "tests/S02/scn-010.spec.ts",
+      "status": "SKIP",
+      "resultRunId": "2026-08-13T145542-048Z-FX100-202-tx-fork-mock-market-default-mock",
+      "message": "本次未执行核对"
+    }
+  ],
+  "logTail": [
+    "运行批次已创建，等待执行。",
+    "开始执行 1 条已自动化用例。",
+    "tx-fork: RPC Chain ID 已核对为 99911。",
+    "tx-fork: 执行 SCN-010。",
+    "Running 1 test using 1 worker",
+    "  -  1 [tx-fork] › tests/S02/scn-010.spec.ts:22:3 › S02 策略下单与订单管理 › SCN-010 现价下方限价开多｜Market Bundle 受控价格真实签名链路 @p0 @tx @oracle @serial",
+    "  1 skipped",
+    "FX100 dashboard: artifacts/runs/2026-08-13T145542-048Z-FX100-202-tx-fork-mock-market-default-mock/dashboard.html",
+    "自动化执行结束：PARTIAL。"
+  ],
+  "startedAt": "2026-08-13T14:55:42.051Z",
+  "endedAt": "2026-08-13T14:55:43.508Z"
+}

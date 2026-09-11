@@ -3,7 +3,7 @@
 //
 // 这里不再自己解析 RPC / 账户：配置来源分叉就是 bug 温床（集成层一度回退到
 // `Test/fx100BaseDev0624.env` 的 `TEST_EOA`，那是另一套旧账户，导致读出余额 0）。
-// 换账户、换 fork 只改 `Test/project/fx100/config.mjs` 一处。
+// 换账户、换 fork 只改 `Test/config.mjs` 一处。
 
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";

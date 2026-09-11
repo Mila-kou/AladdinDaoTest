@@ -24,7 +24,14 @@ import {
   isMockResourceEnvironment,
   loadMockResourceRegistry,
 } from '../config/mock-resources.js';
-import { loadDeploymentManifest } from '../config/deployment.js';
+import {
+  loadDeploymentManifest,
+  parameterSnapshotCsvPath,
+} from '../config/deployment.js';
+import {
+  assertRuntimeEnvironmentBinding,
+  loadEnvironmentBinding,
+} from '../config/environment-binding.js';
 import { validateRpcUrl } from './environment-settings.js';
 import { loadEnvironmentInitializationProfile } from './environment-initialization-profile.js';
 
@@ -92,7 +99,6 @@ const sections = [
 
 const commonFields: readonly FieldSpec[] = [
   { key: 'E2E_APP_BASE_URL', label: 'Trade 站点地址', section: 'trade', type: 'url', help: '填写站点根地址，检查时自动访问 /trade。', required: true, validation: 'http-url' },
-  { key: 'E2E_DEPLOYMENT_MANIFEST', label: 'Deployment Manifest', section: 'trade', type: 'path', help: '相对于 TestCode 的部署清单路径。', required: true },
   { key: 'E2E_REQUEST_TIMEOUT_MS', label: '请求超时（毫秒）', section: 'trade', type: 'number', help: 'Trade、RPC 与链上读取的单次超时。', required: true, validation: 'positive-integer' },
   { key: 'E2E_RELEASE', label: '默认 Release', section: 'trade', type: 'text', help: '运行记录使用的默认版本名称。' },
   { key: 'E2E_FORK_DISPLAY_NAME', label: 'Fork 显示名称', section: 'trade', type: 'text', help: '留空时从 RPC 地址自动推导。' },
@@ -101,6 +107,7 @@ const commonFields: readonly FieldSpec[] = [
   { key: 'E2E_TEST_ACCOUNT', label: 'Trader 地址', section: 'accounts', type: 'text', help: '发起订单的测试账户。', validation: 'address' },
   { key: 'E2E_KEEPER_ACCOUNT', label: 'Keeper 地址', section: 'accounts', type: 'text', help: '执行订单并持有 ORDER_KEEPER 角色。', validation: 'address' },
   { key: 'E2E_ADMIN_ACCOUNT', label: 'Admin 地址', section: 'accounts', type: 'text', help: '修改 Oracle/配置并持有 CONTROLLER 角色。', validation: 'address' },
+  { key: 'E2E_NOISE_TRADER_ACCOUNTS', label: '模拟交易 Trader 列表', section: 'accounts', type: 'text', help: '逗号分隔的地址（fork 上 impersonation 免私钥）。供 env:noise:trades 铺底模拟交易，使环境数据更复杂：双侧 OI、Skew、Funding、多仓并存；这些交易不做核验。' },
   { key: 'E2E_TEST_PRIVATE_KEY', label: 'Trader 私钥', section: 'accounts', type: 'secret', help: '已有值不会回显；留空保持不变。', secret: true, validation: 'private-key' },
   { key: 'E2E_SECONDARY_TEST_PRIVATE_KEY', label: 'Keeper 私钥', section: 'accounts', type: 'secret', help: '已有值不会回显；也可从 Keeper 配置文件读取。', secret: true, validation: 'private-key' },
   { key: 'E2E_TOKEN_OWNER_PRIVATE_KEY', label: 'Token Owner 私钥', section: 'accounts', type: 'secret', help: '仅 Base Sepolia Fund USDC 使用：必须匹配链上 Mock USDC 的 owner()，用于发送真实 mint 交易；不会回显或写入报告。', secret: true, validation: 'private-key' },
@@ -113,7 +120,6 @@ const commonFields: readonly FieldSpec[] = [
 
   { key: 'E2E_SCENARIO_CATALOG', label: '场景目录', section: 'sources', type: 'path', help: 'SCENARIO-CHECKLIST.md 路径。' },
   { key: 'E2E_SCENARIO_DETAILS_DIR', label: '场景明细目录', section: 'sources', type: 'path', help: 'S01–S08 Markdown 文件目录。' },
-  { key: 'E2E_SYSTEM_PARAMETERS_SOURCE', label: '系统参数来源', section: 'sources', type: 'path', help: '合约配置参数 CSV。' },
   { key: 'E2E_CONTRACT_FORMULAS_SOURCE', label: '合约公式来源', section: 'sources', type: 'path', help: '核心字段计算公式 Markdown。' },
   { key: 'E2E_PAGE_FORMULAS_SOURCE', label: '页面公式来源', section: 'sources', type: 'path', help: '页面数据计算公式 Markdown。' },
   { key: 'E2E_TEST_CASE_OVERRIDES', label: 'Case 覆盖层', section: 'sources', type: 'path', help: '看板编辑测试用例时写入的 JSON 文件。' },
@@ -199,9 +205,9 @@ function fieldsFor(environment: EnvironmentName): readonly FieldSpec[] {
   const fields = [
     ...commonFields.slice(0, 1),
     chainIdField,
-    ...commonFields.slice(1, 5),
+    ...commonFields.slice(1, 4),
     ...rpcFields,
-    ...commonFields.slice(5),
+    ...commonFields.slice(4),
   ];
   // Base Sepolia 使用已部署合约，不提供 Fork 重置、Keeper 文件或 Tenderly 初始化配置。
   return environment === 'base-sepolia'
@@ -530,18 +536,34 @@ export async function checkEnvironmentConfiguration(
     }
   }
 
-  const deploymentPath = values.E2E_DEPLOYMENT_MANIFEST?.trim();
   let manifest: Awaited<ReturnType<typeof loadDeploymentManifest>> | undefined;
-  if (!deploymentPath) {
-    push('deployment', 'Deployment Manifest', 'FAIL', 'E2E_DEPLOYMENT_MANIFEST 未配置。');
-  } else {
+  let deploymentBinding: ReturnType<typeof loadEnvironmentBinding> | undefined;
+  try {
+    deploymentBinding = loadEnvironmentBinding(projectRoot, environment);
+    manifest = deploymentBinding.manifest;
+    push(
+      'deployment',
+      '环境部署绑定',
+      'PASS',
+      `${environment} → ${deploymentBinding.binding.deploymentId} → ${manifest.name} / ${manifest.release}`,
+    );
+  } catch (error) {
+    push('deployment', '环境部署绑定', 'FAIL', safeDetail(error, sensitive));
+  }
+  if (rpcReady && rpcUrl && deploymentBinding) {
     try {
-      const resolved = resolve(projectRoot, deploymentPath);
-      await access(resolved);
-      manifest = await loadDeploymentManifest(resolved);
-      push('deployment', 'Deployment Manifest', 'PASS', `${manifest.name} / ${manifest.release}`);
+      await assertRuntimeEnvironmentBinding({
+        environment,
+        chainId: expectedChainId,
+        rpcUrl,
+        deploymentManifestPath: deploymentBinding.manifestPath,
+        deploymentId: deploymentBinding.binding.deploymentId,
+        deploymentRelease: deploymentBinding.binding.release,
+        requestTimeoutMs: 30_000,
+      }, projectRoot);
+      push('deployment-rpc', '绑定部署链上实例', 'PASS', 'RPC Chain ID 与关键合约 bytecode 均匹配。');
     } catch (error) {
-      push('deployment', 'Deployment Manifest', 'FAIL', safeDetail(error, sensitive));
+      push('deployment-rpc', '绑定部署链上实例', 'FAIL', safeDetail(error, sensitive));
     }
   }
 
@@ -703,10 +725,24 @@ export async function checkEnvironmentConfiguration(
     }
   }
 
+  const parametersSource = deploymentBinding?.manifest.source?.parametersFile;
+  const parametersFile = parametersSource
+    ? parameterSnapshotCsvPath(parametersSource)
+    : undefined;
+  if (!parametersFile) {
+    push('file-bound-parameters', '环境绑定参数快照', 'FAIL', '绑定 manifest 缺少 source.parametersFile。');
+  } else {
+    try {
+      await access(resolve(projectRoot, parametersFile));
+      push('file-bound-parameters', '环境绑定参数快照', 'PASS', parametersFile);
+    } catch {
+      push('file-bound-parameters', '环境绑定参数快照', 'FAIL', `找不到 ${parametersFile}；请在参数页刷新当前环境。`);
+    }
+  }
+
   for (const [key, label] of [
     ['E2E_SCENARIO_CATALOG', '场景目录'],
     ['E2E_SCENARIO_DETAILS_DIR', '场景明细目录'],
-    ['E2E_SYSTEM_PARAMETERS_SOURCE', '系统参数来源'],
     ['E2E_CONTRACT_FORMULAS_SOURCE', '合约公式来源'],
     ['E2E_PAGE_FORMULAS_SOURCE', '页面公式来源'],
   ] as const) {

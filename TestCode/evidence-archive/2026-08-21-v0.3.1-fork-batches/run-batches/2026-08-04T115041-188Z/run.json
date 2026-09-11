@@ -1,0 +1,35 @@
+{
+  "id": "2026-08-04T115041-188Z",
+  "release": "release-v0.3.1",
+  "description": "由直接 Playwright 执行自动登记。",
+  "scope": "single",
+  "environmentMode": "default",
+  "marketSelection": "default",
+  "createdAt": "2026-08-04T11:50:41.188Z",
+  "startedAt": "2026-08-04T11:50:41.188Z",
+  "endedAt": "2026-08-04T11:55:52.836Z",
+  "status": "FAIL",
+  "rpcUpdatedEnvironments": [],
+  "cases": [
+    {
+      "id": "SCN-009",
+      "title": "市价开多快速退出",
+      "plannedEnvironment": "tx-fork",
+      "resolvedEnvironment": "tx-fork",
+      "plannedMarketMode": "mock-market",
+      "resolvedMarketMode": "mock-market",
+      "resolvedOracleMode": "mock-oracle",
+      "resolvedMockResourceAlias": "default-mock",
+      "marketCompatibility": "mock-only",
+      "automated": true,
+      "specPath": "tests/S02/scn-009.spec.ts",
+      "status": "FAIL",
+      "resultRunId": "2026-08-04T115041-188Z",
+      "message": "Error: 等 keeper 超时（300s），订单仍在挂单态。先确认 keeper 是否在跑：cd tool/keeper-runner && ./run.sh check"
+    }
+  ],
+  "logTail": [
+    "检测到看板外直接执行的 Playwright 结果，已自动登记到最近运行。",
+    "运行结束：FAIL。"
+  ]
+}

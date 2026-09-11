@@ -1,0 +1,815 @@
+{
+ "task": "configure: offline reproduction of what a zero-applied rerun of configureGeneral.ts / configureOracle.ts / configureMarket.ts (FX100_MARKET=1,2) would prove against the tx-fork v0.3.2 260902 parameter snapshot (block 46282993).",
+ "files_read": [
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/scripts/configureGeneral.ts",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/scripts/configureOracle.ts",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/scripts/configureMarket.ts",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/scripts/config/defaults.ts",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/scripts/config/keys.ts",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/scripts/config/writers.ts",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/scripts/config/runtime.ts",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/scripts/config/types.ts",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/scripts/parameters/general.sample.json",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/scripts/parameters/oracle.fork.tx-fork.json",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/scripts/parameters/market.sample.json",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/scripts/parameters/shared_market.sample.json",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/src/config/Config.sol (lines 50-146, 500-525)",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/src/constants/FX100Keys.sol (grep of key fns)",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/src/market/MarketFactory.sol (lines 55-80)",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/src/market/MarketStoreUtils.sol (grep lines 18-74)",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/ignition/modules/Fx100Fee.ts (grep), Fx100Role.ts (lines 28-45, 66-84), Fx100Oracle.ts (grep lines 30,35)",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/ignition/deployments/tx-fork-v032-260902r3/deployed_addresses.json (diff only)",
+  "/Users/milakou/Documents/FX100/TestCode/scripts/deploy-contracts.ts (lines 120-145, 380-420, 500-720; grep of the rest)",
+  "/Users/milakou/Documents/FX100/TestCode/config/deployments/tx-fork-v0.3.2-260902.json",
+  "/Users/milakou/Documents/FX100/TestCase/config/v0.3.2/tx-fork/260902/parameters.json",
+  "/Users/milakou/Documents/FX100/TestCase/config/v0.3.2/tx-fork/260902/parameters-by-module.csv (header + POSITION_IMPACT rows)",
+  "/Users/milakou/Documents/FX100/TestCase/config/v0.3.2/tx-fork/260902/deployed-addresses.json",
+  "scratch reproduction script: /private/tmp/claude-501/-Users-milakou-Documents-FX100/ec76b4ee-d98b-4f98-b06f-97e6b27b2a87/scratchpad/reproduce-configure.js (results in configure-results.json next to it)"
+ ],
+ "method": "EXPECTED values: re-implemented the three scripts in node (ethers 6.16.0 from the contracts repo node_modules) and generated the exact ordered write list each script performs. Conversion rules, all from source: (a) parseDecimalToScaled(value, scale) is identical in configureGeneral.ts:11-20 / configureOracle.ts:18-27 / configureMarket.ts:24-33 — strip sign, split on '.', pad/truncate the fraction to scaleDigits, whole*scale+fraction, re-apply sign (truncation, never rounding). (b) configureGeneral.ts:30-68: plain gas/seconds fields are BigInt(string) as-is (lines 77-258 pass general.<field> straight to setConfigUintIfNeeded); ratio fields at 1e30 (maxOracleRefPriceDeviationFactor L34, minPositionSizeUsd L40, maxPnlFactorForAdl L46, minPnlFactorAfterAdl L49, maxPnlFactorForWithdrawals L52, estimatedGasFeeMultiplierFactor L55, positionFeeReceiverFactor L58, liquidationFeeReceiverFactor L61); 1e18 fields (maxPriceImpactSpread L37, liquidationGraceTier0Multiplier L43, maxRelaySwapWntCap L64-68); COLLATERAL_TOKEN = deployed MockUSDC (runtime.ts:123, L70-75); GENERAL_DEFAULTS (defaults.ts:8-37) are fully overridden because every field is present in general.sample.json. (c) configureOracle.ts: tokenDecimals = 6 if token==usdc else 18 (L29-31); multiplier = 10^(60-oracleDecimals-tokenDecimals) (L33-40); useDataStream = feedId != 0x00..0 (L55) -> all three tokens take the dataFeed branch (L93-116): PRICE_FEED=feedAddress, PRICE_FEED_MULTIPLIER, PRICE_FEED_HEARTBEAT_DURATION=BigInt; TOKEN_TRANSFER_GAS_LIMIT(token)=tokenTransferGasLimit (L61-68); provider = chainlinkPriceFeedProvider (L118-127) -> ORACLE_PROVIDER_FOR_TOKEN(oracle,token) via Config.initOracleProviderForToken (writers.ts:114-136); fee-token ORACLE_PROVIDER_FOR_TOKEN(usdc) via Config.setOracleProviderForFeeHandlerToken (L130-142, writers.ts:138-148). (d) configureMarket.ts toMarketParams L93-131: 1e30 = ratioToFloatPrecision/usdToFloatPrecision (ReserveFactor, MinCollateralFactor, SinglePosCapUSD, GlobalCapUSD, OrderbookDepth*, OpenFeeRatio, liquidationFeeFactor); 1e18 = ratioToWeiPrecision/tokenAmountToWeiPrecision (ConstantSpread, DynamicSpread_Clamp_*, PriceImpactParameter_Normal, Skew_k_normal, Skew_Clamp_*, executionFeeSubsidizeSize); MIN_COLLATERAL_FACTOR = 1e30/BigInt(MaxLev) (L106); LIQUIDATION_GRACE_PERIOD_BASE = BigInt(GraceBase)*60 (L22,L125); funding = parseDecimalToScaled(x,1e30)/31536000n with BigInt truncation (L53-55, defaults.ts:6); BID<-OrderbookDepthShort, ASK<-OrderbookDepthLong (L116-117); POSITION_FEE_FACTOR long+short both <- OpenFeeRatio (L120-121); MAX_OPEN_INTEREST_FACTOR long/short <- ReserveFactor (L110-111); shared_market params at 1e30 (L73-85), executionFeeSubsidize USD at 1e30 (L82-84); marketIndex = ordinal (L156). (e) Keys: KEY.<NAME> = keccak256(abi.encode(string)) except the four raw keccak256(utf8) keys EXECUTION_FEE_SUBSIDIZE, EXECUTION_FEE_SUBSIDIZE_SIZE, LIQUIDATION_GRACE_PERIOD_BASE, LIQUIDATION_GRACE_PERIOD_TIER_MULTIPLIER (keys.ts:97-98,108-109, matches FX100Keys.sol:10-17); Config.setUint/setInt store at fullKey = keccak256(concat(base, abi.encode(args))) (keys.ts:119-121); directKey.* = keccak256(abi.encode(base, args)) (keys.ts:123-199) — identical bytes for static args, so the computed key hash was matched against parameters.json entries[].key. ACTUAL values: read from parameters.json entries by key hash, choosing the probe entry whose value type matches the type the script writes (uint/int/address) because the dump probes the same key under several types (173 keys have >1 typed entries; e.g. POSITION_IMPACT_EXPONENT_FACTOR has both a set uint probe = 1e30 and an unset bytes32 probe = 0x0). Address comparison is case-insensitive. An expected 0 is PASS only if the chain entry is unset=true with value 0. Result: 120 writes, 120 PASS, 0 FAIL, 0 missing; 112 of the 124 unset=false chain entries are those writes; the other 12 were attributed by reading MarketStoreUtils.sol:45-54 / MarketFactory.sol:58-75, Ignition Fx100Fee.ts:79, Fx100Role.ts:78-79 (parameter from deploy-contracts.ts:402), Fx100Oracle.ts:30,35 -> Config.sol:143-144, and Config.sol:82-101 (block.timestamp side effect of setOracleProviderForFeeHandlerToken). Snapshot deployed-addresses.json was diffed against ignition/deployments/tx-fork-v032-260902r3/deployed_addresses.json: IDENTICAL. No .env, pk.txt, mnemonic, noise-traders.json, hardhat.fork.config.ts, or Devconfig/ file was opened.",
+ "checks": [
+  {
+   "item": "general.sequencerGraceDuration -> SEQUENCER_GRACE_DURATION",
+   "expected": "0",
+   "actual": "0 (unset=true)",
+   "status": "PASS",
+   "evidence": "general.sample.json:3 -> configureGeneral.ts:77-84 -> parameters.json entries[base=SEQUENCER_GRACE_DURATION,args={}]"
+  },
+  {
+   "item": "general.maxOraclePriceAge -> MAX_ORACLE_PRICE_AGE",
+   "expected": "60",
+   "actual": "60",
+   "status": "PASS",
+   "evidence": "general.sample.json:4 -> configureGeneral.ts:85-92 -> parameters.json entries[base=MAX_ORACLE_PRICE_AGE]"
+  },
+  {
+   "item": "general.maxRecordedPriceAge -> MAX_RECORDED_PRICE_AGE",
+   "expected": "86400",
+   "actual": "86400",
+   "status": "PASS",
+   "evidence": "general.sample.json:5 -> configureGeneral.ts:93-100 -> parameters.json entries[base=MAX_RECORDED_PRICE_AGE]"
+  },
+  {
+   "item": "general.maxOracleTimestampRange -> MAX_ORACLE_TIMESTAMP_RANGE",
+   "expected": "60",
+   "actual": "60",
+   "status": "PASS",
+   "evidence": "general.sample.json:6 -> configureGeneral.ts:101-108 -> parameters.json entries[base=MAX_ORACLE_TIMESTAMP_RANGE]"
+  },
+  {
+   "item": "general.maxOracleRefPriceDeviationFactor \"0.02\" x1e30 -> MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR",
+   "expected": "20000000000000000000000000000",
+   "actual": "20000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "general.sample.json:7 -> configureGeneral.ts:34-36,109-116 -> parameters.json entries[base=MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR]"
+  },
+  {
+   "item": "general.maxPriceImpactSpread \"0.005\" x1e18 -> MAX_PRICE_IMPACT_SPREAD (DataStore.setUint direct)",
+   "expected": "5000000000000000",
+   "actual": "5000000000000000",
+   "status": "PASS",
+   "evidence": "general.sample.json:8 -> configureGeneral.ts:37-39,117-122 -> parameters.json entries[base=MAX_PRICE_IMPACT_SPREAD]"
+  },
+  {
+   "item": "general.minPositionSizeUsd \"10\" x1e30 -> MIN_POSITION_SIZE_USD",
+   "expected": "10000000000000000000000000000000",
+   "actual": "10000000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "general.sample.json:9 -> configureGeneral.ts:40-42,123-130 -> parameters.json entries[base=MIN_POSITION_SIZE_USD]"
+  },
+  {
+   "item": "general.requestExpirationTime -> REQUEST_EXPIRATION_TIME",
+   "expected": "3600",
+   "actual": "3600",
+   "status": "PASS",
+   "evidence": "general.sample.json:10 -> configureGeneral.ts:131-138 -> parameters.json entries[base=REQUEST_EXPIRATION_TIME]"
+  },
+  {
+   "item": "general.maxCallbackGasLimit -> MAX_CALLBACK_GAS_LIMIT",
+   "expected": "2000000",
+   "actual": "2000000",
+   "status": "PASS",
+   "evidence": "general.sample.json:11 -> configureGeneral.ts:139-146 -> parameters.json entries[base=MAX_CALLBACK_GAS_LIMIT]"
+  },
+  {
+   "item": "general.maxDataLength -> MAX_DATA_LENGTH",
+   "expected": "32",
+   "actual": "32",
+   "status": "PASS",
+   "evidence": "general.sample.json:12 -> configureGeneral.ts:147-154 -> parameters.json entries[base=MAX_DATA_LENGTH]"
+  },
+  {
+   "item": "general.minAdditionalGasForExecution -> MIN_ADDITIONAL_GAS_FOR_EXECUTION",
+   "expected": "0",
+   "actual": "0 (unset=true)",
+   "status": "PASS",
+   "evidence": "general.sample.json:13 -> configureGeneral.ts:155-162 -> parameters.json entries[base=MIN_ADDITIONAL_GAS_FOR_EXECUTION]"
+  },
+  {
+   "item": "general.minHandleExecutionErrorGas -> MIN_HANDLE_EXECUTION_ERROR_GAS",
+   "expected": "0",
+   "actual": "0 (unset=true)",
+   "status": "PASS",
+   "evidence": "general.sample.json:14 -> configureGeneral.ts:163-170 -> parameters.json entries[base=MIN_HANDLE_EXECUTION_ERROR_GAS]"
+  },
+  {
+   "item": "general.minHandleExecutionErrorGasToForward -> MIN_HANDLE_EXECUTION_ERROR_GAS_TO_FORWARD",
+   "expected": "0",
+   "actual": "0 (unset=true)",
+   "status": "PASS",
+   "evidence": "general.sample.json:15 -> configureGeneral.ts:171-178 -> parameters.json entries[base=MIN_HANDLE_EXECUTION_ERROR_GAS_TO_FORWARD]"
+  },
+  {
+   "item": "general.nativeTokenTransferGasLimit -> NATIVE_TOKEN_TRANSFER_GAS_LIMIT",
+   "expected": "200000",
+   "actual": "200000",
+   "status": "PASS",
+   "evidence": "general.sample.json:16 -> configureGeneral.ts:179-186 -> parameters.json entries[base=NATIVE_TOKEN_TRANSFER_GAS_LIMIT]"
+  },
+  {
+   "item": "general.increaseOrderGasLimit -> INCREASE_ORDER_GAS_LIMIT",
+   "expected": "3900000",
+   "actual": "3900000",
+   "status": "PASS",
+   "evidence": "general.sample.json:17 -> configureGeneral.ts:187-194 -> parameters.json entries[base=INCREASE_ORDER_GAS_LIMIT]"
+  },
+  {
+   "item": "general.decreaseOrderGasLimit -> DECREASE_ORDER_GAS_LIMIT",
+   "expected": "3900000",
+   "actual": "3900000",
+   "status": "PASS",
+   "evidence": "general.sample.json:18 -> configureGeneral.ts:195-202 -> parameters.json entries[base=DECREASE_ORDER_GAS_LIMIT]"
+  },
+  {
+   "item": "general.estimatedGasFeeBaseAmount -> ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1",
+   "expected": "600000",
+   "actual": "600000",
+   "status": "PASS",
+   "evidence": "general.sample.json:19 -> configureGeneral.ts:203-210 -> parameters.json entries[base=ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1]"
+  },
+  {
+   "item": "general.estimatedGasFeePerOraclePrice -> ESTIMATED_GAS_FEE_PER_ORACLE_PRICE",
+   "expected": "250000",
+   "actual": "250000",
+   "status": "PASS",
+   "evidence": "general.sample.json:20 -> configureGeneral.ts:211-218 -> parameters.json entries[base=ESTIMATED_GAS_FEE_PER_ORACLE_PRICE]"
+  },
+  {
+   "item": "general.estimatedGasFeeMultiplierFactor \"1\" x1e30 -> ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR",
+   "expected": "1000000000000000000000000000000",
+   "actual": "1000000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "general.sample.json:21 -> configureGeneral.ts:55-57,219-226 -> parameters.json entries[base=ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR]"
+  },
+  {
+   "item": "general.maxTotalCallbackGasLimitForAutoCancelOrders -> MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS",
+   "expected": "2000000",
+   "actual": "2000000",
+   "status": "PASS",
+   "evidence": "general.sample.json:22 -> configureGeneral.ts:227-234 -> parameters.json entries[base=MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS]"
+  },
+  {
+   "item": "general.maxAutoCancelOrders -> MAX_AUTO_CANCEL_ORDERS",
+   "expected": "64",
+   "actual": "64",
+   "status": "PASS",
+   "evidence": "general.sample.json:23 -> configureGeneral.ts:235-242 -> parameters.json entries[base=MAX_AUTO_CANCEL_ORDERS]"
+  },
+  {
+   "item": "general.liquidationGraceTier0Multiplier \"1\" x1e18 -> LIQUIDATION_GRACE_PERIOD_TIER_MULTIPLIER(tier=0) (input overrides default 8e18)",
+   "expected": "1000000000000000000",
+   "actual": "1000000000000000000",
+   "status": "PASS",
+   "evidence": "general.sample.json:24 -> configureGeneral.ts:43-45,299-304; keys.ts:163-165; defaults.ts:30 -> parameters.json entries[base=LIQUIDATION_GRACE_PERIOD_TIER_MULTIPLIER,args={tier:0}]"
+  },
+  {
+   "item": "general.relayFeeBaseGasLimit -> RELAY_FEE_BASE_GAS_LIMIT",
+   "expected": "30000",
+   "actual": "30000",
+   "status": "PASS",
+   "evidence": "general.sample.json:25 -> configureGeneral.ts:243-250 -> parameters.json entries[base=RELAY_FEE_BASE_GAS_LIMIT]"
+  },
+  {
+   "item": "general.maxRelaySwapWntCap \"0.00005\" x1e18 -> MAX_RELAY_SWAP_WNT_CAP",
+   "expected": "50000000000000",
+   "actual": "50000000000000",
+   "status": "PASS",
+   "evidence": "general.sample.json:26 -> configureGeneral.ts:64-68,251-258 -> parameters.json entries[base=MAX_RELAY_SWAP_WNT_CAP]"
+  },
+  {
+   "item": "general.maxPnlFactorForAdl \"0.75\" x1e30 -> MAX_PNL_FACTOR_FOR_ADL",
+   "expected": "750000000000000000000000000000",
+   "actual": "750000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "general.sample.json:27 -> configureGeneral.ts:46-48,275-282 -> parameters.json entries[base=MAX_PNL_FACTOR_FOR_ADL]"
+  },
+  {
+   "item": "general.minPnlFactorAfterAdl \"0.5\" x1e30 -> MIN_PNL_FACTOR_AFTER_ADL",
+   "expected": "500000000000000000000000000000",
+   "actual": "500000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "general.sample.json:28 -> configureGeneral.ts:49-51,283-290 -> parameters.json entries[base=MIN_PNL_FACTOR_AFTER_ADL]"
+  },
+  {
+   "item": "general.maxPnlFactorForWithdrawals \"0.65\" x1e30 -> MAX_PNL_FACTOR_FOR_WITHDRAWALS",
+   "expected": "650000000000000000000000000000",
+   "actual": "650000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "general.sample.json:29 -> configureGeneral.ts:52-54,291-298 -> parameters.json entries[base=MAX_PNL_FACTOR_FOR_WITHDRAWALS]"
+  },
+  {
+   "item": "general.positionFeeReceiverFactor \"0.5\" x1e30 -> POSITION_FEE_RECEIVER_FACTOR",
+   "expected": "500000000000000000000000000000",
+   "actual": "500000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "general.sample.json:30 -> configureGeneral.ts:58-60,259-266 -> parameters.json entries[base=POSITION_FEE_RECEIVER_FACTOR]"
+  },
+  {
+   "item": "general.liquidationFeeReceiverFactor \"0.5\" x1e30 -> LIQUIDATION_FEE_RECEIVER_FACTOR",
+   "expected": "500000000000000000000000000000",
+   "actual": "500000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "general.sample.json:31 -> configureGeneral.ts:61-63,267-274 -> parameters.json entries[base=LIQUIDATION_FEE_RECEIVER_FACTOR]"
+  },
+  {
+   "item": "COLLATERAL_TOKEN (configureGeneral, from deployed addresses MockUSDC, no input field)",
+   "expected": "0xf300bbfb89106f54794aab6f7554ecfdaf32e154",
+   "actual": "0xf300bbfb89106f54794aab6f7554ecfdaf32e154",
+   "status": "PASS",
+   "evidence": "deployed-addresses.json[Fx100Usdc#MockUSDC]; runtime.ts:123; configureGeneral.ts:70-75 -> parameters.json entries[base=COLLATERAL_TOKEN,args={}]"
+  },
+  {
+   "item": "oracle.tokenTransferGasLimit -> TOKEN_TRANSFER_GAS_LIMIT(token) for USDC, BTC(0x0555..), WETH(0x4200..06)",
+   "expected": "200000 (x3)",
+   "actual": "200000 / 200000 / 200000",
+   "status": "PASS",
+   "evidence": "oracle.fork.tx-fork.json:2 -> configureOracle.ts:49,61-68 -> parameters.json entries[base=TOKEN_TRANSFER_GAS_LIMIT,args={token}] x3"
+  },
+  {
+   "item": "USDC dataFeed.feedAddress -> PRICE_FEED(USDC)",
+   "expected": "0x2888982ba846222fc1466ac73179ab97ad001e10",
+   "actual": "0x2888982ba846222fc1466ac73179ab97ad001e10",
+   "status": "PASS",
+   "evidence": "oracle.fork.tx-fork.json:8 -> configureOracle.ts:94-99 -> parameters.json entries[base=PRICE_FEED,args={token:0xF300..}] (= deployed Fx100Usdc#MockUSDCOracle)"
+  },
+  {
+   "item": "USDC dataFeed.oracleDecimals \"18\" -> PRICE_FEED_MULTIPLIER(USDC)=10^(60-18-6)",
+   "expected": "1000000000000000000000000000000000000",
+   "actual": "1000000000000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "oracle.fork.tx-fork.json:9 -> configureOracle.ts:29-40,52-53,101-106 -> parameters.json entries[base=PRICE_FEED_MULTIPLIER,args={token:0xF300..}]"
+  },
+  {
+   "item": "USDC dataFeed.heartbeatDuration -> PRICE_FEED_HEARTBEAT_DURATION(USDC)",
+   "expected": "86400",
+   "actual": "86400",
+   "status": "PASS",
+   "evidence": "oracle.fork.tx-fork.json:10 -> configureOracle.ts:108-115 -> parameters.json entries[base=PRICE_FEED_HEARTBEAT_DURATION,args={token:0xF300..}]"
+  },
+  {
+   "item": "USDC dataStream.feedId = 0x00..0 -> useDataStream=false -> ORACLE_PROVIDER_FOR_TOKEN(oracle,USDC)=ChainlinkPriceFeedProvider; DATA_STREAM_ID(USDC) untouched",
+   "expected": "0x7ae5fdb923d25840fb4cee822c3d800a48ef6e90; DATA_STREAM_ID unset",
+   "actual": "0x7ae5fdb923d25840fb4cee822c3d800a48ef6e90; DATA_STREAM_ID 0x00..0 unset=true",
+   "status": "PASS",
+   "evidence": "oracle.fork.tx-fork.json:13 -> configureOracle.ts:55,118-127; writers.ts:114-136; Config.sol:55-80 -> parameters.json entries[base=ORACLE_PROVIDER_FOR_TOKEN,args={oracle:0xd681..,token:0xF300..}], entries[base=DATA_STREAM_ID,args={token:0xF300..}]"
+  },
+  {
+   "item": "USDC symbol \"USDC\" -> fee-handler token provider ORACLE_PROVIDER_FOR_TOKEN(USDC)",
+   "expected": "0x7ae5fdb923d25840fb4cee822c3d800a48ef6e90",
+   "actual": "0x7ae5fdb923d25840fb4cee822c3d800a48ef6e90",
+   "status": "PASS",
+   "evidence": "oracle.fork.tx-fork.json:5,13 -> configureOracle.ts:130-142; writers.ts:138-148; keys.ts:160-162 -> parameters.json entries[base=ORACLE_PROVIDER_FOR_TOKEN,args={token:0xF300..}]"
+  },
+  {
+   "item": "WBTC dataFeed.feedAddress -> PRICE_FEED(BTC 0x0555..)",
+   "expected": "0x56e99c391ce1c08074e764d5343930d767bfc053",
+   "actual": "0x56e99c391ce1c08074e764d5343930d767bfc053",
+   "status": "PASS",
+   "evidence": "oracle.fork.tx-fork.json:22 -> configureOracle.ts:94-99 -> parameters.json entries[base=PRICE_FEED,args={token:0x0555..}] (= manifest additionalContracts.mockBtcOracle)"
+  },
+  {
+   "item": "WBTC dataFeed.oracleDecimals \"8\" -> PRICE_FEED_MULTIPLIER(BTC)=10^(60-8-18) (script uses 18 for every non-USDC token)",
+   "expected": "10000000000000000000000000000000000",
+   "actual": "10000000000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "oracle.fork.tx-fork.json:23 -> configureOracle.ts:29-31,33-40,101-106 -> parameters.json entries[base=PRICE_FEED_MULTIPLIER,args={token:0x0555..}]"
+  },
+  {
+   "item": "WBTC dataFeed.heartbeatDuration -> PRICE_FEED_HEARTBEAT_DURATION(BTC)",
+   "expected": "86400",
+   "actual": "86400",
+   "status": "PASS",
+   "evidence": "oracle.fork.tx-fork.json:24 -> configureOracle.ts:108-115 -> parameters.json entries[base=PRICE_FEED_HEARTBEAT_DURATION,args={token:0x0555..}]"
+  },
+  {
+   "item": "WBTC dataStream.feedId = 0x00..0 -> ORACLE_PROVIDER_FOR_TOKEN(oracle,BTC)=ChainlinkPriceFeedProvider",
+   "expected": "0x7ae5fdb923d25840fb4cee822c3d800a48ef6e90",
+   "actual": "0x7ae5fdb923d25840fb4cee822c3d800a48ef6e90",
+   "status": "PASS",
+   "evidence": "oracle.fork.tx-fork.json:27 -> configureOracle.ts:55,118-127 -> parameters.json entries[base=ORACLE_PROVIDER_FOR_TOKEN,args={oracle:0xd681..,token:0x0555..}]"
+  },
+  {
+   "item": "ETH dataFeed.feedAddress -> PRICE_FEED(WETH 0x4200..06)",
+   "expected": "0x29fd027b738fee9ffdac257b5229167078130adc",
+   "actual": "0x29fd027b738fee9ffdac257b5229167078130adc",
+   "status": "PASS",
+   "evidence": "oracle.fork.tx-fork.json:36 -> configureOracle.ts:94-99 -> parameters.json entries[base=PRICE_FEED,args={token:0x4200..06}] (= manifest additionalContracts.mockEthOracle)"
+  },
+  {
+   "item": "ETH dataFeed.oracleDecimals \"8\" -> PRICE_FEED_MULTIPLIER(WETH)=10^(60-8-18)",
+   "expected": "10000000000000000000000000000000000",
+   "actual": "10000000000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "oracle.fork.tx-fork.json:37 -> configureOracle.ts:33-40,101-106 -> parameters.json entries[base=PRICE_FEED_MULTIPLIER,args={token:0x4200..06}]"
+  },
+  {
+   "item": "ETH dataFeed.heartbeatDuration -> PRICE_FEED_HEARTBEAT_DURATION(WETH)",
+   "expected": "86400",
+   "actual": "86400",
+   "status": "PASS",
+   "evidence": "oracle.fork.tx-fork.json:38 -> configureOracle.ts:108-115 -> parameters.json entries[base=PRICE_FEED_HEARTBEAT_DURATION,args={token:0x4200..06}]"
+  },
+  {
+   "item": "ETH dataStream.feedId = 0x00..0 -> ORACLE_PROVIDER_FOR_TOKEN(oracle,WETH)=ChainlinkPriceFeedProvider",
+   "expected": "0x7ae5fdb923d25840fb4cee822c3d800a48ef6e90",
+   "actual": "0x7ae5fdb923d25840fb4cee822c3d800a48ef6e90",
+   "status": "PASS",
+   "evidence": "oracle.fork.tx-fork.json:41 -> configureOracle.ts:55,118-127 -> parameters.json entries[base=ORACLE_PROVIDER_FOR_TOKEN,args={oracle:0xd681..,token:0x4200..06}]"
+  },
+  {
+   "item": "dataStream.oracleDecimals + dataStream.dataStreamSpreadReductionFactor \"1\" (all 3 tokens): computed but never written because useDataStream=false",
+   "expected": "no write (DATA_STREAM_MULTIPLIER / DATA_STREAM_SPREAD_REDUCTION_FACTOR stay unset)",
+   "actual": "DATA_STREAM_MULTIPLIER 0 unset=true x3; DATA_STREAM_SPREAD_REDUCTION_FACTOR 0 unset=true x3",
+   "status": "N/A",
+   "evidence": "oracle.fork.tx-fork.json:14-15,28-29,42-43 -> configureOracle.ts:54,70-92 (dataStream branch only) -> parameters.json entries[base=DATA_STREAM_MULTIPLIER|DATA_STREAM_SPREAD_REDUCTION_FACTOR]"
+  },
+  {
+   "item": "shared.marketIndexes [1,2] gate -> shared block executed for both ordinals",
+   "expected": "shared keys written for marketIndex 1 and 2",
+   "actual": "MAX_PNL_FACTOR/POSITION_IMPACT_EXPONENT_FACTOR/MAX_POSITION_IMPACT_FACTOR/EXECUTION_FEE_SUBSIDIZE all unset=false for market 1 and 2",
+   "status": "PASS",
+   "evidence": "shared_market.sample.json:2 -> configureMarket.ts:167-170; deploy-contracts.ts:640-648 (FX100_MARKET 1,2 + FX100_SHARED_CONFIG) -> parameters.json entries"
+  },
+  {
+   "item": "shared.maxPnlFactorTraderLong \"1\" x1e30 -> MAX_PNL_FACTOR(MAX_PNL_FACTOR_FOR_TRADERS, m, true) for m=1,2",
+   "expected": "1000000000000000000000000000000 (x2)",
+   "actual": "1000000000000000000000000000000 / 1000000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "shared_market.sample.json:4 -> configureMarket.ts:74,172-188 -> parameters.json entries[base=MAX_PNL_FACTOR,args={pnlFactorType:0xab15..,marketIndex:1|2,isLong:true}]"
+  },
+  {
+   "item": "shared.maxPnlFactorTraderShort \"1\" x1e30 -> MAX_PNL_FACTOR(..., m, false) for m=1,2",
+   "expected": "1000000000000000000000000000000 (x2)",
+   "actual": "1000000000000000000000000000000 / 1000000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "shared_market.sample.json:5 -> configureMarket.ts:75,172-188 -> parameters.json entries[base=MAX_PNL_FACTOR,args={...,isLong:false}]"
+  },
+  {
+   "item": "shared.positionImpactFactorLong \"0\" -> POSITION_IMPACT_FACTOR(m,true) m=1,2",
+   "expected": "0 (x2)",
+   "actual": "0 unset=true / 0 unset=true (uint probe)",
+   "status": "PASS",
+   "evidence": "shared_market.sample.json:6 -> configureMarket.ts:76,206-213 -> parameters.json entries[base=POSITION_IMPACT_FACTOR,type=uint,args={marketIndex:1|2,isPositive:true}]"
+  },
+  {
+   "item": "shared.positionImpactFactorShort \"0\" -> POSITION_IMPACT_FACTOR(m,false) m=1,2",
+   "expected": "0 (x2)",
+   "actual": "0 unset=true / 0 unset=true",
+   "status": "PASS",
+   "evidence": "shared_market.sample.json:7 -> configureMarket.ts:77,206-213 -> parameters.json entries[base=POSITION_IMPACT_FACTOR,type=uint,args={marketIndex:1|2,isPositive:false}]"
+  },
+  {
+   "item": "shared.positionImpactExponentFactorLong \"1\" x1e30 -> POSITION_IMPACT_EXPONENT_FACTOR(m,true) m=1,2",
+   "expected": "1000000000000000000000000000000 (x2)",
+   "actual": "1000000000000000000000000000000 / 1000000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "shared_market.sample.json:8 -> configureMarket.ts:78,214-221 -> parameters.json entries[base=POSITION_IMPACT_EXPONENT_FACTOR,type=uint,args={marketIndex:1|2,isPositive:true}] (csv rows 35,37)"
+  },
+  {
+   "item": "shared.positionImpactExponentFactorShort \"1\" x1e30 -> POSITION_IMPACT_EXPONENT_FACTOR(m,false) m=1,2",
+   "expected": "1000000000000000000000000000000 (x2)",
+   "actual": "1000000000000000000000000000000 / 1000000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "shared_market.sample.json:9 -> configureMarket.ts:79,214-221 -> parameters.json entries[...,isPositive:false] (csv rows 36,38)"
+  },
+  {
+   "item": "shared.maxPositionImpactFactorLong \"1\" x1e30 -> MAX_POSITION_IMPACT_FACTOR(m,true) m=1,2",
+   "expected": "1000000000000000000000000000000 (x2)",
+   "actual": "1000000000000000000000000000000 / 1000000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "shared_market.sample.json:10 -> configureMarket.ts:80,222-229 -> parameters.json entries[base=MAX_POSITION_IMPACT_FACTOR,args={marketIndex:1|2,isPositive:true}] (csv rows 97,99)"
+  },
+  {
+   "item": "shared.maxPositionImpactFactorShort \"1\" x1e30 -> MAX_POSITION_IMPACT_FACTOR(m,false) m=1,2",
+   "expected": "1000000000000000000000000000000 (x2)",
+   "actual": "1000000000000000000000000000000 / 1000000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "shared_market.sample.json:11 -> configureMarket.ts:81,222-229 -> parameters.json entries[...,isPositive:false] (csv rows 98,100)"
+  },
+  {
+   "item": "shared.executionFeeSubsidize \"20\" USD x1e30 -> EXECUTION_FEE_SUBSIDIZE(m) m=1,2 (raw keccak key)",
+   "expected": "20000000000000000000000000000000 (x2)",
+   "actual": "20000000000000000000000000000000 / 20000000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "shared_market.sample.json:12 -> configureMarket.ts:82-84,232-237; keys.ts:97,172-174; FX100Keys.sol:16,1589-1590 -> parameters.json entries[base=EXECUTION_FEE_SUBSIDIZE,args={marketIndex:1|2}]"
+  },
+  {
+   "item": "market#1 token 0x0555E30d.. -> ensureMarket: INDEX_TOKEN(1), MARKET_INDEX(1)",
+   "expected": "0x0555e30da8f98308edb960aa94c0db47230d2b9c; 1",
+   "actual": "0x0555e30da8f98308edb960aa94c0db47230d2b9c; 1",
+   "status": "PASS",
+   "evidence": "market.sample.json:5 -> configureMarket.ts:152-165; writers.ts:150-178; MarketStoreUtils.sol:45-54 -> parameters.json entries[group=market-prop,base=INDEX_TOKEN|MARKET_INDEX,args={marketIndex:1}]"
+  },
+  {
+   "item": "market#1 executionFeeSubsidizeSize \"0.000333333333333333\" x1e18 -> EXECUTION_FEE_SUBSIDIZE_SIZE(1)",
+   "expected": "333333333333333",
+   "actual": "333333333333333",
+   "status": "PASS",
+   "evidence": "market.sample.json:7 -> configureMarket.ts:99-101,240-245; keys.ts:98,175-177 -> parameters.json entries[base=EXECUTION_FEE_SUBSIDIZE_SIZE,args={marketIndex:1}]"
+  },
+  {
+   "item": "market#1 liquidationFeeFactor \"0.003\" x1e30 -> LIQUIDATION_FEE_FACTOR(1)",
+   "expected": "3000000000000000000000000000",
+   "actual": "3000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:8 -> configureMarket.ts:102-104,252-259 -> parameters.json entries[base=LIQUIDATION_FEE_FACTOR,args={marketIndex:1}]"
+  },
+  {
+   "item": "market#1 raw.OpenFeeRatio \"0.0005\" x1e30 -> POSITION_FEE_FACTOR(1,true) and (1,false) (CloseFeeRatio unused)",
+   "expected": "500000000000000000000000000 (x2)",
+   "actual": "500000000000000000000000000 / 500000000000000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:11 -> configureMarket.ts:120-121,331-343; FX100Keys.sol:1315 -> parameters.json entries[base=POSITION_FEE_FACTOR,args={marketIndex:1,balanceWasImproved:true|false}]"
+  },
+  {
+   "item": "market#1 raw.ReserveFactor \"0.4\" x1e30 -> RESERVE_FACTOR(1), MAX_OPEN_INTEREST_FACTOR(1,true), (1,false)",
+   "expected": "400000000000000000000000000000 (x3)",
+   "actual": "400000000000000000000000000000 x3",
+   "status": "PASS",
+   "evidence": "market.sample.json:15 -> configureMarket.ts:95,110-112,277-284,298-303; keys.ts:178-180 -> parameters.json entries[base=RESERVE_FACTOR|MAX_OPEN_INTEREST_FACTOR,args={marketIndex:1(,isLong)}]"
+  },
+  {
+   "item": "market#1 raw.MaxLev \"100\" -> MIN_COLLATERAL_FACTOR(1) = 1e30/100",
+   "expected": "10000000000000000000000000000",
+   "actual": "10000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:16 -> configureMarket.ts:106,260-267 -> parameters.json entries[base=MIN_COLLATERAL_FACTOR,args={marketIndex:1}]"
+  },
+  {
+   "item": "market#1 raw.SinglePosCapUSD \"8000000\" x1e30 -> MAX_POSITION_SIZE_USD(1)",
+   "expected": "8000000000000000000000000000000000000",
+   "actual": "8000000000000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:20 -> configureMarket.ts:105,246-251; keys.ts:169-171 -> parameters.json entries[base=MAX_POSITION_SIZE_USD,args={marketIndex:1}]"
+  },
+  {
+   "item": "market#1 raw.GlobalCapUSD \"40000000\" x1e30 -> MAX_OPEN_INTEREST(1,true), (1,false)",
+   "expected": "40000000000000000000000000000000000000 (x2)",
+   "actual": "40000000000000000000000000000000000000 x2",
+   "status": "PASS",
+   "evidence": "market.sample.json:21 -> configureMarket.ts:108-109,286-297 -> parameters.json entries[base=MAX_OPEN_INTEREST,args={marketIndex:1,isLong:true|false}]"
+  },
+  {
+   "item": "market#1 raw.FundingFloorAPR_Normal \"0.1095\" -> 109500000000000000000000000000/31536000 (trunc) -> FUNDING_FLOOR_FACTOR(1)",
+   "expected": "3472222222222222222222",
+   "actual": "3472222222222222222222",
+   "status": "PASS",
+   "evidence": "market.sample.json:23 -> configureMarket.ts:53-55,126,401-408; defaults.ts:6 -> parameters.json entries[base=FUNDING_FLOOR_FACTOR,type=int,args={marketIndex:1}]"
+  },
+  {
+   "item": "market#1 raw.FundingBaseAPR_Normal \"1.345723333\" -> 1345723333000000000000000000000/31536000 -> FUNDING_BASE_FACTOR(1)",
+   "expected": "42672606957128361237950",
+   "actual": "42672606957128361237950",
+   "status": "PASS",
+   "evidence": "market.sample.json:24 -> configureMarket.ts:127,409-416 -> parameters.json entries[base=FUNDING_BASE_FACTOR,args={marketIndex:1}]"
+  },
+  {
+   "item": "market#1 raw.minFundingRate \"-0.13394\" -> -133940000000000000000000000000/31536000 -> MIN_FUNDING_FACTOR_PER_SECOND(1)",
+   "expected": "-4247209538305428716387",
+   "actual": "-4247209538305428716387",
+   "status": "PASS",
+   "evidence": "market.sample.json:27 -> configureMarket.ts:128,417-424 -> parameters.json entries[base=MIN_FUNDING_FACTOR_PER_SECOND,args={marketIndex:1}]"
+  },
+  {
+   "item": "market#1 raw.maxFundingRate \"0.965221\" -> 965221000000000000000000000000/31536000 -> MAX_FUNDING_FACTOR_PER_SECOND(1)",
+   "expected": "30606957128361237950279",
+   "actual": "30606957128361237950279",
+   "status": "PASS",
+   "evidence": "market.sample.json:28 -> configureMarket.ts:129,425-432 -> parameters.json entries[base=MAX_FUNDING_FACTOR_PER_SECOND,args={marketIndex:1}]"
+  },
+  {
+   "item": "market#1 raw.ConstantSpread \"0.0001\" x1e18 -> CONSTANT_PRICE_SPREAD(1)",
+   "expected": "100000000000000",
+   "actual": "100000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:29 -> configureMarket.ts:113,306-311 -> parameters.json entries[base=CONSTANT_PRICE_SPREAD,args={marketIndex:1}]"
+  },
+  {
+   "item": "market#1 raw.DynamicSpread_Clamp_Min \"-0.02\" x1e18 -> MIN_DYNAMIC_SPREAD(1,true), (1,false) (int)",
+   "expected": "-20000000000000000 (x2)",
+   "actual": "-20000000000000000 / -20000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:30 -> configureMarket.ts:114,345-360 -> parameters.json entries[base=MIN_DYNAMIC_SPREAD,type=int,args={marketIndex:1,isLong:true|false}]"
+  },
+  {
+   "item": "market#1 raw.DynamicSpread_Clamp_Max \"1.0\" x1e18 -> MAX_DYNAMIC_SPREAD(1,true), (1,false)",
+   "expected": "1000000000000000000 (x2)",
+   "actual": "1000000000000000000 / 1000000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:31 -> configureMarket.ts:115,361-368 -> parameters.json entries[base=MAX_DYNAMIC_SPREAD,args={marketIndex:1,isLong:true|false}]"
+  },
+  {
+   "item": "market#1 raw.PriceImpactParameter_Normal \"0.5\" x1e18 -> PRICE_IMPACT_PARAMETER(1)",
+   "expected": "500000000000000000",
+   "actual": "500000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:32 -> configureMarket.ts:118,324-329 -> parameters.json entries[base=PRICE_IMPACT_PARAMETER,args={marketIndex:1}]"
+  },
+  {
+   "item": "market#1 raw.OrderbookDepthLong \"15593281.79\" x1e30 -> ASK_ORDER_BOOK_DEPTH(1) (Long->ask)",
+   "expected": "15593281790000000000000000000000000000",
+   "actual": "15593281790000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:34 -> configureMarket.ts:117,318-323 -> parameters.json entries[base=ASK_ORDER_BOOK_DEPTH,args={marketIndex:1}]"
+  },
+  {
+   "item": "market#1 raw.OrderbookDepthShort \"15217320.43\" x1e30 -> BID_ORDER_BOOK_DEPTH(1) (Short->bid)",
+   "expected": "15217320430000000000000000000000000000",
+   "actual": "15217320430000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:35 -> configureMarket.ts:116,312-317 -> parameters.json entries[base=BID_ORDER_BOOK_DEPTH,args={marketIndex:1}]"
+  },
+  {
+   "item": "market#1 raw.Skew_k_normal \"0.01\" x1e18 -> SKEW_IMPACT_FACTOR(1) (int)",
+   "expected": "10000000000000000",
+   "actual": "10000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:42 -> configureMarket.ts:122,371-378 -> parameters.json entries[base=SKEW_IMPACT_FACTOR,args={marketIndex:1}]"
+  },
+  {
+   "item": "market#1 raw.Skew_Clamp_Min \"-0.005\" x1e18 -> MIN_SKEW_IMPACT(1)",
+   "expected": "-5000000000000000",
+   "actual": "-5000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:44 -> configureMarket.ts:123,379-386 -> parameters.json entries[base=MIN_SKEW_IMPACT,args={marketIndex:1}]"
+  },
+  {
+   "item": "market#1 raw.Skew_Clamp_Max \"0.005\" x1e18 -> MAX_SKEW_IMPACT(1)",
+   "expected": "5000000000000000",
+   "actual": "5000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:45 -> configureMarket.ts:124,387-394 -> parameters.json entries[base=MAX_SKEW_IMPACT,args={marketIndex:1}]"
+  },
+  {
+   "item": "market#1 raw.GraceBase 15 -> 15*60 -> LIQUIDATION_GRACE_PERIOD_BASE(1) (raw keccak key)",
+   "expected": "900",
+   "actual": "900",
+   "status": "PASS",
+   "evidence": "market.sample.json:47 -> configureMarket.ts:22,125,395-400; keys.ts:108,166-168; FX100Keys.sol:10,1577-1578 -> parameters.json entries[base=LIQUIDATION_GRACE_PERIOD_BASE,args={marketIndex:1}]"
+  },
+  {
+   "item": "market#1 raw.MinCollateralFactor \"0.004\" x1e30 -> MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION(1)",
+   "expected": "4000000000000000000000000000",
+   "actual": "4000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:49 -> configureMarket.ts:107,268-275 -> parameters.json entries[base=MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION,args={marketIndex:1}]"
+  },
+  {
+   "item": "market#1 unconsumed inputs: tier, raw.ChainlinkStreamUrl, CloseFeeRatio, MaxPriceDeviation, OpenCoolDownPeriodSeconds, MinPosUSD, SinglePosCap, GlobalCap, FundingSkewEmaMinutes, FundingFloorAPR_Emergency, FundingBaseAPR_Emergency, PriceImpactParameter_Emergency, min/maxOrderbookDepthLong/Short, PI_Clamp_Min/Max, Skew_k_emergency, GraceEnabled, GraceMax, RiskThreshold, TargetRiskRatio, LP_NAV",
+   "expected": "no on-chain write",
+   "actual": "not referenced by toMarketParams",
+   "status": "N/A",
+   "evidence": "market.sample.json:6,10,12-14,17-19,22,25-26,33,36-41,43,46,48,50-52 vs configureMarket.ts:93-131 (only the fields listed in the PASS rows are read)"
+  },
+  {
+   "item": "market#2 token 0x4200..06 -> ensureMarket: INDEX_TOKEN(2), MARKET_INDEX(2)",
+   "expected": "0x4200000000000000000000000000000000000006; 2",
+   "actual": "0x4200000000000000000000000000000000000006; 2",
+   "status": "PASS",
+   "evidence": "market.sample.json:58 -> configureMarket.ts:152-165; writers.ts:150-178; MarketStoreUtils.sol:45-54 -> parameters.json entries[group=market-prop,args={marketIndex:2}]"
+  },
+  {
+   "item": "market#2 executionFeeSubsidizeSize \"0.01\" x1e18 -> EXECUTION_FEE_SUBSIDIZE_SIZE(2)",
+   "expected": "10000000000000000",
+   "actual": "10000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:60 -> configureMarket.ts:99-101,240-245 -> parameters.json entries[base=EXECUTION_FEE_SUBSIDIZE_SIZE,args={marketIndex:2}]"
+  },
+  {
+   "item": "market#2 liquidationFeeFactor \"0.003\" x1e30 -> LIQUIDATION_FEE_FACTOR(2)",
+   "expected": "3000000000000000000000000000",
+   "actual": "3000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:61 -> configureMarket.ts:102-104,252-259 -> parameters.json entries[base=LIQUIDATION_FEE_FACTOR,args={marketIndex:2}]"
+  },
+  {
+   "item": "market#2 raw.OpenFeeRatio \"0.0005\" x1e30 -> POSITION_FEE_FACTOR(2,true), (2,false)",
+   "expected": "500000000000000000000000000 (x2)",
+   "actual": "500000000000000000000000000 / 500000000000000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:64 -> configureMarket.ts:120-121,331-343 -> parameters.json entries[base=POSITION_FEE_FACTOR,args={marketIndex:2,balanceWasImproved:true|false}]"
+  },
+  {
+   "item": "market#2 raw.ReserveFactor \"0.3\" x1e30 -> RESERVE_FACTOR(2), MAX_OPEN_INTEREST_FACTOR(2,true), (2,false)",
+   "expected": "300000000000000000000000000000 (x3)",
+   "actual": "300000000000000000000000000000 x3",
+   "status": "PASS",
+   "evidence": "market.sample.json:68 -> configureMarket.ts:95,110-112,277-284,298-303 -> parameters.json entries[base=RESERVE_FACTOR|MAX_OPEN_INTEREST_FACTOR,args={marketIndex:2(,isLong)}]"
+  },
+  {
+   "item": "market#2 raw.MaxLev \"100\" -> MIN_COLLATERAL_FACTOR(2) = 1e30/100",
+   "expected": "10000000000000000000000000000",
+   "actual": "10000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:69 -> configureMarket.ts:106,260-267 -> parameters.json entries[base=MIN_COLLATERAL_FACTOR,args={marketIndex:2}]"
+  },
+  {
+   "item": "market#2 raw.SinglePosCapUSD \"6000000\" x1e30 -> MAX_POSITION_SIZE_USD(2)",
+   "expected": "6000000000000000000000000000000000000",
+   "actual": "6000000000000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:73 -> configureMarket.ts:105,246-251 -> parameters.json entries[base=MAX_POSITION_SIZE_USD,args={marketIndex:2}]"
+  },
+  {
+   "item": "market#2 raw.GlobalCapUSD \"30000000\" x1e30 -> MAX_OPEN_INTEREST(2,true), (2,false)",
+   "expected": "30000000000000000000000000000000000000 (x2)",
+   "actual": "30000000000000000000000000000000000000 x2",
+   "status": "PASS",
+   "evidence": "market.sample.json:74 -> configureMarket.ts:108-109,286-297 -> parameters.json entries[base=MAX_OPEN_INTEREST,args={marketIndex:2,isLong:true|false}]"
+  },
+  {
+   "item": "market#2 raw.FundingFloorAPR_Normal \"0.1095\" -> FUNDING_FLOOR_FACTOR(2)",
+   "expected": "3472222222222222222222",
+   "actual": "3472222222222222222222",
+   "status": "PASS",
+   "evidence": "market.sample.json:76 -> configureMarket.ts:53-55,126,401-408 -> parameters.json entries[base=FUNDING_FLOOR_FACTOR,args={marketIndex:2}]"
+  },
+  {
+   "item": "market#2 raw.FundingBaseAPR_Normal \"1.427896667\" -> 1427896667000000000000000000000/31536000 -> FUNDING_BASE_FACTOR(2)",
+   "expected": "45278306284880771182141",
+   "actual": "45278306284880771182141",
+   "status": "PASS",
+   "evidence": "market.sample.json:77 -> configureMarket.ts:127,409-416 -> parameters.json entries[base=FUNDING_BASE_FACTOR,args={marketIndex:2}]"
+  },
+  {
+   "item": "market#2 raw.minFundingRate \"-0.275075\" -> -275075000000000000000000000000/31536000 -> MIN_FUNDING_FACTOR_PER_SECOND(2)",
+   "expected": "-8722571029934043632673",
+   "actual": "-8722571029934043632673",
+   "status": "PASS",
+   "evidence": "market.sample.json:80 -> configureMarket.ts:128,417-424 -> parameters.json entries[base=MIN_FUNDING_FACTOR_PER_SECOND,args={marketIndex:2}]"
+  },
+  {
+   "item": "market#2 raw.maxFundingRate \"1.113878\" -> 1113878000000000000000000000000/31536000 -> MAX_FUNDING_FACTOR_PER_SECOND(2)",
+   "expected": "35320839675291730086250",
+   "actual": "35320839675291730086250",
+   "status": "PASS",
+   "evidence": "market.sample.json:81 -> configureMarket.ts:129,425-432 -> parameters.json entries[base=MAX_FUNDING_FACTOR_PER_SECOND,args={marketIndex:2}]"
+  },
+  {
+   "item": "market#2 raw.ConstantSpread \"0.0001\" x1e18 -> CONSTANT_PRICE_SPREAD(2)",
+   "expected": "100000000000000",
+   "actual": "100000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:82 -> configureMarket.ts:113,306-311 -> parameters.json entries[base=CONSTANT_PRICE_SPREAD,args={marketIndex:2}]"
+  },
+  {
+   "item": "market#2 raw.DynamicSpread_Clamp_Min \"-0.02\" x1e18 -> MIN_DYNAMIC_SPREAD(2,true), (2,false)",
+   "expected": "-20000000000000000 (x2)",
+   "actual": "-20000000000000000 / -20000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:83 -> configureMarket.ts:114,345-360 -> parameters.json entries[base=MIN_DYNAMIC_SPREAD,args={marketIndex:2,isLong:true|false}]"
+  },
+  {
+   "item": "market#2 raw.DynamicSpread_Clamp_Max \"1.0\" x1e18 -> MAX_DYNAMIC_SPREAD(2,true), (2,false)",
+   "expected": "1000000000000000000 (x2)",
+   "actual": "1000000000000000000 / 1000000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:84 -> configureMarket.ts:115,361-368 -> parameters.json entries[base=MAX_DYNAMIC_SPREAD,args={marketIndex:2,isLong:true|false}]"
+  },
+  {
+   "item": "market#2 raw.PriceImpactParameter_Normal \"0.6\" x1e18 -> PRICE_IMPACT_PARAMETER(2)",
+   "expected": "600000000000000000",
+   "actual": "600000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:85 -> configureMarket.ts:118,324-329 -> parameters.json entries[base=PRICE_IMPACT_PARAMETER,args={marketIndex:2}]"
+  },
+  {
+   "item": "market#2 raw.OrderbookDepthLong \"7923961.27\" x1e30 -> ASK_ORDER_BOOK_DEPTH(2)",
+   "expected": "7923961270000000000000000000000000000",
+   "actual": "7923961270000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:87 -> configureMarket.ts:117,318-323 -> parameters.json entries[base=ASK_ORDER_BOOK_DEPTH,args={marketIndex:2}]"
+  },
+  {
+   "item": "market#2 raw.OrderbookDepthShort \"7767179.17\" x1e30 -> BID_ORDER_BOOK_DEPTH(2)",
+   "expected": "7767179170000000000000000000000000000",
+   "actual": "7767179170000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:88 -> configureMarket.ts:116,312-317 -> parameters.json entries[base=BID_ORDER_BOOK_DEPTH,args={marketIndex:2}]"
+  },
+  {
+   "item": "market#2 raw.Skew_k_normal \"0.0025\" x1e18 -> SKEW_IMPACT_FACTOR(2)",
+   "expected": "2500000000000000",
+   "actual": "2500000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:95 -> configureMarket.ts:122,371-378 -> parameters.json entries[base=SKEW_IMPACT_FACTOR,args={marketIndex:2}]"
+  },
+  {
+   "item": "market#2 raw.Skew_Clamp_Min \"-0.005\" x1e18 -> MIN_SKEW_IMPACT(2)",
+   "expected": "-5000000000000000",
+   "actual": "-5000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:97 -> configureMarket.ts:123,379-386 -> parameters.json entries[base=MIN_SKEW_IMPACT,args={marketIndex:2}]"
+  },
+  {
+   "item": "market#2 raw.Skew_Clamp_Max \"0.005\" x1e18 -> MAX_SKEW_IMPACT(2)",
+   "expected": "5000000000000000",
+   "actual": "5000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:98 -> configureMarket.ts:124,387-394 -> parameters.json entries[base=MAX_SKEW_IMPACT,args={marketIndex:2}]"
+  },
+  {
+   "item": "market#2 raw.GraceBase 15 -> 900 -> LIQUIDATION_GRACE_PERIOD_BASE(2)",
+   "expected": "900",
+   "actual": "900",
+   "status": "PASS",
+   "evidence": "market.sample.json:100 -> configureMarket.ts:125,395-400 -> parameters.json entries[base=LIQUIDATION_GRACE_PERIOD_BASE,args={marketIndex:2}]"
+  },
+  {
+   "item": "market#2 raw.MinCollateralFactor \"0.005\" x1e30 -> MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION(2)",
+   "expected": "5000000000000000000000000000",
+   "actual": "5000000000000000000000000000",
+   "status": "PASS",
+   "evidence": "market.sample.json:102 -> configureMarket.ts:107,268-275 -> parameters.json entries[base=MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION,args={marketIndex:2}]"
+  },
+  {
+   "item": "market#2 unconsumed inputs (same 23 raw fields + tier as market#1)",
+   "expected": "no on-chain write",
+   "actual": "not referenced by toMarketParams",
+   "status": "N/A",
+   "evidence": "market.sample.json:59,63,65-67,70-72,75,78-79,86,89-94,96,99,101,103-105 vs configureMarket.ts:93-131"
+  },
+  {
+   "item": "chain-set but not a configure value write: MARKET_LIST count and MARKET_INDEX(1)/(2) — created by MarketFactory.createMarket through ensureMarket in the two configureMarket runs",
+   "expected": "MARKET_LIST count 2; MARKET_INDEX(1)=1, (2)=2",
+   "actual": "uintCount 2; 1; 2",
+   "status": "PASS",
+   "evidence": "deploy-contracts.ts:640 (ordinals 1,2) -> configureMarket.ts:160-165 -> writers.ts:150-178 -> MarketFactory.sol:58-75 -> MarketStoreUtils.sol:45-48 -> parameters.json entries[group=set-root,base=MARKET_LIST], [group=market-prop,base=MARKET_INDEX]"
+  },
+  {
+   "item": "chain-set but not a configure value write: VAULT(1)/(2) = LPVault written by MarketFactory.createMarket",
+   "expected": "0x46fb4f1eebf811a59dcf6e6343ac5be36122dde8 (x2)",
+   "actual": "0x46fb4f1eebf811a59dcf6e6343ac5be36122dde8 / 0x46fb4f1eebf811a59dcf6e6343ac5be36122dde8",
+   "status": "PASS",
+   "evidence": "MarketFactory.sol:70 (address(vault)) + MarketStoreUtils.sol:51; deployed-addresses.json[Fx100Base#LPVault] -> parameters.json entries[group=market-prop,base=VAULT]"
+  },
+  {
+   "item": "chain-set but not from configure scripts: FEE_RECEIVER = RevenuePool (Ignition Fx100Fee)",
+   "expected": "0x48473691c59750ee8d1fa45cbad29f08d38092ac",
+   "actual": "0x48473691c59750ee8d1fa45cbad29f08d38092ac",
+   "status": "PASS",
+   "evidence": "ignition/modules/Fx100Fee.ts:62,79-80; deployed-addresses.json[Fx100Fee#RevenuePool] -> parameters.json entries[base=FEE_RECEIVER,args={}]"
+  },
+  {
+   "item": "chain-set but not from configure scripts: CHAINLINK_PAYMENT_TOKEN (Ignition Fx100Role, parameter written by deploy-contracts.ts)",
+   "expected": "0xe4ab69c077896252fafbd49efd26b5d171a32410",
+   "actual": "0xe4ab69c077896252fafbd49efd26b5d171a32410",
+   "status": "PASS",
+   "evidence": "deploy-contracts.ts:402 (Fx100Oracle.chainlinkPaymentToken) -> ignition/modules/Fx100Role.ts:33-36,78-82 -> parameters.json entries[base=CHAINLINK_PAYMENT_TOKEN,args={}]"
+  },
+  {
+   "item": "chain-set but not from configure scripts: IS_ORACLE_PROVIDER_ENABLED(ChainlinkPriceFeedProvider) and (ChainlinkDataStreamProvider) (Ignition Fx100Oracle -> Config.setOracleProviderEnabled)",
+   "expected": "true; true",
+   "actual": "true; true",
+   "status": "PASS",
+   "evidence": "ignition/modules/Fx100Oracle.ts:30,35 -> Config.sol:143-144 -> parameters.json entries[base=IS_ORACLE_PROVIDER_ENABLED,args={provider:0x7ae5..|0x3FDd..}]"
+  },
+  {
+   "item": "chain-set side effect of configureOracle: ORACLE_PROVIDER_UPDATED_AT(USDC, ChainlinkPriceFeedProvider) = block.timestamp of the setOracleProviderForFeeHandlerToken tx",
+   "expected": "block.timestamp of that tx (not derivable offline; must be <= snapshot blockTimestamp 1788335217)",
+   "actual": "1788334905",
+   "status": "NOT_VERIFIABLE_OFFLINE",
+   "evidence": "configureOracle.ts:135-142 -> writers.ts:138-148 -> Config.sol:82-101 (store.setUint(oracleProviderUpdatedAt(token,provider), block.timestamp)) -> parameters.json entries[base=ORACLE_PROVIDER_UPDATED_AT,args={token:0xF300..,provider:0x7ae5..}]; parameters.json meta.blockTimestamp"
+  },
+  {
+   "item": "Implication: rerunning the three configure scripts against the snapshot state applies zero transactions",
+   "expected": "every IfNeeded guard reads current == next (writers.ts:21-29,31-39,41-48,68-83,85-100), oracle provider guards read existing == provider (writers.ts:114-148), ensureMarket finds MARKET_LIST index with matching INDEX_TOKEN (writers.ts:150-166)",
+   "actual": "120/120 computed writes equal the snapshot values (8 of them are 0 and unset, so no tx either); ORACLE_PROVIDER_FOR_TOKEN(oracle,token) x3 and (USDC) already = ChainlinkPriceFeedProvider; MARKET_LIST=[1,2] with INDEX_TOKEN(1)=0x0555.., (2)=0x4200..06; ORACLE_PROVIDER_MIN_CHANGE_DELAY unset (0)",
+   "status": "PASS",
+   "evidence": "scratchpad configure-results.json (PASS=120 FAIL=0 MISSING=0); parameters.json meta.blockNumber 46282993; parameters.json entries[base=ORACLE_PROVIDER_MIN_CHANGE_DELAY]"
+  }
+ ],
+ "summary": "PASS=106, FAIL=0, NOT_VERIFIABLE_OFFLINE=1, N/A=3 (110 checks covering 120 individual on-chain writes). Every input field that the three configure scripts consume converts to exactly the value found in the 260902 tx-fork snapshot (120/120 by key hash + type), the 12 remaining unset=false chain entries are all attributed to MarketFactory.createMarket (via ensureMarket), Ignition Fx100Fee/Fx100Role/Fx100Oracle, or the Config.sol timestamp side effect of configureOracle, and the IfNeeded guards therefore imply a zero-applied rerun at snapshot block 46282993.",
+ "unexplained_mismatches": [],
+ "caveats": [
+  "Zero-applied is proven only against the snapshot state at block 46282993 (2026-09-02T07:47:33Z). Any later write flips it: in particular env:init:mock re-points PRICE_FEED(USDC) to a shared 8-decimal USDC mock oracle (deploy-contracts.ts:579-580 comment), after which a configureOracle rerun with the current oracle.fork.tx-fork.json (oracleDecimals 18, feedAddress = Ignition MockUSDCOracle 0x2888..) would APPLY two writes and revert PRICE_FEED(USDC)/PRICE_FEED_MULTIPLIER(USDC) to 1e36 — exactly the 2026-09-01 incident the deploy script warns about.",
+  "The dump probes each key under several value types (173 keys carry >1 typed entry; e.g. POSITION_IMPACT_EXPONENT_FACTOR has a set uint probe = 1e30 and an unset bytes32 probe = 0x0). Any consumer that matches by key alone without the type will misread these as unset; the comparison here matched on key + written type.",
+  "PRICE_FEED_MULTIPLIER for the synthetic BTC index token is 1e34 because configureOracle.ts:29-31 hard-codes 18 token decimals for every non-USDC token, while the deployment manifest declares indexTokenDecimals 8 for MockBTC. The chain matches the script (so the configure reproduction PASSes), but whether 1e34 is the semantically intended normalisation for an 8-decimal synthetic index was not evaluated here.",
+  "8 expected values are 0 (SEQUENCER_GRACE_DURATION, MIN_ADDITIONAL_GAS_FOR_EXECUTION, MIN_HANDLE_EXECUTION_ERROR_GAS, MIN_HANDLE_EXECUTION_ERROR_GAS_TO_FORWARD, POSITION_IMPACT_FACTOR x4); they show as unset=true on chain, which is the correct outcome (setXIfNeeded never sends a tx when current 0 == next 0), not evidence that the field was applied.",
+  "The contracts-repo parseDecimalToScaled silently truncates fractions longer than the scale, whereas deploy-contracts.ts parseDecimalScaled (line 136-144) throws; no input in the four files exceeds its scale, so the two never diverge for this run.",
+  "GENERAL_DEFAULTS and MARKET_DEFAULTS_BY_SYMBOL (defaults.ts) are fully shadowed because every consumed field is present in the input files; the only visible override is liquidationGraceTier0Multiplier (default 8e18, input 1 -> 1e18 on chain).",
+  "ORACLE_PROVIDER_UPDATED_AT(USDC, ChainlinkPriceFeedProvider)=1788334905 is a block.timestamp and cannot be derived offline; it is 312 s before the snapshot block timestamp, consistent with the configure step running shortly before the dump. On a rerun no new timestamp is written because writers.ts:140-142 returns early when the fee-handler provider already matches.",
+  "oracle.fork.tx-fork.json is an untracked, generated file (deploy-contracts.ts:605-623 rewrites it every run from deployed addresses); its addresses were confirmed equal to the snapshot deployed-addresses.json and the manifest, and the snapshot deployed-addresses.json is byte-identical to ignition/deployments/tx-fork-v032-260902r3/deployed_addresses.json.",
+  "Not opened, per ground rules: any .env*, pk.txt, mnemonic, noise-traders.json, hardhat.fork.config.ts, Devconfig/, or the ignition fork parameters file; role grants (roles.json) were out of scope for this task."
+ ]
+}

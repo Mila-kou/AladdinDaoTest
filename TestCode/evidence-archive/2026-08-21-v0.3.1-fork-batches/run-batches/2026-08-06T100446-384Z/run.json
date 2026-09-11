@@ -1,0 +1,36 @@
+{
+  "id": "2026-08-06T100446-384Z",
+  "release": "release-v0.3.1",
+  "description": "由直接 Playwright 执行自动登记。",
+  "scope": "single",
+  "environmentMode": "default",
+  "marketSelection": "default",
+  "keeperMode": "inline",
+  "createdAt": "2026-08-06T10:04:46.384Z",
+  "startedAt": "2026-08-06T10:04:46.384Z",
+  "endedAt": "2026-08-06T10:04:48.448Z",
+  "status": "FAIL",
+  "rpcUpdatedEnvironments": [],
+  "cases": [
+    {
+      "id": "SCN-009",
+      "title": "市价开多快速退出",
+      "plannedEnvironment": "tx-fork",
+      "resolvedEnvironment": "tx-fork",
+      "plannedMarketMode": "mock-market",
+      "resolvedMarketMode": "mock-market",
+      "resolvedOracleMode": "mock-oracle",
+      "resolvedMockResourceAlias": "default-mock",
+      "marketCompatibility": "mock-only",
+      "automated": true,
+      "specPath": "tests/S02/scn-009.spec.ts",
+      "status": "FAIL",
+      "resultRunId": "2026-08-06T100446-384Z",
+      "message": "Error: SCN-009 前置条件不满足：market#29 LIQUIDATION_GRACE_PERIOD_BASE=0；新仓会得到 graceEnd===graceStart。请在测试环境把 Grace 基线设为大于 0（建议 900 秒），强制重新初始化 default-mock 后再执行。"
+    }
+  ],
+  "logTail": [
+    "检测到看板外直接执行的 Playwright 结果，已自动登记到最近运行。",
+    "运行结束：FAIL。"
+  ]
+}

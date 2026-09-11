@@ -1,0 +1,36 @@
+{
+  "id": "2026-08-06T145930-921Z",
+  "release": "release-v0.3.1",
+  "description": "由直接 Playwright 执行自动登记。",
+  "scope": "single",
+  "environmentMode": "default",
+  "marketSelection": "default",
+  "keeperMode": "inline",
+  "createdAt": "2026-08-06T14:59:30.921Z",
+  "startedAt": "2026-08-06T14:59:30.921Z",
+  "endedAt": "2026-08-06T15:00:20.298Z",
+  "status": "PASS",
+  "rpcUpdatedEnvironments": [],
+  "cases": [
+    {
+      "id": "SCN-010",
+      "title": "现价下方限价开多",
+      "plannedEnvironment": "oracle-fork",
+      "resolvedEnvironment": "oracle-fork",
+      "plannedMarketMode": "mock-market",
+      "resolvedMarketMode": "mock-market",
+      "resolvedOracleMode": "mock-oracle",
+      "resolvedMockResourceAlias": "default-mock",
+      "marketCompatibility": "mock-only",
+      "automated": true,
+      "specPath": "tests/S02/scn-010.spec.ts",
+      "status": "PASS",
+      "resultRunId": "2026-08-06T145930-921Z",
+      "message": "链上 31 项核对通过；已记录用户/ Keeper 四笔真实签名业务交易，并恢复双 Mock Oracle 状态；执行详情已展开 114 项 Before / After / Δ / Expected 对账。"
+    }
+  ],
+  "logTail": [
+    "检测到看板外直接执行的 Playwright 结果，已自动登记到最近运行。",
+    "运行结束：PASS。"
+  ]
+}

@@ -2,7 +2,7 @@
 
 SCN-009 / SCN-010 的 runner（`src/scenarios/scn-009-runner.ts`、`scn-010-runner.ts`）和
 `scripts/recover-scn009.ts` 通过动态 `import()` 使用这里的模块。它们原本住在工作区的
-`Test/project/fx100/`，该目录在重构中被整体移出 AladdinDaoTest，导致 runner 报
+`Test/project/fx100/`，该目录在重构中被整体移出 FX100 工作区，导致 runner 报
 `Cannot find module .../Test/project/fx100/tool/config-dump/lib/rpc.mjs`。现按原样收编到仓内。
 
 来源：`/Users/milakou/Documents/AladdinDaoTest-claude/project/fx100/`（旧 `Test/` 树的副本，非 git 管理）。
@@ -17,7 +17,7 @@ SCN-009 / SCN-010 的 runner（`src/scenarios/scn-009-runner.ts`、`scn-010-runn
 
 | 文件 | 计算 | 落点 |
 |---|---|---|
-| `tool/onchain-tx/lib/deployment.mjs:12` | `resolve(HERE, "../../../../../../Github/…")` | `AladdinDaoTest/Github/fx100-contracts@release-v0.3.1/…` |
+| `tool/onchain-tx/lib/deployment.mjs:12` | `resolve(HERE, "../../../../../../Github/…")` | `FX100/Github/fx100-contracts@release-v0.3.1/…` |
 | `config.mjs:124` | `resolve(PROJECT_ROOT, "../../../Github/…")` | 同上 |
 
 `tools/fx100-legacy/` 与旧的 `Test/project/fx100/` 恰好都在工作区根下第 3 层，所以这两处向上

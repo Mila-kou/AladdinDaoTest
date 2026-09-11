@@ -34,7 +34,7 @@
       "signingMode": "readonly",
       "mockResourceAlias": "none",
       "executionMode": "manual",
-      "environmentSetup": "用例开始前：不新建 Fork、不建快照，直接在已部署环境上人工执行；\n用例结束时：手工核对用例不需要回滚或重建 Fork；只按用例自带的清理项处理残留仓位、挂单与授权；\n环境初始化：1、使用 base_sepolia_v0.3.1_260729 已部署市场、Token、Oracle 和 ABI；\n2、仅使用已部署 Market 与 Oracle，不做 Mock 替换；\n3、只读页面核对，不需要签名账户。",
+      "environmentSetup": "用例开始前：不新建 Fork、不建快照，直接在已部署环境上人工执行；\n用例结束时：手工核对用例不需要回滚或重建 Fork；只按用例自带的清理项处理残留仓位、挂单与授权；\n环境初始化：1、使用 Docs/contract-releases/CURRENT.json deployments[] 登记的已部署环境（撰写时 base_sepolia_v0.3.1_260729 @v0.3.1 快照）的市场、Token、Oracle 和 ABI；\n2、仅使用已部署 Market 与 Oracle，不做 Mock 替换；\n3、只读页面核对，不需要签名账户。",
       "roleIntent": "资深交易员首次进入，先判断页面数据是否可信",
       "preconditions": "新浏览器会话；未连接钱包；行情服务正常",
       "testData": "ETH 市场；正常行情、过期行情、N/A 三态",

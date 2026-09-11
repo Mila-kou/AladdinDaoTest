@@ -107,8 +107,8 @@ function defaultProfile(): EnvironmentInitializationProfile {
     oracle: {
       description: defaultMockMarketProfile.oracle.description,
       decimals: defaultMockMarketProfile.oracle.decimals,
-      minPrice: '60000',
-      maxPrice: '60060',
+      minPrice: '2000',
+      maxPrice: '2030',
       heartbeatDuration: defaultMockMarketProfile.oracle.heartbeatDuration.toString(),
     },
     collateralOracle: {

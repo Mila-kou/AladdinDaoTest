@@ -1,0 +1,5058 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-01T11:16:58.731Z",
+  "seededFrom": {
+    "resultsPath": "artifacts/latest/results.json",
+    "runId": "2026-09-01T111105-770Z",
+    "resultsGeneratedAt": "2026-09-01T11:13:58.334Z",
+    "sources": [
+      "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md",
+      "Docs/contract-releases/v0.3.2/04-参数目录.md",
+      "Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md",
+      ".claude/skills/fx100-formula-parity/references/conventions.md"
+    ]
+  },
+  "rows": [
+    {
+      "id": "c-1-1",
+      "side": "合约",
+      "field": "1.1 精度常量",
+      "formulaDigest": "名称 / 数值 / 用途 ；ROW： FLOAT_PRECISION / 1e30 / USD、比例、费率、PnL factor、资金费率 ；ROW： WEI_PRECISION / 1e18 / Token 数量、动态点差、Skew、LP NAV ；ROW： BASIS_POINTS_DIVISOR / 10000 / 基点转换",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §1.1 精度常量",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-1-2",
+      "side": "合约",
+      "field": "1.2 通用公式",
+      "formulaDigest": "applyFactor(value, factor) = value × factor / 1e30 ; toFactor(value, divisor) = value × 1e30 / divisor ; floatToWei(value) = value / 1e12 ; weiToFloat(value) = value × 1e12 ; basisPointsToFloat(bp) = bp × 1e30 / 10000",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §1.2 通用公式",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-1-3",
+      "side": "合约",
+      "field": "1.3 取整规则",
+      "formulaDigest": "- Solidity 普通整数除法向下取整。",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §1.3 取整规则",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-2-1",
+      "side": "合约",
+      "field": "2.1 中间价",
+      "formulaDigest": "midPrice = (minPrice + maxPrice) / 2",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §2.1 中间价",
+      "relatedScenarios": [
+        "SCN-009",
+        "SCN-011",
+        "SCN-012",
+        "SCN-013",
+        "SCN-015",
+        "SCN-016",
+        "SCN-022",
+        "SCN-023",
+        "SCN-024",
+        "SCN-025",
+        "SCN-065",
+        "SCN-066",
+        "SCN-067"
+      ],
+      "status": "implemented",
+      "coveredBy": [
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx2-execute-open-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx4-execute-close-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx2-execute-open-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx4-execute-close-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx2-execute-open-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx4-execute-close-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx2-execute-open-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx4-execute-close-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx2-execute-open-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx4-execute-close-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-tx2-execute-open-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-tx4-execute-middle-1-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-tx6-execute-close-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "long-close-loss-tx2-execute-open-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "long-close-loss-tx4-execute-close-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "short-close-loss-tx2-execute-open-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "short-close-loss-tx4-execute-close-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-tx2-execute-open-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-tx4-execute-middle-1-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-tx6-execute-close-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-tx2-execute-open-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-tx4-execute-middle-1-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-tx6-execute-close-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-065",
+          "rowId": "tx2-execute-open-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-065",
+          "rowId": "tx4-execute-close-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-066",
+          "rowId": "tx2-execute-open-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-066",
+          "rowId": "tx4-execute-close-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-067",
+          "rowId": "tx2-execute-open-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-067",
+          "rowId": "tx4-execute-close-pricing-oracle-mid"
+        }
+      ],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-2-2",
+      "side": "合约",
+      "field": "2.2 PnL 价格选择",
+      "formulaDigest": "仓位 / maximize=true / maximize=false ；ROW： Long / maxPrice / minPrice ；ROW： Short / minPrice / maxPrice",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §2.2 PnL 价格选择",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-2-3",
+      "side": "合约",
+      "field": "2.3 Token 与 USD 换算",
+      "formulaDigest": "usdValue = tokenAmount × tokenPrice ; tokenAmountDown = usdValue / tokenPrice ; tokenAmountUp = ceil(usdValue / tokenPrice)",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §2.3 Token 与 USD 换算",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-3-1",
+      "side": "合约",
+      "field": "3.1 加仓订单",
+      "formulaDigest": "sizeDeltaUsd = rawSizeDelta ; Long sizeDeltaInTokens = sizeDeltaUsd / indexPrice.max ; Short sizeDeltaInTokens = ceil(sizeDeltaUsd / indexPrice.min)",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §3.1 加仓订单",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-3-2",
+      "side": "合约",
+      "field": "3.2 减仓订单",
+      "formulaDigest": "Long sizeDeltaInTokens ; = ceil(position.sizeInTokens × sizeDeltaUsd / position.sizeInUsd) ; Short sizeDeltaInTokens ; = position.sizeInTokens × sizeDeltaUsd / position.sizeInUsd",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §3.2 减仓订单",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-4-1",
+      "side": "合约",
+      "field": "4.1 动态点差",
+      "formulaDigest": "dynamicSpread ; = max(0, constantPriceSpread + priceImpactSpread + skewImpact)",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §4.1 动态点差",
+      "relatedScenarios": [
+        "SCN-009",
+        "SCN-011",
+        "SCN-012",
+        "SCN-013",
+        "SCN-015",
+        "SCN-016",
+        "SCN-022",
+        "SCN-023",
+        "SCN-024",
+        "SCN-025",
+        "SCN-065",
+        "SCN-066",
+        "SCN-067"
+      ],
+      "status": "implemented",
+      "coveredBy": [
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx2-execute-open-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx2-execute-open-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx4-execute-close-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx4-execute-close-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx2-execute-open-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx2-execute-open-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx4-execute-close-pricing-balance-improved"
+        }
+      ],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": "覆盖行超过 40 处，仅保留前 40 处示例"
+    },
+    {
+      "id": "c-4-2",
+      "side": "合约",
+      "field": "4.2 Price Impact Spread",
+      "formulaDigest": "x = orderSize × priceImpactParameter / orderBookDepth ; rawPriceImpactSpread ; = max(exp(x) - 1e18, orderSize × 1e18 / orderBookDepth) / 100 ; priceImpactSpread ; = min(rawPriceImpactSpread, MAX_PRICE_IMPACT_SPREAD)",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §4.2 Price Impact Spread",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-4-3",
+      "side": "合约",
+      "field": "4.3 Skew Reference",
+      "formulaDigest": "skewBefore ; = abs(longOI - shortOI) × 1e18 / abs(longOI + shortOI) ; skewAfter ; = abs(nextLongOI - nextShortOI) × 1e18 / abs(nextLongOI + nextShortOI) ; skewRef = (skewBefore + skewAfter) / 2",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §4.3 Skew Reference",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-4-4",
+      "side": "合约",
+      "field": "4.4 Skew Impact",
+      "formulaDigest": "rawSkewImpact = skewImpactFactor × skewRef / 1e18 ; 如果操作改善多空平衡： ; rawSkewImpact = -rawSkewImpact ; skewImpact = clamp(rawSkewImpact, minSkewImpact, maxSkewImpact)",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §4.4 Skew Impact",
+      "relatedScenarios": [
+        "SCN-009",
+        "SCN-011",
+        "SCN-012",
+        "SCN-013",
+        "SCN-015",
+        "SCN-016",
+        "SCN-022",
+        "SCN-023",
+        "SCN-024",
+        "SCN-025",
+        "SCN-065",
+        "SCN-066",
+        "SCN-067"
+      ],
+      "status": "implemented",
+      "coveredBy": [
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx2-execute-open-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx4-execute-close-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx2-execute-open-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx4-execute-close-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx2-execute-open-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx4-execute-close-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx2-execute-open-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx4-execute-close-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx2-execute-open-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx4-execute-close-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx4-execute-close-pricing-skew-impact"
+        }
+      ],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": "覆盖行超过 40 处，仅保留前 40 处示例"
+    },
+    {
+      "id": "c-4-5",
+      "side": "合约",
+      "field": "4.5 加仓成交价",
+      "formulaDigest": "Long executionPrice ; = ceil(indexPrice.max × (1e18 + dynamicSpread) / 1e18) ; Short executionPrice ; = indexPrice.min × (1e18 - dynamicSpread) / 1e18",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §4.5 加仓成交价",
+      "relatedScenarios": [
+        "SCN-009",
+        "SCN-011",
+        "SCN-012",
+        "SCN-013",
+        "SCN-015",
+        "SCN-016",
+        "SCN-022",
+        "SCN-023",
+        "SCN-024",
+        "SCN-025",
+        "SCN-065",
+        "SCN-066",
+        "SCN-067"
+      ],
+      "status": "implemented",
+      "coveredBy": [
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-open-execution-price"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-open-execution-price"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-open-execution-price"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "open-execution-price"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "open-execution-price"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "open-execution-price"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "open-execution-price"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "open-execution-price"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-open-execution-price"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-open-execution-price"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-open-execution-price"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "long-close-loss-open-execution-price"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "short-close-loss-open-execution-price"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-open-execution-price"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-close-execution-price"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-open-execution-price"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-close-execution-price"
+        },
+        {
+          "scenarioId": "SCN-065",
+          "rowId": "open-execution-price"
+        },
+        {
+          "scenarioId": "SCN-066",
+          "rowId": "open-execution-price"
+        },
+        {
+          "scenarioId": "SCN-067",
+          "rowId": "open-execution-price"
+        }
+      ],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-4-6",
+      "side": "合约",
+      "field": "4.6 减仓成交价",
+      "formulaDigest": "Long executionPrice ; = indexPrice.min × (1e18 - dynamicSpread) / 1e18 ; Short executionPrice ; = ceil(indexPrice.max × (1e18 + dynamicSpread) / 1e18)",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §4.6 减仓成交价",
+      "relatedScenarios": [
+        "SCN-009",
+        "SCN-011",
+        "SCN-012",
+        "SCN-013",
+        "SCN-015",
+        "SCN-016",
+        "SCN-022",
+        "SCN-023",
+        "SCN-024",
+        "SCN-025",
+        "SCN-065",
+        "SCN-066",
+        "SCN-067"
+      ],
+      "status": "implemented",
+      "coveredBy": [
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-close-execution-price"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-close-execution-price"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-close-execution-price"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "close-execution-price"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "close-execution-price"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "close-execution-price"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "close-execution-price"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "close-execution-price"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-close-execution-price"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-close-execution-price"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-close-execution-price"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "long-close-loss-close-execution-price"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "short-close-loss-close-execution-price"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-close-execution-price"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-close-execution-price"
+        },
+        {
+          "scenarioId": "SCN-065",
+          "rowId": "close-execution-price"
+        },
+        {
+          "scenarioId": "SCN-066",
+          "rowId": "close-execution-price"
+        },
+        {
+          "scenarioId": "SCN-067",
+          "rowId": "close-execution-price"
+        }
+      ],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-5-1",
+      "side": "合约",
+      "field": "5.1 加仓后规模",
+      "formulaDigest": "nextSizeInUsd = oldSizeInUsd + sizeDeltaUsd ; nextSizeInTokens = oldSizeInTokens + sizeDeltaInTokens",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §5.1 加仓后规模",
+      "relatedScenarios": [
+        "SCN-009",
+        "SCN-011",
+        "SCN-012",
+        "SCN-013",
+        "SCN-015",
+        "SCN-016",
+        "SCN-022",
+        "SCN-023",
+        "SCN-024",
+        "SCN-025",
+        "SCN-065",
+        "SCN-066",
+        "SCN-067"
+      ],
+      "status": "implemented",
+      "coveredBy": [
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-position-open-size"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-position-open-size"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-position-open-size"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "position-open-size"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "position-open-size"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "position-open-size"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "position-open-size"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "position-open-size"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-position-open-size"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-position-open-size"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-position-open-size"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "long-close-loss-position-open-size"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "short-close-loss-position-open-size"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-position-open-size"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-position-open-size"
+        },
+        {
+          "scenarioId": "SCN-065",
+          "rowId": "position-open-size"
+        },
+        {
+          "scenarioId": "SCN-066",
+          "rowId": "position-open-size"
+        },
+        {
+          "scenarioId": "SCN-067",
+          "rowId": "position-open-size"
+        }
+      ],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-5-2",
+      "side": "合约",
+      "field": "5.2 减仓后规模",
+      "formulaDigest": "nextSizeInUsd = oldSizeInUsd - sizeDeltaUsd ; nextSizeInTokens = oldSizeInTokens - sizeDeltaInTokens",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §5.2 减仓后规模",
+      "relatedScenarios": [
+        "SCN-009",
+        "SCN-011",
+        "SCN-012",
+        "SCN-013",
+        "SCN-015",
+        "SCN-016",
+        "SCN-022",
+        "SCN-023",
+        "SCN-024",
+        "SCN-025",
+        "SCN-065",
+        "SCN-066",
+        "SCN-067"
+      ],
+      "status": "implemented",
+      "coveredBy": [
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-position-closed"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-position-closed"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-position-closed"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "position-closed"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "position-closed"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "position-closed"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "position-closed"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "position-closed"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-position-closed"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-position-closed"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-position-closed"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "long-close-loss-position-closed"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "short-close-loss-position-closed"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-position-closed"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-position-closed"
+        },
+        {
+          "scenarioId": "SCN-065",
+          "rowId": "position-closed"
+        },
+        {
+          "scenarioId": "SCN-066",
+          "rowId": "position-closed"
+        },
+        {
+          "scenarioId": "SCN-067",
+          "rowId": "position-closed"
+        }
+      ],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-5-3",
+      "side": "合约",
+      "field": "5.3 加仓抵押品变化",
+      "formulaDigest": "collateralDeltaAmount ; = initialCollateralDeltaAmount ; - totalCostAmount ; + positiveFundingFeeAmount ; nextCollateralAmount ; = oldCollateralAmount + collateralDeltaAmount",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §5.3 加仓抵押品变化",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-5-4",
+      "side": "合约",
+      "field": "5.4 减仓抵押品与输出",
+      "formulaDigest": "remainingCollateral ; = oldCollateral ; + positiveFundingFeeAmount ; - negativeFundingFeePaid ; - negativePnlPaid ; - tradingAndLiquidationFeesPaid ; - requestedCollateralWithdrawal ; outputAmount ; = positivePnlTokenAmount ; + requestedCo…",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §5.4 减仓抵押品与输出",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-6-1",
+      "side": "合约",
+      "field": "6.1 整仓市值",
+      "formulaDigest": "positionValue = position.sizeInTokens × executionPrice",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §6.1 整仓市值",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-6-2",
+      "side": "合约",
+      "field": "6.2 整仓 PnL",
+      "formulaDigest": "Long totalPnl = positionValue - position.sizeInUsd ; Short totalPnl = position.sizeInUsd - positionValue",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §6.2 整仓 PnL",
+      "relatedScenarios": [
+        "SCN-009",
+        "SCN-011",
+        "SCN-012",
+        "SCN-013",
+        "SCN-015",
+        "SCN-016",
+        "SCN-022",
+        "SCN-023",
+        "SCN-024",
+        "SCN-025",
+        "SCN-065",
+        "SCN-066",
+        "SCN-067"
+      ],
+      "status": "implemented",
+      "coveredBy": [
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-uncapped-pnl"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-uncapped-pnl"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-uncapped-pnl"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-uncapped-pnl"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-uncapped-pnl"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx4-execute-close-uncapped-pnl"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx4-execute-close-uncapped-pnl"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx4-execute-close-uncapped-pnl"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx4-execute-close-uncapped-pnl"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx4-execute-close-uncapped-pnl"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-tx4-execute-middle-1-uncapped-pnl"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-tx6-execute-close-uncapped-pnl"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "long-close-loss-tx4-execute-close-uncapped-pnl"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "short-close-loss-tx4-execute-close-uncapped-pnl"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-tx6-execute-close-uncapped-pnl"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-tx6-execute-close-uncapped-pnl"
+        },
+        {
+          "scenarioId": "SCN-065",
+          "rowId": "tx4-execute-close-uncapped-pnl"
+        },
+        {
+          "scenarioId": "SCN-066",
+          "rowId": "tx4-execute-close-uncapped-pnl"
+        },
+        {
+          "scenarioId": "SCN-067",
+          "rowId": "tx4-execute-close-uncapped-pnl"
+        }
+      ],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-6-3",
+      "side": "合约",
+      "field": "6.3 部分减仓 PnL",
+      "formulaDigest": "positionPnlUsd ; = totalPnl × sizeDeltaInTokens / position.sizeInTokens",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §6.3 部分减仓 PnL",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-6-4",
+      "side": "合约",
+      "field": "6.4 盈利上限",
+      "formulaDigest": "maxPnl = poolUsd × maxPnlFactor / 1e30 ; cappedPoolPnl = min(poolPnl, maxPnl)",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §6.4 盈利上限",
+      "relatedScenarios": [
+        "SCN-009",
+        "SCN-011",
+        "SCN-012",
+        "SCN-013",
+        "SCN-015",
+        "SCN-016",
+        "SCN-022",
+        "SCN-023",
+        "SCN-024",
+        "SCN-025",
+        "SCN-065",
+        "SCN-066",
+        "SCN-067"
+      ],
+      "status": "implemented",
+      "coveredBy": [
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-base-pnl"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-base-pnl"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-base-pnl"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-base-pnl"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-base-pnl"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx4-execute-close-base-pnl"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx4-execute-close-base-pnl"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx4-execute-close-base-pnl"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx4-execute-close-base-pnl"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx4-execute-close-base-pnl"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-tx4-execute-middle-1-base-pnl"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-tx6-execute-close-base-pnl"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "long-close-loss-tx4-execute-close-base-pnl"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "short-close-loss-tx4-execute-close-base-pnl"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-tx6-execute-close-base-pnl"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-tx6-execute-close-base-pnl"
+        },
+        {
+          "scenarioId": "SCN-065",
+          "rowId": "tx4-execute-close-base-pnl"
+        },
+        {
+          "scenarioId": "SCN-066",
+          "rowId": "tx4-execute-close-base-pnl"
+        },
+        {
+          "scenarioId": "SCN-067",
+          "rowId": "tx4-execute-close-base-pnl"
+        }
+      ],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-7-1",
+      "side": "合约",
+      "field": "7.1 基础仓位费",
+      "formulaDigest": "positionFeeAmount ; = sizeDeltaUsd × positionFeeFactor / 1e30 / collateralTokenPrice.min",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §7.1 基础仓位费",
+      "relatedScenarios": [
+        "SCN-009",
+        "SCN-011",
+        "SCN-012",
+        "SCN-013",
+        "SCN-015",
+        "SCN-016",
+        "SCN-022",
+        "SCN-023",
+        "SCN-024",
+        "SCN-025",
+        "SCN-065",
+        "SCN-066",
+        "SCN-067"
+      ],
+      "status": "implemented",
+      "coveredBy": [
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx1-create-open-ledger-claimableFeeAmountPosition"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-ledger-claimableFeeAmountPosition"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-position-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-claimable-position-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx3-create-close-ledger-claimableFeeAmountPosition"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-ledger-claimableFeeAmountPosition"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-position-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-claimable-position-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx1-create-open-ledger-claimableFeeAmountPosition"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-ledger-claimableFeeAmountPosition"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-position-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-claimable-position-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx3-create-close-ledger-claimableFeeAmountPosition"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-ledger-claimableFeeAmountPosition"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-position-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-claimable-position-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx1-create-open-ledger-claimableFeeAmountPosition"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-ledger-claimableFeeAmountPosition"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-position-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-claimable-position-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx3-create-close-ledger-claimableFeeAmountPosition"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-ledger-claimableFeeAmountPosition"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-position-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-claimable-position-fee"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx1-create-open-ledger-claimableFeeAmountPosition"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-ledger-claimableFeeAmountPosition"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-position-fee"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-claimable-position-fee"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx3-create-close-ledger-claimableFeeAmountPosition"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-ledger-claimableFeeAmountPosition"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-position-fee"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-claimable-position-fee"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx1-create-open-ledger-claimableFeeAmountPosition"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-ledger-claimableFeeAmountPosition"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-position-fee"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-claimable-position-fee"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx3-create-close-ledger-claimableFeeAmountPosition"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-ledger-claimableFeeAmountPosition"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-position-fee"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-claimable-position-fee"
+        }
+      ],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": "覆盖行超过 40 处，仅保留前 40 处示例"
+    },
+    {
+      "id": "c-7-2",
+      "side": "合约",
+      "field": "7.2 Pro 折扣",
+      "formulaDigest": "proDiscountAmount ; = positionFeeAmount × proDiscountFactor / 1e30",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §7.2 Pro 折扣",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-7-3",
+      "side": "合约",
+      "field": "7.3 推荐返佣",
+      "formulaDigest": "totalRebateFactor ; = affiliateRewardFactor + traderDiscountFactor",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §7.3 推荐返佣",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-7-4",
+      "side": "合约",
+      "field": "7.4 最终折扣与协议费",
+      "formulaDigest": "totalDiscountAmount ; = max(proDiscountAmount, referralTraderDiscountAmount) ; protocolFeeAmount ; = positionFeeAmount ; - affiliateRewardAmount ; - totalDiscountAmount",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §7.4 最终折扣与协议费",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-7-5",
+      "side": "合约",
+      "field": "7.5 协议与 LP 分成",
+      "formulaDigest": "feeReceiverAmount ; = protocolFeeAmount × positionFeeReceiverFactor / 1e30 ; positionFeeAmountForPool ; = protocolFeeAmount - feeReceiverAmount",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §7.5 协议与 LP 分成",
+      "relatedScenarios": [
+        "SCN-009",
+        "SCN-011",
+        "SCN-012",
+        "SCN-013",
+        "SCN-015",
+        "SCN-016",
+        "SCN-022",
+        "SCN-023",
+        "SCN-024",
+        "SCN-025",
+        "SCN-065",
+        "SCN-066",
+        "SCN-067"
+      ],
+      "status": "implemented",
+      "coveredBy": [
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-protocol-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-fee-receiver"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-pool-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-claimable-position-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-protocol-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-fee-receiver"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-pool-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-claimable-position-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-protocol-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-fee-receiver"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-pool-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-claimable-position-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-protocol-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-fee-receiver"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-pool-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-claimable-position-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-protocol-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-fee-receiver"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-pool-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-claimable-position-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-protocol-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-fee-receiver"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-pool-fee"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-claimable-position-fee"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-protocol-fee"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-fee-receiver"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-pool-fee"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-claimable-position-fee"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-protocol-fee"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-fee-receiver"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-pool-fee"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-claimable-position-fee"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-protocol-fee"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-fee-receiver"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-pool-fee"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-claimable-position-fee"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-protocol-fee"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-fee-receiver"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-pool-fee"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-claimable-position-fee"
+        }
+      ],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": "覆盖行超过 40 处，仅保留前 40 处示例"
+    },
+    {
+      "id": "c-7-6",
+      "side": "合约",
+      "field": "7.6 UI Fee",
+      "formulaDigest": "uiFeeAmount ; = sizeDeltaUsd × uiFeeReceiverFactor / 1e30 ; / collateralTokenPrice.min",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §7.6 UI Fee",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-8",
+      "side": "合约",
+      "field": "8 清算费",
+      "formulaDigest": "liquidationFeeUsd ; = sizeInUsd × liquidationFeeFactor / 1e30 ; liquidationFeeAmount ; = ceil(liquidationFeeUsd / collateralTokenPrice.min) ; liquidationFeeAmountForFeeReceiver ; = liquidationFeeAmount × liquidationFeeReceiverFactor / 1e30…",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §8 清算费",
+      "relatedScenarios": [
+        "SCN-009",
+        "SCN-011",
+        "SCN-012",
+        "SCN-013",
+        "SCN-015",
+        "SCN-016",
+        "SCN-022",
+        "SCN-023",
+        "SCN-024",
+        "SCN-025",
+        "SCN-065",
+        "SCN-066",
+        "SCN-067"
+      ],
+      "status": "implemented",
+      "coveredBy": [
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx1-create-open-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx3-create-close-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx1-create-open-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx3-create-close-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx1-create-open-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx3-create-close-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx1-create-open-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx3-create-close-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx1-create-open-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx3-create-close-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx1-create-open-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx2-execute-open-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx3-create-close-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx4-execute-close-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx1-create-open-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx2-execute-open-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx3-create-close-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx4-execute-close-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx1-create-open-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx2-execute-open-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx3-create-close-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx4-execute-close-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx1-create-open-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx2-execute-open-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx3-create-close-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx4-execute-close-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx1-create-open-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx2-execute-open-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx3-create-close-ledger-claimableFeeAmountLiquidation"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx4-execute-close-ledger-claimableFeeAmountLiquidation"
+        }
+      ],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": "覆盖行超过 40 处，仅保留前 40 处示例"
+    },
+    {
+      "id": "c-9",
+      "side": "合约",
+      "field": "9 费用总额",
+      "formulaDigest": "totalCostAmountExcludingFunding ; = positionFeeAmount ; + liquidationFeeAmount ; + uiFeeAmount ; - totalDiscountAmount ; totalCostAmount ; = totalCostAmountExcludingFunding ; + negativeFundingFeeAmount",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §9 费用总额",
+      "relatedScenarios": [
+        "SCN-009",
+        "SCN-011",
+        "SCN-012",
+        "SCN-013",
+        "SCN-015",
+        "SCN-016",
+        "SCN-022",
+        "SCN-023",
+        "SCN-024",
+        "SCN-025",
+        "SCN-065",
+        "SCN-066",
+        "SCN-067"
+      ],
+      "status": "implemented",
+      "coveredBy": [
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-total-cost"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-total-cost"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-total-cost"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-total-cost"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-total-cost"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-total-cost"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-total-cost"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-total-cost"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-total-cost"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-total-cost"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx2-execute-open-total-cost"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx4-execute-close-total-cost"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx2-execute-open-total-cost"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx4-execute-close-total-cost"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx2-execute-open-total-cost"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx4-execute-close-total-cost"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx2-execute-open-total-cost"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx4-execute-close-total-cost"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx2-execute-open-total-cost"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx4-execute-close-total-cost"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-tx2-execute-open-total-cost"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-tx4-execute-middle-1-total-cost"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-tx6-execute-close-total-cost"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "long-close-loss-tx2-execute-open-total-cost"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "long-close-loss-tx4-execute-close-total-cost"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "short-close-loss-tx2-execute-open-total-cost"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "short-close-loss-tx4-execute-close-total-cost"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-tx2-execute-open-total-cost"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-tx4-execute-middle-1-total-cost"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-tx6-execute-close-total-cost"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-tx2-execute-open-total-cost"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-tx4-execute-middle-1-total-cost"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-tx6-execute-close-total-cost"
+        },
+        {
+          "scenarioId": "SCN-065",
+          "rowId": "tx2-execute-open-total-cost"
+        },
+        {
+          "scenarioId": "SCN-065",
+          "rowId": "tx4-execute-close-total-cost"
+        },
+        {
+          "scenarioId": "SCN-066",
+          "rowId": "tx2-execute-open-total-cost"
+        },
+        {
+          "scenarioId": "SCN-066",
+          "rowId": "tx4-execute-close-total-cost"
+        },
+        {
+          "scenarioId": "SCN-067",
+          "rowId": "tx2-execute-open-total-cost"
+        },
+        {
+          "scenarioId": "SCN-067",
+          "rowId": "tx4-execute-close-total-cost"
+        }
+      ],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-10-1",
+      "side": "合约",
+      "field": "10.1 市场 Open Interest USD",
+      "formulaDigest": "longOIUsd = longOpenInterestInTokens × indexMidPrice ; shortOIUsd = shortOpenInterestInTokens × indexMidPrice ; totalOIUsd = longOIUsd + shortOIUsd",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §10.1 市场 Open Interest USD",
+      "relatedScenarios": [
+        "SCN-009",
+        "SCN-011",
+        "SCN-012",
+        "SCN-013",
+        "SCN-015",
+        "SCN-016",
+        "SCN-022",
+        "SCN-023",
+        "SCN-024",
+        "SCN-025",
+        "SCN-065",
+        "SCN-066",
+        "SCN-067"
+      ],
+      "status": "implemented",
+      "coveredBy": [
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-pricing-long-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-pricing-short-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-pricing-long-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-pricing-short-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-pricing-long-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-pricing-short-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-pricing-long-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-pricing-short-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-pricing-long-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-pricing-short-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-pricing-long-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-pricing-short-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-pricing-long-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-pricing-short-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-pricing-long-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-pricing-short-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-pricing-long-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-pricing-short-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-pricing-long-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-pricing-short-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx2-execute-open-pricing-long-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx2-execute-open-pricing-short-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx4-execute-close-pricing-long-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx4-execute-close-pricing-short-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx2-execute-open-pricing-long-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx2-execute-open-pricing-short-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx4-execute-close-pricing-long-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx4-execute-close-pricing-short-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx2-execute-open-pricing-long-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx2-execute-open-pricing-short-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx4-execute-close-pricing-long-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx4-execute-close-pricing-short-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx2-execute-open-pricing-long-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx2-execute-open-pricing-short-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx4-execute-close-pricing-long-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx4-execute-close-pricing-short-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx2-execute-open-pricing-long-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx2-execute-open-pricing-short-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx4-execute-close-pricing-long-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx4-execute-close-pricing-short-oi-usd"
+        }
+      ],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": "覆盖行超过 40 处，仅保留前 40 处示例"
+    },
+    {
+      "id": "c-10-2",
+      "side": "合约",
+      "field": "10.2 Skew",
+      "formulaDigest": "skew ; = (longOIUsd - shortOIUsd) × 1e18 / totalOIUsd",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §10.2 Skew",
+      "relatedScenarios": [
+        "SCN-009",
+        "SCN-011",
+        "SCN-012",
+        "SCN-013",
+        "SCN-015",
+        "SCN-016",
+        "SCN-022",
+        "SCN-023",
+        "SCN-024",
+        "SCN-025",
+        "SCN-065",
+        "SCN-066",
+        "SCN-067"
+      ],
+      "status": "implemented",
+      "coveredBy": [
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-pricing-long-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-pricing-short-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-pricing-raw-skew"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-pricing-execution-price"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-pricing-long-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-pricing-short-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-pricing-raw-skew"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-pricing-execution-price"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-pricing-long-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-pricing-short-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-pricing-raw-skew"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-pricing-execution-price"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-pricing-long-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-pricing-short-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-pricing-raw-skew"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-pricing-execution-price"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-pricing-oracle-mid"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-pricing-long-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-pricing-short-oi-usd"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-pricing-raw-skew"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-pricing-balance-improved"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-pricing-execution-price"
+        }
+      ],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": "覆盖行超过 40 处，仅保留前 40 处示例"
+    },
+    {
+      "id": "c-10-3",
+      "side": "合约",
+      "field": "10.3 每秒费率",
+      "formulaDigest": "longFundingFactorPerSecond ; = clamp( ; fundingFloorFactor + fundingBaseFactor × skew / 1e18, ; minFundingFactorPerSecond, ; maxFundingFactorPerSecond ; ) ; shortFundingFactorPerSecond ; = clamp( ; -fundingBaseFactor × skew / 1e18, ; minFu…",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §10.3 每秒费率",
+      "relatedScenarios": [
+        "SCN-009",
+        "SCN-011",
+        "SCN-012",
+        "SCN-013",
+        "SCN-015",
+        "SCN-016",
+        "SCN-022",
+        "SCN-023",
+        "SCN-024",
+        "SCN-025",
+        "SCN-065",
+        "SCN-066",
+        "SCN-067"
+      ],
+      "status": "implemented",
+      "coveredBy": [
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-long-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-short-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-long-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-short-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-long-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-short-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-long-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-short-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-long-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-short-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-long-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-short-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-long-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-short-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-long-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-short-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-long-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-short-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-long-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-short-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx2-execute-open-long-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx2-execute-open-short-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx4-execute-close-long-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx4-execute-close-short-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx2-execute-open-long-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx2-execute-open-short-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx4-execute-close-long-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx4-execute-close-short-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx2-execute-open-long-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx2-execute-open-short-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx4-execute-close-long-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx4-execute-close-short-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx2-execute-open-long-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx2-execute-open-short-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx4-execute-close-long-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx4-execute-close-short-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx2-execute-open-long-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx2-execute-open-short-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx4-execute-close-long-funding-factor"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx4-execute-close-short-funding-factor"
+        }
+      ],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": "覆盖行超过 40 处，仅保留前 40 处示例"
+    },
+    {
+      "id": "c-10-4",
+      "side": "合约",
+      "field": "10.4 市场累计 Funding",
+      "formulaDigest": "sideFundingUsd ; = sideOIUsd × sideFundingFactorPerSecond × duration / 1e30",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §10.4 市场累计 Funding",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-10-5",
+      "side": "合约",
+      "field": "10.5 单仓 Funding",
+      "formulaDigest": "negativeFundingFeeAmount ; = fundingAmount( ; latestNegativeFundingFeePerSize ; - position.negativeFundingFeePerSize, ; position.sizeInTokens, ; collateralPrice ; ) ; positiveFundingFeeAmount ; = fundingAmount( ; latestPositiveFundingFeePe…",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §10.5 单仓 Funding",
+      "relatedScenarios": [
+        "SCN-009",
+        "SCN-011",
+        "SCN-012",
+        "SCN-013",
+        "SCN-015",
+        "SCN-016",
+        "SCN-022",
+        "SCN-023",
+        "SCN-024",
+        "SCN-025",
+        "SCN-065",
+        "SCN-066",
+        "SCN-067"
+      ],
+      "status": "implemented",
+      "coveredBy": [
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-positive-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-net-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-positive-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-net-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-positive-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-net-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-positive-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-net-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-positive-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-net-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-positive-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-net-funding"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-positive-funding"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-net-funding"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-positive-funding"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-net-funding"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-positive-funding"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-net-funding"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-positive-funding"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-net-funding"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx2-execute-open-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx2-execute-open-positive-funding"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx2-execute-open-net-funding"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx4-execute-close-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx4-execute-close-positive-funding"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx4-execute-close-net-funding"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx2-execute-open-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx2-execute-open-positive-funding"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx2-execute-open-net-funding"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx4-execute-close-negative-funding"
+        }
+      ],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": "覆盖行超过 40 处，仅保留前 40 处示例"
+    },
+    {
+      "id": "c-10-6",
+      "side": "合约",
+      "field": "10.6 LP Funding 净额",
+      "formulaDigest": "positionPaysLp ; = ( ; longOIUsd × longRate × duration / 1e30 ; + shortOIUsd × shortRate × duration / 1e30 ; ) / collateralMidPrice",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §10.6 LP Funding 净额",
+      "relatedScenarios": [
+        "SCN-009",
+        "SCN-011",
+        "SCN-012",
+        "SCN-013",
+        "SCN-015",
+        "SCN-016",
+        "SCN-022",
+        "SCN-023",
+        "SCN-024",
+        "SCN-025",
+        "SCN-065",
+        "SCN-066",
+        "SCN-067"
+      ],
+      "status": "implemented",
+      "coveredBy": [
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx2-execute-open-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx4-execute-close-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx2-execute-open-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx4-execute-close-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx2-execute-open-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx4-execute-close-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx2-execute-open-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx4-execute-close-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx2-execute-open-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx4-execute-close-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-tx2-execute-open-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-tx4-execute-middle-1-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-tx6-execute-close-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "long-close-loss-tx2-execute-open-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "long-close-loss-tx4-execute-close-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "short-close-loss-tx2-execute-open-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "short-close-loss-tx4-execute-close-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-tx2-execute-open-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-tx4-execute-middle-1-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-tx6-execute-close-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-tx2-execute-open-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-tx4-execute-middle-1-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-tx6-execute-close-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-065",
+          "rowId": "tx2-execute-open-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-065",
+          "rowId": "tx4-execute-close-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-066",
+          "rowId": "tx2-execute-open-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-066",
+          "rowId": "tx4-execute-close-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-067",
+          "rowId": "tx2-execute-open-claimable-funding"
+        },
+        {
+          "scenarioId": "SCN-067",
+          "rowId": "tx4-execute-close-claimable-funding"
+        }
+      ],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-11-1",
+      "side": "合约",
+      "field": "11.1 清算前剩余抵押品 USD",
+      "formulaDigest": "collateralUsd ; = position.collateralAmount × collateralTokenPrice.min ; collateralCostUsd ; = totalCostAmount × collateralTokenPrice.min ; positiveFundingFeeUsd ; = positiveFundingFeeAmount × collateralTokenPrice.min ; remainingCollateral…",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §11.1 清算前剩余抵押品 USD",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-11-2",
+      "side": "合约",
+      "field": "11.2 最低抵押品要求",
+      "formulaDigest": "minCollateralUsdForLeverage ; = position.sizeInUsd × minCollateralFactor / 1e30",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §11.2 最低抵押品要求",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-12-1",
+      "side": "合约",
+      "field": "12.1 池子 USD",
+      "formulaDigest": "poolUsdWithoutPnl ; = LPVault.totalAssets × collateralTokenPrice",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §12.1 池子 USD",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-12-2",
+      "side": "合约",
+      "field": "12.2 市场多空 PnL",
+      "formulaDigest": "openInterestValue ; = openInterestInTokens × selectedIndexPrice ; longPnl = openInterestValue - cumulativeLongOpenCosts ; shortPnl = cumulativeShortOpenCosts - openInterestValue ; netPnl = longPnl + shortPnl",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §12.2 市场多空 PnL",
+      "relatedScenarios": [
+        "SCN-009",
+        "SCN-011",
+        "SCN-012",
+        "SCN-013",
+        "SCN-015",
+        "SCN-016",
+        "SCN-022",
+        "SCN-023",
+        "SCN-024",
+        "SCN-025",
+        "SCN-065",
+        "SCN-066",
+        "SCN-067"
+      ],
+      "status": "implemented",
+      "coveredBy": [
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-cumulative-long-open-costs-after-open"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-cumulative-long-open-costs-restored"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-cumulative-long-open-costs-after-open"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-cumulative-long-open-costs-restored"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-cumulative-long-open-costs-after-open"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-cumulative-long-open-costs-restored"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "cumulative-long-open-costs-after-open"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "cumulative-long-open-costs-restored"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "cumulative-long-open-costs-after-open"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "cumulative-long-open-costs-restored"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "cumulative-long-open-costs-after-open"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "cumulative-long-open-costs-restored"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "cumulative-long-open-costs-after-open"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "cumulative-long-open-costs-restored"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "cumulative-long-open-costs-after-open"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "cumulative-long-open-costs-restored"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-cumulative-long-open-costs-after-open"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-cumulative-long-open-costs-restored"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-cumulative-long-open-costs-after-open"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-cumulative-long-open-costs-restored"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-cumulative-long-open-costs-after-open"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-cumulative-long-open-costs-restored"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "long-close-loss-cumulative-long-open-costs-after-open"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "long-close-loss-cumulative-long-open-costs-restored"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "short-close-loss-cumulative-long-open-costs-after-open"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "short-close-loss-cumulative-long-open-costs-restored"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-cumulative-long-open-costs-after-open"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-cumulative-long-open-costs-restored"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-cumulative-long-open-costs-after-open"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-cumulative-long-open-costs-restored"
+        },
+        {
+          "scenarioId": "SCN-065",
+          "rowId": "cumulative-long-open-costs-after-open"
+        },
+        {
+          "scenarioId": "SCN-065",
+          "rowId": "cumulative-long-open-costs-restored"
+        },
+        {
+          "scenarioId": "SCN-066",
+          "rowId": "cumulative-long-open-costs-after-open"
+        },
+        {
+          "scenarioId": "SCN-066",
+          "rowId": "cumulative-long-open-costs-restored"
+        },
+        {
+          "scenarioId": "SCN-067",
+          "rowId": "cumulative-long-open-costs-after-open"
+        },
+        {
+          "scenarioId": "SCN-067",
+          "rowId": "cumulative-long-open-costs-restored"
+        }
+      ],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-12-3",
+      "side": "合约",
+      "field": "12.3 PnL / Pool Factor",
+      "formulaDigest": "pnlToPoolFactor = pnl × 1e30 / poolUsd",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §12.3 PnL / Pool Factor",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-12-4",
+      "side": "合约",
+      "field": "12.4 Global Net Obligation",
+      "formulaDigest": "marketNetObligation ; = max(longPnl, 0) + max(shortPnl, 0)",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §12.4 Global Net Obligation",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-12-5",
+      "side": "合约",
+      "field": "12.5 Open Interest 上限",
+      "formulaDigest": "openInterest <= MAX_OPEN_INTEREST ; openInterest <= poolUsd × MAX_OPEN_INTEREST_FACTOR / 1e30",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §12.5 Open Interest 上限",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-13-1",
+      "side": "合约",
+      "field": "13.1 Total Assets",
+      "formulaDigest": "totalAssets ; = vault本地asset余额 + strategy.totalAssets",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §13.1 Total Assets",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-13-2",
+      "side": "合约",
+      "field": "13.2 Scaled Assets",
+      "formulaDigest": "totalAssetsScaled = totalAssets × assetScalar",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §13.2 Scaled Assets",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-13-3",
+      "side": "合约",
+      "field": "13.3 NAV",
+      "formulaDigest": "totalSupply = 0 时：nav = 1e18 ; 否则： ; nav = totalAssetsScaled × 1e18 / totalSupply",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §13.3 NAV",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-13-4",
+      "side": "合约",
+      "field": "13.4 Assets 与 Shares",
+      "formulaDigest": "assets ; = shares × nav / 1e18 / assetScalar ; shares ; = assets × assetScalar × 1e18 / nav",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §13.4 Assets 与 Shares",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-13-5",
+      "side": "合约",
+      "field": "13.5 Strategy 分配",
+      "formulaDigest": "targetStrategyAssets ; = totalAssets × strategyAllocationPercentage / 1e18 ; newAllocation ; = targetStrategyAssets - currentStrategyAssets",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §13.5 Strategy 分配",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-14-1",
+      "side": "合约",
+      "field": "14.1 预估 Gas Limit",
+      "formulaDigest": "estimatedAdjustedGas ; = estimatedGasFeeBaseAmount ; + estimatedGasFeePerOraclePrice × oraclePriceCount ; + estimatedGasLimit × estimatedGasFeeMultiplierFactor / 1e30 ; minExecutionFee ; = estimatedAdjustedGas × tx.gasprice",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §14.1 预估 Gas Limit",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-14-2",
+      "side": "合约",
+      "field": "14.2 Keeper 实际执行费",
+      "formulaDigest": "adjustedGasUsed ; = executionGasFeeBaseAmount ; + executionGasFeePerOraclePrice × oraclePriceCount ; + gasUsed × executionGasFeeMultiplierFactor / 1e30 ; keeperExecutionFee ; = min(executionFee, adjustedGasUsed × tx.gasprice) ; refundFeeAm…",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §14.2 Keeper 实际执行费",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-14-3",
+      "side": "合约",
+      "field": "14.3 最大执行费",
+      "formulaDigest": "maxExecutionFee ; = gasLimit × baseFee × maxExecutionFeeMultiplierFactor / 1e30",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §14.3 最大执行费",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-15-1",
+      "side": "合约",
+      "field": "15.1 Calldata Gas",
+      "formulaDigest": "txCalldataGasUsed = calldataLength × 10 ; memoryWords = ceil(calldataLength / 32) ; callMemoryGasUsed ; = memoryWords² / 512 + memoryWords × 3 ; calldataGas ; = txCalldataGasUsed + callMemoryGasUsed",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §15.1 Calldata Gas",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-15-2",
+      "side": "合约",
+      "field": "15.2 Relay Gas 与原生币费用",
+      "formulaDigest": "relayGasLimit ; = gasUsed + relayFeeBaseGasLimit + calldataGas ; nativeFee ; = ceil( ; relayGasLimit × tx.gasprice × relayFeeMultiplierFactor / 1e30 ; ) ; + relayExecutionFee",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §15.2 Relay Gas 与原生币费用",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-15-3",
+      "side": "合约",
+      "field": "15.3 支付 Token 数量",
+      "formulaDigest": "feeTokenAmount ; = ceil( ; nativeFee × nativeTokenPrice.max ; / feeTokenPrice.min ; )",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §15.3 支付 Token 数量",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-16-1",
+      "side": "合约",
+      "field": "16.1 Order 原始字段",
+      "formulaDigest": "字段 / 单位 / 类型 / 页面含义与计算规则 ；ROW： account / address / 订单和目标仓位归属账户 ；ROW： receiver / address / 减仓输出等 Token 的接收地址 ；ROW： cancellationReceiver / address / 取消时抵押品 / 执行费退款地址",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §16.1 Order 原始字段",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-16-2",
+      "side": "合约",
+      "field": "16.2 Pay、Margin、Size 与 Leverage",
+      "formulaDigest": "inputMarginToken = 用户输入的 collateral token 数量 ; inputMarginUsd ; = inputMarginToken × collateralPrice.min ; targetSizeDeltaUsd ; = inputMarginUsd × targetLeverage",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §16.2 Pay、Margin、Size 与 Leverage",
+      "relatedScenarios": [
+        "SCN-009",
+        "SCN-011",
+        "SCN-012",
+        "SCN-013",
+        "SCN-015",
+        "SCN-016",
+        "SCN-022",
+        "SCN-023",
+        "SCN-024",
+        "SCN-025",
+        "SCN-065",
+        "SCN-066",
+        "SCN-067"
+      ],
+      "status": "implemented",
+      "coveredBy": [
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "long-close-loss-position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "short-close-loss-position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-065",
+          "rowId": "position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-066",
+          "rowId": "position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-067",
+          "rowId": "position-open-collateral"
+        }
+      ],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-16-3",
+      "side": "合约",
+      "field": "16.3 触发条件",
+      "formulaDigest": "订单 / Long / Short ；ROW： Limit Increase / oracle.max <= triggerPrice / oracle.min >= triggerPrice ；ROW： Stop Increase / oracle.max >= triggerPrice / oracle.min <= triggerPrice ；ROW： Limit Decrease / TP / oracle.min >= triggerPrice / oracle.…",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §16.3 触发条件",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-16-4",
+      "side": "合约",
+      "field": "16.4 Acceptable Price",
+      "formulaDigest": "开多 / 平空：acceptablePrice = referenceExecutionPrice × (1 + slippage) ; 开空 / 平多：acceptablePrice = referenceExecutionPrice × (1 - slippage)",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §16.4 Acceptable Price",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-16-5",
+      "side": "合约",
+      "field": "16.5 订单列表派生字段",
+      "formulaDigest": "页面字段 / 计算 ；ROW： Size (USD) / sizeDeltaUsd / 1e30 ；ROW： Token Size / sizeDeltaInTokens / 1e18 ；ROW： Trigger / 按 16.3 的方向展示 <= 或 >=",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §16.5 订单列表派生字段",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-17-1",
+      "side": "合约",
+      "field": "17.1 Position 原始字段",
+      "formulaDigest": "positionKey = keccak256(abi.encode(account, marketIndex, isLong))",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §17.1 Position 原始字段",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-17-2",
+      "side": "合约",
+      "field": "17.2 Entry Price、Mark Price 与仓位数量",
+      "formulaDigest": "entryPrice = sizeInUsd / sizeInTokens ; displaySizeUsd = sizeInUsd / 1e30 ; displaySizeToken = sizeInTokens / 1e18",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §17.2 Entry Price、Mark Price 与仓位数量",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-17-3",
+      "side": "合约",
+      "field": "17.3 Margin 字段",
+      "formulaDigest": "marginToken = collateralAmount ; marginUsd ; = collateralAmount × collateralPrice.min ; pendingFundingNetToken ; = negativeFundingFeeAmount - positiveFundingFeeAmount ; effectiveMarginToken ; = collateralAmount ; - negativeFundingFeeAmount…",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §17.3 Margin 字段",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-17-4",
+      "side": "合约",
+      "field": "17.4 Position Leverage 与 Margin Ratio",
+      "formulaDigest": "positionLeverage ; = sizeInUsd / effectiveMarginUsd ; maintenanceMarginUsd ; = sizeInUsd × minCollateralFactorForLiquidation / 1e30 ; marginRatio ; = remainingCollateralUsd / sizeInUsd",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §17.4 Position Leverage 与 Margin Ratio",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-17-5",
+      "side": "合约",
+      "field": "17.5 Unrealized PnL、ROE 与 PnL%",
+      "formulaDigest": "Long unrealizedPnlUsd = sizeInTokens × selectedPrice - sizeInUsd ; Short unrealizedPnlUsd = sizeInUsd - sizeInTokens × selectedPrice ; roe = unrealizedPnlUsd / roeMarginBasisUsd",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §17.5 Unrealized PnL、ROE 与 PnL%",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-17-6",
+      "side": "合约",
+      "field": "17.6 Est. Receive / Est. Pay",
+      "formulaDigest": "estimatedReceive ; = collateral ; + positiveFunding ; - negativeFunding ; + closePnl ; - closePositionFee ; - uiFee ; - liquidationFee(仅清算)",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §17.6 Est. Receive / Est. Pay",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-17-7",
+      "side": "合约",
+      "field": "17.7 调整保证金与目标杠杆",
+      "formulaDigest": "加保证金： ; nextCollateralAmount = currentCollateralAmount + depositAmount - 本次费用 + 本次正Funding ; 减保证金： ; nextCollateralAmount = currentCollateralAmount - withdrawalAmount - 本次费用 ± Funding结算 ; 保持抵押不变、调整到目标杠杆的产品估算： ; targetSizeUsd = targetLevera…",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §17.7 调整保证金与目标杠杆",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-18-1",
+      "side": "合约",
+      "field": "18.1 当前合约的精确清算边界",
+      "formulaDigest": "remainingCollateralUsd(price) ; = collateralUsd ; + fullClosePnlUsd(price) ; + positiveFundingFeeUsd ; - closeCostExcludingFundingUsd ; - negativeFundingFeeUsd",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §18.1 当前合约的精确清算边界",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-18-2",
+      "side": "合约",
+      "field": "18.2 页面闭式估算",
+      "formulaDigest": "Q = sizeInTokens ; S = sizeInUsd ; C = collateralUsd + positiveFundingFeeUsd ; F = discountedClosePositionFeeUsd + negativeFundingFeeUsd ; M = max( ; S × minCollateralFactorForLiquidation / 1e30, ; configuredMinCollateralUsd（调用方启用该检查时） ; )…",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §18.2 页面闭式估算",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-18-3",
+      "side": "合约",
+      "field": "18.3 精确清算价算法",
+      "formulaDigest": "动态点差、Oracle `min/max`、Funding、手续费折扣和 PnL cap 会使闭式公式产生偏差。权威计算方式：",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §18.3 精确清算价算法",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-18-4",
+      "side": "合约",
+      "field": "18.4 清算距离与保护期",
+      "formulaDigest": "Long liquidationDistance ; = (markPrice - liquidationPrice) / markPrice ; Short liquidationDistance ; = (liquidationPrice - markPrice) / markPrice ; graceRemaining ; = max(0, graceEnd - blockTimestamp)",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §18.4 清算距离与保护期",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-19-1",
+      "side": "合约",
+      "field": "19.1 市场费率",
+      "formulaDigest": "hourlyRate = fundingFactorPerSecond × 3600 ; hourlyRatePercent = hourlyRate × 100 / 1e30",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §19.1 市场费率",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-19-2",
+      "side": "合约",
+      "field": "19.2 单仓应付 / 应收",
+      "formulaDigest": "negativeFundingFeeAmount ; = ceil( ; sizeInTokens ; × (latestNegativePerSize - positionNegativePerSize) ; / (1e30 × collateralPrice.min) ; ) ; positiveFundingFeeAmount ; = floor( ; sizeInTokens ; × (latestPositivePerSize - positionPositive…",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §19.2 单仓应付 / 应收",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-19-3",
+      "side": "合约",
+      "field": "19.3 Funding 时间与零 OI",
+      "formulaDigest": "fundingDuration ; = blockTimestamp - fundingUpdatedAt",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §19.3 Funding 时间与零 OI",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-20-1",
+      "side": "合约",
+      "field": "20.1 Open Interest 与 Skew",
+      "formulaDigest": "longOIUsd = longOpenInterestInTokens × indexMidPrice ; shortOIUsd = shortOpenInterestInTokens × indexMidPrice ; totalOIUsd = longOIUsd + shortOIUsd ; skew = (longOIUsd - shortOIUsd) / totalOIUsd",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §20.1 Open Interest 与 Skew",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-20-2",
+      "side": "合约",
+      "field": "20.2 Reserve 与 Available Liquidity",
+      "formulaDigest": "totalNominalOIUsd ; = (longOpenInterestInTokens + shortOpenInterestInTokens) ; × indexPrice.max ; maxReservedUsd ; = poolUsd × reserveFactor / 1e30 ; reserveHeadroomUsd ; = max(0, maxReservedUsd - totalNominalOIUsd) ; hardOiHeadroomUsd ; =…",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §20.2 Reserve 与 Available Liquidity",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "c-20-3",
+      "side": "合约",
+      "field": "20.3 Pool、PnL Obligation 与 ADL",
+      "formulaDigest": "poolUsdWithoutPnl ; = lpVaultTotalAssets × collateralPrice ; marketNetObligation ; = max(longPnl, 0) + max(shortPnl, 0) ; globalNetObligationRatio ; = sum(marketNetObligation) / sharedGlobalPoolUsd",
+      "sourceAnchor": "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md §20.3 Pool、PnL Obligation 与 ADL",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "p-01-min-dynamic-spread",
+      "side": "合约",
+      "field": "MIN_DYNAMIC_SPREAD",
+      "formulaDigest": "变化类型：新增（int256）；作用域：每市场+方向；锚点：FX100Keys.sol::minDynamicSpreadKey；PositionPricingUtils.sol::getDynamicSpread",
+      "sourceAnchor": "Docs/contract-releases/v0.3.2/04-参数目录.md §6 v0.3.2 参数变化清单 · 第 1 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "p-02-max-dynamic-spread",
+      "side": "合约",
+      "field": "MAX_DYNAMIC_SPREAD",
+      "formulaDigest": "变化类型：新增（int256）；作用域：每市场+方向；锚点：同上",
+      "sourceAnchor": "Docs/contract-releases/v0.3.2/04-参数目录.md §6 v0.3.2 参数变化清单 · 第 2 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "p-03-constant-price-spread",
+      "side": "合约",
+      "field": "动态点差链路（CONSTANT_PRICE_SPREAD / PRICE_IMPACT_PARAMETER / BID/ASK_ORDER_BOOK_DEPTH / MAX_PRICE_IMPACT_SPREAD / SKEW_IMPACT_FACTOR / MIN/MAX_SKEW_IMPACT）",
+      "formulaDigest": "变化类型：语义变化（uint256→int256 合成 + clamp）；作用域：每市场（MAX_PRICE_IMPACT_SPREAD 全局）；锚点：PositionPricingUtils.sol::getDynamicSpread / getPriceImpactSpread / getSkewImpact；PositionUtils.sol::getExecutionPriceForDecrease",
+      "sourceAnchor": "Docs/contract-releases/v0.3.2/04-参数目录.md §6 v0.3.2 参数变化清单 · 第 3 行",
+      "relatedScenarios": [
+        "SCN-009",
+        "SCN-011",
+        "SCN-012",
+        "SCN-013",
+        "SCN-015",
+        "SCN-016",
+        "SCN-022",
+        "SCN-023",
+        "SCN-024",
+        "SCN-025",
+        "SCN-065",
+        "SCN-066",
+        "SCN-067"
+      ],
+      "status": "implemented",
+      "coveredBy": [
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx2-execute-open-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx4-execute-close-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx2-execute-open-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx4-execute-close-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx2-execute-open-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx4-execute-close-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx2-execute-open-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx4-execute-close-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx2-execute-open-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx2-execute-open-pricing-dynamic-spread"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx4-execute-close-pricing-skew-impact"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx4-execute-close-pricing-dynamic-spread"
+        }
+      ],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": "覆盖行超过 40 处，仅保留前 40 处示例"
+    },
+    {
+      "id": "p-04-collateral-token",
+      "side": "合约",
+      "field": "COLLATERAL_TOKEN",
+      "formulaDigest": "变化类型：语义迁移（每市场→全局）+ 新增 Relay 约束；作用域：全局；锚点：FX100Keys.sol::COLLATERAL_TOKEN；MarketFactory.sol::createMarket；MarketStoreUtils.sol::get；BaseRelayRouter.sol::_validateCall",
+      "sourceAnchor": "Docs/contract-releases/v0.3.2/04-参数目录.md §6 v0.3.2 参数变化清单 · 第 4 行",
+      "relatedScenarios": [
+        "SCN-009",
+        "SCN-011",
+        "SCN-012",
+        "SCN-013",
+        "SCN-015",
+        "SCN-016",
+        "SCN-022",
+        "SCN-023",
+        "SCN-024",
+        "SCN-025",
+        "SCN-065",
+        "SCN-066",
+        "SCN-067"
+      ],
+      "status": "implemented",
+      "coveredBy": [
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "long-close-loss-position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "short-close-loss-position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-065",
+          "rowId": "position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-066",
+          "rowId": "position-open-collateral"
+        },
+        {
+          "scenarioId": "SCN-067",
+          "rowId": "position-open-collateral"
+        }
+      ],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "p-05-subaccount-slot",
+      "side": "合约",
+      "field": "SUBACCOUNT_SLOT / SUBACCOUNT_SLOT_SUBACCOUNT / SUBACCOUNT_SLOT_ACTIVE",
+      "formulaDigest": "变化类型：新增（槽位模型）；作用域：每账户+槽位(0..3)；锚点：FX100Keys.sol::subaccountSlot*Key；SubaccountUtils.sol::addSubaccount/removeSlot/validateSubaccount；Reader.sol::getSubaccountSlots",
+      "sourceAnchor": "Docs/contract-releases/v0.3.2/04-参数目录.md §6 v0.3.2 参数变化清单 · 第 5 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "p-06-subaccount-list",
+      "side": "合约",
+      "field": "SUBACCOUNT_LIST",
+      "formulaDigest": "变化类型：移除；作用域：每账户；锚点：v0.3.1 FX100Keys.sol::subaccountListKey",
+      "sourceAnchor": "Docs/contract-releases/v0.3.2/04-参数目录.md §6 v0.3.2 参数变化清单 · 第 6 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "p-07-claimable-collateral",
+      "side": "合约",
+      "field": "CLAIMABLE_COLLATERAL_* 六键 + CLAIM_COLLATERAL_FEATURE_DISABLED",
+      "formulaDigest": "变化类型：移除；作用域：多维；锚点：v0.3.1 FX100Keys.sol / ExchangeRouter.sol::claimCollateral / Config.sol::setClaimableCollateral*",
+      "sourceAnchor": "Docs/contract-releases/v0.3.2/04-参数目录.md §6 v0.3.2 参数变化清单 · 第 7 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "p-08-claimable-fee-amount-funding-fee-type",
+      "side": "合约",
+      "field": "资金费结算键（CLAIMABLE_FEE_AMOUNT(FUNDING_FEE_TYPE) 等）",
+      "formulaDigest": "变化类型：结算时点语义变化；作用域：每市场；锚点：MarketUtils.sol::settleFundingFees / updateFundingState；IncreasePositionUtils.sol / DecreasePositionCollateralUtils.sol",
+      "sourceAnchor": "Docs/contract-releases/v0.3.2/04-参数目录.md §6 v0.3.2 参数变化清单 · 第 8 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "p-09-min-affiliate-reward-factor",
+      "side": "合约",
+      "field": "MIN_AFFILIATE_REWARD_FACTOR + PRO_DISCOUNT_FACTOR",
+      "formulaDigest": "变化类型：运行时钳制新增（R2-B15）；作用域：每 tier；锚点：PositionPricingUtils.sol::getPositionFeesAfterReferral",
+      "sourceAnchor": "Docs/contract-releases/v0.3.2/04-参数目录.md §6 v0.3.2 参数变化清单 · 第 9 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "p-10-swap-order-gas-limit",
+      "side": "合约",
+      "field": "SWAP_ORDER_GAS_LIMIT",
+      "formulaDigest": "变化类型：死代码清理（运行时等价）；作用域：全局；锚点：GasUtils.sol（v0.3.1 死函数删除）",
+      "sourceAnchor": "Docs/contract-releases/v0.3.2/04-参数目录.md §6 v0.3.2 参数变化清单 · 第 10 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "p-11-setcollateraltoken",
+      "side": "合约",
+      "field": "部署步骤 SetCollateralToken",
+      "formulaDigest": "变化类型：新增部署初始化步骤；作用域：部署；锚点：ignition/modules/Fx100Role.ts",
+      "sourceAnchor": "Docs/contract-releases/v0.3.2/04-参数目录.md §6 v0.3.2 参数变化清单 · 第 11 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "f-01-size",
+      "side": "前端",
+      "field": "页面目标 Size",
+      "formulaDigest": "期望：= marginUsd × targetLeverage（UI 派生，不是合约反推）",
+      "sourceAnchor": "Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md §九 测试断言参考 · 第 1 行（来源：USDC 计价说明 §6 + 当前合约）",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:58:59.435Z",
+      "note": ""
+    },
+    {
+      "id": "f-02-usd-sizedeltausd",
+      "side": "前端",
+      "field": "USD 模式开仓 sizeDeltaUsd",
+      "formulaDigest": "期望：= order.sizeDelta",
+      "sourceAnchor": "Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md §九 测试断言参考 · 第 2 行（来源：PositionUtils.getIncreaseOrderSize）",
+      "relatedScenarios": [
+        "SCN-011",
+        "SCN-012",
+        "SCN-013",
+        "SCN-022",
+        "SCN-023",
+        "SCN-024",
+        "SCN-025",
+        "SCN-065"
+      ],
+      "status": "implemented",
+      "coveredBy": [
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "ui-order-close-size"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "ui-order-close-size"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "ui-order-close-size"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-ui-order-open-size"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-ui-order-close-size"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-ui-order-open-size"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-ui-order-close-size"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-ui-order-open-size"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-ui-order-close-size"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "long-close-loss-ui-order-open-size"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "long-close-loss-ui-order-close-size"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "short-close-loss-ui-order-open-size"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "short-close-loss-ui-order-close-size"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-ui-order-open-size"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-ui-order-close-size"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-ui-order-open-size"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-ui-order-close-size"
+        },
+        {
+          "scenarioId": "SCN-065",
+          "rowId": "ui-order-open-size"
+        },
+        {
+          "scenarioId": "SCN-065",
+          "rowId": "ui-order-close-size"
+        }
+      ],
+      "updatedAt": "2026-09-01T11:16:58.731Z",
+      "note": ""
+    },
+    {
+      "id": "f-03-usd-sizedeltaintokens",
+      "side": "前端",
+      "field": "USD 模式开多 sizeDeltaInTokens",
+      "formulaDigest": "期望：= floor(sizeDeltaUsd / executionPrice)",
+      "sourceAnchor": "Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md §九 测试断言参考 · 第 3 行（来源：当前合约）",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "f-04-usd-sizedeltaintokens",
+      "side": "前端",
+      "field": "USD 模式开空 sizeDeltaInTokens",
+      "formulaDigest": "期望：= ceil(sizeDeltaUsd / executionPrice)",
+      "sourceAnchor": "Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md §九 测试断言参考 · 第 4 行（来源：当前合约）",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "f-05-sizeinusd",
+      "side": "前端",
+      "field": "开仓 / 加仓后 sizeInUsd",
+      "formulaDigest": "期望：= oldSizeInUsd + sizeDeltaUsd",
+      "sourceAnchor": "Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md §九 测试断言参考 · 第 5 行（来源：IncreasePositionUtils）",
+      "relatedScenarios": [
+        "SCN-011",
+        "SCN-012",
+        "SCN-013",
+        "SCN-022",
+        "SCN-023",
+        "SCN-024",
+        "SCN-025",
+        "SCN-065"
+      ],
+      "status": "implemented",
+      "coveredBy": [
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "ui-order-close-size"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "ui-order-close-size"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "ui-order-close-size"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-ui-order-close-size"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-ui-order-close-size"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-ui-order-close-size"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "long-close-loss-ui-order-close-size"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "short-close-loss-ui-order-close-size"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-ui-order-close-size"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-ui-order-close-size"
+        },
+        {
+          "scenarioId": "SCN-065",
+          "rowId": "ui-order-close-size"
+        }
+      ],
+      "updatedAt": "2026-09-01T11:16:58.731Z",
+      "note": ""
+    },
+    {
+      "id": "f-06-sizeintokens",
+      "side": "前端",
+      "field": "开仓 / 加仓后 sizeInTokens",
+      "formulaDigest": "期望：= oldSizeInTokens + sizeDeltaInTokens",
+      "sourceAnchor": "Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md §九 测试断言参考 · 第 6 行（来源：IncreasePositionUtils）",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "f-07-assert",
+      "side": "前端",
+      "field": "部分减仓",
+      "formulaDigest": "期望：按 §1.2 C 的多空方向取整；减仓后分别相减",
+      "sourceAnchor": "Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md §九 测试断言参考 · 第 7 行（来源：PositionUtils.getDecreaseOrderSize）",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "f-08-assert",
+      "side": "前端",
+      "field": "全平",
+      "formulaDigest": "期望：直接使用完整 sizeInUsd / sizeInTokens，两项必须归零",
+      "sourceAnchor": "Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md §九 测试断言参考 · 第 8 行（来源：当前合约）",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "f-09-pnl",
+      "side": "前端",
+      "field": "关仓 PnL",
+      "formulaDigest": "期望：以 USD 结算，输出 USDC 数量 = PnL_USD / USDC_price",
+      "sourceAnchor": "Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md §九 测试断言参考 · 第 9 行（来源：同上）",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "f-10-usdc",
+      "side": "前端",
+      "field": "USDC 脱锚",
+      "formulaDigest": "期望：MockUSDCOracle 改 \\$0.95 → collateralUsd 同比降 5%",
+      "sourceAnchor": "Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md §九 测试断言参考 · 第 10 行（来源：同上）",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "f-11-10-usdc-100x-size",
+      "side": "前端",
+      "field": "10 USDC + 100x 目标 Size",
+      "formulaDigest": "期望：USDC min 价 $0.9998 时为 $999.8；实际仓位以执行后 Reader 原始值为准",
+      "sourceAnchor": "Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md §九 测试断言参考 · 第 11 行（来源：同上）",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "f-12-usdc-min-max",
+      "side": "前端",
+      "field": "USDC min/max 偏差",
+      "formulaDigest": "期望：正常情况 < 0.02%；用 min 算的结果 ≤ 用 max 算的结果",
+      "sourceAnchor": "Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md §九 测试断言参考 · 第 12 行（来源：同上）",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "f-13-limit-token-size",
+      "side": "前端",
+      "field": "Limit 挂单预览 Token Size",
+      "formulaDigest": "期望：= ORDER_SIZE / triggerPrice；最终仓位按 executionPrice 重算",
+      "sourceAnchor": "Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md §九 测试断言参考 · 第 13 行（来源：Limit/Stop 规范 §2 + 当前合约）",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "f-14-assert",
+      "side": "前端",
+      "field": "挂单期间",
+      "formulaDigest": "期望：OI 与 collateral 均不变",
+      "sourceAnchor": "Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md §九 测试断言参考 · 第 14 行（来源：同上）",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "f-15-assert",
+      "side": "前端",
+      "field": "三层零和",
+      "formulaDigest": "期望：trader / LP / posVault 三方账本闭合",
+      "sourceAnchor": "Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md §九 测试断言参考 · 第 15 行（来源：E2E 精确账本规范）",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "f-16-spread",
+      "side": "前端",
+      "field": "普通交易负 spread",
+      "formulaDigest": "期望：改善平衡时 < 0，执行价优于 oracle，受 MIN/MAX clamp",
+      "sourceAnchor": "Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md §九 测试断言参考 · 第 16 行（来源：07-29 Dynamic Spread 方案）",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "f-17-spread",
+      "side": "前端",
+      "field": "强制平仓 spread",
+      "formulaDigest": "期望：清算 / ADL / 安全校验始终 >= 0",
+      "sourceAnchor": "Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md §九 测试断言参考 · 第 17 行（来源：同上）",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "f-18-price-impact-exp",
+      "side": "前端",
+      "field": "Price Impact exp",
+      "formulaDigest": "期望：指数超界时应在调用 exp 前封顶而非 revert",
+      "sourceAnchor": "Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md §九 测试断言参考 · 第 18 行（来源：R5-B02 / Zenith）",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-precision-01",
+      "side": "配对",
+      "field": "USD 金额（sizeInUsd、费用、PnL、pool value）（§1 精度体系）",
+      "formulaDigest": "合约 × 1e30（Precision.FLOAT_PRECISION） ↔ 前端 bigint × 1e30，formatUsd(x, 30) 只在展示层",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §1 精度体系 · 第 1 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-precision-02",
+      "side": "配对",
+      "field": "比例 / 费率 / factor（§1 精度体系）",
+      "formulaDigest": "合约 × 1e30 ↔ 前端 同",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §1 精度体系 · 第 2 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-precision-03",
+      "side": "配对",
+      "field": "token 数量（sizeInTokens、sizeDeltaInTokens）（§1 精度体系）",
+      "formulaDigest": "合约 统一 × 1e18，与 token 链上 decimals 无关 ↔ 前端 POSITION_SIZE_DECIMALS = 18（packages/sdk/src/utils/positionPrecision.ts）",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §1 精度体系 · 第 3 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-precision-04",
+      "side": "配对",
+      "field": "用户输入的 token 数量（§1 精度体系）",
+      "formulaDigest": "合约 — ↔ 前端 indexToken.decimals（用户输入是原生精度）",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §1 精度体系 · 第 4 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-precision-05",
+      "side": "配对",
+      "field": "USDC 抵押数量（collateralAmount）（§1 精度体系）",
+      "formulaDigest": "合约 × 1e6（USDC 原生） ↔ 前端 同",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §1 精度体系 · 第 5 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-precision-06",
+      "side": "配对",
+      "field": "index / 标的价格（合约价）（§1 精度体系）",
+      "formulaDigest": "合约 USD × 1e12（= 1e30 / 1e18） ↔ 前端 convertToContractPrice(price, 18)",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §1 精度体系 · 第 6 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-precision-07",
+      "side": "配对",
+      "field": "USDC 价格（§1 精度体系）",
+      "formulaDigest": "合约 USD × 1e24（= 1e30 / 1e6） ↔ 前端 collateralToken.decimals = 6",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §1 精度体系 · 第 7 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-precision-08",
+      "side": "配对",
+      "field": "动态点差 / skew 比例（§1 精度体系）",
+      "formulaDigest": "合约 × 1e18（WEI_PRECISION；1e14 = 0.01%） ↔ 前端 同",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §1 精度体系 · 第 8 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-precision-09",
+      "side": "配对",
+      "field": "LP shares（§1 精度体系）",
+      "formulaDigest": "合约 × 1e18 ↔ 前端 同",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §1 精度体系 · 第 9 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-precision-10",
+      "side": "配对",
+      "field": "换算常量（§1 精度体系）",
+      "formulaDigest": "合约 FLOAT_TO_WEI_DIVISOR = 1e12、BASIS_POINTS_DIVISOR = 10000 ↔ 前端 同",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §1 精度体系 · 第 10 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-rounding-01",
+      "side": "配对",
+      "field": "Precision.mulDiv(uint,uint,uint) = OZ Math.mulDiv（§2 取整原语对照）",
+      "formulaDigest": "语义：向下取整（floor）；SDK：bigMath.mulDiv(x,y,z) = (x*y)/z；等价性：等价（bigint 除法向零截断，非负时=floor）",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §2 取整原语对照 · 第 1 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-rounding-02",
+      "side": "配对",
+      "field": "Precision.mulDiv(uint,uint,uint,true) = OZ Math.mulDiv(..., Ceil)（§2 取整原语对照）",
+      "formulaDigest": "语义：向上取整；SDK：bigMath.mulDiv(x,y,z,true) = floor + (mulmod>0 ? 1)；等价性：非负输入等价",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §2 取整原语对照 · 第 2 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-rounding-03",
+      "side": "配对",
+      "field": "Precision.mulDiv(int,…,true) / applyFactor(uint,int,true)（§2 取整原语对照）",
+      "formulaDigest": "语义：按幅值向上取整（负数结果绝对值变大）；SDK：bigMath.mulDiv(负数,…,true)；等价性：不等价：JS % 符号随被除数，(x*y)%z > 0n 对负数恒 false → 负数不进位。调用点若把负值（如负 PnL、负 impact、负 funding）传给 bigMath.mulDiv(..., true)，与合约差 1 wei 幅值。核对时凡是负值 + roundUp 的路径都要点名",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §2 取整原语对照 · 第 3 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-rounding-04",
+      "side": "配对",
+      "field": "Calc.roundUpDivision(a,b) = (a+b-1)/b（§2 取整原语对照）",
+      "formulaDigest": "语义：向上取整；SDK：bigMath.divRoundUp(x,y) = (x+y-1n)/y；等价性：等价（非负）",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §2 取整原语对照 · 第 4 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-rounding-05",
+      "side": "配对",
+      "field": "Calc.roundUpMagnitudeDivision(int a, uint b)（§2 取整原语对照）",
+      "formulaDigest": "语义：负数 (a-b+1)/b，幅值进位；SDK：无直接对应；等价性：前端若需要要自己写；用 divRoundUp 处理负数会错",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §2 取整原语对照 · 第 5 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-rounding-06",
+      "side": "配对",
+      "field": "四舍五入（§2 取整原语对照）",
+      "formulaDigest": "语义：四舍五入；SDK：bigMath.divRound(x,y) = x/y + ((x%y)*2n > y ? 1 : 0)；等价性：合约没有四舍五入原语；前端用它算\"合约值\"即不一致（且负数行为不对称）",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §2 取整原语对照 · 第 6 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-rounding-07",
+      "side": "配对",
+      "field": "Precision.applyFactor(value, factor)（§2 取整原语对照）",
+      "formulaDigest": "语义：value × factor / 1e30 floor；SDK：通常手写 x * f / 10n30n；等价性：等价，前提是同序（先乘后除）",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §2 取整原语对照 · 第 7 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-rounding-08",
+      "side": "配对",
+      "field": "Precision.toFactor(value, divisor[, roundUp])（§2 取整原语对照）",
+      "formulaDigest": "语义：value × 1e30 / divisor；SDK：手写；等价性：同上",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §2 取整原语对照 · 第 8 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-rounding-09",
+      "side": "配对",
+      "field": "Precision.applyExponentFactor（§2 取整原语对照）",
+      "formulaDigest": "语义：指数因子（prb-math pow）；SDK：前端若用 Math.pow float；等价性：不等价（float）",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §2 取整原语对照 · 第 9 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-rounding-10",
+      "side": "配对",
+      "field": "Precision.floatToWei / weiToFloat（§2 取整原语对照）",
+      "formulaDigest": "语义：/1e12、×1e12；SDK：手写；等价性：等价",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §2 取整原语对照 · 第 10 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-pricing-01",
+      "side": "配对",
+      "field": "抵押物 USD 估值（开仓校验 / 清算 / 显示 collateralUsd）（§3 选价规则）",
+      "formulaDigest": "合约用价 collateralPrice.min ↔ 前端应同侧 min",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §3 选价规则 · 第 1 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-pricing-02",
+      "side": "配对",
+      "field": "费用 USD → USDC token 数量（除法）（§3 选价规则）",
+      "formulaDigest": "合约用价 collateralPrice.min（除更小的数 → 多扣） ↔ 前端应同侧 min",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §3 选价规则 · 第 2 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-pricing-03",
+      "side": "配对",
+      "field": "funding 支付端（§3 选价规则）",
+      "formulaDigest": "合约用价 min（多付） ↔ 前端应同侧 min",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §3 选价规则 · 第 3 行",
+      "relatedScenarios": [
+        "SCN-009",
+        "SCN-011",
+        "SCN-012",
+        "SCN-013",
+        "SCN-015",
+        "SCN-016",
+        "SCN-022",
+        "SCN-023",
+        "SCN-024",
+        "SCN-025",
+        "SCN-065",
+        "SCN-066",
+        "SCN-067"
+      ],
+      "status": "implemented",
+      "coveredBy": [
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx2-execute-open-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-up-tx4-execute-close-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx2-execute-open-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-flat-tx4-execute-close-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx2-execute-open-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-009",
+          "rowId": "long-quick-exit-down-tx4-execute-close-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx2-execute-open-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-011",
+          "rowId": "tx4-execute-close-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx2-execute-open-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-012",
+          "rowId": "tx4-execute-close-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx2-execute-open-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-013",
+          "rowId": "tx4-execute-close-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx2-execute-open-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-015",
+          "rowId": "tx4-execute-close-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx2-execute-open-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-016",
+          "rowId": "tx4-execute-close-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx2-execute-open-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "long-close-profit-tx4-execute-close-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx2-execute-open-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-022",
+          "rowId": "short-close-profit-tx4-execute-close-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-tx2-execute-open-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-tx4-execute-middle-1-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-023",
+          "rowId": "long-decrease-profit-tx6-execute-close-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "long-close-loss-tx2-execute-open-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "long-close-loss-tx4-execute-close-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "short-close-loss-tx2-execute-open-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-024",
+          "rowId": "short-close-loss-tx4-execute-close-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-tx2-execute-open-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-tx4-execute-middle-1-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "long-increase-tx6-execute-close-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-tx2-execute-open-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-tx4-execute-middle-1-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-025",
+          "rowId": "short-increase-tx6-execute-close-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-065",
+          "rowId": "tx2-execute-open-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-065",
+          "rowId": "tx4-execute-close-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-066",
+          "rowId": "tx2-execute-open-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-066",
+          "rowId": "tx4-execute-close-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-067",
+          "rowId": "tx2-execute-open-negative-funding"
+        },
+        {
+          "scenarioId": "SCN-067",
+          "rowId": "tx4-execute-close-negative-funding"
+        }
+      ],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-pricing-04",
+      "side": "配对",
+      "field": "funding 收取端 / claimable（§3 选价规则）",
+      "formulaDigest": "合约用价 max（对收款人有利） ↔ 前端应同侧 max",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §3 选价规则 · 第 4 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-pricing-05",
+      "side": "配对",
+      "field": "Pool 价值（LP 侧 maximize）（§3 选价规则）",
+      "formulaDigest": "合约用价 max ↔ 前端应同侧 max",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §3 选价规则 · 第 5 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-pricing-06",
+      "side": "配对",
+      "field": "开仓执行价基准（§3 选价规则）",
+      "formulaDigest": "合约用价 多头 max / 空头 min（买贵卖贱） ↔ 前端应同侧 同",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §3 选价规则 · 第 6 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-pricing-07",
+      "side": "配对",
+      "field": "平仓执行价基准（§3 选价规则）",
+      "formulaDigest": "合约用价 多头 min / 空头 max ↔ 前端应同侧 同",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §3 选价规则 · 第 7 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    },
+    {
+      "id": "pair-pricing-08",
+      "side": "配对",
+      "field": "PnL 计算价（§3 选价规则）",
+      "formulaDigest": "合约用价 平仓侧价（多 min / 空 max） ↔ 前端应同侧 前端\"未实现 PnL\"若用 index/mid 价，与合约算法差一档点差 → 属\"展示性\"还是\"材料性\"要看用途（预览 vs 清算判定）",
+      "sourceAnchor": ".claude/skills/fx100-formula-parity/references/conventions.md §3 选价规则 · 第 8 行",
+      "relatedScenarios": [],
+      "status": "uncovered",
+      "coveredBy": [],
+      "updatedAt": "2026-09-01T09:54:25.980Z",
+      "note": ""
+    }
+  ]
+}

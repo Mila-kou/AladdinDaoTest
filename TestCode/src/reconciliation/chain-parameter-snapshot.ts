@@ -29,6 +29,16 @@ function uintDimensionKey(baseKey: Hex, value: bigint): Hex {
   return keccak256(encodeAbiParameters(parseAbiParameters('bytes32,uint256'), [baseKey, value]));
 }
 
+// keccak256(abi.encode(BASE_KEY, marketIndex, isLong))：FX100Keys.sol:613/:621 的 (marketIndex, isLong) 二维键。
+function marketSideKey(baseKey: Hex, marketIndex: bigint, isLong: boolean): Hex {
+  return keccak256(encodeAbiParameters(parseAbiParameters('bytes32,uint256,bool'), [baseKey, marketIndex, isLong]));
+}
+
+// v0.3.2 getDynamicSpread 的 clamp 上下界（PositionPricingUtils.sol:173-176，getInt，未配置即 0）。
+// 快照 market 段的标签沿用 default-mock 参数表口径：`MIN_DYNAMIC_SPREAD(true)` / `MAX_DYNAMIC_SPREAD(false)` …
+const DYNAMIC_SPREAD_BOUND_BASE_KEYS = ['MIN_DYNAMIC_SPREAD', 'MAX_DYNAMIC_SPREAD'] as const;
+const DYNAMIC_SPREAD_SIDES = [true, false] as const;
+
 function signedWord(value: bigint, bits: bigint): bigint {
   const sign = 1n << (bits - 1n);
   const modulus = 1n << bits;
@@ -112,7 +122,26 @@ export async function readTradeParameterSnapshot(input: {
       value,
     }] as const;
   }));
-  const market = Object.fromEntries(marketEntries);
+  const market: Record<string, ChainParameterValue> = Object.fromEntries(marketEntries);
+
+  // 兜底保证 MIN/MAX_DYNAMIC_SPREAD × (long, short) 四键一定进入快照：default-mock 参数表已登记它们，
+  // 但点差复算把这四个键当硬输入（缺任一键 → 该行 NOT_VERIFIED），不能依赖参数表未来是否还列着。
+  // 已由参数表读到的不重复请求；读到 0 也按 0 登记（链上 getInt 未配置即 0，clamp(x,0,0)=0 是真实行为）。
+  for (const baseKeyName of DYNAMIC_SPREAD_BOUND_BASE_KEYS) {
+    for (const isLong of DYNAMIC_SPREAD_SIDES) {
+      const label = `${baseKeyName}(${isLong})`;
+      if (market[label] !== undefined) continue;
+      const key = marketSideKey(abiStringKey(baseKeyName), BigInt(input.marketIndex), isLong);
+      const value = await client.readContract({
+        address: dataStore,
+        abi: dataStoreAbi,
+        functionName: 'getInt',
+        args: [key],
+        blockNumber,
+      });
+      market[label] = { key, valueType: 'int', value };
+    }
+  }
 
   const positionFeeReceiverFactorKey = abiStringKey('POSITION_FEE_RECEIVER_FACTOR');
   const maxPriceImpactSpreadKey = abiStringKey('MAX_PRICE_IMPACT_SPREAD');

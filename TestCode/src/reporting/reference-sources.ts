@@ -1,11 +1,19 @@
-import { readFile, stat } from 'node:fs/promises';
+import { readFile, realpath, stat } from 'node:fs/promises';
 import { relative, resolve } from 'node:path';
 
+import { environmentNames, type EnvironmentName } from '../../config/environments/catalog.js';
+import {
+  parameterSnapshotCsvPath,
+  parameterSnapshotJsonPath,
+} from '../config/deployment.js';
+import { loadEnvironmentBinding } from '../config/environment-binding.js';
 import { normalizeForkDisplayName } from '../domain/fork-display.js';
 
 export interface ParameterSnapshotMetadata {
   readonly environment: string;
   readonly displayName: string;
+  /** 参数读取的合约地址（DataStore；本部署 RoleStore 与其同址） */
+  readonly dataStore?: string;
   readonly deploymentName: string;
   readonly chainId: number;
   readonly blockNumber: number;
@@ -37,15 +45,25 @@ export interface ParameterReference {
 }
 
 export interface FormulaReference {
+  /** 源文件真实绝对路径（realpath；软链已解析），页面原样显示。 */
   readonly sourcePath: string;
+  /** 源文件 mtime（ISO）。 */
   readonly modifiedAt: string;
   readonly markdown: string;
 }
 
+/**
+ * 三份公式文档都取自工作区 TestCase/E2E/ContractCodeSummary/v0.3.2/（详解层）：
+ * - contractFormulas → FX100-核心字段计算公式.md（A 级，合约）
+ * - pageFormulas     → FX100-前端代码公式.md（B 级，fx100-apps SDK/App 自己算的公式）
+ * - keeperFormulas   → FX100-Keeper代码公式.md（K1/K2，Keeper 进程自己算的公式）
+ * 看板页面结构只有「合约核心公式」「页面数据公式」两页，Keeper 公式挂在页面数据公式页下方（render-formulas.ts）。
+ */
 export interface ReferenceSources {
   readonly parameters: ParameterReference;
   readonly contractFormulas: FormulaReference;
   readonly pageFormulas: FormulaReference;
+  readonly keeperFormulas: FormulaReference;
 }
 
 function parseCsv(source: string): string[][] {
@@ -100,6 +118,7 @@ interface ConfigDumpSnapshot {
     readonly blockNumber: number;
     readonly blockTimestamp: number;
     readonly deploymentName: string;
+    readonly dataStore?: string;
   };
   readonly dimensions?: Record<string, Array<{
     readonly value: string | number | boolean;
@@ -163,12 +182,13 @@ function currentReadableValue(row: Record<string, string>, snapshot: ConfigDumpS
   if (row.type !== 'address' || !row.value) return '';
   const address = row.value;
   if (row.base === 'INDEX_TOKEN') {
-    const market = snapshot.markets?.find((item) => item.INDEX_TOKEN.toLowerCase() === address.toLowerCase());
+    const market = snapshot.markets?.find((item) => item.INDEX_TOKEN?.toLowerCase() === address.toLowerCase());
     if (market?.indexTokenSymbol === 'WETH') return 'ETH market（WETH）';
     if (market?.indexTokenSymbol) return `${market.indexTokenSymbol} market`;
   }
   if (row.base === 'COLLATERAL_TOKEN') {
-    const market = snapshot.markets?.find((item) => item.COLLATERAL_TOKEN.toLowerCase() === address.toLowerCase());
+    // tx-fork@v0.3.2 参数快照的 markets[] 不带 COLLATERAL_TOKEN/INDEX_TOKEN 地址列，缺失时回退 labels 匹配。
+    const market = snapshot.markets?.find((item) => item.COLLATERAL_TOKEN?.toLowerCase() === address.toLowerCase());
     if (market?.collateralTokenSymbol) return market.collateralTokenSymbol;
   }
   const labels = Object.values(snapshot.dimensions ?? {})
@@ -294,6 +314,7 @@ function mapConfigDumpRows(
     metadata: {
       environment,
       displayName,
+      ...(snapshot.meta.dataStore ? { dataStore: snapshot.meta.dataStore } : {}),
       deploymentName: snapshot.meta.deploymentName,
       chainId: snapshot.meta.chainId,
       blockNumber: snapshot.meta.blockNumber,
@@ -333,7 +354,7 @@ export async function loadParameters(
   let snapshotMetadata: ParameterSnapshotMetadata | undefined;
   if (nativeConfigDump) {
     const snapshotPath = options.snapshotPath
-      ?? path.replace(/\.params-by-module(?:-set)?\.csv$/, '.params.json');
+      ?? parameterSnapshotJsonPath(path);
     const snapshot = JSON.parse(await readFile(snapshotPath, 'utf8')) as ConfigDumpSnapshot;
     const mapped = mapConfigDumpRows(
       rows,
@@ -356,36 +377,72 @@ export async function loadParameters(
 }
 
 async function loadFormulas(path: string): Promise<FormulaReference> {
-  const [markdown, metadata] = await Promise.all([readFile(path, 'utf8'), stat(path)]);
+  const [markdown, metadata, realPath] = await Promise.all([
+    readFile(path, 'utf8'),
+    stat(path),
+    realpath(path).catch(() => resolve(path)),
+  ]);
   return {
-    sourcePath: relative(process.cwd(), path),
+    sourcePath: realPath,
     modifiedAt: metadata.mtime.toISOString(),
     markdown,
   };
 }
 
+const FORMULA_DOC_DIR = '../TestCase/E2E/ContractCodeSummary/v0.3.2';
+
 export async function loadReferenceSources(): Promise<ReferenceSources> {
-  const parametersPath = resolve(
-    process.cwd(),
-    process.env.E2E_SYSTEM_PARAMETERS_SOURCE
-      ?? 'artifacts/parameter-cache/base-sepolia/base_sepolia_v0.3.1_260729.params-by-module.csv',
-  );
+  const requestedEnvironment = environmentNames.includes(process.env.E2E_ENV as EnvironmentName)
+    ? process.env.E2E_ENV as EnvironmentName
+    : 'tx-fork';
+  const binding = loadEnvironmentBinding(process.cwd(), requestedEnvironment);
+  const boundParameters = binding.manifest.source?.parametersFile;
+  if (!boundParameters) {
+    throw new Error(`环境 ${requestedEnvironment} 的绑定 manifest 缺少 source.parametersFile。`);
+  }
+  const parametersSnapshotPath = resolve(process.cwd(), boundParameters);
+  const parametersPath = resolve(process.cwd(), parameterSnapshotCsvPath(boundParameters));
+  // 三份公式页数据源统一切到 v0.3.2 详解层（TestCase/E2E/ContractCodeSummary/v0.3.2/）；环境变量只作临时覆盖。
+  // 页面公式页的语义已从「需求文档口径」改为「前端代码公式」，覆盖键随之改名为 E2E_FRONTEND_FORMULAS_SOURCE；
+  // 旧键 E2E_PAGE_FORMULAS_SOURCE（.env.local 里常指向 Docs/…/FX100-页面字段计算公式.md）不再读取，只告警。
+  if (process.env.E2E_PAGE_FORMULAS_SOURCE) {
+    console.warn(
+      '[reference-sources] E2E_PAGE_FORMULAS_SOURCE 已废弃并被忽略：页面数据公式页现在固定渲染 '
+      + `${FORMULA_DOC_DIR}/FX100-前端代码公式.md（临时覆盖请改用 E2E_FRONTEND_FORMULAS_SOURCE）。`,
+    );
+  }
   const contractFormulasPath = resolve(
     process.cwd(),
     process.env.E2E_CONTRACT_FORMULAS_SOURCE
       ?? process.env.E2E_FORMULAS_SOURCE
-      ?? '../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md',
+      ?? `${FORMULA_DOC_DIR}/FX100-核心字段计算公式.md`,
   );
   const pageFormulasPath = resolve(
     process.cwd(),
-    process.env.E2E_PAGE_FORMULAS_SOURCE
-      ?? '../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md',
+    process.env.E2E_FRONTEND_FORMULAS_SOURCE
+      ?? `${FORMULA_DOC_DIR}/FX100-前端代码公式.md`,
+  );
+  const keeperFormulasPath = resolve(
+    process.cwd(),
+    process.env.E2E_KEEPER_FORMULAS_SOURCE
+      ?? `${FORMULA_DOC_DIR}/FX100-Keeper代码公式.md`,
   );
 
-  const [parameters, contractFormulas, pageFormulas] = await Promise.all([
-    loadParameters(parametersPath),
+  const [parameters, contractFormulas, pageFormulas, keeperFormulas] = await Promise.all([
+    loadParameters(parametersPath, { snapshotPath: parametersSnapshotPath, environment: requestedEnvironment }),
     loadFormulas(contractFormulasPath),
     loadFormulas(pageFormulasPath),
+    loadFormulas(keeperFormulasPath),
   ]);
-  return { parameters, contractFormulas, pageFormulas };
+  // 只有 config-dump 原生产物（params-by-module.csv + 同名 params.json）才带链上快照；
+  // 指向设计文档 CSV 时参数页会静默退化成无链上值、无 Market 过滤的清单——必须显式告警，
+  // 否则只会在 dashboard:verify 里表现为 #market-index 选不到选项的超时。
+  if (!parameters.snapshot) {
+    console.warn(
+      `[reference-sources] 系统参数来源不是 config-dump 原生快照：${parameters.sourcePath}\n`
+      + '  参数页将缺少链上当前值、Market 范围过滤与 DataStore 直写；'
+      + '请刷新当前环境的参数快照，并检查绑定 manifest 的 source.parametersFile。',
+    );
+  }
+  return { parameters, contractFormulas, pageFormulas, keeperFormulas };
 }

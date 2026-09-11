@@ -1,0 +1,355 @@
+{
+  "archivedAt": "2026-08-21T09:12:53.439134+00:00",
+  "latestRun": {
+    "id": "2026-08-21T090044-138Z",
+    "startedAt": "2026-08-21T09:00:44.138Z",
+    "endedAt": "2026-08-21T09:08:49.600Z",
+    "durationMs": 485462,
+    "playwrightStatus": "passed",
+    "environments": [
+      "oracle-fork",
+      "tx-fork"
+    ],
+    "projectNames": [
+      "oracle-fork",
+      "tx-fork"
+    ],
+    "discoveredTests": 16,
+    "release": "release-v0.3.1",
+    "releaseSource": "CURRENT.json",
+    "targetRelease": "release-v0.3.2",
+    "releaseMismatch": true
+  },
+  "scenarios": [
+    {
+      "id": "SCN-070",
+      "project": "oracle-fork",
+      "status": "PASS",
+      "executedAt": "2026-08-21T09:00:44.375Z",
+      "run": "2026-08-21T090044-138Z",
+      "release": "release-v0.3.1",
+      "mode": "oracle-fork-private-key-controlled-oracle",
+      "coverageStatus": "PARTIAL",
+      "coverageNote": "已自动化：MarketIncrease long：E=A 成交 / 不利最小步长取消退款；MarketIncrease short：E=A 成交 / 不利最小步长取消退款；MarketDecrease long：E=A 成交 / 不利最小步长原仓不变；MarketDecrease short：E=A 成交 / 不利最小步长原仓不变；8 个数据集独立快照、真实 Trader/Keeper 签名、Reader/OrderStore/EventEmitter 多源核对。尚未自动化：浏览器钱包内输入订单并点击签名；页面历史状态与链上事件逐行比对。",
+      "reconciliations": 186,
+      "transactions": 24,
+      "firstTx": {
+        "hash": "0xe85d7464a72e64652abe4f8c2e580cb37a130e7d1305818ad7f94167da5521f4",
+        "block": 45432829
+      },
+      "lastTx": {
+        "hash": "0x403e8061519c082429105d5ec06a8c476ceabf952e703b6423e08d38aea4187d",
+        "block": 45432838
+      },
+      "evidenceFiles": [
+        "runs/2026-08-21T090044-138Z/attachments/SCN-070-oracle-fork-r0-0-scn-070-evidence.json"
+      ]
+    }
+  ],
+  "files": [
+    {
+      "path": "run-batches/2026-08-03T162814-112Z/run.json",
+      "sha256": "eb87a1b2d5d211d33e58d9bf3644421b05124f19fb7dea5c1aeffe8e6a650e55"
+    },
+    {
+      "path": "run-batches/2026-08-03T162829-189Z/run.json",
+      "sha256": "bd29bedeae32d86dcb4b26b23cfd5389a66365a53d59977168557f3737e2890d"
+    },
+    {
+      "path": "run-batches/2026-08-03T163021-352Z/run.json",
+      "sha256": "7bb6b3871067035c906e324c99a49117fd8019e10096b3abb726ff5cd4468abc"
+    },
+    {
+      "path": "run-batches/2026-08-03T165242-489Z/run.json",
+      "sha256": "814775a305a5cd01d6ecc84244be5f1ffc9d10a5b8fb5f40db353b7dc4d648fe"
+    },
+    {
+      "path": "run-batches/2026-08-03T224931-630Z/run.json",
+      "sha256": "41e8e09e4138e626fea26cbd34bf382a42356c671aa15ca49c99346f20ef30e8"
+    },
+    {
+      "path": "run-batches/2026-08-04T015637-308Z-dashboard-workflow-check/run.json",
+      "sha256": "0109a4e8a4895acf21308229dbdc45a2c0581a37bebf82353b2596a56edce99c"
+    },
+    {
+      "path": "run-batches/2026-08-04T071541-864Z-FX100-20260804-1512/run.json",
+      "sha256": "a913a63992bc56b967ab740b7b62c284a7b3aa9aebcf12f46fdc4096eb220ef2"
+    },
+    {
+      "path": "run-batches/2026-08-04T071703-409Z-FX100-20260804-1516/run.json",
+      "sha256": "1a90c89fcb961dca27ceb2e6fe6fa7c8d7d4112cfcb809a4d2b6973c77f6436a"
+    },
+    {
+      "path": "run-batches/2026-08-04T083030-395Z-FX100-20260804-1630/run.json",
+      "sha256": "5ecf873e1ce4254bfcb09bd6f72d3a276d4dbb24689d0e3348de0239f128c312"
+    },
+    {
+      "path": "run-batches/2026-08-04T083525-030Z-FX100-20260804-1635/run.json",
+      "sha256": "4797b53489f9b23570b00dbe95da3310a4cff0a0e4a76dda244719d035fd8ea7"
+    },
+    {
+      "path": "run-batches/2026-08-04T083639-365Z/run.json",
+      "sha256": "b70202f0946a29a305227790d41434640ca1d1012b686d4e7997cc256ab76887"
+    },
+    {
+      "path": "run-batches/2026-08-04T083910-560Z/run.json",
+      "sha256": "fd38901dab9f1c1a1b1548632deec8e99d203c27b5f1e68d72b53478c9238673"
+    },
+    {
+      "path": "run-batches/2026-08-04T084235-280Z/run.json",
+      "sha256": "c83f20fe056d3c161bc31b536f83f8145630b574d1e7e004ab4a174983c85abc"
+    },
+    {
+      "path": "run-batches/2026-08-04T084350-474Z/run.json",
+      "sha256": "942905b3d86260d2f773bcd9e42c5c3cc9a9d8bd4765691b3223684a391611af"
+    },
+    {
+      "path": "run-batches/2026-08-04T090834-770Z-FX100-20260804-1708/run.json",
+      "sha256": "0fcc55bf8c208d9a375390ac807445096e93c43523107b4e24acc2b464353d3b"
+    },
+    {
+      "path": "run-batches/2026-08-04T100055-913Z-FX100-20260804-1800/run.json",
+      "sha256": "f955b0eb5975baa69b3666577cab0308f76387d4f8d8fbd3102cee0c775db42c"
+    },
+    {
+      "path": "run-batches/2026-08-04T101117-305Z-FX100-20260804-1811/run.json",
+      "sha256": "5f2707b8db341d452c5e3db45212c3ed4d222a4d49b1fcc4b8625a453d60f5d8"
+    },
+    {
+      "path": "run-batches/2026-08-04T101631-777Z/run.json",
+      "sha256": "6652ee68c64e078e6184d06d7f3f6e439150232d7a2d2d95ffcd7e47716f07f1"
+    },
+    {
+      "path": "run-batches/2026-08-04T101707-251Z/run.json",
+      "sha256": "b2056746896b261fc9e848bf4b7d0e82d76d875adfec05a7a35354a3f8d6c7c3"
+    },
+    {
+      "path": "run-batches/2026-08-04T102014-308Z/run.json",
+      "sha256": "9e20d20472042bd3dd5495c32d49595bee41facc2e589355945d67dd765c044b"
+    },
+    {
+      "path": "run-batches/2026-08-04T102822-470Z-FX100-20260804-1828/run.json",
+      "sha256": "50afdbdb64bb3a9cdcc7ed3c213e7e58470bfb2f8e98baed10f566c401519ff2"
+    },
+    {
+      "path": "run-batches/2026-08-04T111033-635Z-FX100-20260804-1910/run.json",
+      "sha256": "74a620663e4b20bde17d48f617fffbde3bca75bcfd667e42a5f16914f93cd9a9"
+    },
+    {
+      "path": "run-batches/2026-08-04T115041-188Z/run.json",
+      "sha256": "f14a0bdd894ca0e4a7f612b80964ef5fb4aac3f20e367491acb97cafcc2e9ded"
+    },
+    {
+      "path": "run-batches/2026-08-04T115522-727Z-FX100-20260804-1955/run.json",
+      "sha256": "28285a8c0fccdf64a1825772d1887565bef06aac9a9f18220700a5fb0101edf0"
+    },
+    {
+      "path": "run-batches/2026-08-04T125713-637Z-FX100-20260804-2057/run.json",
+      "sha256": "07c94aae53bc40bbf04c8131d71391ab8139f7bf15cdec00aad276b4c4fe5e8c"
+    },
+    {
+      "path": "run-batches/2026-08-04T130452-906Z-FX100-20260804-2104/run.json",
+      "sha256": "236cee53e8b36cd9e8b43971eb7f65c7423a7290981dca51cc1c893ae0a2285c"
+    },
+    {
+      "path": "run-batches/2026-08-04T150456-410Z-FX100-20260804-2304/run.json",
+      "sha256": "f68d55aa875127c09383841e3e1949d093b6f87ce034afa08de948c47c1ff3a4"
+    },
+    {
+      "path": "run-batches/2026-08-04T153014-635Z-FX100-20260804-2330/run.json",
+      "sha256": "3b326c2388a0394d33117fbbbd4d9dde2fe3dd2e9d43fdde62b36f17389df859"
+    },
+    {
+      "path": "run-batches/2026-08-04T153814-305Z-FX100-20260804-2338/run.json",
+      "sha256": "84571ad95b936a8d7f70fcd092f1049e104499a2f87fc093477bb1dd0b555c6a"
+    },
+    {
+      "path": "run-batches/2026-08-04T154801-018Z-FX100-20260804-2347/run.json",
+      "sha256": "aecffd187c0f887cd1befcb462f36aa20e279845a890a3539cf1920427824400"
+    },
+    {
+      "path": "run-batches/2026-08-04T155138-082Z-FX100-20260804-2351/run.json",
+      "sha256": "105d9843c92f8ccfaaad0d3a020d339e7677d777420bedb73a096e4323af8ea9"
+    },
+    {
+      "path": "run-batches/2026-08-04T155647-329Z-FX100-20260804-2356/run.json",
+      "sha256": "ba46a7bff02d75364ece5169758db1de6a886cc61d6daa0140f20fee5b193ef5"
+    },
+    {
+      "path": "run-batches/2026-08-06T095728-019Z-FX100-20260806-1757/run.json",
+      "sha256": "8dd5c262759c9a005179e2e291c080352ee1f4e26b485c06c93bde789cf5e804"
+    },
+    {
+      "path": "run-batches/2026-08-06T100446-384Z/run.json",
+      "sha256": "621cf22315a2230215d6ee7f94f7d3476213bc35a3bd39d9f24c6940f1b396ce"
+    },
+    {
+      "path": "run-batches/2026-08-06T120453-642Z-FX100-20260806-2004/run.json",
+      "sha256": "e8b8f5950747c1ed8e010c2e3755d0ac8cd6c504be1a409039d6ca6bea506aee"
+    },
+    {
+      "path": "run-batches/2026-08-06T121353-746Z/run.json",
+      "sha256": "8767314396fb7648dff1205178ea3ceb70686ed2257fe5953688e8d1317f4d84"
+    },
+    {
+      "path": "run-batches/2026-08-06T145558-927Z/run.json",
+      "sha256": "67529bbc3d20014158d7c39aa338b04be4b9a7d033e2340426116d5823cfef39"
+    },
+    {
+      "path": "run-batches/2026-08-06T145638-833Z/run.json",
+      "sha256": "8af3ce0c5e7c21eb33c60f4212018ac5444e6486136133256e95772f908b1821"
+    },
+    {
+      "path": "run-batches/2026-08-06T145842-070Z/run.json",
+      "sha256": "46c7cec2936ae35468252be27e16c2509dedb74f6eea5772173dad15135fc464"
+    },
+    {
+      "path": "run-batches/2026-08-06T145930-921Z/run.json",
+      "sha256": "2461cc9b1699484866120960e3779b12a5507ae1cd548707a3fefca0485af34b"
+    },
+    {
+      "path": "run-batches/2026-08-06T152240-651Z/run.json",
+      "sha256": "e68be0b243d84306560d53d42a7d5d7d26da72e18552eea37a9e8b68afb8af3c"
+    },
+    {
+      "path": "run-batches/2026-08-06T152333-727Z/run.json",
+      "sha256": "f29705f96a34e9fc7f03ae9673d7e4543125eda43edca87a3558817c2c3a42a7"
+    },
+    {
+      "path": "run-batches/2026-08-06T152538-445Z/run.json",
+      "sha256": "843b0e7e8e400a40aa2adcbf72028a502eabcd21d6ae321d489b5a3ba33e473d"
+    },
+    {
+      "path": "run-batches/2026-08-06T152616-016Z/run.json",
+      "sha256": "97e2eb0bccb019538bb8282c575da3abf7a6c2707bade4d6515fffd7c15b6071"
+    },
+    {
+      "path": "run-batches/2026-08-12T085159-819Z-FX100-20260812-1651/run.json",
+      "sha256": "d2582cb7341b869d3efbac24b8c3bf379594a39ac1b56b229f12c7ef10067d63"
+    },
+    {
+      "path": "run-batches/2026-08-12T151330-423Z-FX100-20260812-2313/run.json",
+      "sha256": "1fdb3ffd5d11d17d7567b8ca3c377ef4968e43b02428a7c5f1855af0e77e85e4"
+    },
+    {
+      "path": "run-batches/2026-08-12T154809-033Z-FX100-20260812-2348/run.json",
+      "sha256": "cf5dae9e311d71c569b7d5e098c3873213ae75bf41862274f97b7d3fce0a1738"
+    },
+    {
+      "path": "run-batches/2026-08-12T155024-978Z-FX100-20260812-2350/run.json",
+      "sha256": "e6fb78c95ccb647ce08c7bb25b24f26f74bf8a35330ca50a3426212fa7d031bc"
+    },
+    {
+      "path": "run-batches/2026-08-12T161705-531Z-FX100-20260813-0017/run.json",
+      "sha256": "28a59048fdae67497a796d9f872d49449e0b904b4e9bcbe4185db561a8a7046e"
+    },
+    {
+      "path": "run-batches/2026-08-12T162756-728Z-FX100-20260813-0027/run.json",
+      "sha256": "f1c800310bbd4f6103778c32133c4b2fc84c201243594116161d7731fa59e351"
+    },
+    {
+      "path": "run-batches/2026-08-13T041448-696Z-FX100-20260813-1214/run.json",
+      "sha256": "a9bed738bb868e7a620d10fed1cd66f1a97bf46e5514dd81c8c368f4b5c81a76"
+    },
+    {
+      "path": "run-batches/2026-08-13T145359-048Z-FX100-20260813-2253/run.json",
+      "sha256": "0fff0723b9629468a860a0024a697211306e5656fec9ed1500a3d9ad545640e9"
+    },
+    {
+      "path": "run-batches/2026-08-13T145542-048Z-FX100-20260813-2255/run.json",
+      "sha256": "51014a06e40cb41f4acffeddeb84c912cd0ccef4efda92626ebadeb64d8d6813"
+    },
+    {
+      "path": "run-batches/2026-08-13T145821-962Z-FX100-20260813-2258/run.json",
+      "sha256": "1d027959da0726a3e20602ce451262800d6b6a150154daf5b5baad0cb59801dc"
+    },
+    {
+      "path": "run-batches/2026-08-13T151033-634Z-FX100-20260813-2310/run.json",
+      "sha256": "bdad3d02973c15020e079a061020ef3e3706fad4ee873f6932fee677ccda01f8"
+    },
+    {
+      "path": "run-batches/2026-08-13T153106-702Z-FX100-20260813-2331/run.json",
+      "sha256": "81ae1091cf47ab7985f33ce9512e7ee5a96a525bdd0e4e1802f2d90ba4efd70d"
+    },
+    {
+      "path": "run-batches/2026-08-13T155026-787Z/run.json",
+      "sha256": "f649b8b6d098408f582cc678a61063fd089e42d97d252ae12805e850b3e24a50"
+    },
+    {
+      "path": "run-batches/2026-08-13T155728-390Z/run.json",
+      "sha256": "8e6c4f7f2942f2f02dc0f143fdef2b1ce71504303672d4e3206ac55af5430967"
+    },
+    {
+      "path": "run-batches/2026-08-13T160146-056Z/run.json",
+      "sha256": "66e97b5f824195037171c4d768902411e14a2778d58292a958c52016be5dd606"
+    },
+    {
+      "path": "run-batches/2026-08-13T160253-392Z/run.json",
+      "sha256": "5d39df63fca84a6e8a8432d2843c399069e29d3d7b71a5387b372c0a929b1e98"
+    },
+    {
+      "path": "run-batches/2026-08-14T040506-824Z/run.json",
+      "sha256": "1da46fce4156121da46776a9091e91a180c3d8b9ca02ad6b6b74197d899f8a88"
+    },
+    {
+      "path": "run-batches/2026-08-14T040717-552Z/run.json",
+      "sha256": "9a1b47683bf70da74d719d631c59918a134e9665b7dd4a89629ac42980edc770"
+    },
+    {
+      "path": "run-batches/2026-08-14T045211-851Z/run.json",
+      "sha256": "2124925fc37db8c44bdb40048e186decddde58ff2828ce9c6000d8b947865166"
+    },
+    {
+      "path": "run-batches/2026-08-14T045415-990Z/run.json",
+      "sha256": "34cc492eed9433b04530f86780cb59f2b473f485a9443cd6c80fda071e8ca998"
+    },
+    {
+      "path": "run-batches/2026-08-14T053255-871Z/run.json",
+      "sha256": "f096681e03320c97aaf0c8d8431254fd06c738502c408490bfb5c59351f72c73"
+    },
+    {
+      "path": "run-batches/2026-08-14T053403-093Z/run.json",
+      "sha256": "a0d0bda455c8b32dca7e798bad70973fe9a988e5e727b7071df96692c0cc6b8c"
+    },
+    {
+      "path": "run-batches/2026-08-14T053454-075Z/run.json",
+      "sha256": "759646e0fce4ae8ed76f54ca86f775bb43781c883b03da5f2377098e8aaf9749"
+    },
+    {
+      "path": "run-batches/2026-08-14T053544-208Z/run.json",
+      "sha256": "22f7e2b87f0fd7fe6641d437901101afe8803b132a4921933d394480987053aa"
+    },
+    {
+      "path": "run-batches/2026-08-14T053632-208Z/run.json",
+      "sha256": "19803439d441087f0e53c3ef75ce92631b232fe0dcc81dc9972d8e8b532af827"
+    },
+    {
+      "path": "run-batches/2026-08-14T053720-013Z/run.json",
+      "sha256": "32ddc17a0a8acc334746e65511b63d3042b73cf0267f2e09eb02349ad248ed74"
+    },
+    {
+      "path": "run-batches/2026-08-14T053809-461Z/run.json",
+      "sha256": "d188ce7f750fdeb508a7da341cb6b48c4ea5ae3780e6611e7f7212311c1da3ca"
+    },
+    {
+      "path": "run-batches/2026-08-14T065208-162Z/run.json",
+      "sha256": "3de65ce46ea4f23f85f6ed94e892475dbe79b08f8f1b83714d5978ab08dddace"
+    },
+    {
+      "path": "run-batches/2026-08-14T065250-313Z/run.json",
+      "sha256": "9de00388f3ede3090c0b5406881d915054fb26054bb07472ccae3b8afd0b9bb3"
+    },
+    {
+      "path": "runs/2026-08-21T090044-138Z/results.json",
+      "sha256": "8611046f879e3dc10d5a56e33be966efd34321abde5f644a081cb382a23cf06d"
+    },
+    {
+      "path": "runs/2026-08-21T090044-138Z/summary.md",
+      "sha256": "b09c27d6620c3e03d054af596e1421c57aa5ece9ad3d7a0cfc4c8fe2e9ef8604"
+    },
+    {
+      "path": "runs/2026-08-21T090044-138Z/attachments/SCN-070-oracle-fork-r0-0-scn-070-evidence.json",
+      "sha256": "9874cf6438d1ae9c472a9ca85c4d6223da8adfda9d01a0e8ea6924d6739d44ab"
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "name": "tx-fork-v0.3.2-260902-2305",
+  "release": "release-v0.3.2@13880f2416918f4fed3fea86d7f1023084a3ce0d",
+  "chainId": 99911,
+  "forkBlockNumber": "46296406",
+  "contracts": {
+    "exchangeRouter": "0xC3b304939d1c419cC61133D64F1a2879bD0feC23",
+    "reader": "0x38C6f6B07081Ae1E062a12D0A9d90a70dcFFc76e",
+    "dataStore": "0x6212A7361276915108aDe471caBF03484c5C2380",
+    "roleStore": "0x6212A7361276915108aDe471caBF03484c5C2380",
+    "config": "0x2290f5DbFBa70402cb7E71325DE0dEC5fB84e015",
+    "oracle": "0xe15A6130b6336f96B698d6fAd4732A7aCC0Cc110",
+    "orderHandler": "0x5aF00C801C0Ec0C2214a19D270b7E666a7dCFEf8",
+    "liquidationHandler": "0x9F9bF801C980B3f7280809A2CFBd6eB84eEFC948",
+    "adlHandler": "0x6Ddd896834adEE794C24DDe8D80b26E7EAAd7051",
+    "eventEmitter": "0xA85dfd8A34A71BdEd807cFf356105B43bDE3A20E",
+    "positionVault": "0x98E3785c44ffD7D09DcDF8A9383d8350CbCF0194"
+  },
+  "roles": {
+    "controller": "0xf82CF35C5c0019861c2cDC65041C8Ac32970D403",
+    "configKeeper": "0xf82CF35C5c0019861c2cDC65041C8Ac32970D403",
+    "orderKeeper": "0x542fe841228416F6a3D65eb534a90Ebc5cc36354",
+    "liquidationKeeper": "0x542fe841228416F6a3D65eb534a90Ebc5cc36354",
+    "adlKeeper": "0x542fe841228416F6a3D65eb534a90Ebc5cc36354"
+  },
+  "markets": [
+    {
+      "name": "MockBTC",
+      "symbol": "MOCK-BTC-USD",
+      "marketIndex": "1",
+      "indexToken": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
+      "collateralToken": "0x09E1C105E1476F7F1592a1Ff129d797572c383c7",
+      "vault": "0x227621E4bB53b9bb70c05f5a2266626Baf7c4eE9",
+      "indexTokenDecimals": 18,
+      "collateralTokenDecimals": 6,
+      "synthetic": true
+    },
+    {
+      "name": "ETH",
+      "symbol": "ETH-USD",
+      "marketIndex": "2",
+      "indexToken": "0x4200000000000000000000000000000000000006",
+      "collateralToken": "0x09E1C105E1476F7F1592a1Ff129d797572c383c7",
+      "vault": "0x227621E4bB53b9bb70c05f5a2266626Baf7c4eE9",
+      "indexTokenDecimals": 18,
+      "collateralTokenDecimals": 6,
+      "synthetic": false
+    }
+  ],
+  "additionalContracts": {
+    "router": "0x469a1758e1Cf1C5776BAE26f82C28e54bDF1319a",
+    "orderVault": "0xF4D73E22AD8BBa07d963752762bC3814A06a1925",
+    "lpVault": "0x227621E4bB53b9bb70c05f5a2266626Baf7c4eE9",
+    "referralStorage": "0x63f617152bcF2aaa42a09039D0FD00494620DA20",
+    "externalHandler": "0xA0473C0F4f694ED55ea1bD2C6844de6432DB9AFD",
+    "mockUsdc": "0x09E1C105E1476F7F1592a1Ff129d797572c383c7",
+    "mockUsdcOracle": "0xE80611dbe0D3e6B3B36Af4348430FC058A202BdA",
+    "keeperReader": "0xa149A149a84878342b894fb1A1B8C24e017E908D",
+    "marketFactory": "0x6e40251fcFe6C72E58479168d8E6C98568bbd5e1",
+    "chainlinkPriceFeedProvider": "0x037518F9bfaB37CB6Ed1270f8721067A224db870",
+    "chainlinkDataStreamProvider": "0x63Bb86f2EDF8Fa13A2DCbD0bB75F7919279C394d",
+    "pythPriceFeedProvider": "0x179CcB793d7440a5F543Af901f9a9d7FAd10885c",
+    "subaccountRouter": "0x0a430d766fF421709321fF2f9594D21EA9F112fA",
+    "relayRouter": "0x734ddb9052166633fFa7d068447c0308592A65bd",
+    "subaccountRelayRouter": "0x7BB9e0f021ab1509d1Af65B5Ded76Ef037ca79b9",
+    "increaseOrderExecutor": "0x0F2ca080532a9db408f156e4c0Efb2571216B257",
+    "decreaseOrderExecutor": "0x093F79772C4Dff4E6c0698fcba9d969619522B42",
+    "feeHandler": "0x83Ce4d17C531f08957B4Eb941523367C54d8Bd39",
+    "protocolTreasury": "0x8710a6398638dDc8Ed20384035f4508557294598",
+    "insuranceTreasury": "0x5Fb819a1313c1beF9d3777ac4201a4eED22cbA6C",
+    "revenuePool": "0x8ccC3233100c43b678313e3163B5b642bB015008",
+    "autoCancelSyncer": "0x0012A438e47d601a23445A1f6C8d68D73cf1584b",
+    "configSyncer": "0x65DD14Df574d01ac54CD03D5F25De3F19fA8F2a8",
+    "mockBtcOracle": "0x03d3d2B5C4aE0a214197Aba3520C74768D204968",
+    "mockEthOracle": "0x8E4529c5C7bA8E1Ab87ACf9937477C31c89301F1",
+    "wnt": "0x4200000000000000000000000000000000000006"
+  },
+  "source": {
+    "deploymentDirectory": "../Github/fx100-contracts@release-v0.3.2/ignition/deployments/tx-fork-v032-260902r4",
+    "addressesFile": "../Github/fx100-contracts@release-v0.3.2/ignition/deployments/tx-fork-v032-260902r4/deployed_addresses.json",
+    "abiDirectory": "../Github/fx100-contracts@release-v0.3.2/artifacts",
+    "parametersFile": "../TestCase/config/v0.3.2/tx-fork/260902-2305/parameters.json",
+    "rolesFile": "../TestCase/config/v0.3.2/tx-fork/260902-2305/roles.json",
+    "tokensFile": "../TestCase/config/v0.3.2/tx-fork/260902-2305/tokens.json"
+  },
+  "abiFiles": {},
+  "initialization": {
+    "nativeEth": {
+      "trader": "10",
+      "keeper": "10",
+      "admin": "10"
+    },
+    "traderUsdc": "1000000",
+    "minimumLpUsdc": "500000",
+    "routerApproval": "max",
+    "keeperRoles": [
+      "ORDER_KEEPER",
+      "ADL_KEEPER",
+      "LIQUIDATION_KEEPER"
+    ]
+  }
+}

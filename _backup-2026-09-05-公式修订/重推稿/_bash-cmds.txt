@@ -1,0 +1,326 @@
+##### 2026-09-04T19:15:09.157Z wf_381fd010-804 agent-a7595fa8780aeaf76.jsonl is_error=False
+python3 -c "
+p='/private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u10.md'
+s=open(p,encoding='utf-8').read()
+print('curly',s.count('“'),s.count('”'))
+print('corner',s.count('「'),s.count('」'))
+print('straight',s.count(chr(34)))
+"
+grep -c '"' /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u10.md
+
+##### 2026-09-04T19:15:11.612Z wf_381fd010-804 agent-a20ce94c8455811c3.jsonl is_error=False
+cd "/Users/milakou/Documents/FX100/TestCase/E2E/ContractCodeSummary/v0.3.2" && python3 -c "
+s=open('FX100-核心字段计算公式.md').read()
+print('curly open',s.count('“'),'close',s.count('”'))
+print('ascii dq',s.count('\"'))
+print('corner',s.count('「'),s.count('」'))
+"
+echo "==== rewrite ===="
+python3 -c "
+s=open('/private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u03.md').read()
+print('curly open',s.count('“'),'close',s.count('”'))
+print('ascii dq',s.count('\"'))
+print('corner',s.count('「'),s.count('」'))
+"
+
+##### 2026-09-04T19:16:16.344Z wf_381fd010-804 agent-aa857c1134ffd668e.jsonl is_error=False
+cd /Users/milakou/Documents/FX100/TestCase/E2E/ContractCodeSummary/v0.3.2 && grep -c "^> 源码" "FX100-核心字段计算公式.md"; grep -n "^> " "FX100-核心字段计算公式.md" | head -20; echo "=== gap file ==="; cat "/private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u07-gap.md"
+
+##### 2026-09-04T19:18:50.043Z wf_381fd010-804 agent-acdda8a275fe566ac.jsonl is_error=False
+cat >> "/private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u04-gap.md" << 'EOF'
+
+---
+
+### 部分减仓预估闸门的源码注释指向 indexTokenPrice，实现用的是含点差 executionPrice
+
+- 需求规范：无专属规范。`DecreasePositionUtils.sol::decreasePosition` 阶梯④前的注释 `// estimate pnl based on indexTokenPrice` 表达的意图是"用裸 index 价估算 PnL"。
+- 合约实现：同处代码先调用 `PositionUtils.getExecutionPriceForDecrease(params, cache.prices.indexTokenPrice)` 取得含动态点差的 `executionPrice`，再以该 `executionPrice` 调 `getPositionPnlUsdWithExecutionPrice` 得到 `estimatedPositionPnlUsd`；index 价只是 executionPrice 的输入。
+- 差异：注释与实现不一致（注释停留在早期版本口径）。
+- 影响：按注释推导期望值会漏掉点差，`estimatedRealizedPnlUsd` / `estimatedRemainingPnlUsd` 偏离，进而把 §5.2 阶梯④（提取额置 0）与⑤（升级全平）的触发点算错——点差越大偏离越大。构造④⑤两级的边界用例时必须按 executionPrice 口径反推。
+- 建议定性：文档/注释缺陷（实现正确，注释过期）
+EOF
+echo done
+
+##### 2026-09-04T19:19:11.625Z wf_381fd010-804 agent-a20ce94c8455811c3.jsonl is_error=False
+python3 -c "
+s=open('/private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u03.md').read()
+print('ascii dq',s.count(chr(34)))
+print('curly',s.count('“'),s.count('”'))
+print('corner',s.count('「'),s.count('」'))
+print('starts',s.split(chr(10))[0])
+print('has next ##', [l for l in s.split(chr(10)) if l.startswith('## ')])
+"
+
+##### 2026-09-04T19:22:05.619Z wf_381fd010-804 agent-a2db854172c4d4daa.jsonl is_error=False
+cat >> "/private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u08-gap.md" << 'EOF'
+
+---
+
+### 13. 方案断言「`willPositionCollateralBeSufficient` 完全不受负点差改动影响」只对开仓路径成立
+
+- 需求规范：C 三.1.2 标题即「一个独立的、**不受影响的**第二层防线：`willPositionCollateralBeSufficient`」，正文断言「这个函数的设计是完全不算 fees 和 price impact……从头到尾不碰 `dynamicSpread`——**这一层完全不受本次改动影响**」；C 九.4 据此把「验证 `willPositionCollateralBeSufficient` 这一层（3.1.2）确实完全不受本次改动影响」写成测试点，且该测试点的场景明确含「开仓/加仓/**减仓**」。
+- 合约实现：函数体本身确实不碰点差，但它有**两个**调用点——`IncreasePositionUtils.increasePosition`（`cache.sizeDeltaUsd > 0`）和 `DecreasePositionUtils.decreasePosition`（`cache.sizeDeltaUsd < position.sizeInUsd`，即每一笔部分减仓与每一笔纯提取保证金单）。减仓侧传入的 `realizedPnlUsd = cache.estimatedRealizedPnlUsd`，由 `PositionUtils.getExecutionPriceForDecrease` 的成交价推出；用户发起的 `MarketDecrease` 既不是 `Order.OrderType.Liquidation`、也不带 `secondaryOrderType == Adl`，因此 `allowNegativeSpread = true`，负点差直接进入该闸门的入参。
+- 差异：方案把「函数体不碰点差」等同于「这层防线不受影响」，忽略了减仓路径的入参链路。
+- 影响：**部分减仓 / 提取保证金的自动降级触发点会随负点差移动**。减仓侧 `!willBeSufficient` 不 revert `InsufficientCollateralUsd`（该错误只存在于开仓路径），而是：`sizeDeltaUsd == 0` 时 revert `UnableToWithdrawCollateral`；否则静默把 `order.initialCollateralDeltaAmount` 置 0（emit `OrderCollateralDeltaAmountAutoUpdated`）并回填 USD，随后若 `estimatedRemainingCollateralUsd + estimatedRemainingPnlUsd < MIN_COLLATERAL_USD` 再把 `order.sizeDelta` 自动改成 `maxSizeDelta`，**订单被升级为整仓全平**。按 C 九.4 的字面表述去设计「减仓侧该层不受影响」的回归用例会得到假通过；提取保证金 Max 值、部分平仓的期望输出量也必须按含负点差的成交价重算。另注：该 `if` 的第二个并列条件 `(estimatedRemainingCollateralUsd + estimatedRemainingPnlUsd) < MIN_COLLATERAL_USD` 与 `willBeSufficient` 是 `||` 关系，方案与既有核对文档均未提。
+- 建议定性：需求断言与实现不符（方案自述结论过宽）
+EOF
+echo done
+
+##### 2026-09-04T19:24:05.666Z wf_381fd010-804 agent-afb49a6634e72d1fa.jsonl is_error=False
+echo "=== formulas.ts logExpMathExp ===" && grep -n "logExpMathExp\|composeDynamicSpread" TestCode/src/reconciliation/formulas.ts | head -20 && echo "=== 引号统计 (u03.md) ===" && python3 -c "
+p='/private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u03.md'
+s=open(p,encoding='utf-8').read()
+print('ASCII double quotes:', s.count(chr(34)))
+print('curly open:', s.count('“'), 'curly close:', s.count('”'))
+print('corner open:', s.count('「'), 'close:', s.count('」'))
+print('lines:', len(s.splitlines()))
+import re
+print('h2:', re.findall(r'^## .*',s,re.M))
+print('h3 count:', len(re.findall(r'^### ',s,re.M)))
+print('trailing newline?', repr(s[-30:]))
+"
+
+##### 2026-09-04T19:24:11.467Z wf_381fd010-804 agent-aea42153911e48bb2.jsonl is_error=False
+ls -la "/private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/" "/private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/" 2>/dev/null
+
+##### 2026-09-04T19:24:19.202Z wf_381fd010-804 agent-a83452bdb36254c24.jsonl is_error=False
+cat >> "/private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u11-gap.md" << 'EOF'
+
+---
+
+### 13. `sizeInTokens` 精度：本文档旧表述写死 1e18，实现按 index token 登记 decimals
+
+- 需求规范：A 未直接规定；本文档 v0.3.1/v0.3.2 §17.1 写「`sizeInTokens` | 标的 × 1e18 | 所有市场统一按 18 位仓位精度」，§17.2 写 `displaySizeToken = sizeInTokens / 1e18`，§21 速查表「Size Token 展示 `sizeInTokens / 1e18` | 所有标的统一 18 位」同口径。
+- 合约实现：`sizeInTokens` 是 index token 的 **raw 单位**，没有任何归一到 1e18 的换算——`PositionUtils.sol::getIncreaseOrderSize` / `::getDecreaseOrderSize` 用 `sizeDeltaUsd / indexTokenPrice` 得出，而 oracle 价格本身是「USD×1e30 / raw token」，因此精度完全由 index token 的注册 decimals 决定。
+- 当前基线核实：`TestCode/config/mock-resources.json` 三个 fork 的 index token（FXMOCK）均登记 **18 位**（同文件出现的 `decimals: 8` 是 Mock Oracle 的价格源精度，不是 token 精度；CLAUDE.md 亦记「WBTC 合成 index token 登记修正 8→18 位」）。故当前基线上 `/1e18` 的数值结果恰好正确。
+- 差异：文档把「当前基线的巧合」写成了「协议约定」。一旦接入非 18 位 index token（合成资产、8 位包装币），`/1e18` 的展示与断言会整体错 10^(18−d) 倍，而且不会报错。
+- 影响：本次已在 §17.1 / §17.2 改为「以 index token 登记 decimals 为准（当前基线 18 位）」；**§1.1 与 §21 速查表两处仍写「所有标的统一 18 位」，属其它单元章节，需一并同步**。
+- 建议定性：文档表述与实现不符（当前基线数值一致，不影响本轮执行，但属静默错值风险）
+EOF
+echo done
+
+##### 2026-09-04T19:24:40.497Z wf_381fd010-804 agent-a6b9fbf642284b23e.jsonl is_error=False
+grep -n "^### 10\.1\|^### 10\.2\|^### 12\.2\|^### 12\.5\|^## 10\|^## 12\|^### 16\.4" "TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md"; echo "=== quotes ==="; python3 -c "
+p='/private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u03.md'
+s=open(p).read()
+print('ascii dq', s.count('\"'), 'left', s.count('“'), 'right', s.count('”'), 'corner', s.count('「'), s.count('」'))
+"
+
+##### 2026-09-04T19:24:51.703Z wf_381fd010-804 agent-afb49a6634e72d1fa.jsonl is_error=False
+echo "=== 搜 上限沿用/封顶/maxDynamicSpread 清算 定案 ===" && grep -rn "清算.*MAX_DYNAMIC_SPREAD\|MAX_DYNAMIC_SPREAD.*清算\|上限沿用\|同样被它封顶\|8-03\|08-03" Docs/contract-releases/v0.3.2/*.md TestCase/E2E/ContractCodeSummary/v0.3.2/*.md 2>/dev/null | head -20; echo "--- gap 文件 ---"; ls /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/
+
+##### 2026-09-04T19:27:57.053Z wf_381fd010-804 agent-aa1df8064632ecf9a.jsonl is_error=False
+ls -la /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/ 2>/dev/null
+
+##### 2026-09-04T19:30:13.932Z wf_381fd010-804 agent-a3da27dc4950cce6b.jsonl is_error=False
+ls /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/ && echo "=== gap ===" && cat /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u02-gap.md 2>/dev/null
+
+##### 2026-09-04T19:34:13.117Z wf_381fd010-804 agent-aff43ca02098fd023.jsonl is_error=False
+ls -la "/private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/" 2>/dev/null; ls "/private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/" 2>/dev/null
+
+##### 2026-09-04T19:37:02.794Z wf_381fd010-804 agent-aa13daccfb7bc5ec1.jsonl is_error=False
+ls -la /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/ && grep -n "#13\|#11" /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u08-gap.md 2>/dev/null | head
+
+##### 2026-09-04T19:39:00.392Z wf_381fd010-804 agent-a45e921ed53986fa0.jsonl is_error=False
+cd /Users/milakou/Documents/FX100/TestCase/E2E/ContractCodeSummary/v0.3.2 && grep -n "台账\|差异台账" FX100-核心字段计算公式.md | head -20; echo "--- ls dir ---"; ls -la .; echo "--- scratchpad ---"; ls -la /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/ 2>/dev/null
+
+##### 2026-09-04T19:48:52.374Z wf_9844efda-3be agent-aaf3266871db188e9.jsonl is_error=False
+cat > /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/fix_u05.py <<'PY'
+# -*- coding: utf-8 -*-
+import io, re, sys
+
+p = "/private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u05.md"
+s = io.open(p, encoding="utf-8").read()
+
+def rep(old, new):
+    global s
+    assert s.count(old) == 1, (s.count(old), old[:60])
+    s = s.replace(old, new)
+
+# --- B-1: §8.3 选价侧 ---
+rep(
+"选价侧：分子分母都用 `collateralTokenPrice.min`（最小化抵押品折算数量 → 抬高扣费 token 数），与仓位费、UI Fee 一致。",
+"""选价侧：**本节唯一用到价格的是换算分母** `collateralTokenPrice.min`。`liquidationFeeUsd = applyFactor(sizeDeltaUsd, liquidationFeeFactor)` 里不出现任何价格（`sizeDeltaUsd` 已由上游 `getExecutionPriceForDecrease` 定好）；只有 `liquidationFeeAmount = Calc.roundUpDivision(liquidationFeeUsd, collateralTokenPrice.min)` 这一步取价。分母取**最小价** ⇒ 折算出的扣费 token 数被抬高（对用户不利），与仓位费 `positionFeeAmount`、UI Fee `uiFeeAmount` 的换算分母同为 `collateralTokenPrice.min`。
+
+注意三者**取整方向不同**：仓位费与 UI Fee 用普通整除（向下），只有清算费用 `roundUpDivision`（向上）——复算时不要套同一个取整。"""
+)
+
+# --- N-1: §9.1 maxAffiliateRewardFactor 钳位 ---
+rep(
+"`PositionPricingUtils.sol::getPositionFeesAfterReferral` 里的 `maxAffiliateRewardFactor = 1e30 − max(proDiscountFactor, referralTraderDiscountFactor)` 封顶的是",
+"`PositionPricingUtils.sol::getPositionFeesAfterReferral` 里的 `maxAffiliateRewardFactor = totalDiscountFactor < 1e30 ? 1e30 − totalDiscountFactor : 0`（`totalDiscountFactor = max(proDiscountFactor, referralTraderDiscountFactor)`，即 §7.3 写的 `max(1e30 − totalDiscountFactor, 0)`，源码带下界钳位而非裸减）封顶的是"
+)
+
+# --- N-2: §9.5 后果第 2 条限定费种 ---
+rep(
+"- 不向 LP Vault 转 `feeAmountForPool`、不增记任何 `claimableFeeAmount` / `claimableUiFeeAmount`；",
+"- 不向 LP Vault 转 `feeAmountForPool`，也不增记 `POSITION_FEE_TYPE` / `LIQUIDATION_FEE_TYPE` 的 `claimableFeeAmount` 与 `UI_POSITION_FEE_TYPE` 的 `claimableUiFeeAmount`（这三笔只在 ③ 的 `remainingCostUsd == 0` 分支里发生）。**`FUNDING_FEE_TYPE` 不在此列**：`settleFundingFees` 在 ① 的早退判断之前就已调用，净负时照常增记 `FUNDING_FEE_TYPE`（见下条）；"
+)
+
+# --- N-3: §6.3 指向 §12.4 ---
+rep(
+"因此 `poolTokenUsd` 是 vault 级、`poolPnl` 是\"市场 × 方向\"级——两者维度不同。",
+"因此 `poolTokenUsd` 是 vault 级、`poolPnl` 是\"市场 × 方向\"级——两者维度不同。\n\n但合约层并非处处中立：`MarketUtils.sol::getGlobalNetObligationRatio` 的循环里硬编码了注释\"All markets share the same vault\"，只取第 0 个市场的 `poolUsd` 当全局池子价值——那是 ADL 侧（本文档 §12.4）的既定假设，**`_getPositionPnlUsd` 本身不带这个假设**（它只读本市场的 `market.vault`）。两边口径不一致时按各自源码走，不要互相套用。"
+)
+
+# --- 引号统一：ASCII " -> 中文弯引号（跳过 ``` 代码块与行内 `code`）---
+out = []
+fence = False
+for line in s.split("\n"):
+    if line.lstrip().startswith("```"):
+        fence = not fence
+        out.append(line)
+        continue
+    if fence or '"' not in line:
+        out.append(line)
+        continue
+    parts = line.split("`")
+    openq = True
+    for i in range(0, len(parts), 2):
+        seg = []
+        for ch in parts[i]:
+            if ch == '"':
+                seg.append("“" if openq else "”")
+                openq = not openq
+            else:
+                seg.append(ch)
+        parts[i] = "".join(seg)
+    out.append("`".join(parts))
+s = "\n".join(out)
+
+io.open(p, "w", encoding="utf-8").write(s)
+print("ok")
+PY
+python3 /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/fix_u05.py
+
+##### 2026-09-04T19:50:29.355Z wf_9844efda-3be agent-aaf3266871db188e9.jsonl is_error=False
+cat > /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/fix2_u05.py <<'PY'
+# -*- coding: utf-8 -*-
+import io
+p = "/private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u05.md"
+s = io.open(p, encoding="utf-8").read()
+def rep(old, new):
+    global s
+    assert s.count(old) == 1, (s.count(old), old[:70])
+    s = s.replace(old, new)
+
+# 9.3 措辞：调用点无分支，内部 delta==0 自 no-op；并点明 settleFundingFees 传参与减仓路径的差别
+rep(
+"开仓路径**没有**“付不清就清零”分支：付不起直接 revert。资金动作固定四步且无条件执行，顺序为：",
+"开仓路径**没有**“付不清就清零”分支：付不起直接 revert。资金动作固定四步、调用点上没有任何条件分支（`incrementClaimable*` 内部 `delta == 0` 时自身早退 no-op），顺序为："
+)
+rep(
+"`MarketUtils::settleFundingFees` 只按**该仓 negative 与 positive 的净差**动账：净负 → `incrementClaimableFeeAmount(差额, FUNDING_FEE_TYPE)`（资金留在 PositionVault，只记账）；净正 → LP Vault `transferOut` 差额给 PositionVault；相等 → 不动。",
+"""`MarketUtils::settleFundingFees` 只按**该仓 negative 与 positive 的净差**动账：净负 → `incrementClaimableFeeAmount(差额, FUNDING_FEE_TYPE)`（资金留在 PositionVault，只记账）；净正 → LP Vault `transferOut` 差额给 PositionVault；相等 → 不动。
+
+**两条路径传给它的第一个实参不同**：开仓/加仓传的是**应付额** `fees.funding.negativeFundingFeeAmount`（付不起早已 revert，应付即实付）；减仓/平仓/清算传的是 `payForCost` 返回的**实付额** `amountPaidInCollateralToken`（§9.4 ①），抵押品不够时它小于应付额，差额只体现在 `InsufficientFundingFeePayment` 事件里，链上不再补记。复算 `claimableFeeAmount(FUNDING_FEE_TYPE)` 增量时必须用实付额，不能用事件里的 `fundingFeeAmount`。"""
+)
+
+# 6.5 非 18 位 index token 的提醒
+rep(
+"前提：index token 18 位（价格标度 = USD × 1e12），抵押品 USDC 6 位（价格标度 = USD × 1e24）。`maxPnlFactor` 取 0.6e30 **仅为本例假设值**，不是任何环境的实读值。",
+"前提：index token 18 位（价格标度 = USD × 1e12），抵押品 USDC 6 位（价格标度 = USD × 1e24）。`maxPnlFactor` 取 0.6e30 **仅为本例假设值**，不是任何环境的实读值。\n\n**index token 不保证 18 位**（本环境已有 8 位/18 位混用的登记）。换成 `d` 位 index token 时价格标度变成 `USD × 1e(30−d)`，`sizeInTokens` / `openInterestInTokens` 也按 `d` 位计，本例的 `1e19` / `3e20` / `3.3e15` 都要重算——不要把 `/1e18` 写进核对脚本。"
+)
+io.open(p, "w", encoding="utf-8").write(s)
+print("ok")
+PY
+python3 /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/fix2_u05.py && cd /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite && head -1 u05.md && grep -n '^## ' u05.md && tail -1 u05.md && grep -c '' u05.md
+
+##### 2026-09-04T19:50:58.379Z wf_9844efda-3be agent-aaf3266871db188e9.jsonl is_error=False
+cat > /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/fix3_u05.py <<'PY'
+# -*- coding: utf-8 -*-
+import io
+p = "/private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u05.md"
+s = io.open(p, encoding="utf-8").read()
+def rep(old, new):
+    global s
+    assert s.count(old) == 1, (s.count(old), old[:70])
+    s = s.replace(old, new)
+
+rep("**index token 不保证 18 位**（本环境已有 8 位/18 位混用的登记）。换成",
+    "**index token 的 decimals 不由合约保证为 18**（按 `market.indexToken` 逐市场实读）。换成")
+rep("复算 `claimableFeeAmount(FUNDING_FEE_TYPE)` 增量时必须用实付额，不能用事件里的 `fundingFeeAmount`。",
+    "复算 `claimableFeeAmount(FUNDING_FEE_TYPE)` 增量时必须用实付额，不能直接拿费用事件里的 `negativeFundingFeeAmount` 减 `positiveFundingFeeAmount`。")
+io.open(p,"w",encoding="utf-8").write(s)
+print("ok")
+PY
+python3 /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/fix3_u05.py && cd /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite && grep -n '"' u05.md | grep -v '`"' | grep -v 'step = "' | grep -v 'step ∈' ; echo "final lines: $(grep -c '' u05.md)"
+
+##### 2026-09-04T19:53:22.114Z wf_9844efda-3be agent-a4ca8f33668f558d5.jsonl is_error=False
+ls -la "/private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/" 2>/dev/null
+
+##### 2026-09-04T19:54:19.915Z wf_9844efda-3be agent-a5cd6d7d1107aac41.jsonl is_error=False
+cd /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite && python3 - <<'PY'
+import io
+p='u01.md'
+s=io.open(p,encoding='utf-8').read()
+a="`PositionPricingUtils.sol::getFundingFees`（L400-405）写入 `negativeFundingFeeAmount`"
+b="`PositionPricingUtils.sol::getFundingFees`（L399-405）写入 `negativeFundingFeeAmount`"
+assert a in s
+io.open(p,'w',encoding='utf-8').write(s.replace(a,b))
+print("ok")
+PY
+grep -n '"' /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u01.md; echo "quotes-check-done"; head -1 /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u01.md; tail -1 /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u01.md
+
+##### 2026-09-04T19:56:13.144Z wf_9844efda-3be agent-ab9225b793681bd66.jsonl is_error=False
+cd "/Users/milakou/Documents/FX100/TestCase/E2E/ContractCodeSummary/v0.3.2" && python3 -c "
+s=open('FX100-核心字段计算公式.md',encoding='utf-8').read()
+for ch,name in [('“','left-curly-dq'),('”','right-curly-dq'),('「','left-corner'),('」','right-corner'),('\"','ascii-dq'),(chr(39),'ascii-sq')]:
+    print(name, s.count(ch))
+"; echo "=== draft ==="; python3 -c "
+s=open('/private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u02.md',encoding='utf-8').read()
+for ch,name in [('“','left-curly-dq'),('”','right-curly-dq'),('「','left-corner'),('」','right-corner'),('\"','ascii-dq'),(chr(39),'ascii-sq')]:
+    print(name, s.count(ch))
+"
+
+##### 2026-09-04T19:59:09.440Z wf_9844efda-3be agent-ab9225b793681bd66.jsonl is_error=False
+cd /Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2 && grep -rn "OrderNotUpdatable" src/ | head; echo "=== fmt ==="; python3 -c "
+p='/private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u02.md'
+s=open(p,encoding='utf-8').read()
+L=s.split(chr(10))
+print('first line:',repr(L[0]))
+print('h2:',[l for l in L if l.startswith('## ')])
+print('h3:',[l for l in L if l.startswith('### ')])
+print('h4 count:',sum(1 for l in L if l.startswith('#### ')))
+print('fence count:',s.count('\`\`\`'))
+print('last non-empty:',repr([l for l in L if l.strip()][-1][:60]))
+"
+
+##### 2026-09-04T20:01:07.717Z wf_9844efda-3be agent-a11df2b7155529006.jsonl is_error=False
+ls /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/ 2>/dev/null | head -40; echo "---"; grep -rln "差异台账" --include='*.md' TestCase Docs 2>/dev/null | head
+
+##### 2026-09-04T20:04:34.836Z wf_9844efda-3be agent-ac0dc7b1120e56a19.jsonl is_error=False
+ls -la "/private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/" 2>/dev/null; echo "---"; ls -la "/private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/" 2>/dev/null
+
+##### 2026-09-04T20:12:45.935Z wf_36b3d57e-d2b agent-acf44cd2f3ecde6d8.jsonl is_error=False
+wc -l /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u05.md /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u05-review3.md 2>&1; ls -la /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/
+
+##### 2026-09-04T20:17:11.918Z wf_36b3d57e-d2b agent-a1fe83dcebb183c91.jsonl is_error=False
+ls -la /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/ && echo "=== grep G-0 in rewrite dir ===" && grep -rn "G-0" /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/ 2>/dev/null | head -20
+
+##### 2026-09-04T20:19:38.941Z wf_36b3d57e-d2b agent-af516a32f308295eb.jsonl is_error=False
+F=/private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u02.md
+echo "--- heading counts ---"; grep -c '^## ' $F; grep -c '^### ' $F; grep -c '^#### ' $F
+echo "--- fences ---"; grep -c '^```' $F
+echo "--- first/last lines ---"; head -1 $F; tail -1 $F
+echo "--- quotes ---"; python3 - <<'EOF'
+p="/private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u02.md"
+s=open(p,encoding='utf-8').read()
+print('ascii dquote', s.count('"'), 'ascii squote', s.count("'"))
+print('curly', s.count('“'), s.count('”'))
+print('cjk brackets', s.count('「'), s.count('」'))
+import re
+# fence pairing check
+lines=s.split('\n')
+depth=0; ok=True
+for i,l in enumerate(lines,1):
+    if l.startswith('```'):
+        depth=1-depth
+print('fence balanced:', depth==0)
+print('has §4 heading:', '## 4' in s or '#### ' in s)
+EOF
+echo "--- grep 4 heading ---"; grep -n '^#' $F
+
+##### 2026-09-04T20:22:11.399Z wf_36b3d57e-d2b agent-a3980552d28ef8a14.jsonl is_error=False
+wc -l /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u11.md /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/u11-review3.md 2>&1; ls /private/tmp/claude-501/-Users-milakou-Documents-FX100/7d295c95-2c3e-4fee-a63f-707b9b23b26f/scratchpad/rewrite/
+

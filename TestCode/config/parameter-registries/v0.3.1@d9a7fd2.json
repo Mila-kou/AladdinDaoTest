@@ -1,0 +1,5084 @@
+{
+  "generatedFrom": {
+    "contracts": "../Github/fx100-contracts@release-v0.3.1",
+    "branch": "release/v0.3.1",
+    "commit": "d9a7fd2f23705c0bcfe44eaa2f40d9d5c170aaa0",
+    "files": [
+      "src/constants/FX100Keys.sol",
+      "src/constants/Role.sol",
+      "src/market/MarketStoreUtils.sol",
+      "src/config/Config.sol"
+    ]
+  },
+  "stats": {
+    "constants": 247,
+    "derivations": 155,
+    "globalScalarCandidates": 107,
+    "valueTypesResolved": 152,
+    "valueTypesBackfilledFromKeyFunctions": 80,
+    "valueTypesFromNamingHeuristic": 26,
+    "roles": 11,
+    "settableViaConfig": 138,
+    "settableViaLimitedConfig": 12
+  },
+  "constants": [
+    {
+      "name": "LIQUIDATION_GRACE_PERIOD_BASE",
+      "literal": "LIQUIDATION_GRACE_PERIOD_BASE",
+      "hashMode": "raw",
+      "hash": "0x9c99490aed4e1fcee2199fa23e105d0d413f924b423098f7e44621028a171c29",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "LIQUIDATION_GRACE_PERIOD_TIER_MULTIPLIER",
+      "literal": "LIQUIDATION_GRACE_PERIOD_TIER_MULTIPLIER",
+      "hashMode": "raw",
+      "hash": "0x8eeef43d987e2c0a3d6339604c0ab8bfa3c2af31603989bb4e1076f9d83345be",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "EXECUTION_FEE_SUBSIDIZE",
+      "literal": "EXECUTION_FEE_SUBSIDIZE",
+      "hashMode": "raw",
+      "hash": "0x3171fa590fb72d3f72ca1ec568184ba2c4ffab697bd1c0cebdc99eab50bfde50",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "EXECUTION_FEE_SUBSIDIZE_SIZE",
+      "literal": "EXECUTION_FEE_SUBSIDIZE_SIZE",
+      "hashMode": "raw",
+      "hash": "0x8e21a49554caf5318a5f6de65b0dae92a2e22495335e586c2b43a7e2e8323598",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "POSITION_IMPACT_FACTOR",
+      "literal": "POSITION_IMPACT_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0xdbe66c23ce3688bc34131316a8b4dd967631de35afb1dbb972bc1b7c71c4a18b",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "POSITION_IMPACT_EXPONENT_FACTOR",
+      "literal": "POSITION_IMPACT_EXPONENT_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0xdd130ae153fcacdeb3063e386277de2d305638932d8de421f5c79f3919eea233",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MAX_POSITION_IMPACT_FACTOR",
+      "literal": "MAX_POSITION_IMPACT_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x13be955c1220ee542749f9621d477d34649523d4273ecf1b722d67b372cca75f",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS",
+      "literal": "MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS",
+      "hashMode": "abiEncode",
+      "hash": "0x60c6f7a6820f7b274465f97450f5ba86cedd20f28f1cd3690510968ab87a0f8c",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "POSITION_FEE_FACTOR",
+      "literal": "POSITION_FEE_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x3999256650a6ebfea3dfbd4d56990f4d9048943a0e38ea6aabfc65122556c342",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "CONSTANT_PRICE_SPREAD",
+      "literal": "CONSTANT_PRICE_SPREAD",
+      "hashMode": "abiEncode",
+      "hash": "0xb891481ec38a71ff33c4b447f343b55e59795716812a3f30cffb3b9449d691b8",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "BID_ORDER_BOOK_DEPTH",
+      "literal": "BID_ORDER_BOOK_DEPTH",
+      "hashMode": "abiEncode",
+      "hash": "0xe797e0573a3d66485e56b355cdae059ddadeec7cb32019e542dc6102726ac068",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "ASK_ORDER_BOOK_DEPTH",
+      "literal": "ASK_ORDER_BOOK_DEPTH",
+      "hashMode": "abiEncode",
+      "hash": "0x8a16e1f9f04d94b6f2171f038bba2b206f3b23dd46c0038e01b303b62364474f",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "PRICE_IMPACT_PARAMETER",
+      "literal": "PRICE_IMPACT_PARAMETER",
+      "hashMode": "abiEncode",
+      "hash": "0x594ded69621c84e89e21492caaeff91fc199dabd34e88715c87cad879f876ab3",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "MAX_PRICE_IMPACT_SPREAD",
+      "literal": "MAX_PRICE_IMPACT_SPREAD",
+      "hashMode": "abiEncode",
+      "hash": "0x9f71064f4d31ede08ea2e305fbbe1b3f4c903416fe7defe9f2b7ebdbb257c70f",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "SKEW_IMPACT_FACTOR",
+      "literal": "SKEW_IMPACT_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0xe0147bcd641545faad2aa55373814f25807deecafb5f79b418763101637d41db",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MIN_SKEW_IMPACT",
+      "literal": "MIN_SKEW_IMPACT",
+      "hashMode": "abiEncode",
+      "hash": "0xdc2d0656570c091fb0abc227cd1c64906d3025dd2c0ded0216e4b9f3b112fd22",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MAX_SKEW_IMPACT",
+      "literal": "MAX_SKEW_IMPACT",
+      "hashMode": "abiEncode",
+      "hash": "0xba7ee5185658a2fa6fcff864bf6699b6f36e70169500a68dcb185b0090c741eb",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MARKET_LIST",
+      "literal": "MARKET_LIST",
+      "hashMode": "abiEncode",
+      "hash": "0xcdac201abd09598973b1365dbbaeb65ff0f370d30bb5c7440dc3341f570b2e38",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "CUMULATIVE_OPEN_COSTS",
+      "literal": "CUMULATIVE_OPEN_COSTS",
+      "hashMode": "abiEncode",
+      "hash": "0x7a715a0233745957547f8418579f252028a3ed553a398842673bd138587e05eb",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "OPEN_INTEREST_IN_TOKENS",
+      "literal": "OPEN_INTEREST_IN_TOKENS",
+      "hashMode": "abiEncode",
+      "hash": "0xc577a5cb08b8e2126f9b9796b8c85ef9d1b5047a5ff670fc18802878f0bfd2f8",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "COLLATERAL_SUM",
+      "literal": "COLLATERAL_SUM",
+      "hashMode": "abiEncode",
+      "hash": "0xe27f5ccaade489de12c2ef69d7b8ed7fd42971f096ed75f305c7f990952b8a87",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "MAX_COLLATERAL_SUM",
+      "literal": "MAX_COLLATERAL_SUM",
+      "hashMode": "abiEncode",
+      "hash": "0x60cc22b6a728415d844c73108a5ce8816dc5c111b1a12c2d4a78e528f59bf887",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "POOL_AMOUNT",
+      "literal": "POOL_AMOUNT",
+      "hashMode": "abiEncode",
+      "hash": "0x8d6d2afbc2bb1e17cb89b72f19b266a410f6ee8f890812b98b609d4bbf135960",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "MAX_POOL_AMOUNT",
+      "literal": "MAX_POOL_AMOUNT",
+      "hashMode": "abiEncode",
+      "hash": "0xe88b5773e3873a6265fa6e9e8dc016218fbded41751726542157f40b640a2083",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)",
+        "Config(LIMITED_CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MAX_POOL_USD_FOR_DEPOSIT",
+      "literal": "MAX_POOL_USD_FOR_DEPOSIT",
+      "hashMode": "abiEncode",
+      "hash": "0x2db5d586da17dbbdf405b386a76cc03dc4e25079c306e3af459ce5f7241f90b3",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)",
+        "Config(LIMITED_CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MAX_OPEN_INTEREST",
+      "literal": "MAX_OPEN_INTEREST",
+      "hashMode": "abiEncode",
+      "hash": "0x00468cb3aa9036ff00a31f90887485d87e1ee0299e9c1e1a838fe5110c4fbafb",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)",
+        "Config(LIMITED_CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MAX_OPEN_INTEREST_FACTOR",
+      "literal": "MAX_OPEN_INTEREST_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x36664f7e5bb11187e0891a9f726f65c38d3f4bc63534d49c4da57861b063dab7",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "POSITION_IMPACT_POOL_AMOUNT",
+      "literal": "POSITION_IMPACT_POOL_AMOUNT",
+      "hashMode": "abiEncode",
+      "hash": "0x8d05e344d016decb2483e1a2db6dfebdef3f67c47ac787f0ac505b4d45d3e16c",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "LENT_POSITION_IMPACT_POOL_AMOUNT",
+      "literal": "LENT_POSITION_IMPACT_POOL_AMOUNT",
+      "hashMode": "abiEncode",
+      "hash": "0x3dda68c1c3af43a8e512252c926c15763f903cc0ada8ecc4e69ef42c0471db92",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "MAX_LENDABLE_IMPACT_FACTOR",
+      "literal": "MAX_LENDABLE_IMPACT_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x8cb6ce8cebc6a70c23e54c4b948605fa061c4abf34c0a944b4bbf3d5c600c553",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MAX_LENDABLE_IMPACT_FACTOR_FOR_WITHDRAWALS",
+      "literal": "MAX_LENDABLE_IMPACT_FACTOR_FOR_WITHDRAWALS",
+      "hashMode": "abiEncode",
+      "hash": "0xc6c6dde5d3a836f7ef6788ebed0781dd77cd53faf9a0e00d7cc0867350df7c6e",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MAX_LENDABLE_IMPACT_USD",
+      "literal": "MAX_LENDABLE_IMPACT_USD",
+      "hashMode": "abiEncode",
+      "hash": "0xa23a9856708ad9f4c345187beed59b7f011e79542354bb7945a304577a52d9a7",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MIN_POSITION_IMPACT_POOL_AMOUNT",
+      "literal": "MIN_POSITION_IMPACT_POOL_AMOUNT",
+      "hashMode": "abiEncode",
+      "hash": "0x51b52cf96d34463f9bc4e5e8bec30840ef6136662d205186576876c6c858c14f",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "POSITION_IMPACT_POOL_DISTRIBUTION_RATE",
+      "literal": "POSITION_IMPACT_POOL_DISTRIBUTION_RATE",
+      "hashMode": "abiEncode",
+      "hash": "0xf89ffe65e30e9f6c854fed9b2dc0954e8d3edcece3aaaba4690a29017308232d",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "POSITION_IMPACT_POOL_DISTRIBUTED_AT",
+      "literal": "POSITION_IMPACT_POOL_DISTRIBUTED_AT",
+      "hashMode": "abiEncode",
+      "hash": "0xd00ccd9302e904fc3b933c391098b79b121cf0d26e17f16e92abcd7fbc75cc5b",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "SWAP_IMPACT_POOL_AMOUNT",
+      "literal": "SWAP_IMPACT_POOL_AMOUNT",
+      "hashMode": "abiEncode",
+      "hash": "0x4fb1f90d8edf65669df0be41543c031da77cdaa09b807a81bebe3e2aaf3b17cb",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "PRICE_FEED",
+      "literal": "PRICE_FEED",
+      "hashMode": "abiEncode",
+      "hash": "0x81aa94c2a32d037d5c7159805991f42e28203d981808ca299c160ae93ad8e555",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "PRICE_FEED_MULTIPLIER",
+      "literal": "PRICE_FEED_MULTIPLIER",
+      "hashMode": "abiEncode",
+      "hash": "0x83ba84737b6b708ae0e41e2bc28956c56998b33ca3c6c0a781e4382342fa3071",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "PYTH_PRICE_FEED",
+      "literal": "PYTH_PRICE_FEED",
+      "hashMode": "abiEncode",
+      "hash": "0x31d968880ff1120ca745becc1a9745dab4b311430c8b023788f15c2fd6f4f897",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "PYTH_PRICE_FEED_MULTIPLIER",
+      "literal": "PYTH_PRICE_FEED_MULTIPLIER",
+      "hashMode": "abiEncode",
+      "hash": "0xb3c5975fd47f5633844b2fde42ae8103b00a674e51c26fdffb453c720235984e",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "PRICE_FEED_HEARTBEAT_DURATION",
+      "literal": "PRICE_FEED_HEARTBEAT_DURATION",
+      "hashMode": "abiEncode",
+      "hash": "0x69e355be3e99b33ce1a145b798739352367a6af7143f540e50ef6cbc2ef211cb",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "DATA_STREAM_ID",
+      "literal": "DATA_STREAM_ID",
+      "hashMode": "abiEncode",
+      "hash": "0xb0e5ff337a5342f322adf882ea142231d63ac56163479c6584faa447c66fef9d",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "EDGE_DATA_STREAM_ID",
+      "literal": "EDGE_DATA_STREAM_ID",
+      "hashMode": "abiEncode",
+      "hash": "0x64c4651b0c9ab3d7460b7042f1fce6898bedb987448d1db8e49017427569e055",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "EDGE_DATA_STREAM_TOKEN_DECIMALS",
+      "literal": "EDGE_DATA_STREAM_TOKEN_DECIMALS",
+      "hashMode": "abiEncode",
+      "hash": "0x2985c40996bd3ac324064d9523c4db1190509411ea19298f6f6e1bad303af80e",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "DATA_STREAM_MULTIPLIER",
+      "literal": "DATA_STREAM_MULTIPLIER",
+      "hashMode": "abiEncode",
+      "hash": "0x7bad48bb191a799189b580e2b36b191467986ea06959f4392f0849479f927fe9",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "DATA_STREAM_SPREAD_REDUCTION_FACTOR",
+      "literal": "DATA_STREAM_SPREAD_REDUCTION_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0xb0bf3d1291eac42e5b8c37dffc1b0a30c893040789a64d7b1cb5091daa261503",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "STABLE_PRICE",
+      "literal": "STABLE_PRICE",
+      "hashMode": "abiEncode",
+      "hash": "0x6f64eca4396d54f1ceda702ad11639031126fc26b9d71c09d05771abe22cc450",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "RESERVE_FACTOR",
+      "literal": "RESERVE_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0xeb6dbcc031d84cf5bcdec21aafd7b4ea59618b0863960405767329a7ad41889a",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MAX_PNL_FACTOR",
+      "literal": "MAX_PNL_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0xd71a84af4a71a03c3fefcc9b7409cf8ddf5087c8ae89bfa83fc0daa003cd5bdd",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MAX_PNL_FACTOR_FOR_TRADERS",
+      "literal": "MAX_PNL_FACTOR_FOR_TRADERS",
+      "hashMode": "abiEncode",
+      "hash": "0xab15365d3aa743e766355e2557c230d8f943e195dc84d9b2b05928a07b635ee1",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "MAX_PNL_FACTOR_FOR_ADL",
+      "literal": "MAX_PNL_FACTOR_FOR_ADL",
+      "hashMode": "abiEncode",
+      "hash": "0x95024a223e128da6224cc271671896642c5acb9ebf2f0432e71fcd87205177cf",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MIN_PNL_FACTOR_AFTER_ADL",
+      "literal": "MIN_PNL_FACTOR_AFTER_ADL",
+      "hashMode": "abiEncode",
+      "hash": "0x87d8ac296048efc64f5a826815f8d178cd3e6c3d6f367340cc963df0aca137c6",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MAX_PNL_FACTOR_FOR_WITHDRAWALS",
+      "literal": "MAX_PNL_FACTOR_FOR_WITHDRAWALS",
+      "hashMode": "abiEncode",
+      "hash": "0xdd8747ceca84c84319e46661e0ee4095cc511df8c2208b6ff4e9d2b2e6930bb6",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "LATEST_ADL_AT",
+      "literal": "LATEST_ADL_AT",
+      "hashMode": "abiEncode",
+      "hash": "0x9f5222d0036fe7d45792c87b696485c1d9aa86340684b0a87396ed26bb19f95a",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "IS_ADL_ENABLED",
+      "literal": "IS_ADL_ENABLED",
+      "hashMode": "abiEncode",
+      "hash": "0x42d606829004e41fa153cb60d91f53d9fd69270a28d3d5a7ebbc9475a66bb4b8",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "FUNDING_SKEW_EMA",
+      "literal": "FUNDING_SKEW_EMA",
+      "hashMode": "abiEncode",
+      "hash": "0x98a2bd04f401c6edc3345c21456bf32eceb7526ac2cc66ccc77544d132193b4e",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "FUNDING_FLOOR_FACTOR",
+      "literal": "FUNDING_FLOOR_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x0484f133884266369d160226a2f90b073219469bb0fd143d9d5784464af6127e",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "FUNDING_BASE_FACTOR",
+      "literal": "FUNDING_BASE_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x6be19a72079dc3f217d370f82b1b951f4cb3b0efa4edf91790fbcc496a359a4c",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MIN_FUNDING_FACTOR_PER_SECOND",
+      "literal": "MIN_FUNDING_FACTOR_PER_SECOND",
+      "hashMode": "abiEncode",
+      "hash": "0x368afb51b32c3d33dfca82b9cf2acb7189260668d74581e720aba5782e57cd14",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)",
+        "Config(LIMITED_CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MAX_FUNDING_FACTOR_PER_SECOND",
+      "literal": "MAX_FUNDING_FACTOR_PER_SECOND",
+      "hashMode": "abiEncode",
+      "hash": "0xbeb1b2c6c23ef59c950f3194c435435cc060a612328d7b143074e6309e18e282",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)",
+        "Config(LIMITED_CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "THRESHOLD_FOR_STABLE_FUNDING",
+      "literal": "THRESHOLD_FOR_STABLE_FUNDING",
+      "hashMode": "abiEncode",
+      "hash": "0x183bdff2eb59d396a4199bf4641673c64ce0e2a6229c72f8a07dccbe95d57d11",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "THRESHOLD_FOR_DECREASE_FUNDING",
+      "literal": "THRESHOLD_FOR_DECREASE_FUNDING",
+      "hashMode": "abiEncode",
+      "hash": "0x6eca37816aa74c2687a4153398ea1ad6d8174b8118dbb94527279eb35673ef30",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "NEGATIVE_FUNDING_FEE_PER_SIZE",
+      "literal": "NEGATIVE_FUNDING_FEE_PER_SIZE",
+      "hashMode": "abiEncode",
+      "hash": "0x6e8b87ea06c9221f73ea34e701e91933207ccae80ddbb99db974c44537bf28fd",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "POSITIVE_FUNDING_FEE_PER_SIZE",
+      "literal": "POSITIVE_FUNDING_FEE_PER_SIZE",
+      "hashMode": "abiEncode",
+      "hash": "0xd59d824637df27725b710f83baffed2eb4933542b498c3bdebab94fa2d64bcb4",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "FUNDING_UPDATED_AT",
+      "literal": "FUNDING_UPDATED_AT",
+      "hashMode": "abiEncode",
+      "hash": "0xb5ddf508060c27de8692c76ee937ac1c56cb8c1fb7431f074d2a0eb00b863ee6",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "CLAIMABLE_FUNDING_AMOUNT",
+      "literal": "CLAIMABLE_FUNDING_AMOUNT",
+      "hashMode": "abiEncode",
+      "hash": "0x06fc3f5466c175728538f97bb3af89978c1db23c9c7f107930c4bb1b84305a1d",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "CLAIMABLE_COLLATERAL_AMOUNT",
+      "literal": "CLAIMABLE_COLLATERAL_AMOUNT",
+      "hashMode": "abiEncode",
+      "hash": "0x95b0f9aac7537ff0053f80e854f6a799bd4d922442234dd163aff199d65ffb48",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "CLAIMABLE_COLLATERAL_FACTOR",
+      "literal": "CLAIMABLE_COLLATERAL_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x5f01f265319ba87ec962beee49e7b2ebd677e83ecdc2d56dd786317d4b9d416c",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "CLAIMABLE_COLLATERAL_REDUCTION_FACTOR",
+      "literal": "CLAIMABLE_COLLATERAL_REDUCTION_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x4375ef29cdd28b855cdb828400a6e53c572afada4d58ffb2ca26bbcabc87017d",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "CLAIMABLE_COLLATERAL_TIME_DIVISOR",
+      "literal": "CLAIMABLE_COLLATERAL_TIME_DIVISOR",
+      "hashMode": "abiEncode",
+      "hash": "0xd6f0cefee45c8294f4bd4fab381296d615e6db63979e0313550832965a54410b",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "CLAIMABLE_COLLATERAL_DELAY",
+      "literal": "CLAIMABLE_COLLATERAL_DELAY",
+      "hashMode": "abiEncode",
+      "hash": "0x38d785da7798ef0d1e9bb7dcd9264288d1f77f77eff4d2080997df015159894e",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "CLAIMED_COLLATERAL_AMOUNT",
+      "literal": "CLAIMED_COLLATERAL_AMOUNT",
+      "hashMode": "abiEncode",
+      "hash": "0x5f9d28fde1f072513987142624941604342e72147a121a742437e1e099bf6745",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "OPTIMAL_USAGE_FACTOR",
+      "literal": "OPTIMAL_USAGE_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0xe6f533d0e6465526dc1f2ce029bfd519c4732e82e2774257b4d744f4601b0170",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "BASE_BORROWING_FACTOR",
+      "literal": "BASE_BORROWING_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x4b577b54505b207509b4801875038658b5a30a983be8e0ecaa07b480f3e519cf",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR",
+      "literal": "ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x0697a21ae9a968612a7097b30b07df7630eaf35000c3e78ca63f17fd64c2266d",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "BORROWING_FACTOR",
+      "literal": "BORROWING_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0xa38d85dceca084ba5b76ea9a3020c5536fb5cf7455ef13366c4f4ad20d24b3c2",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "BORROWING_EXPONENT_FACTOR",
+      "literal": "BORROWING_EXPONENT_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x44e07d838924516f5b9c562ffc22db10a563a3f687178102325f6c448f2fa35d",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "SKIP_BORROWING_FEE_FOR_SMALLER_SIDE",
+      "literal": "SKIP_BORROWING_FEE_FOR_SMALLER_SIDE",
+      "hashMode": "abiEncode",
+      "hash": "0x6b11e342f6958fd7970dd58c6f71142d5edf77c480f9322a8e9c96b6cc7f7888",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "CUMULATIVE_BORROWING_FACTOR",
+      "literal": "CUMULATIVE_BORROWING_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0xdfcf1ff0bd7c33ac55f48912a5ab14e3f2f75247a2a36b0f34c4bf025cf7aca9",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "CUMULATIVE_BORROWING_FACTOR_UPDATED_AT",
+      "literal": "CUMULATIVE_BORROWING_FACTOR_UPDATED_AT",
+      "hashMode": "abiEncode",
+      "hash": "0x965350856896dd6e2b221d575c162996752999158c92401a2428740d55b419bf",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "TOTAL_BORROWING",
+      "literal": "TOTAL_BORROWING",
+      "hashMode": "abiEncode",
+      "hash": "0xb5a3cadc939955394d5d3fe9fee404ec883da6f884f16effad30ffe7f352f819",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE",
+      "literal": "USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE",
+      "hashMode": "abiEncode",
+      "hash": "0x75a3957e02e4119004dc68ed9253860288ddffa3fa2751cb5855a7eb30175c8e",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MIN_AFFILIATE_REWARD_FACTOR",
+      "literal": "MIN_AFFILIATE_REWARD_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x09d70cb2fb73c06e5a8169307dc13065afda23608e0b571963118c08b7bcb09b",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "AFFILIATE_REWARD",
+      "literal": "AFFILIATE_REWARD",
+      "hashMode": "abiEncode",
+      "hash": "0xb22e5bee1a46af21985d9efc68d53f15baa450af6760c5a4a286bd26f37c3b3c",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "NONCE",
+      "literal": "NONCE",
+      "hashMode": "abiEncode",
+      "hash": "0x61d7b15962e47499cf052e59076ed26d83442f0a746870faeec94287c0f3d55f",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "FEE_RECEIVER",
+      "literal": "FEE_RECEIVER",
+      "hashMode": "abiEncode",
+      "hash": "0x27b063950f8f840ec54a6c89264fe84c340d2e36c5461ab6fdfb822573067108",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "HOLDING_ADDRESS",
+      "literal": "HOLDING_ADDRESS",
+      "hashMode": "abiEncode",
+      "hash": "0xedb1530fc28f30624c93628ad31b7268776e448c849abb51e7e59c52548beaab",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "RELAY_FEE_ADDRESS",
+      "literal": "RELAY_FEE_ADDRESS",
+      "hashMode": "abiEncode",
+      "hash": "0xcd295147effa98263715fb5d6f36ea27805332189fb3a023b2d7a14092dacb3d",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MIN_HANDLE_EXECUTION_ERROR_GAS",
+      "literal": "MIN_HANDLE_EXECUTION_ERROR_GAS",
+      "hashMode": "abiEncode",
+      "hash": "0xf65cd06b72dca04f73edc6036e3cc0149ed7b805993dfb79d52f804ef0db10e5",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MIN_HANDLE_EXECUTION_ERROR_GAS_TO_FORWARD",
+      "literal": "MIN_HANDLE_EXECUTION_ERROR_GAS_TO_FORWARD",
+      "hashMode": "abiEncode",
+      "hash": "0x8f89c5181fb3126c328569bd9d983aad3d1cf891a0dc2d10dd2ed2aedfa18c39",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MIN_ADDITIONAL_GAS_FOR_EXECUTION",
+      "literal": "MIN_ADDITIONAL_GAS_FOR_EXECUTION",
+      "hashMode": "abiEncode",
+      "hash": "0x1bd286d5d2339da978c5b93c7b579e5087e18bbb5509aa18095c879151945822",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "REENTRANCY_GUARD_STATUS",
+      "literal": "REENTRANCY_GUARD_STATUS",
+      "hashMode": "abiEncode",
+      "hash": "0x146a497980efd3d6d0343e6f486010ed887d93f221e3fb61c76b1266c210bfd1",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "DEPOSIT_FEE_TYPE",
+      "literal": "DEPOSIT_FEE_TYPE",
+      "hashMode": "abiEncode",
+      "hash": "0x39226eb4fed85317aa310fa53f734c7af59274c49325ab568f9c4592250e8cc5",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "WITHDRAWAL_FEE_TYPE",
+      "literal": "WITHDRAWAL_FEE_TYPE",
+      "hashMode": "abiEncode",
+      "hash": "0xda1ac8fcb4f900f8ab7c364d553e5b6b8bdc58f74160df840be80995056f3838",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "SWAP_FEE_TYPE",
+      "literal": "SWAP_FEE_TYPE",
+      "hashMode": "abiEncode",
+      "hash": "0x7ad0b6f464d338ea140ff9ef891b4a69cf89f107060a105c31bb985d9e532214",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "ATOMIC_SWAP_FEE_TYPE",
+      "literal": "ATOMIC_SWAP_FEE_TYPE",
+      "hashMode": "abiEncode",
+      "hash": "0x0715366437cc1f9a874eb5c6cd8111dcbea3677598c568f8b8d013d6c4380688",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "POSITION_FEE_TYPE",
+      "literal": "POSITION_FEE_TYPE",
+      "hashMode": "abiEncode",
+      "hash": "0x17c8136795f108c881c75741acd4fdd0da0c0490014b2a5478cb0af71af53d39",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "LIQUIDATION_FEE_TYPE",
+      "literal": "LIQUIDATION_FEE_TYPE",
+      "hashMode": "abiEncode",
+      "hash": "0x48098338b7951548405ae9595f9afca42cef81cb9e62ab7b9197062ac9589916",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "FUNDING_FEE_TYPE",
+      "literal": "FUNDING_FEE_TYPE",
+      "hashMode": "abiEncode",
+      "hash": "0xaa29290904ae6d2424f8b6d33af3b4e36cab293aae4ff5179e3b31f7b283c298",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "UI_DEPOSIT_FEE_TYPE",
+      "literal": "UI_DEPOSIT_FEE_TYPE",
+      "hashMode": "abiEncode",
+      "hash": "0xa308101ac9839a32932eeff55c751a8c7c7456ddd11032ff2e7f59e511e03e38",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "UI_WITHDRAWAL_FEE_TYPE",
+      "literal": "UI_WITHDRAWAL_FEE_TYPE",
+      "hashMode": "abiEncode",
+      "hash": "0x60d9d0628f9ac11173c8fe92ef1b87cb309066b9469b11ea38865c18f9a15779",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "UI_SWAP_FEE_TYPE",
+      "literal": "UI_SWAP_FEE_TYPE",
+      "hashMode": "abiEncode",
+      "hash": "0xa0c3abc09ebd75f64c70f35ac10928fbf25d016b68aec9d0dcafa251f65e1e39",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "UI_POSITION_FEE_TYPE",
+      "literal": "UI_POSITION_FEE_TYPE",
+      "hashMode": "abiEncode",
+      "hash": "0x21bbfc38c54ccf4ce9515f2040d66a101840804b22500ee8c0c1a4cf6777f206",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "UI_FEE_FACTOR",
+      "literal": "UI_FEE_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x1183017aa6dc064c15e97f13e90ee4514112c290e234df5a0fc8dbaafe0ccdf8",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "MAX_UI_FEE_FACTOR",
+      "literal": "MAX_UI_FEE_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0xab045c9d202ad7ee7dd9fa7ab3c082d9835872721eaf03397e59b961fe399329",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "CLAIMABLE_FEE_AMOUNT",
+      "literal": "CLAIMABLE_FEE_AMOUNT",
+      "hashMode": "abiEncode",
+      "hash": "0x3bd2b5ccbea0f8e9b4e2fbe367bea6f9c8785b391741b2d29e9d7398a241067e",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "CLAIMABLE_UI_FEE_AMOUNT",
+      "literal": "CLAIMABLE_UI_FEE_AMOUNT",
+      "hashMode": "abiEncode",
+      "hash": "0xe7a0ab2794e2f361a6b85aa6f73b733613c1ca25a0a0ecc02516871050defbbc",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "MAX_AUTO_CANCEL_ORDERS",
+      "literal": "MAX_AUTO_CANCEL_ORDERS",
+      "hashMode": "abiEncode",
+      "hash": "0xef2fbe4143b9a96a7ea63d505c1a2113ad28c3698479c1a47d0f3bb2317476ec",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS",
+      "literal": "MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS",
+      "hashMode": "abiEncode",
+      "hash": "0xcd2f7ab10b6b4b1c3d84f3930c725280715c9c6fe1d9a80fe152b989578a3b90",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "FEE_BATCH_LIST",
+      "literal": "FEE_BATCH_LIST",
+      "hashMode": "abiEncode",
+      "hash": "0xdf957bfb795e04b40bd7651b04bd206232954ea0229a9ca477c8a1180aac71c4",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "DEPOSIT_LIST",
+      "literal": "DEPOSIT_LIST",
+      "hashMode": "abiEncode",
+      "hash": "0x2166c7343d4ca73a6399ca8425e6490d3b231faf254a8d6773d80b449fab46a3",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "ACCOUNT_DEPOSIT_LIST",
+      "literal": "ACCOUNT_DEPOSIT_LIST",
+      "hashMode": "abiEncode",
+      "hash": "0x5c404a055e2d503b33a9fa5a337346721237b9c31ea651df0abc84ef82a0eaeb",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "WITHDRAWAL_LIST",
+      "literal": "WITHDRAWAL_LIST",
+      "hashMode": "abiEncode",
+      "hash": "0xa0e12a7533998e22054310527710129373aaf51361c57ff86c1d9cda91267d87",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "ACCOUNT_WITHDRAWAL_LIST",
+      "literal": "ACCOUNT_WITHDRAWAL_LIST",
+      "hashMode": "abiEncode",
+      "hash": "0x5b5e71ec5b2596db39cdab2c176be7b71fddeeed8af808914bac78e71af7c04f",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "SUBACCOUNT_LIST",
+      "literal": "SUBACCOUNT_LIST",
+      "hashMode": "abiEncode",
+      "hash": "0xe211c7349be3d015791fba0c45875e1c46f2efc266c7f2b44dce8856fb0b3920",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "AUTO_CANCEL_ORDER_LIST",
+      "literal": "AUTO_CANCEL_ORDER_LIST",
+      "hashMode": "abiEncode",
+      "hash": "0xc52850ea977ceeb31a6fec609fc6450d66dbe30e1b9c1f6f3ce549921200026f",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "IS_MARKET_DISABLED",
+      "literal": "IS_MARKET_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0x5c27e8a9fa01145fb01eb80b81db2eab7e57bc33d109d6a64315239a65ce4d36",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MAX_SWAP_PATH_LENGTH",
+      "literal": "MAX_SWAP_PATH_LENGTH",
+      "hashMode": "abiEncode",
+      "hash": "0x697374e09b9871325e5d5460167aebba9af368415fa1cb61cdc4c240f18834cf",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "SWAP_PATH_MARKET_FLAG",
+      "literal": "SWAP_PATH_MARKET_FLAG",
+      "hashMode": "abiEncode",
+      "hash": "0x2ed33e43d724277bf1f10d89be120217e15b562765ff490361cce3c80dbdd55d",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT",
+      "literal": "MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT",
+      "hashMode": "abiEncode",
+      "hash": "0x06f004b4c4aa31a1e9c9e7616a63eaa524b6ab79241c7de824ccd57daed7241e",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "JIT_FEATURE_DISABLED",
+      "literal": "JIT_FEATURE_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0x64948eb1ac738fbe50fdcd909aab194f09306ed94cb65a6a488174d59e56b03c",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "CREATE_DEPOSIT_FEATURE_DISABLED",
+      "literal": "CREATE_DEPOSIT_FEATURE_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0xc5cacb613df586e878c919ccc5ad563c4f845cc648c1578c456592840135cfdf",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "CANCEL_DEPOSIT_FEATURE_DISABLED",
+      "literal": "CANCEL_DEPOSIT_FEATURE_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0xa06d534b39db63273958e322a4586ce53c49655c54f5ec540388590401d5fb8c",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "EXECUTE_DEPOSIT_FEATURE_DISABLED",
+      "literal": "EXECUTE_DEPOSIT_FEATURE_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0x6edfeba9580660b02e67971e2da73a60ce860b5effa111c559ee69a417df58ed",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "CREATE_WITHDRAWAL_FEATURE_DISABLED",
+      "literal": "CREATE_WITHDRAWAL_FEATURE_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0xe22e21c60f32cfb79020e8dbf3211f7a678325f5d7195c979268c4db4a4a6fa1",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "CANCEL_WITHDRAWAL_FEATURE_DISABLED",
+      "literal": "CANCEL_WITHDRAWAL_FEATURE_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0x140e23cf2aaa07da5b9e920f74b7ab8d04fda453ff700aeed2cff1283345b7c7",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "EXECUTE_WITHDRAWAL_FEATURE_DISABLED",
+      "literal": "EXECUTE_WITHDRAWAL_FEATURE_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0xa5d5ec2aef29f70d602db4f2b395018c1a19c7f69e551e9943277b57770f0dd0",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED",
+      "literal": "EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0x227609b2dabc89b9be687155d77b9464d7b462401ec65e744f3a8a01d02b8ec0",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "CREATE_ORDER_FEATURE_DISABLED",
+      "literal": "CREATE_ORDER_FEATURE_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0xdf83d07880c6c9da5b08e099b2210859db7182f98d9293f12e8552c7674ccbe6",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "EXECUTE_ORDER_FEATURE_DISABLED",
+      "literal": "EXECUTE_ORDER_FEATURE_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0xfeecf7f710a5550b87d68f152c61d5fa51b623a46b6f640b617fdce98319659f",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "EXECUTE_ADL_FEATURE_DISABLED",
+      "literal": "EXECUTE_ADL_FEATURE_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0x7ec36cfdc8138f81d335ee44288c2014b983372ac8bb7fc7ed3021b0b842bdf6",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "UPDATE_ORDER_FEATURE_DISABLED",
+      "literal": "UPDATE_ORDER_FEATURE_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0x7117083c70c4572953617e4f37ac075352fdbd9dd555ff4bf95865548af0e55b",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "CANCEL_ORDER_FEATURE_DISABLED",
+      "literal": "CANCEL_ORDER_FEATURE_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0x86fdb9bb0b922f499ebaec089088902cffe9f5cfb587e51bc742bcca0b431985",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "CLAIM_FUNDING_FEES_FEATURE_DISABLED",
+      "literal": "CLAIM_FUNDING_FEES_FEATURE_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0x76ae681616b22a1dbedfed97711cfbaccebaa8fdbc95a784ac7b688a70d0e776",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "CLAIM_COLLATERAL_FEATURE_DISABLED",
+      "literal": "CLAIM_COLLATERAL_FEATURE_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0x35f224f4df850c423d77ba75ee566883065cc99f24c7138f65154de5fefb6dbb",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED",
+      "literal": "CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0x7609820b4c2dd800e9a96ab8efe0e93c1195d57252fec524d70c31339efdee8d",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "CLAIM_UI_FEES_FEATURE_DISABLED",
+      "literal": "CLAIM_UI_FEES_FEATURE_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0x00a9cfafc7ab2c938d08637c9ef1aea8139481b8c34d60b74cdd4b4c064c49ee",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "SUBACCOUNT_FEATURE_DISABLED",
+      "literal": "SUBACCOUNT_FEATURE_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0xa01c6da5d5e15c1af8f98062aeca120f965ccea873f1e9d80d26b3289b001b88",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "GASLESS_FEATURE_DISABLED",
+      "literal": "GASLESS_FEATURE_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0xeb9f7255b7f27e30167db1aa9edc905870ff134ae556c058d38f8e54431147aa",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "GENERAL_CLAIM_FEATURE_DISABLED",
+      "literal": "GENERAL_CLAIM_FEATURE_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0x1d2ba6447efa610ce55888762a716d08b0a8b4c6ba415d403ae157d4320e0799",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MIN_ORACLE_SIGNERS",
+      "literal": "MIN_ORACLE_SIGNERS",
+      "hashMode": "abiEncode",
+      "hash": "0xca743b6c74c562e099be60774edc4f9efa2362a901058c58612675f8d852ba06",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "MIN_ORACLE_BLOCK_CONFIRMATIONS",
+      "literal": "MIN_ORACLE_BLOCK_CONFIRMATIONS",
+      "hashMode": "abiEncode",
+      "hash": "0x445ca54e2bbcedf38fbd27852669601f815ad148d665a37db3d2aa43c9084db1",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MAX_ORACLE_PRICE_AGE",
+      "literal": "MAX_ORACLE_PRICE_AGE",
+      "hashMode": "abiEncode",
+      "hash": "0x2498be75403c532695a52aa481268f4d166a68f0d7468b5a879e2beb6ec70062",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MAX_RECORDED_PRICE_AGE",
+      "literal": "MAX_RECORDED_PRICE_AGE",
+      "hashMode": "abiEncode",
+      "hash": "0xc83c444bcd119490846c686c27f08afe01d79d379620a40281e02eb5c02f4eb1",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MAX_ORACLE_TIMESTAMP_RANGE",
+      "literal": "MAX_ORACLE_TIMESTAMP_RANGE",
+      "hashMode": "abiEncode",
+      "hash": "0xfd601530e028bbf3f82445e9cbecc952c0949c975b6e8b5b7faa42fad1df678a",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR",
+      "literal": "MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x6ae871e17942129cc618ad90203e946883c7e6680e1ce7610c677123c024a4f1",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "IS_ORACLE_PROVIDER_ENABLED",
+      "literal": "IS_ORACLE_PROVIDER_ENABLED",
+      "hashMode": "abiEncode",
+      "hash": "0x6015d056536cff00cb3f95802407b3a56d3fa7d4736d98351ee5e1bcb73d9030",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "ORACLE_TIMESTAMP_ADJUSTMENT",
+      "literal": "ORACLE_TIMESTAMP_ADJUSTMENT",
+      "hashMode": "abiEncode",
+      "hash": "0x23bf0486e8114b3a0cc772ea49140438e3b60769a07d3939c68c1da7d6e9ed20",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "ORACLE_PROVIDER_FOR_TOKEN",
+      "literal": "ORACLE_PROVIDER_FOR_TOKEN",
+      "hashMode": "abiEncode",
+      "hash": "0x657bbff942bd72a4c9f2ae3dde95e145191db37af62643255f43fd27fb007981",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "ORACLE_PROVIDER_UPDATED_AT",
+      "literal": "ORACLE_PROVIDER_UPDATED_AT",
+      "hashMode": "abiEncode",
+      "hash": "0x6c894da4a95dcd527acfeadd5a8eb1ebae683f49d37bc458f00bc49d4be9982b",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "ORACLE_PROVIDER_MIN_CHANGE_DELAY",
+      "literal": "ORACLE_PROVIDER_MIN_CHANGE_DELAY",
+      "hashMode": "abiEncode",
+      "hash": "0xd25bff94e6d7ea91d20825729fef538193a6c8eb391d1c84c81fde9dc17208bc",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "CHAINLINK_PAYMENT_TOKEN",
+      "literal": "CHAINLINK_PAYMENT_TOKEN",
+      "hashMode": "abiEncode",
+      "hash": "0x03f726650f8538e1919c3c9b108cb96f42556acb1f879309ce67536879722687",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "SEQUENCER_GRACE_DURATION",
+      "literal": "SEQUENCER_GRACE_DURATION",
+      "hashMode": "abiEncode",
+      "hash": "0x3e49c0cd228c0b769b9ef4b9ab5d55aed44ee1c781f748d0f209f9b472bb5cd5",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "POSITION_FEE_RECEIVER_FACTOR",
+      "literal": "POSITION_FEE_RECEIVER_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x2b88ca05099085c49a5b3a47bec5166e91b81ecf14c8e7defd75f6a0e89886df",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "LIQUIDATION_FEE_RECEIVER_FACTOR",
+      "literal": "LIQUIDATION_FEE_RECEIVER_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x218f21fe1eab2a2eb76441fd0510d8588f02b2e2d2b3d63ded1f7ca0c565258b",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "SWAP_FEE_RECEIVER_FACTOR",
+      "literal": "SWAP_FEE_RECEIVER_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x450288e023dbbe63a71a796f03a9669531263914bcda347e99028b1f1fc46c83",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "BORROWING_FEE_RECEIVER_FACTOR",
+      "literal": "BORROWING_FEE_RECEIVER_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x174a3ec23a145772d821721199b827025a0b7e3f95163596932ed2239f6d3e11",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1",
+      "literal": "ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1",
+      "hashMode": "abiEncode",
+      "hash": "0x39288f227e5db9a793e9f4afb15aa22b77dbb7e410ffc973c816a19a6ed921cd",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)",
+        "Config(LIMITED_CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "ESTIMATED_GAS_FEE_PER_ORACLE_PRICE",
+      "literal": "ESTIMATED_GAS_FEE_PER_ORACLE_PRICE",
+      "hashMode": "abiEncode",
+      "hash": "0xf95915378e4358fb5f51ae0fd75853a15a29a978eb14b73d5c5b7d69d3b9fccc",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)",
+        "Config(LIMITED_CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR",
+      "literal": "ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0xce135f2a886cf6d862269f215b1e64498fa09cb04f90b771b163399df2a82b81",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)",
+        "Config(LIMITED_CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1",
+      "literal": "EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1",
+      "hashMode": "abiEncode",
+      "hash": "0x3f6fa256a0f23dcedf39a71b69828f9f2798c96ed183ecac67a1f77a2a8053f4",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)",
+        "Config(LIMITED_CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "EXECUTION_GAS_FEE_PER_ORACLE_PRICE",
+      "literal": "EXECUTION_GAS_FEE_PER_ORACLE_PRICE",
+      "hashMode": "abiEncode",
+      "hash": "0x335c1af4f0f3344a478b67aff6e7d3dc526f6aafe3dbd1ba2198c772551210cb",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)",
+        "Config(LIMITED_CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "EXECUTION_GAS_FEE_MULTIPLIER_FACTOR",
+      "literal": "EXECUTION_GAS_FEE_MULTIPLIER_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x65b1cbab23a5e24597a3d4e2966e0205be2ea573a0eab06be214d7e63488148f",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)",
+        "Config(LIMITED_CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MAX_EXECUTION_FEE_MULTIPLIER_FACTOR",
+      "literal": "MAX_EXECUTION_FEE_MULTIPLIER_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0xa88c33e1f94a413dcabdfec9caed3610ecce198a0ab1ea4efcca7ca4199731ce",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT",
+      "literal": "MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT",
+      "hashMode": "abiEncode",
+      "hash": "0xb63bc7370967dcd0d91108a8ca9b680c0c464fc385aabe225d66dddec92a256f",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MAX_RELAY_SWAP_WNT_CAP",
+      "literal": "MAX_RELAY_SWAP_WNT_CAP",
+      "hashMode": "abiEncode",
+      "hash": "0x8400beecb6c4fc4127a8126e817c049e5138747a91a2e63edd8b9b0c32de20c3",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "RELAY_FEE_MULTIPLIER_FACTOR",
+      "literal": "RELAY_FEE_MULTIPLIER_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x8acb85545a5e09619f8bcae781cd0e24a785f6ccdb6b7e0428048ab2ca762555",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "RELAY_FEE_BASE_GAS_LIMIT",
+      "literal": "RELAY_FEE_BASE_GAS_LIMIT",
+      "hashMode": "abiEncode",
+      "hash": "0xd4dfe3d351f800442b0b50da17280a4272d7309014ae9a0eb7811c3823a56a26",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "CREATE_DEPOSIT_GAS_LIMIT",
+      "literal": "CREATE_DEPOSIT_GAS_LIMIT",
+      "hashMode": "abiEncode",
+      "hash": "0x2720ebeb701a49a5605425375f4977acb840137a105f7f78b74cac51ccc81cec",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "DEPOSIT_GAS_LIMIT",
+      "literal": "DEPOSIT_GAS_LIMIT",
+      "hashMode": "abiEncode",
+      "hash": "0x584e21a67b50948de3f8d83d0226c3568896d123cdbe7a46d824d0f48aabf184",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "CREATE_WITHDRAWAL_GAS_LIMIT",
+      "literal": "CREATE_WITHDRAWAL_GAS_LIMIT",
+      "hashMode": "abiEncode",
+      "hash": "0x06c83fd46ee00458249657285f6f9d9023b9d5206e056eaf71c1969e68b6d6c7",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "WITHDRAWAL_GAS_LIMIT",
+      "literal": "WITHDRAWAL_GAS_LIMIT",
+      "hashMode": "abiEncode",
+      "hash": "0x2e365620be682b0eaff6521339d5f4a7d6a1c118d9766dad390735f03b07b738",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "SINGLE_SWAP_GAS_LIMIT",
+      "literal": "SINGLE_SWAP_GAS_LIMIT",
+      "hashMode": "abiEncode",
+      "hash": "0x3be28fb346f7abc4a956a16d3739c8c4bfcca9385988c64bf86cdd16638c1f81",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "INCREASE_ORDER_GAS_LIMIT",
+      "literal": "INCREASE_ORDER_GAS_LIMIT",
+      "hashMode": "abiEncode",
+      "hash": "0x983e0a7f5307213e84497f2543331fe5e404db14ddf98f98dc956e0ee3ab6875",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "DECREASE_ORDER_GAS_LIMIT",
+      "literal": "DECREASE_ORDER_GAS_LIMIT",
+      "hashMode": "abiEncode",
+      "hash": "0xfce7a3444b72c2d30987163c1f2e6c00cffa03bf0b6ca2f077e8db006b4cae8b",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "SWAP_ORDER_GAS_LIMIT",
+      "literal": "SWAP_ORDER_GAS_LIMIT",
+      "hashMode": "abiEncode",
+      "hash": "0x1df34600e0072da6588ec3a179142a668c6e62238ad3354a7d2a3ae665b50f5c",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "SET_TRADER_REFERRAL_CODE_GAS_LIMIT",
+      "literal": "SET_TRADER_REFERRAL_CODE_GAS_LIMIT",
+      "hashMode": "abiEncode",
+      "hash": "0xf4c79b92861083d4db59428fce7ec170c718963a4e493929e1d90361b47ce9be",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "REGISTER_CODE_GAS_LIMIT",
+      "literal": "REGISTER_CODE_GAS_LIMIT",
+      "hashMode": "abiEncode",
+      "hash": "0x712662605dc7e7cf1707a41e5cf1be7b6445aa979c8b257514364ba46e7b199f",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "TOKEN_TRANSFER_GAS_LIMIT",
+      "literal": "TOKEN_TRANSFER_GAS_LIMIT",
+      "hashMode": "abiEncode",
+      "hash": "0x8d7a38cdd2817aa4759ade0cb60da9326076e4b716def5fa29542afd428bbe2f",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "NATIVE_TOKEN_TRANSFER_GAS_LIMIT",
+      "literal": "NATIVE_TOKEN_TRANSFER_GAS_LIMIT",
+      "hashMode": "abiEncode",
+      "hash": "0xba4ba3faa47eef5c7b4406bc363e4b87dc12ebd5f379111429dfde09787195c7",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "REQUEST_EXPIRATION_TIME",
+      "literal": "REQUEST_EXPIRATION_TIME",
+      "hashMode": "abiEncode",
+      "hash": "0xf664ba0f4e5389df44705cd100171228b74c4f050a9f00bd873e95d25c49a273",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MAX_CALLBACK_GAS_LIMIT",
+      "literal": "MAX_CALLBACK_GAS_LIMIT",
+      "hashMode": "abiEncode",
+      "hash": "0x96db769bd846fd256f553194bd23105f53fbbc15d04533f642d48a1ea161bfc4",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "REFUND_EXECUTION_FEE_GAS_LIMIT",
+      "literal": "REFUND_EXECUTION_FEE_GAS_LIMIT",
+      "hashMode": "abiEncode",
+      "hash": "0x3d67aec8986df82bd66d53133c4835e64b058998f4ed1a5b169e791c5899e39b",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "SAVED_CALLBACK_CONTRACT",
+      "literal": "SAVED_CALLBACK_CONTRACT",
+      "hashMode": "abiEncode",
+      "hash": "0xd184c4ba8f4297e73d22c50e69ab9c3086eb81c01cb2d7b6ca71bbc3b1d1b511",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "MIN_COLLATERAL_FACTOR",
+      "literal": "MIN_COLLATERAL_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x9fc265ee9783e670a7a731141f58b59bca5a260ba3eb3f893412fb613dc559f7",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER",
+      "literal": "MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER",
+      "hashMode": "abiEncode",
+      "hash": "0xdc48ea96f9c72892c8db4fdc046f04409cdef6b91e71b660bce5b8302ce8a9bb",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MIN_COLLATERAL_USD",
+      "literal": "MIN_COLLATERAL_USD",
+      "hashMode": "abiEncode",
+      "hash": "0x6497f0f2c47edc68f06ede1c06d3475f939eb1a8341362460277bcd8ee7419f4",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION",
+      "literal": "MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION",
+      "hashMode": "abiEncode",
+      "hash": "0xc1c82b94002bf5bd86480807e32ee86f3d83d38b2853b1e48546acc11884eebd",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MIN_POSITION_SIZE_USD",
+      "literal": "MIN_POSITION_SIZE_USD",
+      "hashMode": "abiEncode",
+      "hash": "0x48faddd525cc6e216bc2c62a7053b940a842e3c102782fb4da69ebeb8f7bd724",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MAX_POSITION_SIZE_USD",
+      "literal": "MAX_POSITION_SIZE_USD",
+      "hashMode": "abiEncode",
+      "hash": "0xcc0935b308b938b74a1a9a23307822c6b33c36ea39d1c29c34f7d9e0f4c62be8",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "VIRTUAL_TOKEN_ID",
+      "literal": "VIRTUAL_TOKEN_ID",
+      "hashMode": "abiEncode",
+      "hash": "0xf67a7032110168f4a12e06bb2da6bd7c662f9f983baea96840754d9d18c6fd3f",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "VIRTUAL_MARKET_ID",
+      "literal": "VIRTUAL_MARKET_ID",
+      "hashMode": "abiEncode",
+      "hash": "0xff9bd560da6d40ff8ad8731ff6380588d288cc7aba40ff490b81e2a62800590d",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "VIRTUAL_INVENTORY_FOR_SWAPS",
+      "literal": "VIRTUAL_INVENTORY_FOR_SWAPS",
+      "hashMode": "abiEncode",
+      "hash": "0x7fe007f9bd8862e0de799f6fbd8c21b553689d1eb45beb083ca688e0d7cf2b6d",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "VIRTUAL_INVENTORY_FOR_POSITIONS",
+      "literal": "VIRTUAL_INVENTORY_FOR_POSITIONS",
+      "hashMode": "abiEncode",
+      "hash": "0xf22f880a75a5623d3ed30338ac185794b296b0dd4105749a17d30853cb8d9b93",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "VIRTUAL_INVENTORY_FOR_POSITIONS_IN_TOKENS",
+      "literal": "VIRTUAL_INVENTORY_FOR_POSITIONS_IN_TOKENS",
+      "hashMode": "abiEncode",
+      "hash": "0xef16622f16cbe15952d0e1393cd8870844dffcb7b42ce90332a5635553d2ab50",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "PRO_TRADER_TIER",
+      "literal": "PRO_TRADER_TIER",
+      "hashMode": "abiEncode",
+      "hash": "0xc43d4a0e0ed3ebe314c5efe5927fec68b466f838107f15cd5101b6bae5051949",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)",
+        "Config(LIMITED_CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "PRO_DISCOUNT_FACTOR",
+      "literal": "PRO_DISCOUNT_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x4471a2f4514c79733ff0d64d9552d84f9a2a3ea1d0e22b827aa20be3d4c01e20",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "LIQUIDATION_FEE_FACTOR",
+      "literal": "LIQUIDATION_FEE_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x3a9047f0ded507ed1dabb64e1e0515c4b51c350aa275b69f5d66841dcf29b4ff",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "SWAP_IMPACT_FACTOR",
+      "literal": "SWAP_IMPACT_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0xb7b5078258119da264291f3a2e9abfced2bc31a5991e7e7f1904b6921c6311a7",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "SWAP_IMPACT_EXPONENT_FACTOR",
+      "literal": "SWAP_IMPACT_EXPONENT_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0xf5696d772a3abd1b31035d4c1d2455016d0edb67544f554fc4fc7aa73f622cd5",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "SWAP_FEE_FACTOR",
+      "literal": "SWAP_FEE_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x94d46da9c8a5f890b6b58c1e6e78b27ac6d05b5b488adb426ef137d5eb0f3599",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "ATOMIC_SWAP_FEE_FACTOR",
+      "literal": "ATOMIC_SWAP_FEE_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0xde72bcc3246e0d5d632117733986ff91c7efefa5ae54a84e77a311a9b3e1bb60",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "ATOMIC_WITHDRAWAL_FEE_FACTOR",
+      "literal": "ATOMIC_WITHDRAWAL_FEE_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x5a97ca4f442b1a1a3252836f8c6aa13fcf54aee9016ab2f3944e69a02beef93f",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "DEPOSIT_FEE_FACTOR",
+      "literal": "DEPOSIT_FEE_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0x2bf0feec8ff0614372dfa474a194c8ed4afe132cef4a51163d98e9c832164201",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "WITHDRAWAL_FEE_FACTOR",
+      "literal": "WITHDRAWAL_FEE_FACTOR",
+      "hashMode": "abiEncode",
+      "hash": "0xd60dc284de69a24ae24561caecbd4312f09ada08bc2a3c00510944ae52d60bb2",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "ORACLE_TYPE",
+      "literal": "ORACLE_TYPE",
+      "hashMode": "abiEncode",
+      "hash": "0xfcfe01b4300970d5df513f44ebe914e972f7aeddffbfea2710a27ebb18db1350",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT",
+      "literal": "MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT",
+      "hashMode": "abiEncode",
+      "hash": "0xde6d7ba6907cdeb6383a9c6eb5584debbfcb17b3058bc5d901a08daa9a56cf13",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "SUBACCOUNT_EXPIRES_AT",
+      "literal": "SUBACCOUNT_EXPIRES_AT",
+      "hashMode": "abiEncode",
+      "hash": "0x149d3ada2c5aa2b6f57c0686c14c0d055a55e46ec746397019822615074b1852",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "SUBACCOUNT_ACTION_COUNT",
+      "literal": "SUBACCOUNT_ACTION_COUNT",
+      "hashMode": "abiEncode",
+      "hash": "0xc2f3da5aa5f09347e0b73f8c41d1824641fdefa2ca140b1faf88b7989cd51963",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "SUBACCOUNT_AUTO_TOP_UP_AMOUNT",
+      "literal": "SUBACCOUNT_AUTO_TOP_UP_AMOUNT",
+      "hashMode": "abiEncode",
+      "hash": "0x626604cee3bea157a36201991fa9ed303c7a02a2b0237eaeb00842e2791d62cc",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "SUBACCOUNT_ORDER_ACTION",
+      "literal": "SUBACCOUNT_ORDER_ACTION",
+      "hashMode": "abiEncode",
+      "hash": "0x2a0791687fd34f2095c484a9fa4e25057d3ef79a97fcd8c61436047a7bdf4cbe",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "SUBACCOUNT_INTEGRATION_ID",
+      "literal": "SUBACCOUNT_INTEGRATION_ID",
+      "hashMode": "abiEncode",
+      "hash": "0x7ada53ad4d1a006a2245a7986871fe976ef8601f18462355adafe410de7af3a7",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "SUBACCOUNT_INTEGRATION_DISABLED",
+      "literal": "SUBACCOUNT_INTEGRATION_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0x8d734a366f5d131dc95f890b6271ef8b6e955589ae95622cb8c196d5624f1d1b",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "FEE_DISTRIBUTOR_SWAP_TOKEN_INDEX",
+      "literal": "FEE_DISTRIBUTOR_SWAP_TOKEN_INDEX",
+      "hashMode": "abiEncode",
+      "hash": "0x28b2bbdb54181baf7c5968b49d2bd8d901e8da30d09057fc68158da6e94e4e8a",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "FEE_DISTRIBUTOR_SWAP_FEE_BATCH",
+      "literal": "FEE_DISTRIBUTOR_SWAP_FEE_BATCH",
+      "hashMode": "abiEncode",
+      "hash": "0xe5ad0718f6580beb7f449f94fc43c0989a0154e16f6993006e6fdee19198f0d9",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "SYNC_CONFIG_FEATURE_DISABLED",
+      "literal": "SYNC_CONFIG_FEATURE_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0xed210824b84b6a2c1e2379c8adadc0b34668844a00c4253800c70eae7475b8f0",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "SYNC_CONFIG_MARKET_DISABLED",
+      "literal": "SYNC_CONFIG_MARKET_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0xd85ecfd36cc7009af0b46342592bd301fbb55b5ebd333597ee98b20d9c67b2c9",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "SYNC_CONFIG_PARAMETER_DISABLED",
+      "literal": "SYNC_CONFIG_PARAMETER_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0x1d126137de5e6ba87330c5d7a638a8f90d5ea0993555cf9bc7246ca680eee068",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "SYNC_CONFIG_MARKET_PARAMETER_DISABLED",
+      "literal": "SYNC_CONFIG_MARKET_PARAMETER_DISABLED",
+      "hashMode": "abiEncode",
+      "hash": "0x813af6d484d6848eb092289ed762612aeb03152be2a7acc3dc3fefa408cbe7ee",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "SYNC_CONFIG_UPDATE_COMPLETED",
+      "literal": "SYNC_CONFIG_UPDATE_COMPLETED",
+      "hashMode": "abiEncode",
+      "hash": "0xd28664b9dfba2be8e6ab0a3234643ead8074a04c1cf5be8a0a5dc58295e490b9",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "SYNC_CONFIG_LATEST_UPDATE_ID",
+      "literal": "SYNC_CONFIG_LATEST_UPDATE_ID",
+      "hashMode": "abiEncode",
+      "hash": "0x161afdac3166e7c6854f809cbaf5b900805bee975d3a5025502820f6a541dcbb",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "CONTRIBUTOR_ACCOUNT_LIST",
+      "literal": "CONTRIBUTOR_ACCOUNT_LIST",
+      "hashMode": "abiEncode",
+      "hash": "0x50b0e78c3e0339a1361ed3a91c37da7dbd3dc10182b4d7ebe59ab07ed8b2d0e4",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "CONTRIBUTOR_TOKEN_LIST",
+      "literal": "CONTRIBUTOR_TOKEN_LIST",
+      "hashMode": "abiEncode",
+      "hash": "0xeab8251c23d595727ae1a811d578657e8c8d65c416e6c9894b41ba721892dc95",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "CONTRIBUTOR_TOKEN_AMOUNT",
+      "literal": "CONTRIBUTOR_TOKEN_AMOUNT",
+      "hashMode": "abiEncode",
+      "hash": "0x948d759fedd620f2ce392c9aa9646016730bec7ed867328714076abe6abd5c6d",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "MAX_TOTAL_CONTRIBUTOR_TOKEN_AMOUNT",
+      "literal": "MAX_TOTAL_CONTRIBUTOR_TOKEN_AMOUNT",
+      "hashMode": "abiEncode",
+      "hash": "0xfc4843ae5b95543bb09b22411e6ab57db76d11d09d3c3435a84bf3bc76fe737f",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "CONTRIBUTOR_FUNDING_ACCOUNT",
+      "literal": "CONTRIBUTOR_FUNDING_ACCOUNT",
+      "hashMode": "abiEncode",
+      "hash": "0xfbfce7afde079f2651cbaad793dfb4cb4dce461c3e5a92d546164952a8674fd6",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "CUSTOM_CONTRIBUTOR_FUNDING_ACCOUNT",
+      "literal": "CUSTOM_CONTRIBUTOR_FUNDING_ACCOUNT",
+      "hashMode": "abiEncode",
+      "hash": "0xe59ac7b985b64d0578b060cdc0e52ad3cacfaefc055751983d3a268cafab9cf9",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "CONTRIBUTOR_LAST_PAYMENT_AT",
+      "literal": "CONTRIBUTOR_LAST_PAYMENT_AT",
+      "hashMode": "abiEncode",
+      "hash": "0x5b1043fcfd55b3ecce8da1184425c0eb9d353e8f067ba4cff246948220c21629",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "MIN_CONTRIBUTOR_PAYMENT_INTERVAL",
+      "literal": "MIN_CONTRIBUTOR_PAYMENT_INTERVAL",
+      "hashMode": "abiEncode",
+      "hash": "0x549358ca6261b67761ba484e221b39ab30378beccd743446e1bf93af12f8e010",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "AVAILABLE_FEE_AMOUNT",
+      "literal": "AVAILABLE_FEE_AMOUNT",
+      "hashMode": "abiEncode",
+      "hash": "0xe1d7c1b420c642bbf3ea4bf7113fd1dc016bcebaf3e2791cb7b2020b16cb547e",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "MULTICHAIN_BALANCE",
+      "literal": "MULTICHAIN_BALANCE",
+      "hashMode": "abiEncode",
+      "hash": "0x3150e34ed2bc2912771bc28ae1945c3db4b3312273ef8f506b4064ad77528236",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "IS_MULTICHAIN_PROVIDER_ENABLED",
+      "literal": "IS_MULTICHAIN_PROVIDER_ENABLED",
+      "hashMode": "abiEncode",
+      "hash": "0xed4e6b58afae719ce062d8d683b6dc473cc97ccd984f27261ce869d7df6b194f",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "IS_MULTICHAIN_ENDPOINT_ENABLED",
+      "literal": "IS_MULTICHAIN_ENDPOINT_ENABLED",
+      "hashMode": "abiEncode",
+      "hash": "0xfe74bac295538d4ac4620af0721d4cf269aca96165492ebcfd7ab06a212cbb57",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "IS_RELAY_FEE_EXCLUDED",
+      "literal": "IS_RELAY_FEE_EXCLUDED",
+      "hashMode": "abiEncode",
+      "hash": "0xb5f0179d012748aa521a4e5777fc5bcda2202abd9dbc7c22ea02b561e8a613ae",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "IS_SRC_CHAIN_ID_ENABLED",
+      "literal": "IS_SRC_CHAIN_ID_ENABLED",
+      "hashMode": "abiEncode",
+      "hash": "0x2718ce5cab7ee3f544957c929c99dc7ec31532b8fd202e801f13084ebd593378",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "POSITION_LAST_SRC_CHAIN_ID",
+      "literal": "POSITION_LAST_SRC_CHAIN_ID",
+      "hashMode": "abiEncode",
+      "hash": "0x320c46139096ee40f93876a454cc8c43774f8a191b86762b71d0dd0b7c5ee18b",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "EID_TO_SRC_CHAIN_ID",
+      "literal": "EID_TO_SRC_CHAIN_ID",
+      "hashMode": "abiEncode",
+      "hash": "0xc629f9d0bbea9474ede6cd37121158e220384270ee6dcdfce326687871dbcaf4",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "MAX_DATA_LENGTH",
+      "literal": "MAX_DATA_LENGTH",
+      "hashMode": "abiEncode",
+      "hash": "0xefa49304bafedb997b280023ceb8fdc619a52bd764b5aff228285d898d8d1cc0",
+      "settableVia": [
+        "Config(CONFIG_KEEPER)"
+      ]
+    },
+    {
+      "name": "GMX_DATA_ACTION",
+      "literal": "GMX_DATA_ACTION",
+      "hashMode": "abiEncode",
+      "hash": "0x1e00e1bfa18454bf880ac17012d43b7b87f2a386d674ef67395563b8fb6c5a5e",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "CLAIMABLE_FUNDS_AMOUNT",
+      "literal": "CLAIMABLE_FUNDS_AMOUNT",
+      "hashMode": "abiEncode",
+      "hash": "0x6a651f3cefdf0b7c2e694d991ebcf6a6337112d3aa55d6b1f9979cc947983d5f",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "TOTAL_CLAIMABLE_FUNDS_AMOUNT",
+      "literal": "TOTAL_CLAIMABLE_FUNDS_AMOUNT",
+      "hashMode": "abiEncode",
+      "hash": "0x3c5306ceb0609800360e39d96cb4c69e4cf1935566b4da4782c3bfd092d27da4",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "CLAIM_TERMS",
+      "literal": "CLAIM_TERMS",
+      "hashMode": "abiEncode",
+      "hash": "0x4f361fcb5ebf8c34932080096371b32b45a9fa47dd801664e09bf8f94416b550",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "CLAIM_TERMS_BACKREF",
+      "literal": "CLAIM_TERMS_BACKREF",
+      "hashMode": "abiEncode",
+      "hash": "0x86938ba482f6d2d61c037c0c7ce538834ed1accd5c8fd892819a8673dd27b36f",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "POSITION_LIST",
+      "literal": "POSITION_LIST",
+      "hashMode": "abiEncode",
+      "hash": "0x3fe95e2be5587b71e685e297dc351a27f09a363e7d84b38bb75158a8f06590ac",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "ACCOUNT_POSITION_LIST",
+      "literal": "ACCOUNT_POSITION_LIST",
+      "hashMode": "abiEncode",
+      "hash": "0xa94015725b1182c6666b50aed1bb84d2b2cf9da39e6f5a5b19cd01f2f37738a1",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "ORDER_LIST",
+      "literal": "ORDER_LIST",
+      "hashMode": "abiEncode",
+      "hash": "0x86f7cfd5d8f8404e5145c91bebb8484657420159dabd0753d6a59f3de3f7b8c1",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    },
+    {
+      "name": "ACCOUNT_ORDER_LIST",
+      "literal": "ACCOUNT_ORDER_LIST",
+      "hashMode": "abiEncode",
+      "hash": "0xd008ab8798caa94b11c12ebc5bce5104c343552f5375d1bf3870b4b4a6e8d562",
+      "settableVia": [
+        "DataStore 直写(CONTROLLER)"
+      ]
+    }
+  ],
+  "derivations": [
+    {
+      "fn": "accountPositionListKey",
+      "kind": "derived",
+      "base": "ACCOUNT_POSITION_LIST",
+      "params": [
+        {
+          "type": "address",
+          "name": "account",
+          "dimension": "account"
+        }
+      ],
+      "scheme": "_efficientHash(BASE, arg)"
+    },
+    {
+      "fn": "accountOrderListKey",
+      "kind": "derived",
+      "base": "ACCOUNT_ORDER_LIST",
+      "params": [
+        {
+          "type": "address",
+          "name": "account",
+          "dimension": "account"
+        }
+      ],
+      "scheme": "_efficientHash(BASE, arg)"
+    },
+    {
+      "fn": "positionImpactExponentFactorKey",
+      "kind": "derived",
+      "base": "POSITION_IMPACT_EXPONENT_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "bool",
+          "name": "isPositive",
+          "dimension": "bool"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "constantPriceSpreadKey",
+      "kind": "derived",
+      "base": "CONSTANT_PRICE_SPREAD",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "bidOrderBookDepthKey",
+      "kind": "derived",
+      "base": "BID_ORDER_BOOK_DEPTH",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "askOrderBookDepthKey",
+      "kind": "derived",
+      "base": "ASK_ORDER_BOOK_DEPTH",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "priceImpactParameterKey",
+      "kind": "derived",
+      "base": "PRICE_IMPACT_PARAMETER",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "skewImpactFactorKey",
+      "kind": "derived",
+      "base": "SKEW_IMPACT_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "minSkewImpactKey",
+      "kind": "derived",
+      "base": "MIN_SKEW_IMPACT",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "maxSkewImpactKey",
+      "kind": "derived",
+      "base": "MAX_SKEW_IMPACT",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "cumulativeOpenCostsKey",
+      "kind": "derived",
+      "base": "CUMULATIVE_OPEN_COSTS",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "bool",
+          "name": "isLong",
+          "dimension": "bool"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "openInterestInTokensKey",
+      "kind": "derived",
+      "base": "OPEN_INTEREST_IN_TOKENS",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "bool",
+          "name": "isLong",
+          "dimension": "bool"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "poolAmountKey",
+      "kind": "derived",
+      "base": "POOL_AMOUNT",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "maxPoolAmountKey",
+      "kind": "derived",
+      "base": "MAX_POOL_AMOUNT",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "maxPoolUsdForDepositKey",
+      "kind": "derived",
+      "base": "MAX_POOL_USD_FOR_DEPOSIT",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "maxOpenInterestKey",
+      "kind": "derived",
+      "base": "MAX_OPEN_INTEREST",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "bool",
+          "name": "isLong",
+          "dimension": "bool"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "maxOpenInterestFactorKey",
+      "kind": "derived",
+      "base": "MAX_OPEN_INTEREST_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "bool",
+          "name": "isLong",
+          "dimension": "bool"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "positionImpactPoolAmountKey",
+      "kind": "derived",
+      "base": "POSITION_IMPACT_POOL_AMOUNT",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "lentPositionImpactPoolAmountKey",
+      "kind": "derived",
+      "base": "LENT_POSITION_IMPACT_POOL_AMOUNT",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "maxLendableImpactFactorKey",
+      "kind": "derived",
+      "base": "MAX_LENDABLE_IMPACT_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "maxLendableImpactFactorForWithdrawalsKey",
+      "kind": "derived",
+      "base": "MAX_LENDABLE_IMPACT_FACTOR_FOR_WITHDRAWALS",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "maxLendableImpactUsdKey",
+      "kind": "derived",
+      "base": "MAX_LENDABLE_IMPACT_USD",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "minPositionImpactPoolAmountKey",
+      "kind": "derived",
+      "base": "MIN_POSITION_IMPACT_POOL_AMOUNT",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "positionImpactPoolDistributionRateKey",
+      "kind": "derived",
+      "base": "POSITION_IMPACT_POOL_DISTRIBUTION_RATE",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "positionImpactPoolDistributedAtKey",
+      "kind": "derived",
+      "base": "POSITION_IMPACT_POOL_DISTRIBUTED_AT",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "swapImpactPoolAmountKey",
+      "kind": "derived",
+      "base": "SWAP_IMPACT_POOL_AMOUNT",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "reserveFactorKey",
+      "kind": "derived",
+      "base": "RESERVE_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "maxPnlFactorKey",
+      "kind": "derived",
+      "base": "MAX_PNL_FACTOR",
+      "params": [
+        {
+          "type": "bytes32",
+          "name": "pnlFactorType",
+          "dimension": "pnlFactorType"
+        },
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "bool",
+          "name": "isLong",
+          "dimension": "bool"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "minPnlFactorAfterAdlKey",
+      "kind": "alias",
+      "base": "MIN_PNL_FACTOR_AFTER_ADL",
+      "params": [],
+      "scheme": "identity"
+    },
+    {
+      "fn": "latestAdlAtKey",
+      "kind": "alias",
+      "base": "LATEST_ADL_AT",
+      "params": [],
+      "scheme": "identity"
+    },
+    {
+      "fn": "isAdlEnabledKey",
+      "kind": "alias",
+      "base": "IS_ADL_ENABLED",
+      "params": [],
+      "scheme": "identity"
+    },
+    {
+      "fn": "fundingSkewEmaKey",
+      "kind": "derived",
+      "base": "FUNDING_SKEW_EMA",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "fundingFloorFactorKey",
+      "kind": "derived",
+      "base": "FUNDING_FLOOR_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "fundingBaseFactorKey",
+      "kind": "derived",
+      "base": "FUNDING_BASE_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "minFundingFactorPerSecondKey",
+      "kind": "derived",
+      "base": "MIN_FUNDING_FACTOR_PER_SECOND",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "maxFundingFactorPerSecondKey",
+      "kind": "derived",
+      "base": "MAX_FUNDING_FACTOR_PER_SECOND",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "thresholdForStableFundingKey",
+      "kind": "derived",
+      "base": "THRESHOLD_FOR_STABLE_FUNDING",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "thresholdForDecreaseFundingKey",
+      "kind": "derived",
+      "base": "THRESHOLD_FOR_DECREASE_FUNDING",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "negativeFundingFeePerSizeKey",
+      "kind": "derived",
+      "base": "NEGATIVE_FUNDING_FEE_PER_SIZE",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "bool",
+          "name": "isLong",
+          "dimension": "bool"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "positiveFundingFeePerSizeKey",
+      "kind": "derived",
+      "base": "POSITIVE_FUNDING_FEE_PER_SIZE",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "bool",
+          "name": "isLong",
+          "dimension": "bool"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "fundingUpdatedAtKey",
+      "kind": "derived",
+      "base": "FUNDING_UPDATED_AT",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "claimableCollateralAmountKey",
+      "kind": "derived",
+      "base": "CLAIMABLE_COLLATERAL_AMOUNT",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "claimableCollateralAmountKey",
+      "kind": "derived",
+      "base": "CLAIMABLE_COLLATERAL_AMOUNT",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        },
+        {
+          "type": "uint256",
+          "name": "timeKey",
+          "dimension": "timeKey"
+        },
+        {
+          "type": "address",
+          "name": "account",
+          "dimension": "account"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "claimableCollateralFactorKey",
+      "kind": "derived",
+      "base": "CLAIMABLE_COLLATERAL_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        },
+        {
+          "type": "uint256",
+          "name": "timeKey",
+          "dimension": "timeKey"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "claimableCollateralFactorKey",
+      "kind": "derived",
+      "base": "CLAIMABLE_COLLATERAL_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        },
+        {
+          "type": "uint256",
+          "name": "timeKey",
+          "dimension": "timeKey"
+        },
+        {
+          "type": "address",
+          "name": "account",
+          "dimension": "account"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "claimableCollateralReductionFactorKey",
+      "kind": "derived",
+      "base": "CLAIMABLE_COLLATERAL_REDUCTION_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        },
+        {
+          "type": "uint256",
+          "name": "timeKey",
+          "dimension": "timeKey"
+        },
+        {
+          "type": "address",
+          "name": "account",
+          "dimension": "account"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "claimedCollateralAmountKey",
+      "kind": "derived",
+      "base": "CLAIMED_COLLATERAL_AMOUNT",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        },
+        {
+          "type": "uint256",
+          "name": "timeKey",
+          "dimension": "timeKey"
+        },
+        {
+          "type": "address",
+          "name": "account",
+          "dimension": "account"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "optimalUsageFactorKey",
+      "kind": "derived",
+      "base": "OPTIMAL_USAGE_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "bool",
+          "name": "isLong",
+          "dimension": "bool"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "baseBorrowingFactorKey",
+      "kind": "derived",
+      "base": "BASE_BORROWING_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "bool",
+          "name": "isLong",
+          "dimension": "bool"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "aboveOptimalUsageBorrowingFactorKey",
+      "kind": "derived",
+      "base": "ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "bool",
+          "name": "isLong",
+          "dimension": "bool"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "borrowingFactorKey",
+      "kind": "derived",
+      "base": "BORROWING_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "bool",
+          "name": "isLong",
+          "dimension": "bool"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "borrowingExponentFactorKey",
+      "kind": "derived",
+      "base": "BORROWING_EXPONENT_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "bool",
+          "name": "isLong",
+          "dimension": "bool"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "cumulativeBorrowingFactorKey",
+      "kind": "derived",
+      "base": "CUMULATIVE_BORROWING_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "bool",
+          "name": "isLong",
+          "dimension": "bool"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "cumulativeBorrowingFactorUpdatedAtKey",
+      "kind": "derived",
+      "base": "CUMULATIVE_BORROWING_FACTOR_UPDATED_AT",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "bool",
+          "name": "isLong",
+          "dimension": "bool"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "totalBorrowingKey",
+      "kind": "derived",
+      "base": "TOTAL_BORROWING",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "bool",
+          "name": "isLong",
+          "dimension": "bool"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "affiliateRewardKey",
+      "kind": "derived",
+      "base": "AFFILIATE_REWARD",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "accountDepositListKey",
+      "kind": "derived",
+      "base": "ACCOUNT_DEPOSIT_LIST",
+      "params": [
+        {
+          "type": "address",
+          "name": "account",
+          "dimension": "account"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "accountWithdrawalListKey",
+      "kind": "derived",
+      "base": "ACCOUNT_WITHDRAWAL_LIST",
+      "params": [
+        {
+          "type": "address",
+          "name": "account",
+          "dimension": "account"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "subaccountListKey",
+      "kind": "derived",
+      "base": "SUBACCOUNT_LIST",
+      "params": [
+        {
+          "type": "address",
+          "name": "account",
+          "dimension": "account"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "autoCancelOrderListKey",
+      "kind": "derived",
+      "base": "AUTO_CANCEL_ORDER_LIST",
+      "params": [
+        {
+          "type": "bytes32",
+          "name": "positionKey",
+          "dimension": "positionKey"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "claimableFeeAmountKey",
+      "kind": "derived",
+      "base": "CLAIMABLE_FEE_AMOUNT",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        },
+        {
+          "type": "bytes32",
+          "name": "feeType",
+          "dimension": "feeType"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "claimableUiFeeAmountKey",
+      "kind": "derived",
+      "base": "CLAIMABLE_UI_FEE_AMOUNT",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "claimableUiFeeAmountKey",
+      "kind": "derived",
+      "base": "CLAIMABLE_UI_FEE_AMOUNT",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        },
+        {
+          "type": "address",
+          "name": "account",
+          "dimension": "account"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "depositGasLimitKey",
+      "kind": "alias",
+      "base": "DEPOSIT_GAS_LIMIT",
+      "params": [],
+      "scheme": "identity"
+    },
+    {
+      "fn": "withdrawalGasLimitKey",
+      "kind": "alias",
+      "base": "WITHDRAWAL_GAS_LIMIT",
+      "params": [],
+      "scheme": "identity"
+    },
+    {
+      "fn": "singleSwapGasLimitKey",
+      "kind": "alias",
+      "base": "SINGLE_SWAP_GAS_LIMIT",
+      "params": [],
+      "scheme": "identity"
+    },
+    {
+      "fn": "increaseOrderGasLimitKey",
+      "kind": "alias",
+      "base": "INCREASE_ORDER_GAS_LIMIT",
+      "params": [],
+      "scheme": "identity"
+    },
+    {
+      "fn": "decreaseOrderGasLimitKey",
+      "kind": "alias",
+      "base": "DECREASE_ORDER_GAS_LIMIT",
+      "params": [],
+      "scheme": "identity"
+    },
+    {
+      "fn": "swapOrderGasLimitKey",
+      "kind": "alias",
+      "base": "SWAP_ORDER_GAS_LIMIT",
+      "params": [],
+      "scheme": "identity"
+    },
+    {
+      "fn": "swapPathMarketFlagKey",
+      "kind": "derived",
+      "base": "SWAP_PATH_MARKET_FLAG",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "jitFeatureDisabledKey",
+      "kind": "derived",
+      "base": "JIT_FEATURE_DISABLED",
+      "params": [
+        {
+          "type": "address",
+          "name": "module",
+          "dimension": "module"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "createDepositFeatureDisabledKey",
+      "kind": "derived",
+      "base": "CREATE_DEPOSIT_FEATURE_DISABLED",
+      "params": [
+        {
+          "type": "address",
+          "name": "module",
+          "dimension": "module"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "cancelDepositFeatureDisabledKey",
+      "kind": "derived",
+      "base": "CANCEL_DEPOSIT_FEATURE_DISABLED",
+      "params": [
+        {
+          "type": "address",
+          "name": "module",
+          "dimension": "module"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "executeDepositFeatureDisabledKey",
+      "kind": "derived",
+      "base": "EXECUTE_DEPOSIT_FEATURE_DISABLED",
+      "params": [
+        {
+          "type": "address",
+          "name": "module",
+          "dimension": "module"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "createWithdrawalFeatureDisabledKey",
+      "kind": "derived",
+      "base": "CREATE_WITHDRAWAL_FEATURE_DISABLED",
+      "params": [
+        {
+          "type": "address",
+          "name": "module",
+          "dimension": "module"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "cancelWithdrawalFeatureDisabledKey",
+      "kind": "derived",
+      "base": "CANCEL_WITHDRAWAL_FEATURE_DISABLED",
+      "params": [
+        {
+          "type": "address",
+          "name": "module",
+          "dimension": "module"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "executeWithdrawalFeatureDisabledKey",
+      "kind": "derived",
+      "base": "EXECUTE_WITHDRAWAL_FEATURE_DISABLED",
+      "params": [
+        {
+          "type": "address",
+          "name": "module",
+          "dimension": "module"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "executeAtomicWithdrawalFeatureDisabledKey",
+      "kind": "derived",
+      "base": "EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED",
+      "params": [
+        {
+          "type": "address",
+          "name": "module",
+          "dimension": "module"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "createOrderFeatureDisabledKey",
+      "kind": "derived",
+      "base": "CREATE_ORDER_FEATURE_DISABLED",
+      "params": [
+        {
+          "type": "address",
+          "name": "module",
+          "dimension": "module"
+        },
+        {
+          "type": "uint256",
+          "name": "orderType",
+          "dimension": "orderType"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "executeOrderFeatureDisabledKey",
+      "kind": "derived",
+      "base": "EXECUTE_ORDER_FEATURE_DISABLED",
+      "params": [
+        {
+          "type": "address",
+          "name": "module",
+          "dimension": "module"
+        },
+        {
+          "type": "uint256",
+          "name": "orderType",
+          "dimension": "orderType"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "executeAdlFeatureDisabledKey",
+      "kind": "derived",
+      "base": "EXECUTE_ADL_FEATURE_DISABLED",
+      "params": [
+        {
+          "type": "address",
+          "name": "module",
+          "dimension": "module"
+        },
+        {
+          "type": "uint256",
+          "name": "orderType",
+          "dimension": "orderType"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "updateOrderFeatureDisabledKey",
+      "kind": "derived",
+      "base": "UPDATE_ORDER_FEATURE_DISABLED",
+      "params": [
+        {
+          "type": "address",
+          "name": "module",
+          "dimension": "module"
+        },
+        {
+          "type": "uint256",
+          "name": "orderType",
+          "dimension": "orderType"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "cancelOrderFeatureDisabledKey",
+      "kind": "derived",
+      "base": "CANCEL_ORDER_FEATURE_DISABLED",
+      "params": [
+        {
+          "type": "address",
+          "name": "module",
+          "dimension": "module"
+        },
+        {
+          "type": "uint256",
+          "name": "orderType",
+          "dimension": "orderType"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "claimFundingFeesFeatureDisabledKey",
+      "kind": "derived",
+      "base": "CLAIM_FUNDING_FEES_FEATURE_DISABLED",
+      "params": [
+        {
+          "type": "address",
+          "name": "module",
+          "dimension": "module"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "claimCollateralFeatureDisabledKey",
+      "kind": "derived",
+      "base": "CLAIM_COLLATERAL_FEATURE_DISABLED",
+      "params": [
+        {
+          "type": "address",
+          "name": "module",
+          "dimension": "module"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "claimAffiliateRewardsFeatureDisabledKey",
+      "kind": "derived",
+      "base": "CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED",
+      "params": [
+        {
+          "type": "address",
+          "name": "module",
+          "dimension": "module"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "claimUiFeesFeatureDisabledKey",
+      "kind": "derived",
+      "base": "CLAIM_UI_FEES_FEATURE_DISABLED",
+      "params": [
+        {
+          "type": "address",
+          "name": "module",
+          "dimension": "module"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "subaccountFeatureDisabledKey",
+      "kind": "derived",
+      "base": "SUBACCOUNT_FEATURE_DISABLED",
+      "params": [
+        {
+          "type": "address",
+          "name": "module",
+          "dimension": "module"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "gaslessFeatureDisabledKey",
+      "kind": "derived",
+      "base": "GASLESS_FEATURE_DISABLED",
+      "params": [
+        {
+          "type": "address",
+          "name": "module",
+          "dimension": "module"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "isRelayFeeExcludedKey",
+      "kind": "derived",
+      "base": "IS_RELAY_FEE_EXCLUDED",
+      "params": [
+        {
+          "type": "address",
+          "name": "sender",
+          "dimension": "account"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "generalClaimFeatureDisabled",
+      "kind": "derived",
+      "base": "GENERAL_CLAIM_FEATURE_DISABLED",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "distributionId",
+          "dimension": "distributionId"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "uiFeeFactorKey",
+      "kind": "derived",
+      "base": "UI_FEE_FACTOR",
+      "params": [
+        {
+          "type": "address",
+          "name": "account",
+          "dimension": "account"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "isOracleProviderEnabledKey",
+      "kind": "derived",
+      "base": "IS_ORACLE_PROVIDER_ENABLED",
+      "params": [
+        {
+          "type": "address",
+          "name": "provider",
+          "dimension": "oracleProvider"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "oracleTimestampAdjustmentKey",
+      "kind": "derived",
+      "base": "ORACLE_TIMESTAMP_ADJUSTMENT",
+      "params": [
+        {
+          "type": "address",
+          "name": "provider",
+          "dimension": "oracleProvider"
+        },
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "oracleProviderForTokenKey",
+      "kind": "derived",
+      "base": "ORACLE_PROVIDER_FOR_TOKEN",
+      "params": [
+        {
+          "type": "address",
+          "name": "oracle",
+          "dimension": "oracleContract"
+        },
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "oracleProviderForTokenKey",
+      "kind": "derived",
+      "base": "ORACLE_PROVIDER_FOR_TOKEN",
+      "params": [
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "oracleProviderUpdatedAt",
+      "kind": "derived",
+      "base": "ORACLE_PROVIDER_UPDATED_AT",
+      "params": [
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        },
+        {
+          "type": "address",
+          "name": "provider",
+          "dimension": "oracleProvider"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "tokenTransferGasLimit",
+      "kind": "derived",
+      "base": "TOKEN_TRANSFER_GAS_LIMIT",
+      "params": [
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "savedCallbackContract",
+      "kind": "derived",
+      "base": "SAVED_CALLBACK_CONTRACT",
+      "params": [
+        {
+          "type": "address",
+          "name": "account",
+          "dimension": "account"
+        },
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "minCollateralFactorKey",
+      "kind": "derived",
+      "base": "MIN_COLLATERAL_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "minCollateralFactorForOpenInterestMultiplierKey",
+      "kind": "derived",
+      "base": "MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "bool",
+          "name": "isLong",
+          "dimension": "bool"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "minCollateralFactorForLiquidationKey",
+      "kind": "derived",
+      "base": "MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "virtualTokenIdKey",
+      "kind": "derived",
+      "base": "VIRTUAL_TOKEN_ID",
+      "params": [
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "virtualMarketIdKey",
+      "kind": "derived",
+      "base": "VIRTUAL_MARKET_ID",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "virtualInventoryForPositionsKey",
+      "kind": "derived",
+      "base": "VIRTUAL_INVENTORY_FOR_POSITIONS",
+      "params": [
+        {
+          "type": "bytes32",
+          "name": "virtualTokenId",
+          "dimension": "virtualTokenId"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "virtualInventoryForPositionsInTokensKey",
+      "kind": "derived",
+      "base": "VIRTUAL_INVENTORY_FOR_POSITIONS_IN_TOKENS",
+      "params": [
+        {
+          "type": "bytes32",
+          "name": "virtualTokenId",
+          "dimension": "virtualTokenId"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "virtualInventoryForSwapsKey",
+      "kind": "derived",
+      "base": "VIRTUAL_INVENTORY_FOR_SWAPS",
+      "params": [
+        {
+          "type": "bytes32",
+          "name": "virtualMarketId",
+          "dimension": "virtualMarketId"
+        },
+        {
+          "type": "bool",
+          "name": "isLongToken",
+          "dimension": "bool"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "positionImpactFactorKey",
+      "kind": "derived",
+      "base": "POSITION_IMPACT_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "bool",
+          "name": "isPositive",
+          "dimension": "bool"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "maxPositionImpactFactorKey",
+      "kind": "derived",
+      "base": "MAX_POSITION_IMPACT_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "bool",
+          "name": "isPositive",
+          "dimension": "bool"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "maxPositionImpactFactorForLiquidationsKey",
+      "kind": "derived",
+      "base": "MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "positionFeeFactorKey",
+      "kind": "derived",
+      "base": "POSITION_FEE_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "bool",
+          "name": "balanceWasImproved",
+          "dimension": "bool"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "proTraderTierKey",
+      "kind": "derived",
+      "base": "PRO_TRADER_TIER",
+      "params": [
+        {
+          "type": "address",
+          "name": "account",
+          "dimension": "account"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "proDiscountFactorKey",
+      "kind": "derived",
+      "base": "PRO_DISCOUNT_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "proTier",
+          "dimension": "proTier"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "liquidationFeeFactorKey",
+      "kind": "derived",
+      "base": "LIQUIDATION_FEE_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "swapImpactFactorKey",
+      "kind": "derived",
+      "base": "SWAP_IMPACT_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "bool",
+          "name": "isPositive",
+          "dimension": "bool"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "swapImpactExponentFactorKey",
+      "kind": "derived",
+      "base": "SWAP_IMPACT_EXPONENT_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "swapFeeFactorKey",
+      "kind": "derived",
+      "base": "SWAP_FEE_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "bool",
+          "name": "balanceWasImproved",
+          "dimension": "bool"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "atomicSwapFeeFactorKey",
+      "kind": "derived",
+      "base": "ATOMIC_SWAP_FEE_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "atomicWithdrawalFeeFactorKey",
+      "kind": "derived",
+      "base": "ATOMIC_WITHDRAWAL_FEE_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "depositFeeFactorKey",
+      "kind": "derived",
+      "base": "DEPOSIT_FEE_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "bool",
+          "name": "balanceWasImproved",
+          "dimension": "bool"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "withdrawalFeeFactorKey",
+      "kind": "derived",
+      "base": "WITHDRAWAL_FEE_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "bool",
+          "name": "balanceWasImproved",
+          "dimension": "bool"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "oracleTypeKey",
+      "kind": "derived",
+      "base": "ORACLE_TYPE",
+      "params": [
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "minAffiliateRewardFactorKey",
+      "kind": "derived",
+      "base": "MIN_AFFILIATE_REWARD_FACTOR",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "referralTierLevel",
+          "dimension": "referralTier"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "maxAllowedSubaccountActionCountKey",
+      "kind": "derived",
+      "base": "MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT",
+      "params": [
+        {
+          "type": "address",
+          "name": "account",
+          "dimension": "account"
+        },
+        {
+          "type": "address",
+          "name": "subaccount",
+          "dimension": "account"
+        },
+        {
+          "type": "bytes32",
+          "name": "actionType",
+          "dimension": "subaccountActionType"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "subaccountExpiresAtKey",
+      "kind": "derived",
+      "base": "SUBACCOUNT_EXPIRES_AT",
+      "params": [
+        {
+          "type": "address",
+          "name": "account",
+          "dimension": "account"
+        },
+        {
+          "type": "address",
+          "name": "subaccount",
+          "dimension": "account"
+        },
+        {
+          "type": "bytes32",
+          "name": "actionType",
+          "dimension": "subaccountActionType"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "subaccountActionCountKey",
+      "kind": "derived",
+      "base": "SUBACCOUNT_ACTION_COUNT",
+      "params": [
+        {
+          "type": "address",
+          "name": "account",
+          "dimension": "account"
+        },
+        {
+          "type": "address",
+          "name": "subaccount",
+          "dimension": "account"
+        },
+        {
+          "type": "bytes32",
+          "name": "actionType",
+          "dimension": "subaccountActionType"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "subaccountAutoTopUpAmountKey",
+      "kind": "derived",
+      "base": "SUBACCOUNT_AUTO_TOP_UP_AMOUNT",
+      "params": [
+        {
+          "type": "address",
+          "name": "account",
+          "dimension": "account"
+        },
+        {
+          "type": "address",
+          "name": "subaccount",
+          "dimension": "account"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "subaccountIntegrationIdKey",
+      "kind": "derived",
+      "base": "SUBACCOUNT_INTEGRATION_ID",
+      "params": [
+        {
+          "type": "address",
+          "name": "account",
+          "dimension": "account"
+        },
+        {
+          "type": "address",
+          "name": "subaccount",
+          "dimension": "account"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "subaccountIntegrationDisabledKey",
+      "kind": "derived",
+      "base": "SUBACCOUNT_INTEGRATION_DISABLED",
+      "params": [
+        {
+          "type": "bytes32",
+          "name": "integrationId",
+          "dimension": "integrationId"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "affiliateRewardKey",
+      "kind": "derived",
+      "base": "AFFILIATE_REWARD",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        },
+        {
+          "type": "address",
+          "name": "account",
+          "dimension": "account"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "isMarketDisabledKey",
+      "kind": "derived",
+      "base": "IS_MARKET_DISABLED",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "minMarketTokensForFirstDepositKey",
+      "kind": "derived",
+      "base": "MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "priceFeedKey",
+      "kind": "derived",
+      "base": "PRICE_FEED",
+      "params": [
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "pythPriceFeedKey",
+      "kind": "derived",
+      "base": "PYTH_PRICE_FEED",
+      "params": [
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "dataStreamIdKey",
+      "kind": "derived",
+      "base": "DATA_STREAM_ID",
+      "params": [
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "edgeDataStreamIdKey",
+      "kind": "derived",
+      "base": "EDGE_DATA_STREAM_ID",
+      "params": [
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "edgeDataStreamTokenDecimalsKey",
+      "kind": "derived",
+      "base": "EDGE_DATA_STREAM_TOKEN_DECIMALS",
+      "params": [
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "dataStreamMultiplierKey",
+      "kind": "derived",
+      "base": "DATA_STREAM_MULTIPLIER",
+      "params": [
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "dataStreamSpreadReductionFactorKey",
+      "kind": "derived",
+      "base": "DATA_STREAM_SPREAD_REDUCTION_FACTOR",
+      "params": [
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "priceFeedMultiplierKey",
+      "kind": "derived",
+      "base": "PRICE_FEED_MULTIPLIER",
+      "params": [
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "pythPriceFeedMultiplierKey",
+      "kind": "derived",
+      "base": "PYTH_PRICE_FEED_MULTIPLIER",
+      "params": [
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "priceFeedHeartbeatDurationKey",
+      "kind": "derived",
+      "base": "PRICE_FEED_HEARTBEAT_DURATION",
+      "params": [
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "stablePriceKey",
+      "kind": "derived",
+      "base": "STABLE_PRICE",
+      "params": [
+        {
+          "type": "address",
+          "name": "token",
+          "dimension": "token"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "syncConfigFeatureDisabledKey",
+      "kind": "derived",
+      "base": "SYNC_CONFIG_FEATURE_DISABLED",
+      "params": [
+        {
+          "type": "address",
+          "name": "module",
+          "dimension": "module"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "syncConfigMarketDisabledKey",
+      "kind": "derived",
+      "base": "SYNC_CONFIG_MARKET_DISABLED",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "syncConfigParameterDisabledKey",
+      "kind": "derived",
+      "base": "SYNC_CONFIG_PARAMETER_DISABLED",
+      "params": [
+        {
+          "type": "string",
+          "name": "parameter",
+          "dimension": "configParameterName"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "syncConfigMarketParameterDisabledKey",
+      "kind": "derived",
+      "base": "SYNC_CONFIG_MARKET_PARAMETER_DISABLED",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        },
+        {
+          "type": "string",
+          "name": "parameter",
+          "dimension": "configParameterName"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "syncConfigUpdateCompletedKey",
+      "kind": "derived",
+      "base": "SYNC_CONFIG_UPDATE_COMPLETED",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "updateId",
+          "dimension": "updateId"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "syncConfigLatestUpdateIdKey",
+      "kind": "alias",
+      "base": "SYNC_CONFIG_LATEST_UPDATE_ID",
+      "params": [],
+      "scheme": "identity"
+    },
+    {
+      "fn": "availableFeeAmountKey",
+      "kind": "derived",
+      "base": "AVAILABLE_FEE_AMOUNT",
+      "params": [
+        {
+          "type": "address",
+          "name": "feeToken",
+          "dimension": "token"
+        },
+        {
+          "type": "bytes32",
+          "name": "feeType",
+          "dimension": "feeType"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "liquidationGracePeriodBaseKey",
+      "kind": "derived",
+      "base": "LIQUIDATION_GRACE_PERIOD_BASE",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "liquidationGracePeriodTierMultiplierKey",
+      "kind": "derived",
+      "base": "LIQUIDATION_GRACE_PERIOD_TIER_MULTIPLIER",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "tier",
+          "dimension": "graceTier"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "maxPositionSizeUSDKey",
+      "kind": "derived",
+      "base": "MAX_POSITION_SIZE_USD",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "executionFeeSubsidizeKey",
+      "kind": "derived",
+      "base": "EXECUTION_FEE_SUBSIDIZE",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    },
+    {
+      "fn": "executionFeeSubsidizeSizeKey",
+      "kind": "derived",
+      "base": "EXECUTION_FEE_SUBSIDIZE_SIZE",
+      "params": [
+        {
+          "type": "uint256",
+          "name": "marketIndex",
+          "dimension": "market"
+        }
+      ],
+      "scheme": "keccak256(abi.encode(BASE,...args))"
+    }
+  ],
+  "marketProps": [
+    {
+      "name": "MARKET_INDEX",
+      "literal": "MARKET_INDEX",
+      "hashMode": "abiEncode",
+      "hash": "0x2a43a0e980f36277298263ff4c47a7038903f45e2e14cbf1955338bf9a0017ec",
+      "scheme": "_efficientHash(bytes32(marketIndex), SUBKEY)",
+      "dimension": "market",
+      "valueType": "uint"
+    },
+    {
+      "name": "VAULT",
+      "literal": "VAULT",
+      "hashMode": "abiEncode",
+      "hash": "0xea9b609194985287b2ff2464b6aa465600973cf50bd6cd958ad5c2b8f7dd717b",
+      "scheme": "_efficientHash(bytes32(marketIndex), SUBKEY)",
+      "dimension": "market",
+      "valueType": "address"
+    },
+    {
+      "name": "INDEX_TOKEN",
+      "literal": "INDEX_TOKEN",
+      "hashMode": "abiEncode",
+      "hash": "0x24d94f32ee792b2aa0f9a7903eacb19e72fa7d5a6ae424211a3ecb6df2f3d6f3",
+      "scheme": "_efficientHash(bytes32(marketIndex), SUBKEY)",
+      "dimension": "market",
+      "valueType": "address"
+    },
+    {
+      "name": "COLLATERAL_TOKEN",
+      "literal": "COLLATERAL_TOKEN",
+      "hashMode": "abiEncode",
+      "hash": "0xd890cedaab800f07f6432ac38d67dd1adbee92bfb56f145ca33f99455f6398b4",
+      "scheme": "_efficientHash(bytes32(marketIndex), SUBKEY)",
+      "dimension": "market",
+      "valueType": "address"
+    }
+  ],
+  "roles": [
+    {
+      "name": "TIMELOCK_ADMIN",
+      "literal": "TIMELOCK_ADMIN",
+      "hashMode": "abiEncode",
+      "hash": "0xf49b0c86b385620e25b0985905d1a112a5f1bc1d51a7a292a8cdf112b3a7c47c"
+    },
+    {
+      "name": "CONFIG_KEEPER",
+      "literal": "CONFIG_KEEPER",
+      "hashMode": "abiEncode",
+      "hash": "0x901fb3de937a1dcb6ecaf26886fda47a088e74f36232a0673eade97079dc225b"
+    },
+    {
+      "name": "LIMITED_CONFIG_KEEPER",
+      "literal": "LIMITED_CONFIG_KEEPER",
+      "hashMode": "abiEncode",
+      "hash": "0xb49beded4d572a2d32002662fc5c735817329f4337b3a488aab0b5e835c01ba7"
+    },
+    {
+      "name": "CONTROLLER",
+      "literal": "CONTROLLER",
+      "hashMode": "abiEncode",
+      "hash": "0x97adf037b2472f4a6a9825eff7d2dd45e37f2dc308df2a260d6a72af4189a65b"
+    },
+    {
+      "name": "ROUTER_PLUGIN",
+      "literal": "ROUTER_PLUGIN",
+      "hashMode": "abiEncode",
+      "hash": "0xc82e6cc76072f8edb32d42796e58e13ab6e145524eb6b36c073be82f20d410f3"
+    },
+    {
+      "name": "MARKET_KEEPER",
+      "literal": "MARKET_KEEPER",
+      "hashMode": "abiEncode",
+      "hash": "0xd66692c70b60cf1337e643d6a6473f6865d8c03f3c26b460df3d19b504fb46ae"
+    },
+    {
+      "name": "FEE_KEEPER",
+      "literal": "FEE_KEEPER",
+      "hashMode": "abiEncode",
+      "hash": "0xe0ff4cc0c6ecffab6db3f63ea62dd53f8091919ac57669f1bb3d9828278081d8"
+    },
+    {
+      "name": "ORDER_KEEPER",
+      "literal": "ORDER_KEEPER",
+      "hashMode": "abiEncode",
+      "hash": "0x40a07f8f0fc57fcf18b093d96362a8e661eaac7b7e6edbf66f242111f83a6794"
+    },
+    {
+      "name": "FROZEN_ORDER_KEEPER",
+      "literal": "FROZEN_ORDER_KEEPER",
+      "hashMode": "abiEncode",
+      "hash": "0xcb6c7bc0d25d73c91008af44527b80c56dee4db8965845d926a25659a4a8bc07"
+    },
+    {
+      "name": "LIQUIDATION_KEEPER",
+      "literal": "LIQUIDATION_KEEPER",
+      "hashMode": "abiEncode",
+      "hash": "0x556c788ffc0574ec93966d808c170833d96489c9c58f5bcb3dadf711ba28720e"
+    },
+    {
+      "name": "ADL_KEEPER",
+      "literal": "ADL_KEEPER",
+      "hashMode": "abiEncode",
+      "hash": "0xb37d64edaeaf5e634c13682dbd813f5a12fec9eb4f74433a089e7a3c3289af91"
+    }
+  ],
+  "allowlists": {
+    "config": [
+      "MIN_HANDLE_EXECUTION_ERROR_GAS",
+      "MIN_HANDLE_EXECUTION_ERROR_GAS_TO_FORWARD",
+      "MIN_ADDITIONAL_GAS_FOR_EXECUTION",
+      "IS_MARKET_DISABLED",
+      "MAX_SWAP_PATH_LENGTH",
+      "MAX_CALLBACK_GAS_LIMIT",
+      "REFUND_EXECUTION_FEE_GAS_LIMIT",
+      "MIN_POSITION_SIZE_USD",
+      "MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS",
+      "MAX_POOL_AMOUNT",
+      "MAX_POOL_USD_FOR_DEPOSIT",
+      "MAX_COLLATERAL_SUM",
+      "MAX_OPEN_INTEREST",
+      "MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT",
+      "CREATE_DEPOSIT_FEATURE_DISABLED",
+      "CANCEL_DEPOSIT_FEATURE_DISABLED",
+      "EXECUTE_DEPOSIT_FEATURE_DISABLED",
+      "CREATE_WITHDRAWAL_FEATURE_DISABLED",
+      "CANCEL_WITHDRAWAL_FEATURE_DISABLED",
+      "EXECUTE_WITHDRAWAL_FEATURE_DISABLED",
+      "EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED",
+      "CREATE_ORDER_FEATURE_DISABLED",
+      "EXECUTE_ORDER_FEATURE_DISABLED",
+      "EXECUTE_ADL_FEATURE_DISABLED",
+      "UPDATE_ORDER_FEATURE_DISABLED",
+      "CANCEL_ORDER_FEATURE_DISABLED",
+      "CLAIM_FUNDING_FEES_FEATURE_DISABLED",
+      "CLAIM_COLLATERAL_FEATURE_DISABLED",
+      "CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED",
+      "CLAIM_UI_FEES_FEATURE_DISABLED",
+      "GENERAL_CLAIM_FEATURE_DISABLED",
+      "JIT_FEATURE_DISABLED",
+      "MIN_AFFILIATE_REWARD_FACTOR",
+      "SUBACCOUNT_FEATURE_DISABLED",
+      "GASLESS_FEATURE_DISABLED",
+      "MIN_ORACLE_BLOCK_CONFIRMATIONS",
+      "MAX_ORACLE_PRICE_AGE",
+      "MAX_RECORDED_PRICE_AGE",
+      "MAX_ORACLE_TIMESTAMP_RANGE",
+      "ORACLE_TIMESTAMP_ADJUSTMENT",
+      "ORACLE_PROVIDER_MIN_CHANGE_DELAY",
+      "CHAINLINK_PAYMENT_TOKEN",
+      "SEQUENCER_GRACE_DURATION",
+      "MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR",
+      "POSITION_FEE_RECEIVER_FACTOR",
+      "LIQUIDATION_FEE_RECEIVER_FACTOR",
+      "SWAP_FEE_RECEIVER_FACTOR",
+      "BORROWING_FEE_RECEIVER_FACTOR",
+      "ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1",
+      "ESTIMATED_GAS_FEE_PER_ORACLE_PRICE",
+      "ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR",
+      "EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1",
+      "EXECUTION_GAS_FEE_PER_ORACLE_PRICE",
+      "EXECUTION_GAS_FEE_MULTIPLIER_FACTOR",
+      "MAX_EXECUTION_FEE_MULTIPLIER_FACTOR",
+      "CREATE_DEPOSIT_GAS_LIMIT",
+      "DEPOSIT_GAS_LIMIT",
+      "CREATE_WITHDRAWAL_GAS_LIMIT",
+      "WITHDRAWAL_GAS_LIMIT",
+      "SINGLE_SWAP_GAS_LIMIT",
+      "INCREASE_ORDER_GAS_LIMIT",
+      "DECREASE_ORDER_GAS_LIMIT",
+      "SWAP_ORDER_GAS_LIMIT",
+      "SET_TRADER_REFERRAL_CODE_GAS_LIMIT",
+      "REGISTER_CODE_GAS_LIMIT",
+      "TOKEN_TRANSFER_GAS_LIMIT",
+      "NATIVE_TOKEN_TRANSFER_GAS_LIMIT",
+      "REQUEST_EXPIRATION_TIME",
+      "MIN_COLLATERAL_FACTOR",
+      "MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER",
+      "MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION",
+      "MIN_COLLATERAL_USD",
+      "VIRTUAL_TOKEN_ID",
+      "VIRTUAL_MARKET_ID",
+      "VIRTUAL_INVENTORY_FOR_SWAPS",
+      "VIRTUAL_INVENTORY_FOR_POSITIONS",
+      "VIRTUAL_INVENTORY_FOR_POSITIONS_IN_TOKENS",
+      "POSITION_IMPACT_FACTOR",
+      "POSITION_IMPACT_EXPONENT_FACTOR",
+      "MAX_POSITION_IMPACT_FACTOR",
+      "POSITION_FEE_FACTOR",
+      "SKEW_IMPACT_FACTOR",
+      "MIN_SKEW_IMPACT",
+      "MAX_SKEW_IMPACT",
+      "PRO_DISCOUNT_FACTOR",
+      "PRO_TRADER_TIER",
+      "LIQUIDATION_FEE_FACTOR",
+      "SWAP_IMPACT_FACTOR",
+      "SWAP_IMPACT_EXPONENT_FACTOR",
+      "SWAP_FEE_FACTOR",
+      "DEPOSIT_FEE_FACTOR",
+      "WITHDRAWAL_FEE_FACTOR",
+      "ATOMIC_SWAP_FEE_FACTOR",
+      "ATOMIC_WITHDRAWAL_FEE_FACTOR",
+      "MAX_UI_FEE_FACTOR",
+      "MAX_AUTO_CANCEL_ORDERS",
+      "MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS",
+      "ORACLE_TYPE",
+      "RESERVE_FACTOR",
+      "MAX_PNL_FACTOR",
+      "MAX_PNL_FACTOR_FOR_ADL",
+      "MIN_PNL_FACTOR_AFTER_ADL",
+      "MAX_PNL_FACTOR_FOR_WITHDRAWALS",
+      "MAX_LENDABLE_IMPACT_FACTOR",
+      "MAX_LENDABLE_IMPACT_FACTOR_FOR_WITHDRAWALS",
+      "MAX_LENDABLE_IMPACT_USD",
+      "FUNDING_FLOOR_FACTOR",
+      "FUNDING_BASE_FACTOR",
+      "MIN_FUNDING_FACTOR_PER_SECOND",
+      "MAX_FUNDING_FACTOR_PER_SECOND",
+      "THRESHOLD_FOR_STABLE_FUNDING",
+      "THRESHOLD_FOR_DECREASE_FUNDING",
+      "OPTIMAL_USAGE_FACTOR",
+      "BASE_BORROWING_FACTOR",
+      "ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR",
+      "BORROWING_FACTOR",
+      "BORROWING_EXPONENT_FACTOR",
+      "SKIP_BORROWING_FEE_FOR_SMALLER_SIDE",
+      "USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE",
+      "PRICE_FEED_HEARTBEAT_DURATION",
+      "SYNC_CONFIG_FEATURE_DISABLED",
+      "SYNC_CONFIG_MARKET_DISABLED",
+      "SYNC_CONFIG_PARAMETER_DISABLED",
+      "SYNC_CONFIG_MARKET_PARAMETER_DISABLED",
+      "DATA_STREAM_SPREAD_REDUCTION_FACTOR",
+      "IS_MULTICHAIN_PROVIDER_ENABLED",
+      "IS_MULTICHAIN_ENDPOINT_ENABLED",
+      "IS_RELAY_FEE_EXCLUDED",
+      "IS_SRC_CHAIN_ID_ENABLED",
+      "EID_TO_SRC_CHAIN_ID",
+      "MAX_DATA_LENGTH",
+      "CLAIMABLE_COLLATERAL_DELAY",
+      "SUBACCOUNT_INTEGRATION_DISABLED",
+      "RELAY_FEE_ADDRESS",
+      "RELAY_FEE_BASE_GAS_LIMIT",
+      "RELAY_FEE_MULTIPLIER_FACTOR",
+      "MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT",
+      "MAX_RELAY_SWAP_WNT_CAP"
+    ],
+    "limitedConfig": [
+      "ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1",
+      "ESTIMATED_GAS_FEE_PER_ORACLE_PRICE",
+      "ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR",
+      "EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1",
+      "EXECUTION_GAS_FEE_PER_ORACLE_PRICE",
+      "EXECUTION_GAS_FEE_MULTIPLIER_FACTOR",
+      "MAX_FUNDING_FACTOR_PER_SECOND",
+      "MIN_FUNDING_FACTOR_PER_SECOND",
+      "MAX_POOL_AMOUNT",
+      "MAX_POOL_USD_FOR_DEPOSIT",
+      "MAX_OPEN_INTEREST",
+      "PRO_TRADER_TIER"
+    ]
+  },
+  "valueTypes": {
+    "MAX_CALLBACK_GAS_LIMIT": "uint",
+    "REFUND_EXECUTION_FEE_GAS_LIMIT": "uint",
+    "ORACLE_PROVIDER_MIN_CHANGE_DELAY": "uint",
+    "REQUEST_EXPIRATION_TIME": "uint",
+    "MAX_DATA_LENGTH": "uint",
+    "FEE_RECEIVER": "address",
+    "MIN_HANDLE_EXECUTION_ERROR_GAS": "uint",
+    "MIN_HANDLE_EXECUTION_ERROR_GAS_TO_FORWARD": "uint",
+    "MIN_ADDITIONAL_GAS_FOR_EXECUTION": "uint",
+    "MAX_EXECUTION_FEE_MULTIPLIER_FACTOR": "uint",
+    "HOLDING_ADDRESS": "address",
+    "EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1": "uint",
+    "EXECUTION_GAS_FEE_PER_ORACLE_PRICE": "uint",
+    "EXECUTION_GAS_FEE_MULTIPLIER_FACTOR": "uint",
+    "ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1": "uint",
+    "ESTIMATED_GAS_FEE_PER_ORACLE_PRICE": "uint",
+    "ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR": "uint",
+    "SET_TRADER_REFERRAL_CODE_GAS_LIMIT": "uint",
+    "REGISTER_CODE_GAS_LIMIT": "uint",
+    "MARKET_LIST": "uint",
+    "CLAIMABLE_COLLATERAL_TIME_DIVISOR": "uint",
+    "CLAIMABLE_COLLATERAL_DELAY": "uint",
+    "MAX_UI_FEE_FACTOR": "uint",
+    "NONCE": "uint",
+    "CHAINLINK_PAYMENT_TOKEN": "address",
+    "SEQUENCER_GRACE_DURATION": "uint",
+    "MAX_RECORDED_PRICE_AGE": "uint",
+    "MAX_ORACLE_TIMESTAMP_RANGE": "uint",
+    "MAX_ORACLE_PRICE_AGE": "uint",
+    "MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR": "uint",
+    "MAX_AUTO_CANCEL_ORDERS": "uint",
+    "ORDER_LIST": "bytes32",
+    "MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS": "uint",
+    "MIN_COLLATERAL_USD": "uint",
+    "MIN_POSITION_SIZE_USD": "uint",
+    "POSITION_LIST": "bytes32",
+    "MAX_PRICE_IMPACT_SPREAD": "uint",
+    "POSITION_FEE_RECEIVER_FACTOR": "uint",
+    "LIQUIDATION_FEE_RECEIVER_FACTOR": "uint",
+    "RELAY_FEE_BASE_GAS_LIMIT": "uint",
+    "RELAY_FEE_MULTIPLIER_FACTOR": "uint",
+    "MAX_RELAY_SWAP_WNT_CAP": "uint",
+    "NATIVE_TOKEN_TRANSFER_GAS_LIMIT": "uint",
+    "MAX_PNL_FACTOR_FOR_WITHDRAWALS": "uint",
+    "MAX_PNL_FACTOR_FOR_ADL": "uint",
+    "MIN_PNL_FACTOR_AFTER_ADL": "uint",
+    "LATEST_ADL_AT": "uint",
+    "IS_ADL_ENABLED": "bool",
+    "SAVED_CALLBACK_CONTRACT": "address",
+    "ORACLE_PROVIDER_FOR_TOKEN": "address",
+    "IS_ORACLE_PROVIDER_ENABLED": "bool",
+    "ORACLE_PROVIDER_UPDATED_AT": "uint",
+    "SYNC_CONFIG_LATEST_UPDATE_ID": "uint",
+    "SYNC_CONFIG_MARKET_DISABLED": "bool",
+    "SYNC_CONFIG_PARAMETER_DISABLED": "bool",
+    "SYNC_CONFIG_MARKET_PARAMETER_DISABLED": "bool",
+    "SYNC_CONFIG_UPDATE_COMPLETED": "bool",
+    "PRICE_FEED": "address",
+    "DATA_STREAM_ID": "bytes32",
+    "EDGE_DATA_STREAM_ID": "bytes32",
+    "PRICE_FEED_MULTIPLIER": "uint",
+    "PRICE_FEED_HEARTBEAT_DURATION": "uint",
+    "STABLE_PRICE": "uint",
+    "DATA_STREAM_MULTIPLIER": "uint",
+    "DATA_STREAM_SPREAD_REDUCTION_FACTOR": "uint",
+    "EDGE_DATA_STREAM_TOKEN_DECIMALS": "uint",
+    "AVAILABLE_FEE_AMOUNT": "uint",
+    "EXECUTION_FEE_SUBSIDIZE": "uint",
+    "EXECUTION_FEE_SUBSIDIZE_SIZE": "uint",
+    "INCREASE_ORDER_GAS_LIMIT": "uint",
+    "DECREASE_ORDER_GAS_LIMIT": "uint",
+    "SWAP_ORDER_GAS_LIMIT": "uint",
+    "MAX_OPEN_INTEREST": "uint",
+    "MAX_OPEN_INTEREST_FACTOR": "uint",
+    "CLAIMABLE_COLLATERAL_AMOUNT": "uint",
+    "CLAIMED_COLLATERAL_AMOUNT": "uint",
+    "CLAIMABLE_COLLATERAL_FACTOR": "uint",
+    "CLAIMABLE_COLLATERAL_REDUCTION_FACTOR": "uint",
+    "FUNDING_UPDATED_AT": "uint",
+    "FUNDING_SKEW_EMA": "bytes32",
+    "FUNDING_FLOOR_FACTOR": "int",
+    "FUNDING_BASE_FACTOR": "int",
+    "MIN_FUNDING_FACTOR_PER_SECOND": "int",
+    "MAX_FUNDING_FACTOR_PER_SECOND": "int",
+    "CUMULATIVE_OPEN_COSTS": "uint",
+    "OPEN_INTEREST_IN_TOKENS": "uint",
+    "MAX_POSITION_IMPACT_FACTOR": "uint",
+    "MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS": "uint",
+    "MIN_COLLATERAL_FACTOR": "uint",
+    "MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION": "uint",
+    "MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER": "uint",
+    "RESERVE_FACTOR": "uint",
+    "MAX_PNL_FACTOR": "uint",
+    "NEGATIVE_FUNDING_FEE_PER_SIZE": "uint",
+    "POSITIVE_FUNDING_FEE_PER_SIZE": "uint",
+    "IS_MARKET_DISABLED": "bool",
+    "UI_FEE_FACTOR": "uint",
+    "ORACLE_TIMESTAMP_ADJUSTMENT": "uint",
+    "PYTH_PRICE_FEED": "bytes32",
+    "PYTH_PRICE_FEED_MULTIPLIER": "uint",
+    "LIQUIDATION_GRACE_PERIOD_TIER_MULTIPLIER": "uint",
+    "LIQUIDATION_GRACE_PERIOD_BASE": "uint",
+    "ACCOUNT_ORDER_LIST": "bytes32",
+    "ACCOUNT_POSITION_LIST": "bytes32",
+    "MAX_POSITION_SIZE_USD": "uint",
+    "CONSTANT_PRICE_SPREAD": "uint",
+    "PRICE_IMPACT_PARAMETER": "uint",
+    "ASK_ORDER_BOOK_DEPTH": "uint",
+    "BID_ORDER_BOOK_DEPTH": "uint",
+    "SKEW_IMPACT_FACTOR": "int",
+    "MIN_SKEW_IMPACT": "int",
+    "MAX_SKEW_IMPACT": "int",
+    "POSITION_FEE_FACTOR": "uint",
+    "PRO_TRADER_TIER": "uint",
+    "PRO_DISCOUNT_FACTOR": "uint",
+    "LIQUIDATION_FEE_FACTOR": "uint",
+    "SUBACCOUNT_EXPIRES_AT": "uint",
+    "MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT": "uint",
+    "SUBACCOUNT_ACTION_COUNT": "uint",
+    "SUBACCOUNT_AUTO_TOP_UP_AMOUNT": "uint",
+    "SUBACCOUNT_INTEGRATION_ID": "bytes32",
+    "SUBACCOUNT_INTEGRATION_DISABLED": "bool",
+    "MIN_AFFILIATE_REWARD_FACTOR": "uint",
+    "IS_RELAY_FEE_EXCLUDED": "bool",
+    "TOKEN_TRANSFER_GAS_LIMIT": "uint",
+    "CLAIMABLE_FEE_AMOUNT": "uint",
+    "SKIP_BORROWING_FEE_FOR_SMALLER_SIDE": "bool",
+    "USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE": "bool",
+    "JIT_FEATURE_DISABLED": "bool",
+    "CREATE_DEPOSIT_FEATURE_DISABLED": "bool",
+    "CANCEL_DEPOSIT_FEATURE_DISABLED": "bool",
+    "EXECUTE_DEPOSIT_FEATURE_DISABLED": "bool",
+    "CREATE_WITHDRAWAL_FEATURE_DISABLED": "bool",
+    "CANCEL_WITHDRAWAL_FEATURE_DISABLED": "bool",
+    "EXECUTE_WITHDRAWAL_FEATURE_DISABLED": "bool",
+    "EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED": "bool",
+    "CREATE_ORDER_FEATURE_DISABLED": "bool",
+    "EXECUTE_ORDER_FEATURE_DISABLED": "bool",
+    "EXECUTE_ADL_FEATURE_DISABLED": "bool",
+    "UPDATE_ORDER_FEATURE_DISABLED": "bool",
+    "CANCEL_ORDER_FEATURE_DISABLED": "bool",
+    "CLAIM_FUNDING_FEES_FEATURE_DISABLED": "bool",
+    "CLAIM_COLLATERAL_FEATURE_DISABLED": "bool",
+    "CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED": "bool",
+    "CLAIM_UI_FEES_FEATURE_DISABLED": "bool",
+    "SUBACCOUNT_FEATURE_DISABLED": "bool",
+    "GASLESS_FEATURE_DISABLED": "bool",
+    "GENERAL_CLAIM_FEATURE_DISABLED": "bool",
+    "SYNC_CONFIG_FEATURE_DISABLED": "bool",
+    "IS_MULTICHAIN_PROVIDER_ENABLED": "bool",
+    "IS_MULTICHAIN_ENDPOINT_ENABLED": "bool",
+    "IS_SRC_CHAIN_ID_ENABLED": "bool"
+  },
+  "valueTypesFromNamingHeuristic": {
+    "SKIP_BORROWING_FEE_FOR_SMALLER_SIDE": "bool",
+    "USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE": "bool",
+    "JIT_FEATURE_DISABLED": "bool",
+    "CREATE_DEPOSIT_FEATURE_DISABLED": "bool",
+    "CANCEL_DEPOSIT_FEATURE_DISABLED": "bool",
+    "EXECUTE_DEPOSIT_FEATURE_DISABLED": "bool",
+    "CREATE_WITHDRAWAL_FEATURE_DISABLED": "bool",
+    "CANCEL_WITHDRAWAL_FEATURE_DISABLED": "bool",
+    "EXECUTE_WITHDRAWAL_FEATURE_DISABLED": "bool",
+    "EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED": "bool",
+    "CREATE_ORDER_FEATURE_DISABLED": "bool",
+    "EXECUTE_ORDER_FEATURE_DISABLED": "bool",
+    "EXECUTE_ADL_FEATURE_DISABLED": "bool",
+    "UPDATE_ORDER_FEATURE_DISABLED": "bool",
+    "CANCEL_ORDER_FEATURE_DISABLED": "bool",
+    "CLAIM_FUNDING_FEES_FEATURE_DISABLED": "bool",
+    "CLAIM_COLLATERAL_FEATURE_DISABLED": "bool",
+    "CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED": "bool",
+    "CLAIM_UI_FEES_FEATURE_DISABLED": "bool",
+    "SUBACCOUNT_FEATURE_DISABLED": "bool",
+    "GASLESS_FEATURE_DISABLED": "bool",
+    "GENERAL_CLAIM_FEATURE_DISABLED": "bool",
+    "SYNC_CONFIG_FEATURE_DISABLED": "bool",
+    "IS_MULTICHAIN_PROVIDER_ENABLED": "bool",
+    "IS_MULTICHAIN_ENDPOINT_ENABLED": "bool",
+    "IS_SRC_CHAIN_ID_ENABLED": "bool"
+  },
+  "ambiguousValueTypes": {},
+  "nonScalar": {
+    "setRoots": [
+      "MARKET_LIST",
+      "FEE_BATCH_LIST",
+      "DEPOSIT_LIST",
+      "ACCOUNT_DEPOSIT_LIST",
+      "WITHDRAWAL_LIST",
+      "ACCOUNT_WITHDRAWAL_LIST",
+      "SUBACCOUNT_LIST",
+      "AUTO_CANCEL_ORDER_LIST",
+      "CONTRIBUTOR_ACCOUNT_LIST",
+      "CONTRIBUTOR_TOKEN_LIST",
+      "POSITION_LIST",
+      "ACCOUNT_POSITION_LIST",
+      "ORDER_LIST",
+      "ACCOUNT_ORDER_LIST"
+    ],
+    "identifiers": [
+      "DEPOSIT_FEE_TYPE",
+      "WITHDRAWAL_FEE_TYPE",
+      "SWAP_FEE_TYPE",
+      "ATOMIC_SWAP_FEE_TYPE",
+      "POSITION_FEE_TYPE",
+      "LIQUIDATION_FEE_TYPE",
+      "FUNDING_FEE_TYPE",
+      "UI_DEPOSIT_FEE_TYPE",
+      "UI_WITHDRAWAL_FEE_TYPE",
+      "UI_SWAP_FEE_TYPE",
+      "UI_POSITION_FEE_TYPE"
+    ]
+  },
+  "dimensionByParam": {
+    "marketIndex": "market",
+    "token": "token",
+    "feeToken": "token",
+    "module": "module",
+    "isLong": "bool",
+    "isPositive": "bool",
+    "isLongToken": "bool",
+    "balanceWasImproved": "bool",
+    "orderType": "orderType",
+    "pnlFactorType": "pnlFactorType",
+    "feeType": "feeType",
+    "tier": "graceTier",
+    "proTier": "proTier",
+    "referralTierLevel": "referralTier",
+    "provider": "oracleProvider",
+    "oracle": "oracleContract",
+    "account": "account",
+    "subaccount": "account",
+    "sender": "account",
+    "actionType": "subaccountActionType",
+    "positionKey": "positionKey",
+    "timeKey": "timeKey",
+    "parameter": "configParameterName",
+    "distributionId": "distributionId",
+    "updateId": "updateId",
+    "virtualTokenId": "virtualTokenId",
+    "virtualMarketId": "virtualMarketId",
+    "integrationId": "integrationId"
+  }
+}

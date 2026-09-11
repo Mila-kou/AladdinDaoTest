@@ -11,8 +11,11 @@ import {
 } from '../../config/environments/catalog.js';
 import { normalizeForkDisplayName } from '../domain/fork-display.js';
 import { loadParameters, type ParameterReference } from '../reporting/reference-sources.js';
+import {
+  assertRuntimeEnvironmentBinding,
+  loadEnvironmentBinding,
+} from '../config/environment-binding.js';
 
-const DEPLOYMENT_NAME = 'base_sepolia_v0.3.1_260729';
 const activeQueries = new Map<EnvironmentName, Promise<ParameterQueryResult>>();
 
 export interface ParameterEnvironmentView {
@@ -33,6 +36,7 @@ interface SnapshotIdentity {
     readonly rpc?: string;
     readonly chainId?: number;
     readonly blockNumber?: number;
+    readonly deploymentName?: string;
   };
 }
 
@@ -108,16 +112,13 @@ async function latestBlockNumber(rpcUrl: string): Promise<number> {
   return Number(BigInt(payload.result));
 }
 
-// tx-fork 复用既有的部署参数 dump；该目录在工作区重构时从 Test/project/fx100/config
-// 迁到了 TestCase/project/fx100/config，路径没跟着改，导致此前会在仓外新建空目录并重新全量 dump。
-function cachePaths(projectRoot: string, environment: EnvironmentName) {
-  const directory = environment === 'tx-fork'
-    ? resolve(projectRoot, '../TestCase/project/fx100/config')
-    : resolve(projectRoot, 'artifacts/parameter-cache', environment);
+// 参数缓存按「环境 + 绑定的 manifest.name」隔离；切换部署不会复用另一个环境或旧版本的快照。
+function cachePaths(projectRoot: string, environment: EnvironmentName, deploymentName: string) {
+  const directory = resolve(projectRoot, 'artifacts/parameter-cache', environment);
   return {
     directory,
-    snapshot: join(directory, `${DEPLOYMENT_NAME}.params.json`),
-    csv: join(directory, `${DEPLOYMENT_NAME}.params-by-module.csv`),
+    snapshot: join(directory, `${deploymentName}.params.json`),
+    csv: join(directory, `${deploymentName}.params-by-module.csv`),
   };
 }
 
@@ -134,10 +135,13 @@ async function cacheMatches(
   snapshotPath: string,
   displayName: string,
   blockNumber: number,
+  deploymentName: string,
 ): Promise<boolean> {
   try {
     const snapshot = JSON.parse(await readFile(snapshotPath, 'utf8')) as SnapshotIdentity;
-    return snapshot.meta?.rpc === displayName && snapshot.meta.blockNumber === blockNumber;
+    return snapshot.meta?.rpc === displayName
+      && snapshot.meta.blockNumber === blockNumber
+      && snapshot.meta.deploymentName === deploymentName;
   } catch {
     return false;
   }
@@ -178,12 +182,25 @@ async function executeParameterQuery(
   const rpcUrl = rpcUrlFor(environment);
   if (!rpcUrl) throw new Error(`Project 环境 ${environment} 未配置 RPC。`);
 
+  const binding = loadEnvironmentBinding(projectRoot, environment);
+  await assertRuntimeEnvironmentBinding({
+    environment,
+    chainId: binding.binding.environmentChainId,
+    rpcUrl,
+    deploymentManifestPath: binding.manifestPath,
+    deploymentId: binding.binding.deploymentId,
+    deploymentRelease: binding.binding.release,
+    requestTimeoutMs: 30_000,
+  }, projectRoot);
+  if (!binding.addressesFile) {
+    throw new Error(`环境 ${environment} 的绑定 manifest 缺少 source.addressesFile，无法读取参数。`);
+  }
   const displayName = environmentDisplayName(environment, rpcUrl);
   const latestBlock = await latestBlockNumber(rpcUrl);
-  const paths = cachePaths(projectRoot, environment);
+  const paths = cachePaths(projectRoot, environment, binding.manifest.name);
   await mkdir(paths.directory, { recursive: true });
   const cached = !forceRefresh && await fileExists(paths.csv)
-    && await cacheMatches(paths.snapshot, displayName, latestBlock);
+    && await cacheMatches(paths.snapshot, displayName, latestBlock, binding.manifest.name);
 
   if (!cached) {
     const dumpTool = resolve(projectRoot, 'tools/config-dump/dump-config.mjs');
@@ -191,9 +208,12 @@ async function executeParameterQuery(
     await runNode(dumpTool, [
       '--block', String(latestBlock),
       '--out', paths.directory,
+      '--deployment', binding.addressesFile,
+      '--deployment-name', binding.manifest.name,
+      '--registry', binding.parameterRegistryPath,
       '--rpc-label', displayName,
       '--max-calls', '100000',
-      ...(environment === 'base-sepolia' ? ['--expected-chain-id', '84532'] : []),
+      '--expected-chain-id', String(binding.binding.environmentChainId),
     ], { cwd: projectRoot, env: { FX100_RPC_URL: rpcUrl } });
     await runNode(groupTool, [
       '--snapshot', paths.snapshot,

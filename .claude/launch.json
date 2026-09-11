@@ -1,0 +1,42 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "fx100-frontend-local",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd Github/fx100-apps@develop && yarn workspace fx-base-app dev"
+      ],
+      "port": 3010
+    },
+    {
+      "name": "testcode-dashboard",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd TestCode && npm run dashboard:serve"
+      ],
+      "port": 4173
+    },
+    {
+      "name": "testcode-dashboard-verify",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd TestCode && npx tsx scripts/serve-dashboard.ts --port 4199 --dir artifacts/latest"
+      ],
+      "port": 4199,
+      "autoPort": false
+    },
+    {
+      "name": "fx100-frontend-devfork",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd Github/fx100-apps@develop && set -a && . /private/tmp/claude-501/-Users-milakou-Documents-FX100/74a07254-cbd4-44e2-a47a-243607bcfbdd/scratchpad/frontend-devfork.env && set +a && yarn workspace fx-base-app exec next dev -p ${FX100_DEV_PORT:-3110}"
+      ],
+      "port": 3110
+    }
+  ]
+}

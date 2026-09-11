@@ -1,0 +1,36 @@
+{
+  "id": "2026-08-14T053632-208Z",
+  "release": "release-v0.3.1",
+  "description": "由直接 Playwright 执行自动登记。",
+  "scope": "single",
+  "environmentMode": "default",
+  "marketSelection": "default",
+  "keeperMode": "inline",
+  "createdAt": "2026-08-14T05:36:32.208Z",
+  "startedAt": "2026-08-14T05:36:32.208Z",
+  "endedAt": "2026-08-14T05:37:19.450Z",
+  "status": "PASS",
+  "rpcUpdatedEnvironments": [],
+  "cases": [
+    {
+      "id": "SCN-016",
+      "title": "括号单 SL 先触发",
+      "plannedEnvironment": "oracle-fork",
+      "resolvedEnvironment": "tx-fork",
+      "plannedMarketMode": "mock-market",
+      "resolvedMarketMode": "mock-market",
+      "resolvedOracleMode": "mock-oracle",
+      "resolvedMockResourceAlias": "default-mock",
+      "marketCompatibility": "mock-only",
+      "automated": true,
+      "specPath": "tests/S02/scn-016.spec.ts",
+      "status": "PASS",
+      "resultRunId": "2026-08-14T053632-208Z",
+      "message": "链上 38 项核对通过（SL 止损触发全平（亏损瀑布））；已记录用户签名挂单/平仓、推价触发与 Keeper 执行完整回执；执行详情已展开 125 项 Before / After / Δ / Expected 对账。"
+    }
+  ],
+  "logTail": [
+    "检测到看板外直接执行的 Playwright 结果，已自动登记到最近运行。",
+    "运行结束：PASS。"
+  ]
+}

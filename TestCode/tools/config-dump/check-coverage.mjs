@@ -8,7 +8,7 @@
 //
 // C 表是本脚本的目的：清单是人手维护的，只会越用越旧；快照是从合约源码生成的，不会漏。
 //
-// 用法：node check-coverage.mjs [--snapshot <params.json>] [--out <coverage.md>]
+// 用法：node check-coverage.mjs --snapshot <params.json> [--out <coverage.md>]
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
@@ -16,7 +16,6 @@ import { fileURLToPath } from "node:url";
 import { humanize } from "./lib/hints.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const DEFAULT_SNAPSHOT = resolve(HERE, "../../artifacts/parameter-cache/base_sepolia_v0.3.1_260729.params.json");
 const DEFAULT_CHECKLIST = join(HERE, "checklist-取数清单.json");
 
 function parseArgs() {
@@ -30,9 +29,11 @@ function parseArgs() {
 
 function main() {
   const args = parseArgs();
-  const snapshot = JSON.parse(readFileSync(resolve(args.snapshot ?? DEFAULT_SNAPSHOT), "utf8"));
+  if (!args.snapshot) throw new Error("缺少 --snapshot <params.json>；不再回退固定 v0.3.1 快照。");
+  const snapshotPath = resolve(args.snapshot);
+  const snapshot = JSON.parse(readFileSync(snapshotPath, "utf8"));
   const checklist = JSON.parse(readFileSync(resolve(args.checklist ?? DEFAULT_CHECKLIST), "utf8"));
-  const outPath = resolve(args.out ?? join(dirname(resolve(args.snapshot ?? DEFAULT_SNAPSHOT)), "取数清单-覆盖度.md"));
+  const outPath = resolve(args.out ?? join(dirname(snapshotPath), "取数清单-覆盖度.md"));
 
   const byBase = new Map();
   for (const entry of snapshot.entries) {

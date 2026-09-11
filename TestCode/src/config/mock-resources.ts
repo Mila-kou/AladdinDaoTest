@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 
@@ -108,9 +109,9 @@ export type SharedCollateralRecord = z.infer<typeof sharedCollateralSchema>;
 export type MockResourceRegistry = z.infer<typeof registrySchema>;
 export type MockResourceEnvironment = keyof MockResourceRegistry['resources'];
 
-function registryPath(): string {
+function registryPath(projectRoot: string = process.cwd()): string {
   return resolve(
-    process.cwd(),
+    projectRoot,
     process.env.E2E_MOCK_RESOURCE_REGISTRY ?? './config/mock-resources.json',
   );
 }
@@ -187,8 +188,8 @@ export function isCompleteDefaultMockResource(resource: MockResourceRecord): boo
   return isCompleteMockMarketBundle(resource, resource.defaultBundleAlias ?? 'default-mock');
 }
 
-export async function loadMockResourceRegistry(): Promise<MockResourceRegistry> {
-  const parsed = registrySchema.parse(JSON.parse(await readFile(registryPath(), 'utf8')) as unknown);
+function normalizeMockResourceRegistry(input: unknown): MockResourceRegistry {
+  const parsed = registrySchema.parse(input);
   return registrySchema.parse({
     ...parsed,
     resources: Object.fromEntries(Object.entries(parsed.resources).map(([environment, resource]) => {
@@ -203,6 +204,18 @@ export async function loadMockResourceRegistry(): Promise<MockResourceRegistry> 
       }];
     })),
   });
+}
+
+export function loadMockResourceRegistrySync(projectRoot: string = process.cwd()): MockResourceRegistry {
+  return normalizeMockResourceRegistry(
+    JSON.parse(readFileSync(registryPath(projectRoot), 'utf8')) as unknown,
+  );
+}
+
+export async function loadMockResourceRegistry(): Promise<MockResourceRegistry> {
+  return normalizeMockResourceRegistry(
+    JSON.parse(await readFile(registryPath(), 'utf8')) as unknown,
+  );
 }
 
 export async function resolveDefaultMockResource(

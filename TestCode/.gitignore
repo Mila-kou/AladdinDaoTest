@@ -3,6 +3,12 @@ node_modules/
 .env.local
 .env.*.local
 config/faucet-auto-funding.json
+# 本机造数据计划（页面「Faucet & 交易」保存；按机器/环境定制，不进仓）
+config/noise-plan.json
+config/noise-traders.json
+config/noise-traders.secret.json
+config/noise-traders.secret.json.*.tmp
+config/noise-traders.csv
 
 artifacts/*
 !artifacts/.gitkeep

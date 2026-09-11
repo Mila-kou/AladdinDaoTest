@@ -1,0 +1,33 @@
+{
+  "general": {
+    "sequencerGraceDuration": "0",
+    "maxOraclePriceAge": "60",
+    "maxRecordedPriceAge": "86400",
+    "maxOracleTimestampRange": "60",
+    "maxOracleRefPriceDeviationFactor": "0.02",
+    "maxPriceImpactSpread": "0.005",
+    "minPositionSizeUsd": "10",
+    "requestExpirationTime": "3600",
+    "maxCallbackGasLimit": "2000000",
+    "maxDataLength": "32",
+    "minAdditionalGasForExecution": "0",
+    "minHandleExecutionErrorGas": "0",
+    "minHandleExecutionErrorGasToForward": "0",
+    "nativeTokenTransferGasLimit": "200000",
+    "increaseOrderGasLimit": "3900000",
+    "decreaseOrderGasLimit": "3900000",
+    "estimatedGasFeeBaseAmount": "600000",
+    "estimatedGasFeePerOraclePrice": "250000",
+    "estimatedGasFeeMultiplierFactor": "1",
+    "maxTotalCallbackGasLimitForAutoCancelOrders": "2000000",
+    "maxAutoCancelOrders": "64",
+    "liquidationGraceTier0Multiplier": "1",
+    "relayFeeBaseGasLimit": "30000",
+    "maxRelaySwapWntCap": "0.00005",
+    "maxPnlFactorForAdl": "0.75",
+    "minPnlFactorAfterAdl": "0.5",
+    "maxPnlFactorForWithdrawals": "0.65",
+    "positionFeeReceiverFactor": "0.5",
+    "liquidationFeeReceiverFactor": "0.5"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "id": "2026-08-14T040506-824Z",
+  "release": "release-v0.3.1",
+  "description": "由直接 Playwright 执行自动登记。",
+  "scope": "single",
+  "environmentMode": "default",
+  "marketSelection": "default",
+  "keeperMode": "inline",
+  "createdAt": "2026-08-14T04:05:06.824Z",
+  "startedAt": "2026-08-14T04:05:06.824Z",
+  "endedAt": "2026-08-14T04:06:38.253Z",
+  "status": "PASS",
+  "rpcUpdatedEnvironments": [],
+  "cases": [
+    {
+      "id": "SCN-022",
+      "title": "PnL 与 Est. Receive",
+      "plannedEnvironment": "oracle-fork",
+      "resolvedEnvironment": "tx-fork",
+      "plannedMarketMode": "mock-market",
+      "resolvedMarketMode": "mock-market",
+      "resolvedOracleMode": "mock-oracle",
+      "resolvedMockResourceAlias": "default-mock",
+      "marketCompatibility": "mock-only",
+      "automated": true,
+      "specPath": "tests/S03/scn-022.spec.ts",
+      "status": "PASS",
+      "resultRunId": "2026-08-14T040506-824Z",
+      "message": "双数据集（long-close-profit、short-close-profit）共 72 项链上核对通过；毛 PnL 与实际可得差异（费用/取整）双向逐位核对；执行详情已展开 250 项 Before / After / Δ / Expected 对账。"
+    }
+  ],
+  "logTail": [
+    "检测到看板外直接执行的 Playwright 结果，已自动登记到最近运行。",
+    "运行结束：PASS。"
+  ]
+}

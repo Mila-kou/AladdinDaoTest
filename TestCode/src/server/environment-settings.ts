@@ -8,6 +8,7 @@ import {
   environments,
   type EnvironmentName,
 } from '../../config/environments/catalog.js';
+import { loadBaselineRegistry, normalizeReleaseVersion } from '../config/baseline.js';
 import {
   isCompleteDefaultMockResource,
   isMockResourceEnvironment,
@@ -19,6 +20,13 @@ export interface EnvironmentProfile {
   readonly name: EnvironmentName;
   /** 每个环境/Fork 运行前必须与 RPC 实际 chainId 一致；看板仅显示，不暴露 RPC。 */
   readonly configuredChainId?: number;
+  /** 本环境约定的固定 Chain ID（catalog fixedChainId；仅三条 Fork 环境有）。 */
+  readonly fixedChainId?: number;
+  /**
+   * 环境实际部署版本段（CURRENT.json environments.<env>.forkOf 归一化出的 vN.N.N）。
+   * 登记缺失 / 环境未登记 / forkOf 无版本段时省略——调用方按「未登记」降级展示。
+   */
+  readonly forkOfVersion?: string;
   readonly rpcEnvironmentVariable: string;
   readonly adminRpcEnvironmentVariable?: string;
   readonly rpcConfigured: boolean;
@@ -109,13 +117,18 @@ export async function readEnvironmentSettings(
 
 export async function listEnvironmentProfiles(projectRoot: string): Promise<EnvironmentProfile[]> {
   const registry = await loadMockResourceRegistry();
+  // 看板服务长驻，而 CURRENT.json 会被建 Fork / 部署改写：每次列举都实时重读（缺失/损坏时返回 undefined，不抛错）。
+  const baselineRegistry = loadBaselineRegistry(projectRoot, { reload: true });
   return Promise.all(environmentNames.map(async (name) => {
     const definition = environments[name];
     const settings = await readEnvironmentSettings(projectRoot, name);
     const mockResource = isMockResourceEnvironment(name) ? registry.resources[name] : undefined;
+    const forkOfVersion = normalizeReleaseVersion(baselineRegistry?.environments[name]?.forkOf ?? undefined);
     return {
       name,
       ...(settings.chainId ? { configuredChainId: settings.chainId } : {}),
+      ...(definition.fixedChainId !== undefined ? { fixedChainId: definition.fixedChainId } : {}),
+      ...(forkOfVersion ? { forkOfVersion } : {}),
       rpcEnvironmentVariable: definition.rpcEnvironmentVariable,
       ...(definition.adminRpcEnvironmentVariable
         ? { adminRpcEnvironmentVariable: definition.adminRpcEnvironmentVariable }

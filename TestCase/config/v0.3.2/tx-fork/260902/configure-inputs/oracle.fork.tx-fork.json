@@ -1,0 +1,47 @@
+{
+  "tokenTransferGasLimit": "200000",
+  "tokens": [
+    {
+      "symbol": "USDC",
+      "token": "0xF300bBfB89106F54794aab6f7554ECfdAf32e154",
+      "dataFeed": {
+        "feedAddress": "0x2888982BA846222FC1466aC73179Ab97AD001e10",
+        "oracleDecimals": "18",
+        "heartbeatDuration": "86400"
+      },
+      "dataStream": {
+        "feedId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "oracleDecimals": "18",
+        "dataStreamSpreadReductionFactor": "1"
+      }
+    },
+    {
+      "symbol": "WBTC",
+      "token": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
+      "dataFeed": {
+        "feedAddress": "0x56E99C391cE1C08074e764D5343930D767bFC053",
+        "oracleDecimals": "8",
+        "heartbeatDuration": "86400"
+      },
+      "dataStream": {
+        "feedId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "oracleDecimals": "8",
+        "dataStreamSpreadReductionFactor": "1"
+      }
+    },
+    {
+      "symbol": "ETH",
+      "token": "0x4200000000000000000000000000000000000006",
+      "dataFeed": {
+        "feedAddress": "0x29FD027b738FEe9ffDac257B5229167078130AdC",
+        "oracleDecimals": "8",
+        "heartbeatDuration": "86400"
+      },
+      "dataStream": {
+        "feedId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "oracleDecimals": "8",
+        "dataStreamSpreadReductionFactor": "1"
+      }
+    }
+  ]
+}

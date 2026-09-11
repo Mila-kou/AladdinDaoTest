@@ -1,17 +1,49 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import { readFile } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { dirname, join, resolve } from 'node:path';
 
+import {
+  applyDeletedRecords,
+  deletedRecordsPath,
+  readDeletedRecords,
+} from '../reporting/latest-snapshot.js';
+import {
+  confirmableStatuses,
+  loadReconciliationLedger,
+  saveReconciliationLedger,
+  type ReconciliationFieldStatus,
+} from '../reporting/reconciliation-fields.js';
+import { writeRunOutputs } from '../reporting/write-outputs.js';
+import { baselineRegistryDisplayPath, targetRelease } from '../config/baseline.js';
 import { validateTestRunArtifact, type TestRunArtifact } from '../reporting/schema.js';
 import { saveTestCaseOverride } from '../reporting/test-case-overrides.js';
 import { attachExecutions, loadTestCases, type TestCaseView } from '../reporting/test-cases.js';
+import {
+  buildVersionRunCaseDefinitions,
+  isFunctionalCaseId,
+  loadVersionCases,
+} from '../reporting/version-cases.js';
 import { listParameterEnvironments, queryParameters } from './parameter-query.js';
 import { RunBatchManager } from './run-batches.js';
 import { KeeperServiceManager } from './keeper-service.js';
+import { FrontendLauncher } from './frontend-launcher.js';
+import { KeeperLauncher } from './keeper-launcher.js';
 import { TenderlyForkManager } from './tenderly-forks.js';
+import {
+  ContractDeploymentConflictError,
+  ContractDeploymentManager,
+} from './contract-deployments.js';
+import {
+  EnvironmentSetupConflictError,
+  EnvironmentSetupOrchestrator,
+} from './environment-setup.js';
 import { DefaultMarketSourceManager } from './default-market-source.js';
 import { UsdcFundingManager } from './usdc-funding.js';
 import { FaucetBalanceMonitor } from './faucet-monitor.js';
+import { MockOraclePriceManager } from './mock-oracle-prices.js';
+import { ParameterWriteManager } from './parameter-write.js';
+import { NoiseTradeManager } from './noise-trades.js';
+import { rosterToCsv } from '../domain/noise-plan.js';
 import { FaucetAutoFundingManager } from './faucet-auto-funding.js';
 import {
   checkEnvironmentConfiguration,
@@ -27,6 +59,22 @@ import {
   environmentNames,
   type EnvironmentName,
 } from '../../config/environments/catalog.js';
+import {
+  explorerLinkStatus,
+  findBlockExplorerBaseUrl,
+  findForkDisplayName,
+  findTransactionExplorerUrl,
+  resolveBlockExplorerBaseUrl,
+  transactionExplorerUrl,
+} from '../config/transaction-links.js';
+import {
+  appendVersionResults,
+  createManualBatch,
+  readVersionResults,
+  VersionResultsError,
+  writeManualBatchSummary,
+} from './version-results.js';
+import { createVerifyTxRoutes, VERIFY_TX_ROUTES } from './verify-tx-routes.js';
 
 export interface DashboardServerOptions {
   readonly host: string;
@@ -43,10 +91,10 @@ interface PackageMetadata {
 const SECURITY_HEADERS = {
   'Cache-Control': 'no-store',
   'Content-Security-Policy':
-    "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
+    "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; base-uri 'none'; frame-ancestors 'self'; form-action 'none'",
   'Referrer-Policy': 'no-referrer',
   'X-Content-Type-Options': 'nosniff',
-  'X-Frame-Options': 'DENY',
+  'X-Frame-Options': 'SAMEORIGIN',
 } as const;
 
 function send(
@@ -62,6 +110,59 @@ function send(
     'Content-Length': Buffer.byteLength(body),
   });
   response.end(headOnly ? undefined : body);
+}
+
+function recordValue(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function findFunctionalTransaction(
+  value: unknown,
+  wanted: string,
+  depth = 0,
+): Record<string, unknown> | undefined {
+  if (depth > 24) return undefined;
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = findFunctionalTransaction(item, wanted, depth + 1);
+      if (found) return found;
+    }
+    return undefined;
+  }
+  if (!recordValue(value)) return undefined;
+  const matchingHash = Object.entries(value).some(([key, candidate]) =>
+    typeof candidate === 'string'
+    && candidate.toLowerCase() === wanted
+    && (key === 'txHash' || key === 'transactionHash' || key === 'hash' || /TxHash$/.test(key)),
+  );
+  if (matchingHash) return value;
+  for (const child of Object.values(value)) {
+    const found = findFunctionalTransaction(child, wanted, depth + 1);
+    if (found) return found;
+  }
+  return undefined;
+}
+
+function resolveEvidenceTransactionLink(
+  projectRoot: string,
+  environment: string,
+  evidence: unknown,
+  hash: string,
+): { transactionUrl?: string; transactionLinkStatus: 'available' | 'missing' } {
+  const savedUrl = findTransactionExplorerUrl(evidence, hash);
+  const savedBaseUrl = findBlockExplorerBaseUrl(evidence);
+  const baseUrl = savedBaseUrl ?? resolveBlockExplorerBaseUrl(
+    projectRoot,
+    environment,
+    undefined,
+    findForkDisplayName(evidence),
+  );
+  const candidate = savedUrl ?? (baseUrl ? transactionExplorerUrl(baseUrl, hash) : undefined);
+  const transactionLinkStatus = explorerLinkStatus(projectRoot, candidate);
+  return {
+    transactionLinkStatus,
+    ...(candidate && transactionLinkStatus === 'available' ? { transactionUrl: candidate } : {}),
+  };
 }
 
 function sendJson(response: ServerResponse, status: number, body: unknown, headOnly = false): void {
@@ -116,6 +217,22 @@ async function readTestCaseViews(
   return attachExecutions(definitions, artifact.results);
 }
 
+async function readRunCaseViews(
+  artifactDirectory: string,
+  projectRoot: string,
+): Promise<TestCaseView[]> {
+  const [artifact, versionCases] = await Promise.all([
+    readArtifact(artifactDirectory),
+    loadVersionCases(projectRoot),
+  ]);
+  const catalogPath = resolve(projectRoot, artifact.source.catalogPath);
+  const scenarios = await loadTestCases(artifact.catalog, catalogPath);
+  return attachExecutions(
+    [...scenarios, ...buildVersionRunCaseDefinitions(versionCases)],
+    artifact.results,
+  );
+}
+
 function isSameOriginRequest(request: IncomingMessage): boolean {
   const origin = request.headers.origin;
   if (!origin || !request.headers.host) return false;
@@ -144,18 +261,34 @@ export async function startDashboardServer(options: DashboardServerOptions) {
   ]);
   const runManager = await RunBatchManager.create({
     projectRoot,
-    getCases: () => readTestCaseViews(artifactDirectory, projectRoot),
+    getCases: () => readRunCaseViews(artifactDirectory, projectRoot),
   });
   const keeperServiceManager = new KeeperServiceManager(projectRoot);
   const tenderlyForkManager = new TenderlyForkManager(projectRoot);
+  const contractDeploymentManager = new ContractDeploymentManager(projectRoot);
+  // 环境页 ⑥ 本地服务：前端 dev server 与 Keeper 车道各自持有路由（docs/04 §10）。
+  const frontendLauncher = new FrontendLauncher(projectRoot);
+  const keeperLauncher = new KeeperLauncher(projectRoot);
+  const environmentSetupOrchestrator = new EnvironmentSetupOrchestrator({
+    projectRoot,
+    tenderlyForkManager,
+    contractDeploymentManager,
+    frontendLauncher,
+    keeperLauncher,
+    runManager,
+  });
   const defaultMarketSourceManager = new DefaultMarketSourceManager(projectRoot);
   const usdcFundingManager = new UsdcFundingManager(projectRoot);
   const faucetBalanceMonitor = new FaucetBalanceMonitor(projectRoot);
+  const mockOraclePriceManager = new MockOraclePriceManager(projectRoot);
+  const parameterWriteManager = new ParameterWriteManager(projectRoot);
+  const noiseTradeManager = await NoiseTradeManager.create(projectRoot);
   const faucetAutoFundingManager = await FaucetAutoFundingManager.create(
     projectRoot,
     faucetBalanceMonitor,
     usdcFundingManager,
   );
+  const verifyTxRoutes = createVerifyTxRoutes({ projectRoot, helpers: { isSameOriginRequest, sendJson } });
 
   const server = createServer(async (request: IncomingMessage, response: ServerResponse) => {
     const method = request.method ?? 'GET';
@@ -180,12 +313,18 @@ export async function startDashboardServer(options: DashboardServerOptions) {
         '/runs.html': 'runs.html',
         '/environments': 'environments.html',
         '/environments.html': 'environments.html',
+        '/deployments': 'deployments.html',
+        '/deployments.html': 'deployments.html',
+        '/faucet': 'faucet.html',
+        '/faucet.html': 'faucet.html',
         '/parameters': 'parameters.html',
         '/parameters.html': 'parameters.html',
         '/formulas': 'formulas.html',
         '/formulas.html': 'formulas.html',
         '/page-formulas': 'page-formulas.html',
         '/page-formulas.html': 'page-formulas.html',
+        '/reconciliation-console': 'reconciliation-console.html',
+        '/reconciliation-console.html': 'reconciliation-console.html',
       };
       const pageFile = pageFiles[url.pathname];
       if (pageFile) {
@@ -195,6 +334,33 @@ export async function startDashboardServer(options: DashboardServerOptions) {
         }
         const html = await readFile(join(artifactDirectory, pageFile));
         send(response, 200, 'text/html; charset=utf-8', html, headOnly);
+        return;
+      }
+
+      // 执行附件静态读取（停点截图 PNG / 证据 JSON）：只允许 attachments/ 目录内的单层文件名，防穿越。
+      if (url.pathname.startsWith('/attachments/') && (method === 'GET' || method === 'HEAD')) {
+        const fileName = decodeURIComponent(url.pathname.slice('/attachments/'.length));
+        if (!fileName || fileName.includes('/') || fileName.includes('\\') || fileName.startsWith('.')) {
+          sendJson(response, 404, { error: '附件不存在' }, headOnly);
+          return;
+        }
+        const attachmentsDir = join(artifactDirectory, 'attachments');
+        const filePath = resolve(attachmentsDir, fileName);
+        if (!filePath.startsWith(resolve(attachmentsDir) + '/')) {
+          sendJson(response, 404, { error: '附件不存在' }, headOnly);
+          return;
+        }
+        let body: Buffer;
+        try {
+          body = await readFile(filePath);
+        } catch {
+          sendJson(response, 404, { error: `附件 ${fileName} 不存在` }, headOnly);
+          return;
+        }
+        const contentType = fileName.endsWith('.png') ? 'image/png'
+          : fileName.endsWith('.json') ? 'application/json; charset=utf-8'
+            : 'application/octet-stream';
+        send(response, 200, contentType, body, headOnly);
         return;
       }
 
@@ -222,6 +388,151 @@ export async function startDashboardServer(options: DashboardServerOptions) {
             detail: error instanceof Error ? error.message : String(error),
           });
         }
+        return;
+      }
+
+      if (url.pathname === '/api/noise-traders') {
+        if (method === 'GET' || method === 'HEAD') {
+          sendJson(response, 200, await noiseTradeManager.loadRoster(), headOnly);
+          return;
+        }
+        if (method === 'POST') {
+          if (!isSameOriginRequest(request)) { sendJson(response, 403, { error: '仅允许同源测试看板生成 Trader 花名册。' }); return; }
+          try {
+            sendJson(response, 200, await noiseTradeManager.generateRoster(await readJsonBody(request).catch(() => ({}))));
+          } catch (error) {
+            sendJson(response, 400, { error: 'Trader 花名册生成失败', detail: error instanceof Error ? error.message : String(error) });
+          }
+          return;
+        }
+        sendJson(response, 405, { error: 'Method Not Allowed' }, headOnly);
+        return;
+      }
+      if (url.pathname === '/api/noise-traders/wallets' && method === 'POST') {
+        if (!isSameOriginRequest(request)) { sendJson(response, 403, { error: '仅允许同源测试看板生成 Trader 钱包。' }); return; }
+        try {
+          // 返回值绝不含私钥/助记词；私钥束仅落本机 config/noise-traders.secret.json（0600、gitignore）
+          sendJson(response, 200, await noiseTradeManager.generateWallets(await readJsonBody(request).catch(() => ({}))));
+        } catch (error) {
+          sendJson(response, 400, { error: 'Trader 钱包生成失败', detail: error instanceof Error ? error.message : String(error) });
+        }
+        return;
+      }
+      if (url.pathname === '/api/noise-traders.csv' && (method === 'GET' || method === 'HEAD')) {
+        const loaded = await noiseTradeManager.loadRoster();
+        send(response, 200, 'text/csv; charset=utf-8', `${rosterToCsv(loaded.roster)}\n`, headOnly);
+        return;
+      }
+
+      if (url.pathname === '/api/noise-plan') {
+        if (method === 'GET' || method === 'HEAD') {
+          const loaded = await noiseTradeManager.loadPlan();
+          sendJson(response, 200, { ...loaded, presets: noiseTradeManager.presets() }, headOnly);
+          return;
+        }
+        if (method === 'PUT') {
+          if (!isSameOriginRequest(request)) { sendJson(response, 403, { error: '仅允许同源测试看板保存造数据计划。' }); return; }
+          try {
+            sendJson(response, 200, { plan: await noiseTradeManager.savePlan(await readJsonBody(request)), saved: true });
+          } catch (error) {
+            sendJson(response, 400, { error: '造数据计划保存失败', detail: error instanceof Error ? error.message : String(error) });
+          }
+          return;
+        }
+        if (method === 'POST') {
+          // POST = 展开预览（不落盘、不上链）
+          try {
+            sendJson(response, 200, noiseTradeManager.preview(await readJsonBody(request)));
+          } catch (error) {
+            sendJson(response, 400, { error: '造数据计划展开失败', detail: error instanceof Error ? error.message : String(error) });
+          }
+          return;
+        }
+        sendJson(response, 405, { error: 'Method Not Allowed' }, headOnly);
+        return;
+      }
+
+      if (url.pathname === '/api/noise-trades') {
+        if (method === 'GET' || method === 'HEAD') {
+          sendJson(response, 200, {
+            jobs: noiseTradeManager.list(),
+            configuredTraders: await noiseTradeManager.configuredTraders(),
+          }, headOnly);
+          return;
+        }
+        if (method === 'POST') {
+          if (!isSameOriginRequest(request)) {
+            sendJson(response, 403, { error: '仅允许同源测试看板启动模拟交易。' });
+            return;
+          }
+          try {
+            sendJson(response, 202, { job: await noiseTradeManager.start(await readJsonBody(request)) });
+          } catch (error) {
+            sendJson(response, 400, {
+              error: '模拟交易任务创建失败',
+              detail: error instanceof Error ? error.message : String(error),
+            });
+          }
+          return;
+        }
+        sendJson(response, 405, { error: 'Method Not Allowed' }, headOnly);
+        return;
+      }
+      const noiseJobMatch = /^\/api\/noise-trades\/([a-zA-Z0-9._-]+)$/.exec(url.pathname);
+      if (noiseJobMatch && (method === 'GET' || method === 'HEAD')) {
+        const job = noiseTradeManager.get(noiseJobMatch[1]!);
+        if (!job) { sendJson(response, 404, { error: '模拟交易任务不存在。' }, headOnly); return; }
+        sendJson(response, 200, { job }, headOnly);
+        return;
+      }
+
+      if (url.pathname === '/api/parameters/set' && method === 'POST') {
+        if (!isSameOriginRequest(request)) {
+          sendJson(response, 403, { error: '仅允许同源测试看板写入参数。' });
+          return;
+        }
+        try {
+          sendJson(response, 200, { write: await parameterWriteManager.write(await readJsonBody(request)) });
+        } catch (error) {
+          sendJson(response, 400, {
+            error: '参数写入失败',
+            detail: error instanceof Error ? error.message : String(error),
+          });
+        }
+        return;
+      }
+
+      if (url.pathname === '/api/mock-oracle-prices') {
+        if (method === 'GET' || method === 'HEAD') {
+          try {
+            sendJson(response, 200, await mockOraclePriceManager.read({
+              environment: url.searchParams.get('environment') ?? '',
+              bundleAlias: url.searchParams.get('bundleAlias') ?? undefined,
+            }), headOnly);
+          } catch (error) {
+            sendJson(response, 400, {
+              error: 'Mock Oracle 价格读取失败',
+              detail: error instanceof Error ? error.message : String(error),
+            }, headOnly);
+          }
+          return;
+        }
+        if (method === 'POST') {
+          if (!isSameOriginRequest(request)) {
+            sendJson(response, 403, { error: '仅允许同源测试看板修改 Mock Oracle 价格。' });
+            return;
+          }
+          try {
+            sendJson(response, 200, await mockOraclePriceManager.update(await readJsonBody(request)));
+          } catch (error) {
+            sendJson(response, 400, {
+              error: 'Mock Oracle 价格更新失败',
+              detail: error instanceof Error ? error.message : String(error),
+            });
+          }
+          return;
+        }
+        sendJson(response, 405, { error: 'Method Not Allowed' }, headOnly);
         return;
       }
 
@@ -420,10 +731,120 @@ export async function startDashboardServer(options: DashboardServerOptions) {
         }
       }
 
+      if (url.pathname === '/api/tenderly-forks' && method === 'GET') {
+        sendJson(response, 200, { vnets: await tenderlyForkManager.list() });
+        return;
+      }
+
       if (url.pathname === '/api/tenderly-forks' && method === 'POST') {
-        if (!isSameOriginRequest(request)) { sendJson(response, 403, { error: '仅允许同源看板页面创建 Tenderly Fork。' }); return; }
+        if (!isSameOriginRequest(request)) { sendJson(response, 403, { error: '仅允许同源看板页面创建 Tenderly Virtual TestNet。' }); return; }
         try { sendJson(response, 201, { fork: await tenderlyForkManager.create(await readJsonBody(request)) }); }
-        catch (error) { sendJson(response, 400, { error: 'Tenderly Fork 创建失败', detail: error instanceof Error ? error.message : String(error) }); }
+        catch (error) { sendJson(response, 400, { error: 'Tenderly Virtual TestNet 创建失败', detail: error instanceof Error ? error.message : String(error) }); }
+        return;
+      }
+
+      if (url.pathname === '/api/tenderly-forks/delete' && method === 'POST') {
+        if (!isSameOriginRequest(request)) { sendJson(response, 403, { error: '仅允许同源看板页面删除 Tenderly Virtual TestNet。' }); return; }
+        try { sendJson(response, 200, { removed: await tenderlyForkManager.remove(await readJsonBody(request)) }); }
+        catch (error) { sendJson(response, 400, { error: 'Tenderly Virtual TestNet 删除失败', detail: error instanceof Error ? error.message : String(error) }); }
+        return;
+      }
+
+      // ② 部署合约：长任务模式照抄 environment-initializations（spawn 子进程 + 内存日志），
+      // branches 是精确路径，必须放在 /:id 匹配之前。
+      if (url.pathname === '/api/contract-deployments/branches' && (method === 'GET' || method === 'HEAD')) {
+        try {
+          sendJson(response, 200, { branches: await contractDeploymentManager.listBranches() }, headOnly);
+        } catch (error) {
+          sendJson(response, 400, {
+            error: '合约分支列表读取失败',
+            detail: error instanceof Error ? error.message : String(error),
+          }, headOnly);
+        }
+        return;
+      }
+
+      if (url.pathname === '/api/contract-deployments') {
+        if (method === 'GET' || method === 'HEAD') {
+          sendJson(response, 200, { deployments: contractDeploymentManager.list() }, headOnly);
+          return;
+        }
+        if (method === 'POST') {
+          if (!isSameOriginRequest(request)) {
+            sendJson(response, 403, { error: '仅允许同源看板页面发起合约部署。' });
+            return;
+          }
+          try {
+            const job = await contractDeploymentManager.create(await readJsonBody(request));
+            sendJson(response, 202, { jobId: job.id, job });
+          } catch (error) {
+            if (error instanceof ContractDeploymentConflictError) {
+              sendJson(response, 409, { error: '合约部署任务冲突', detail: error.message });
+            } else {
+              sendJson(response, 400, {
+                error: '合约部署任务创建失败',
+                detail: error instanceof Error ? error.message : String(error),
+              });
+            }
+          }
+          return;
+        }
+        sendJson(response, 405, { error: 'Method Not Allowed' }, headOnly);
+        return;
+      }
+
+      // ⓪ 一键搭建向导：createFork → deploy → init → check 固定顺序编排现有管理器；
+      // 任务内存态（与部署任务一致），/:id 精确路径放在通配匹配之前。
+      if (url.pathname === '/api/environment-setup') {
+        if (method === 'GET' || method === 'HEAD') {
+          sendJson(response, 200, { setups: environmentSetupOrchestrator.list() }, headOnly);
+          return;
+        }
+        if (method === 'POST') {
+          if (!isSameOriginRequest(request)) {
+            sendJson(response, 403, { error: '仅允许同源看板页面发起一键环境搭建。' });
+            return;
+          }
+          try {
+            const job = await environmentSetupOrchestrator.create(await readJsonBody(request));
+            sendJson(response, 202, { jobId: job.id, job });
+          } catch (error) {
+            if (error instanceof EnvironmentSetupConflictError) {
+              sendJson(response, 409, { error: '一键搭建任务冲突', detail: error.message });
+            } else {
+              sendJson(response, 400, {
+                error: '一键搭建任务创建失败',
+                detail: error instanceof Error ? error.message : String(error),
+              });
+            }
+          }
+          return;
+        }
+        sendJson(response, 405, { error: 'Method Not Allowed' }, headOnly);
+        return;
+      }
+
+      const environmentSetupMatch =
+        /^\/api\/environment-setup\/([a-zA-Z0-9._-]+)$/.exec(url.pathname);
+      if (environmentSetupMatch && (method === 'GET' || method === 'HEAD')) {
+        const setup = environmentSetupOrchestrator.get(environmentSetupMatch[1]!);
+        if (!setup) {
+          sendJson(response, 404, { error: '一键搭建任务不存在。' }, headOnly);
+          return;
+        }
+        sendJson(response, 200, setup, headOnly);
+        return;
+      }
+
+      const contractDeploymentMatch =
+        /^\/api\/contract-deployments\/([a-zA-Z0-9._-]+)$/.exec(url.pathname);
+      if (contractDeploymentMatch && (method === 'GET' || method === 'HEAD')) {
+        const deployment = contractDeploymentManager.get(contractDeploymentMatch[1]!);
+        if (!deployment) {
+          sendJson(response, 404, { error: '合约部署任务不存在。' }, headOnly);
+          return;
+        }
+        sendJson(response, 200, deployment, headOnly);
         return;
       }
 
@@ -482,6 +903,14 @@ export async function startDashboardServer(options: DashboardServerOptions) {
             detail: error instanceof Error ? error.message : String(error),
           });
         }
+        return;
+      }
+
+      // ⑥ 本地服务：路由内聚在各自启动器里（同源校验、参数校验、状态码都在那边），这里只分发。
+      if (url.pathname.startsWith('/api/local-services/')) {
+        if (await frontendLauncher.handle(request, response, url, method)) return;
+        if (await keeperLauncher.handle(request, response, url, method)) return;
+        sendJson(response, 404, { error: '未知的本地服务接口', detail: url.pathname });
         return;
       }
 
@@ -574,6 +1003,198 @@ export async function startDashboardServer(options: DashboardServerOptions) {
         return;
       }
 
+      // —— 版本功能用例结果台账（results.md 标记区）与手工批次归档 ——
+      // 错误映射统一走 VersionResultsError.status（400 校验 / 404 缺失 / 409 冲突 / 422 admission 门槛）。
+      if (url.pathname === '/api/version-results' && (method === 'GET' || method === 'HEAD')) {
+        try {
+          sendJson(
+            response,
+            200,
+            await readVersionResults(projectRoot, url.searchParams.get('release')),
+            headOnly,
+          );
+        } catch (error) {
+          const status = error instanceof VersionResultsError ? error.status : 400;
+          sendJson(response, status, {
+            error: '版本功能用例结果读取失败',
+            detail: error instanceof Error ? error.message : String(error),
+          }, headOnly);
+        }
+        return;
+      }
+
+      if (url.pathname === '/api/version-results/append' && method === 'POST') {
+        if (!isSameOriginRequest(request)) {
+          sendJson(response, 403, { error: '仅允许同源测试看板写回版本功能用例结果。' });
+          return;
+        }
+        try {
+          sendJson(response, 200, await appendVersionResults(projectRoot, await readJsonBody(request)));
+        } catch (error) {
+          const status = error instanceof VersionResultsError ? error.status : 400;
+          sendJson(response, status, {
+            error: status === 422 ? '版本功能用例结果被 admission 门槛拒绝' : '版本功能用例结果写回失败',
+            detail: error instanceof Error ? error.message : String(error),
+          });
+        }
+        return;
+      }
+
+      if (url.pathname === '/api/manual-batches' && method === 'POST') {
+        if (!isSameOriginRequest(request)) {
+          sendJson(response, 403, { error: '仅允许同源测试看板创建手工批次。' });
+          return;
+        }
+        try {
+          sendJson(response, 201, { batch: await createManualBatch(projectRoot, await readJsonBody(request)) });
+        } catch (error) {
+          const status = error instanceof VersionResultsError ? error.status : 400;
+          sendJson(response, status, {
+            error: '手工批次创建失败',
+            detail: error instanceof Error ? error.message : String(error),
+          });
+        }
+        return;
+      }
+
+      const manualBatchSummaryMatch = /^\/api\/manual-batches\/([^/]+)\/summary$/.exec(url.pathname);
+      if (manualBatchSummaryMatch && method === 'POST') {
+        if (!isSameOriginRequest(request)) {
+          sendJson(response, 403, { error: '仅允许同源测试看板归档手工批次小结。' });
+          return;
+        }
+        try {
+          sendJson(response, 200, {
+            summary: await writeManualBatchSummary(
+              projectRoot,
+              decodeURIComponent(manualBatchSummaryMatch[1]!),
+              await readJsonBody(request),
+            ),
+          });
+        } catch (error) {
+          const status = error instanceof VersionResultsError ? error.status : 400;
+          sendJson(response, status, {
+            error: '手工批次小结归档失败',
+            detail: error instanceof Error ? error.message : String(error),
+          });
+        }
+        return;
+      }
+
+      // —— 按 tx hash 核对（/api/verify-tx）与证据挂到手工批次（/api/manual-runs/attach）：见 verify-tx-routes.ts ——
+      if (await verifyTxRoutes.handle(request, response, url, method)) return;
+
+      if (url.pathname === '/api/reconciliation-fields' && (method === 'GET' || method === 'HEAD')) {
+        const ledger = await loadReconciliationLedger(projectRoot);
+        if (!ledger) {
+          sendJson(response, 404, {
+            error: '核对字段台账不存在',
+            detail: '先运行 npx tsx scripts/seed-reconciliation-fields.ts 生成 config/reconciliation-fields.json。',
+          }, headOnly);
+          return;
+        }
+        sendJson(response, 200, { ledger }, headOnly);
+        return;
+      }
+
+      if (url.pathname === '/api/reconciliation-fields/confirm' && method === 'POST') {
+        if (!isSameOriginRequest(request)) {
+          sendJson(response, 403, { error: '仅允许同源测试看板写回核对字段台账。' });
+          return;
+        }
+        try {
+          const body = (await readJsonBody(request) ?? {}) as {
+            id?: unknown;
+            status?: unknown;
+            note?: unknown;
+          };
+          const id = typeof body.id === 'string' ? body.id : '';
+          const status = typeof body.status === 'string' ? body.status : '';
+          const note = typeof body.note === 'string' ? body.note : undefined;
+          if (!/^[A-Za-z0-9._-]{1,80}$/.test(id)) {
+            sendJson(response, 400, { error: '需要有效的台账行 id。' });
+            return;
+          }
+          if (!confirmableStatuses.includes(status as ReconciliationFieldStatus)) {
+            sendJson(response, 400, {
+              error: `status 只允许 ${confirmableStatuses.join(' / ')}（implemented 由 seed 依据 results.json 覆盖判定）。`,
+            });
+            return;
+          }
+          if (note !== undefined && note.length > 500) {
+            sendJson(response, 400, { error: 'note 最长 500 字符。' });
+            return;
+          }
+          const ledger = await loadReconciliationLedger(projectRoot);
+          if (!ledger) {
+            sendJson(response, 404, {
+              error: '核对字段台账不存在',
+              detail: '先运行 npx tsx scripts/seed-reconciliation-fields.ts 生成 config/reconciliation-fields.json。',
+            });
+            return;
+          }
+          const target = ledger.rows.find((row) => row.id === id);
+          if (!target) {
+            sendJson(response, 404, { error: `台账中没有 id 为 ${id} 的字段行。` });
+            return;
+          }
+          if (target.status === 'implemented') {
+            sendJson(response, 409, {
+              error: '该字段已由自动化核对覆盖（implemented），不接受手工改状态；如覆盖失效请重跑 seed。',
+            });
+            return;
+          }
+          const updated = {
+            ...target,
+            status: status as ReconciliationFieldStatus,
+            note: note ?? target.note,
+            updatedAt: new Date().toISOString(),
+          };
+          await saveReconciliationLedger(projectRoot, {
+            ...ledger,
+            rows: ledger.rows.map((row) => (row.id === id ? updated : row)),
+          });
+          sendJson(response, 200, { ok: true, row: updated });
+        } catch (error) {
+          sendJson(response, 400, {
+            error: '核对字段台账写回失败',
+            detail: error instanceof Error ? error.message : String(error),
+          });
+        }
+        return;
+      }
+
+      if (url.pathname === '/api/execution-records/delete' && method === 'POST') {
+        const body = (await readJsonBody(request) ?? {}) as { id?: unknown; project?: unknown };
+        const id = typeof body.id === 'string' ? body.id : '';
+        const project = typeof body.project === 'string' ? body.project : '';
+        if ((!/^SCN-\d{3}$/.test(id) && !isFunctionalCaseId(id)) || !project) {
+          sendJson(response, 400, { error: '需要有效的用例 id 与 project。' });
+          return;
+        }
+        const artifact = await readArtifact(artifactDirectory);
+        const matches = artifact.results.filter((item) => item.id === id && item.project === project);
+        if (matches.length === 0) {
+          sendJson(response, 404, { error: `latest 中没有 ${id}:${project} 的执行记录。` });
+          return;
+        }
+        const deletedAt = new Date().toISOString();
+        const records = await readDeletedRecords(projectRoot);
+        records.push({
+          id,
+          project,
+          deletedAt,
+          note: `删除前状态 ${matches[0]!.status} · executedAt ${matches[0]!.executedAt}`,
+        });
+        const tombstonePath = deletedRecordsPath(projectRoot);
+        await mkdir(dirname(tombstonePath), { recursive: true });
+        await writeFile(tombstonePath, `${JSON.stringify(records, null, 2)}\n`, 'utf8');
+        // 仅重写 latest 视图；artifacts/runs 历史档案不动，该场景未来的新执行会重新出现。
+        await writeRunOutputs(applyDeletedRecords(artifact, records), artifactDirectory);
+        sendJson(response, 200, { ok: true, id, project, deletedAt });
+        return;
+      }
+
       if (method === 'PUT' || method === 'POST') {
         sendJson(response, 405, { error: 'Method Not Allowed' });
         return;
@@ -594,14 +1215,55 @@ export async function startDashboardServer(options: DashboardServerOptions) {
             (item) => item.txHash.toLowerCase() === wanted,
           );
           if (transaction) {
+            const link = resolveEvidenceTransactionLink(
+              projectRoot,
+              result.project,
+              result.executionEvidence,
+              transaction.txHash,
+            );
             sendJson(response, 200, {
-              runId: artifact.run.id,
+              batchId: result.batchId ?? null,
+              runId: result.resultRunId ?? artifact.run.id,
               scenario: { id: result.id, title: result.scenarioTitle, project: result.project },
-              transaction,
+              transaction: { ...transaction, ...link },
+              ...link,
               evidenceSource: result.executionEvidence?.sourcePath,
-              note: 'Tenderly 私有 Fork 的本地持久证据；交易是否仍可由 RPC 查询取决于 Fork 是否被重置。',
+              note: link.transactionLinkStatus === 'available'
+                ? '本地持久证据已关联实际发送交易的浏览器链接。'
+                : '本地交易证据仍保留，但原 Fork 已删除或无法确认，真实链接已缺失。',
             }, headOnly);
             return;
+          }
+          for (const attachment of result.attempts.flatMap((attempt) => attempt.attachments)) {
+            if (!isFunctionalCaseId(result.id) || attachment.contentType !== 'application/json' || !attachment.path) continue;
+            try {
+              const raw = JSON.parse(await readFile(resolve(projectRoot, attachment.path), 'utf8')) as unknown;
+              const functionalTransaction = findFunctionalTransaction(
+                raw,
+                wanted,
+              );
+              if (!functionalTransaction) continue;
+              const link = resolveEvidenceTransactionLink(
+                projectRoot,
+                result.project,
+                raw,
+                transactionMatch[1]!,
+              );
+              sendJson(response, 200, {
+                batchId: result.batchId ?? null,
+                runId: result.resultRunId ?? artifact.run.id,
+                scenario: { id: result.id, title: result.scenarioTitle, project: result.project },
+                transaction: { ...functionalTransaction, ...link },
+                ...link,
+                evidenceSource: attachment.path,
+                note: link.transactionLinkStatus === 'available'
+                  ? '功能用例本地证据已关联实际发送交易的浏览器链接。'
+                  : '功能用例本地交易证据仍保留，但原 Fork 已删除或无法确认，真实链接已缺失。',
+              }, headOnly);
+              return;
+            } catch {
+              // 附件缺失或不是有效 JSON 时继续查找其他证据。
+            }
           }
         }
         sendJson(response, 404, { error: 'Transaction evidence not found' }, headOnly);
@@ -621,27 +1283,51 @@ export async function startDashboardServer(options: DashboardServerOptions) {
             sourceStatus: artifact.sourceStatus,
             runId: artifact.run.id,
             release: artifact.run.release ?? null,
+            releaseSource: artifact.run.releaseSource ?? null,
+            targetRelease: artifact.run.targetRelease ?? null,
+            releaseMismatch: artifact.run.releaseMismatch ?? null,
+            currentTargetRelease: targetRelease()?.label ?? null,
+            baselineRegistry: baselineRegistryDisplayPath(),
             generatedAt: artifact.source.generatedAt,
             catalogSize: artifact.catalog.length,
             resultCount: artifact.results.length,
-            pages: ['/', '/executions', '/test-cases', '/runs', '/environments', '/parameters', '/formulas', '/page-formulas'],
+            pages: ['/', '/executions', '/test-cases', '/runs', '/environments', '/deployments', '/faucet', '/parameters', '/formulas', '/page-formulas', '/reconciliation-console'],
             parameterApis: ['/api/parameter-environments', '/api/parameters?environment=tx-fork'],
             runApis: [
               '/api/environments',
               '/api/environment-initializations',
+              '/api/contract-deployments',
+              '/api/contract-deployments/branches',
+              '/api/environment-setup',
               '/api/run-batches',
               '/api/run-batches/:id/manual-result',
               '/api/run-batches/:id/manual-start',
               '/api/keeper-service',
+              '/api/local-services/frontend',
+              '/api/local-services/keeper',
               '/api/fund-usdc',
               '/api/faucet-balance',
               '/api/faucet-auto-funding',
               '/api/faucet-auto-funding/run-now',
+              '/api/mock-oracle-prices',
+              '/api/parameters/set',
+              '/api/noise-trades',
+              '/api/noise-plan',
+              '/api/noise-traders',
               '/api/manual-check-target',
+              '/api/reconciliation-fields',
+              '/api/reconciliation-fields/confirm',
+              '/api/version-results',
+              '/api/version-results/append',
+              '/api/manual-batches',
+              '/api/manual-batches/:id/summary',
+              ...VERIFY_TX_ROUTES,
             ],
             capabilities: {
               environmentInitialization: true,
               environmentConfiguration: true,
+              contractDeployment: true,
+              environmentSetupWizard: true,
               completeDefaultMockMarket: true,
               manualVerdictRecording: true,
               manualFrontendLink: true,
@@ -649,7 +1335,12 @@ export async function startDashboardServer(options: DashboardServerOptions) {
               usdcFunding: true,
               baseSepoliaFaucetMonitor: true,
               faucetAutoFunding: true,
+              mockOraclePrices: true,
+              parameterWrite: true,
+              noiseTrades: true,
               telegramNotifications: true,
+              versionResultWorkbench: true,
+              txVerify: true,
             },
           },
           headOnly,

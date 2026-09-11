@@ -1,6 +1,3 @@
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
-
 import {
   createPublicClient,
   createWalletClient,
@@ -21,9 +18,13 @@ import {
 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 
-import { loadDeploymentManifest, type DeploymentManifest } from '../config/deployment.js';
+import { loadDeploymentAbi, loadDeploymentManifest, type DeploymentManifest } from '../config/deployment.js';
+import { assertRuntimeEnvironmentBinding } from '../config/environment-binding.js';
 import { resolveMockMarketBundle, type MockResourceRecord } from '../config/mock-resources.js';
 import type { RuntimeConfig } from '../config/runtime.js';
+import type { ResolvedTestEnvironment } from '../domain/test-environment.js';
+import { assertRuntimeMatchesResolvedEnvironment } from '../execution/runtime-environment.js';
+import { freshOracleTimestamp } from '../drivers/mock-oracle.js';
 import {
   SCN070_CASES,
   isExecutionPriceAcceptable,
@@ -234,16 +235,6 @@ async function rawRpc(
     throw error;
   }
   return body.result;
-}
-
-async function loadAbi(manifest: DeploymentManifest, name: string): Promise<Abi> {
-  const directory = manifest.source?.abiDirectory;
-  if (!directory) throw new Error('Deployment manifest 缺少 source.abiDirectory');
-  const filename = manifest.abiFiles[name] ?? `${name}.json`;
-  const source = await readFile(resolve(process.cwd(), directory, filename), 'utf8');
-  const parsed = JSON.parse(source) as unknown;
-  if (!Array.isArray(parsed)) throw new Error(`${filename} 不是 ABI 数组`);
-  return parsed as Abi;
 }
 
 function keyBase(name: string): Hex {
@@ -462,25 +453,54 @@ async function setOraclePrice(
 ): Promise<TransactionEvidence> {
   if (rawPrice <= 0n) throw new Error(`Mock Oracle 价格必须大于 0：${rawPrice}`);
   const block = await context.adminPublicClient.getBlock();
+  // 时间戳取 max(本机时钟, 链上最新区块时间)：Tenderly fork 只在有交易时出块且新块用真实时钟，
+  // 闲置数日后"最新区块时间"会落后真实时间；若照抄旧块时间戳，下一笔 executeOrder 出的新块
+  // 会让 feed 年龄 > PRICE_FEED_HEARTBEAT_DURATION(86400) 触发 ChainlinkPriceFeedNotUpdated。
+  const timestamp = freshOracleTimestamp(block.timestamp);
   return adminSend(context, {
     from: getAddress(requireValue(context.runtime.adminAccount, '缺少 E2E_ADMIN_ACCOUNT')),
     to: oracle,
     data: encodeFunctionData({
       abi: mockOracleAbi,
       functionName: 'setMockPrice',
-      args: [rawPrice, block.timestamp],
+      args: [rawPrice, timestamp],
     }),
     label,
   });
 }
 
-async function setMockPrice(context: ScenarioContext, rawPrice: bigint): Promise<TransactionEvidence> {
-  return setOraclePrice(
+/** Index 价一次写入的两笔环境交易：feed（MockOracle.setMockPrice）+ STABLE_PRICE 锚（DataStore.setUint）。 */
+interface IndexPriceWrite {
+  readonly feed: TransactionEvidence;
+  readonly stablePrice: TransactionEvidence;
+}
+
+/**
+ * 设置 Index Mock 价（三件套：feed 价 + 新鲜时间戳 + STABLE_PRICE 锚）。
+ * 机理（v0.3.1 ChainlinkPriceFeedProvider.getOraclePrice）：STABLE_PRICE(token) > 0 时
+ * min = min(feed, stable)、max = max(feed, stable)；开多/平空按 max、开空/平多按 min 算执行价。
+ * 本 runner 的边界模型用 Reader.getExecutionPrice(min = max = feed) 推导 A 与 E，
+ * 因此每次改 feed 都必须把锚同步到同一内部价，使链上 min == max == feed；
+ * 否则锚（default-mock 初始化为 2030）与基线 2000 劈开成 [2000, 2030]，
+ * 开多等号边界按 max=2030 成交价 > A → OrderNotFulfillableAtAcceptablePrice 静默取消
+ *（2026-08-13 oracle-fork FAIL 根因；锚机理见 fx100-verify-handbook traps §11）。
+ * 锚写入走 admin（CONTROLLER）直写 DataStore；每个数据集的 evm_revert 会一并回滚。
+ */
+async function setMockPrice(context: ScenarioContext, rawPrice: bigint): Promise<IndexPriceWrite> {
+  const feed = await setOraclePrice(
     context,
     context.fixture.mockOracle,
     rawPrice,
     `SCN-070 设置 Mock Oracle ${rawPrice}`,
   );
+  const stablePrice = await writeDataStore(
+    context,
+    'setUint',
+    tokenKey('STABLE_PRICE', context.fixture.indexToken),
+    contractPriceFromRaw(context.fixture, rawPrice),
+    `SCN-070 同步 STABLE_PRICE 锚 ${rawPrice}`,
+  );
+  return { feed, stablePrice };
 }
 
 async function ensureApproval(context: ScenarioContext): Promise<TransactionEvidence | undefined> {
@@ -821,9 +841,9 @@ async function preparePosition(
   definition: Scn070CaseDefinition,
   rawPrice: bigint,
 ): Promise<{
-  readonly oracleBeforeCreate: TransactionEvidence;
+  readonly oracleBeforeCreate: IndexPriceWrite;
   readonly create: TransactionEvidence;
-  readonly oracleBeforeExecute: TransactionEvidence;
+  readonly oracleBeforeExecute: IndexPriceWrite;
   readonly execute: TransactionEvidence;
   readonly position: PositionState;
 }> {
@@ -1090,13 +1110,18 @@ async function runBoundaryCase(
       oracleConfigHeartbeat: setupTransactions[2],
       oracleConfigProvider: setupTransactions[3],
       approve,
-      prepareOracleBeforeCreate: preparation?.oracleBeforeCreate,
+      // *OracleSet = feed 写入；*StablePriceSet = 同笔三件套里的 STABLE_PRICE 锚写入（新增键，旧键语义不变）
+      prepareOracleBeforeCreate: preparation?.oracleBeforeCreate.feed,
+      prepareStablePriceBeforeCreate: preparation?.oracleBeforeCreate.stablePrice,
       prepareCreate: preparation?.create,
-      prepareOracleBeforeExecute: preparation?.oracleBeforeExecute,
+      prepareOracleBeforeExecute: preparation?.oracleBeforeExecute.feed,
+      prepareStablePriceBeforeExecute: preparation?.oracleBeforeExecute.stablePrice,
       prepareExecute: preparation?.execute,
-      baselineOracleSet,
+      baselineOracleSet: baselineOracleSet.feed,
+      baselineStablePriceSet: baselineOracleSet.stablePrice,
       create: created.transaction,
-      executionOracleSet,
+      executionOracleSet: executionOracleSet.feed,
+      executionStablePriceSet: executionOracleSet.stablePrice,
       execute: executed,
     },
     events,
@@ -1104,7 +1129,10 @@ async function runBoundaryCase(
   };
 }
 
-async function buildContext(runtime: RuntimeConfig): Promise<ScenarioContext> {
+async function buildContext(
+  runtime: RuntimeConfig,
+  resolvedEnvironment?: ResolvedTestEnvironment,
+): Promise<ScenarioContext> {
   if (runtime.environment !== 'oracle-fork') {
     throw new Error(`SCN-070 只能在 oracle-fork 执行，当前 ${runtime.environment}`);
   }
@@ -1124,8 +1152,10 @@ async function buildContext(runtime: RuntimeConfig): Promise<ScenarioContext> {
     throw new Error('SCN-070 的 E2E_SECONDARY_TEST_PRIVATE_KEY 与 E2E_KEEPER_ACCOUNT 不匹配');
   }
   const manifest = await loadDeploymentManifest(runtime.deploymentManifestPath);
-  const mockResourceAlias = process.env.E2E_MARKET_RESOURCE_ALIAS ?? 'default-mock';
-  const resource = await resolveMockMarketBundle('oracle-fork', mockResourceAlias);
+  const mockResourceAlias = resolvedEnvironment?.mockResourceAlias
+    ?? process.env.E2E_MARKET_RESOURCE_ALIAS
+    ?? 'default-mock';
+  const resource = await resolveMockMarketBundle(runtime.environment, mockResourceAlias);
   const registered = resource.market?.status === 'registered'
     ? resource.market.marketIndex
     : undefined;
@@ -1162,12 +1192,12 @@ async function buildContext(runtime: RuntimeConfig): Promise<ScenarioContext> {
   const publicClient = createPublicClient({ transport: rpcTransport, pollingInterval: 500 });
   const adminPublicClient = createPublicClient({ transport: adminTransport, pollingInterval: 500 });
   const abis = {
-    exchangeRouter: await loadAbi(manifest, 'ExchangeRouter'),
-    orderHandler: await loadAbi(manifest, 'OrderHandler'),
-    reader: await loadAbi(manifest, 'Reader'),
-    dataStore: await loadAbi(manifest, 'DataStore'),
-    erc20: await loadAbi(manifest, 'ERC20'),
-    eventEmitter: await loadAbi(manifest, 'EventEmitter'),
+    exchangeRouter: await loadDeploymentAbi(manifest, 'ExchangeRouter'),
+    orderHandler: await loadDeploymentAbi(manifest, 'OrderHandler'),
+    reader: await loadDeploymentAbi(manifest, 'Reader'),
+    dataStore: await loadDeploymentAbi(manifest, 'DataStore'),
+    erc20: await loadDeploymentAbi(manifest, 'ERC20'),
+    eventEmitter: await loadDeploymentAbi(manifest, 'EventEmitter'),
   };
   const temporaryContext = {
     runtime,
@@ -1264,9 +1294,20 @@ async function buildContext(runtime: RuntimeConfig): Promise<ScenarioContext> {
   return context;
 }
 
-export async function runScn070(runtime: RuntimeConfig): Promise<Scn070Evidence> {
+export async function runScn070(
+  runtime: RuntimeConfig,
+  options: { readonly resolvedEnvironment?: ResolvedTestEnvironment } = {},
+): Promise<Scn070Evidence> {
+  if (options.resolvedEnvironment) {
+    assertRuntimeMatchesResolvedEnvironment(runtime, options.resolvedEnvironment);
+    if (options.resolvedEnvironment.marketMode !== 'mock-market'
+      || options.resolvedEnvironment.oracleMode !== 'mock-oracle') {
+      throw new Error('SCN-070 需要 mock-market + mock-oracle');
+    }
+  }
+  await assertRuntimeEnvironmentBinding(runtime);
   validateScn070Matrix();
-  const context = await buildContext(runtime);
+  const context = await buildContext(runtime, options.resolvedEnvironment);
   const cases: Scn070CaseEvidence[] = [];
   const adminUrl = runtime.adminRpcUrl ?? runtime.rpcUrl;
 
@@ -1301,6 +1342,9 @@ export async function runScn070(runtime: RuntimeConfig): Promise<Scn070Evidence>
       mockOracleDecimals: context.fixture.mockOracleDecimals,
       priceFeedMultiplier: context.fixture.priceFeedMultiplier,
       resetMode: 'per-dataset-evm_snapshot',
+      // Index 价写入口径：每次 setMockPrice 同步 STABLE_PRICE 锚 → 链上 min == max == feed，
+      // 与 Reader.getExecutionPrice(min = max) 推导的 A/E 同一口径。
+      indexPriceModel: 'feed + fresh timestamp + STABLE_PRICE 锚同步（min == max == feed）',
     },
     coverage: {
       executed: [

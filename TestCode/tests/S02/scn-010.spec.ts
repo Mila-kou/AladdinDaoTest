@@ -3,6 +3,7 @@ import { writeFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
 import { loadRuntimeConfig } from '../../src/config/runtime.js';
+import { applyCaseTrader } from '../../src/config/trader-roster.js';
 import { runScn010, stringifyEvidence, type Scn010Evidence } from '../../src/scenarios/scn-010-runner.js';
 
 async function rawRpc(url: string, method: string, params: readonly unknown[] = []): Promise<unknown> {
@@ -22,7 +23,7 @@ test.describe('S02 策略下单与订单管理', () => {
   test('SCN-010 现价下方限价开多｜Market Bundle 受控价格真实签名链路 @p0 @tx @oracle @serial', async ({}, testInfo) => {
     test.setTimeout(360_000);
     test.skip(testInfo.project.name !== 'oracle-fork', 'SCN-010 使用 oracle-fork 的双 Mock Oracle Market Bundle 构造精确价格边界');
-    const runtime = loadRuntimeConfig();
+    const runtime = await applyCaseTrader(loadRuntimeConfig(), 'SCN-010');
     const persistForkState = process.env.E2E_PERSIST_FORK_STATE === 'true';
     expect(runtime.signingMode, 'SCN-010 的用户与 Keeper 业务交易必须使用私钥签名').toBe('private-key');
     expect(runtime.hasPrimaryTestWallet, '缺少用户签名私钥').toBe(true);

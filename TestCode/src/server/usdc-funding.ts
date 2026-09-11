@@ -20,9 +20,11 @@ import {
   environments,
   type EnvironmentName,
 } from '../../config/environments/catalog.js';
-import { loadDeploymentManifest } from '../config/deployment.js';
 import {
-  readEnvironmentConfiguration,
+  assertRuntimeEnvironmentBinding,
+  loadEnvironmentBinding,
+} from '../config/environment-binding.js';
+import {
   readFundingSignerCandidates,
 } from './environment-configuration.js';
 import { readEnvironmentSettings } from './environment-settings.js';
@@ -64,13 +66,6 @@ async function rpcCall(url: string, method: string, params: readonly unknown[]):
   return body.result;
 }
 
-function configurationValue(
-  configuration: Awaited<ReturnType<typeof readEnvironmentConfiguration>>,
-  key: string,
-): string | undefined {
-  return configuration.fields.find((field) => field.key === key)?.value?.trim() || undefined;
-}
-
 export interface UsdcFundingReceipt {
   readonly environment: EnvironmentName;
   readonly chainId: number;
@@ -106,18 +101,25 @@ export class UsdcFundingManager {
 
   /** 自动补款启动前的只读校验；不会签名或发送交易。 */
   async validateBaseSepoliaAutoFunding(expectedToken: Address): Promise<void> {
-    const [settings, configuration, candidates] = await Promise.all([
+    const [settings, candidates] = await Promise.all([
       readEnvironmentSettings(this.projectRoot, 'base-sepolia'),
-      readEnvironmentConfiguration(this.projectRoot, 'base-sepolia'),
       readFundingSignerCandidates(this.projectRoot),
     ]);
     if (!settings.rpcUrl) throw new Error('base-sepolia 未配置 E2E_BASE_SEPOLIA_RPC_URL。');
     if (settings.chainId !== 84_532) {
       throw new Error(`base-sepolia 固定 Chain ID 应为 84532，当前为 ${settings.chainId ?? '未配置'}。`);
     }
-    const manifestPath = configurationValue(configuration, 'E2E_DEPLOYMENT_MANIFEST');
-    if (!manifestPath) throw new Error('E2E_DEPLOYMENT_MANIFEST 未配置。');
-    const manifest = await loadDeploymentManifest(resolve(this.projectRoot, manifestPath));
+    const binding = loadEnvironmentBinding(this.projectRoot, 'base-sepolia');
+    await assertRuntimeEnvironmentBinding({
+      environment: 'base-sepolia',
+      chainId: binding.binding.environmentChainId,
+      rpcUrl: settings.rpcUrl,
+      deploymentManifestPath: binding.manifestPath,
+      deploymentId: binding.binding.deploymentId,
+      deploymentRelease: binding.binding.release,
+      requestTimeoutMs: 30_000,
+    }, this.projectRoot);
+    const manifest = binding.manifest;
     const lpVault = manifest.additionalContracts.lpVault;
     if (!lpVault) throw new Error('Deployment Manifest 缺少 LPVault 地址。');
     const client = createPublicClient({
@@ -160,10 +162,7 @@ export class UsdcFundingManager {
       throw new Error('USDC Funding 只允许 base-sepolia 或 tx-fork、oracle-fork、time-fork。');
     }
 
-    const [settings, configuration] = await Promise.all([
-      readEnvironmentSettings(this.projectRoot, input.environment),
-      readEnvironmentConfiguration(this.projectRoot, input.environment),
-    ]);
+    const settings = await readEnvironmentSettings(this.projectRoot, input.environment);
     if (isPrivateFork && !settings.adminRpcUrl) {
       throw new Error(`${input.environment} 未配置 ${definition.adminRpcEnvironmentVariable}。`);
     }
@@ -173,9 +172,17 @@ export class UsdcFundingManager {
     if (!settings.chainId) throw new Error(`${input.environment} 未配置固定 Chain ID。`);
     const operationRpcUrl = isPrivateFork ? settings.adminRpcUrl! : settings.rpcUrl!;
 
-    const manifestPath = configurationValue(configuration, 'E2E_DEPLOYMENT_MANIFEST');
-    if (!manifestPath) throw new Error('E2E_DEPLOYMENT_MANIFEST 未配置。');
-    const manifest = await loadDeploymentManifest(resolve(this.projectRoot, manifestPath));
+    const binding = loadEnvironmentBinding(this.projectRoot, input.environment);
+    await assertRuntimeEnvironmentBinding({
+      environment: input.environment,
+      chainId: binding.binding.environmentChainId,
+      rpcUrl: operationRpcUrl,
+      deploymentManifestPath: binding.manifestPath,
+      deploymentId: binding.binding.deploymentId,
+      deploymentRelease: binding.binding.release,
+      requestTimeoutMs: 30_000,
+    }, this.projectRoot);
+    const manifest = binding.manifest;
     const lpVault = manifest.additionalContracts.lpVault;
     if (!lpVault) throw new Error('Deployment Manifest 缺少 LPVault 地址。');
 

@@ -1,0 +1,38 @@
+{
+  "Fx100Usdc": {
+    "usdc": "0x0000000000000000000000000000000000000000",
+    "mockUsdcInitialSupply": "10000000000000000n"
+  },
+  "Fx100Base": {
+    "lpVaultName": "FX100 LP USDC",
+    "lpVaultSymbol": "fxLP-USDC",
+    "lpVaultWithdrawDelaySeconds": 604800,
+    "lpVaultEpochDuration": 604800,
+    "lpVaultEpochStartTime": 1787729338,
+    "lpVaultStrategy": "0x0000000000000000000000000000000000000000",
+    "sequencerUptimeFeed": "0x0000000000000000000000000000000000000000",
+    "pyth": "0x0000000000000000000000000000000000000000"
+  },
+  "Fx100Oracle": {
+    "pyth": "0x0000000000000000000000000000000000000000",
+    "dataStreamVerifier": "0x8Ac491b7c118a0cdcF048e0f707247fD8C9575f9",
+    "chainlinkPaymentToken": "0xE4aB69C077896252FAFBD49EFD26B5D171A32410"
+  },
+  "Fx100Periphery": {
+    "riskOracle": "0x0000000000000000000000000000000000000000"
+  },
+  "Fx100Fee": {
+    "multisig": "0xf82CF35C5c0019861c2cDC65041C8Ac32970D403",
+    "feeKeeper": "0xf82CF35C5c0019861c2cDC65041C8Ac32970D403"
+  },
+  "Fx100Role": {
+    "configKeeper": "0xf82CF35C5c0019861c2cDC65041C8Ac32970D403",
+    "limitedConfigKeeper": "0xf82CF35C5c0019861c2cDC65041C8Ac32970D403",
+    "marketKeeper": "0xf82CF35C5c0019861c2cDC65041C8Ac32970D403",
+    "orderKeeper": "0x542fe841228416F6a3D65eb534a90Ebc5cc36354",
+    "liquidationKeeper": "0x542fe841228416F6a3D65eb534a90Ebc5cc36354",
+    "adlKeeper": "0x542fe841228416F6a3D65eb534a90Ebc5cc36354",
+    "timelockAdmin": "0xf82CF35C5c0019861c2cDC65041C8Ac32970D403",
+    "holdingAddress": "0x0000000000000000000000000000000000000000"
+  }
+}

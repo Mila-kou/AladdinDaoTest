@@ -1,0 +1,26 @@
+{
+  "id": "2026-08-04T015637-308Z-dashboard-workflow-check",
+  "release": "dashboard-workflow-check",
+  "description": "验证看板运行创建，不发送交易",
+  "scope": "single",
+  "environmentMode": "default",
+  "createdAt": "2026-08-04T01:56:37.308Z",
+  "status": "NO_AUTOMATION",
+  "rpcUpdatedEnvironments": [],
+  "cases": [
+    {
+      "id": "SCN-001",
+      "title": "首次进入并判断数据可信",
+      "plannedEnvironment": "dev-readonly",
+      "resolvedEnvironment": "dev-readonly",
+      "automated": false,
+      "status": "NOT_AUTOMATED"
+    }
+  ],
+  "logTail": [
+    "运行批次已创建，等待执行。",
+    "所选用例尚无自动化代码，本次没有发送交易。"
+  ],
+  "startedAt": "2026-08-04T01:56:37.309Z",
+  "endedAt": "2026-08-04T01:56:37.309Z"
+}

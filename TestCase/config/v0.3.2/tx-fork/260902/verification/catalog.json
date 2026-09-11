@@ -1,0 +1,309 @@
+{
+ "task": "A-3 full reconciliation of the 124 set values in TestCase/config/v0.3.2/tx-fork/260902/parameters-by-module.csv (tx-fork-v0.3.2-260902, chainId 99911, block 46282993, release/v0.3.2 @13880f2) against (a) Docs/contract-releases/v0.3.2/04-参数目录.md (§2 new-key cards, §3 semantic-change cards, §4 removed keys, §5 unchanged-by-module, §6 change list) and (b) TestCase/E2E/ContractCodeSummary/v0.3.2 (README + FX100-合约参数定义目录.csv/.xlsx + deployments/tx-fork-260902). Outputs: (1) per-card chain values + PASS/FAIL/NOT_STATED, (2) uncatalogued chain-set keys, (3) §4 removed keys still set, (4) expected-but-unset keys.",
+ "files_read": [
+  "/Users/milakou/Documents/FX100/TestCase/config/v0.3.2/tx-fork/260902/parameters-by-module.csv",
+  "/Users/milakou/Documents/FX100/TestCase/config/v0.3.2/tx-fork/260902/parameters.json",
+  "/Users/milakou/Documents/FX100/TestCase/config/v0.3.2/tx-fork/260902/parameters.md",
+  "/Users/milakou/Documents/FX100/TestCase/config/v0.3.2/tx-fork/260902/README.md",
+  "/Users/milakou/Documents/FX100/TestCase/config/v0.3.2/tx-fork/260902/roles.json",
+  "/Users/milakou/Documents/FX100/TestCase/config/v0.3.2/tx-fork/260902/tokens.json",
+  "/Users/milakou/Documents/FX100/TestCase/config/v0.3.2/tx-fork/260902/deployed-addresses.json",
+  "/Users/milakou/Documents/FX100/TestCase/config/v0.3.2/tx-fork/260902/read-checks-live-2026-09-02.md",
+  "/Users/milakou/Documents/FX100/TestCase/config/v0.3.2/tx-fork/260902/compile.log",
+  "/Users/milakou/Documents/FX100/TestCase/config/v0.3.2/tx-fork/260902/configure-inputs/general.sample.json",
+  "/Users/milakou/Documents/FX100/TestCase/config/v0.3.2/tx-fork/260902/configure-inputs/market.sample.json",
+  "/Users/milakou/Documents/FX100/TestCase/config/v0.3.2/tx-fork/260902/configure-inputs/shared_market.sample.json",
+  "/Users/milakou/Documents/FX100/TestCase/config/v0.3.2/tx-fork/260902/configure-inputs/oracle.fork.tx-fork.json",
+  "/Users/milakou/Documents/FX100/TestCase/config/v0.3.2/tx-fork/260902/ignition/fx100.fork.tx-fork.json",
+  "/Users/milakou/Documents/FX100/TestCase/config/v0.3.2/tx-fork/260902/ignition/journal.jsonl (grep only: futureId/type/args of SetCollateralToken, futureId list, FEE_RECEIVER hash count)",
+  "/Users/milakou/Documents/FX100/TestCode/config/deployments/tx-fork-v0.3.2-260902.json",
+  "/Users/milakou/Documents/FX100/Docs/contract-releases/v0.3.2/04-参数目录.md",
+  "/Users/milakou/Documents/FX100/TestCase/E2E/ContractCodeSummary/v0.3.2/README.md",
+  "/Users/milakou/Documents/FX100/TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-合约参数定义目录.csv",
+  "/Users/milakou/Documents/FX100/TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-合约参数定义目录.xlsx (sheets 说明/参数定义/链上已设置/版本变化/部署信息)",
+  "/Users/milakou/Documents/FX100/TestCase/E2E/ContractCodeSummary/v0.3.2/deployments/tx-fork-260902/README.md",
+  "/Users/milakou/Documents/FX100/TestCase/E2E/ContractCodeSummary/v0.3.1/FX100-合约配置参数总表.csv",
+  "/Users/milakou/Documents/FX100/TestCase/config/v0.3.1/tx-fork/260812/parameters-by-module.csv",
+  "/Users/milakou/Documents/FX100/TestCase/config/v0.3.1/base-sepolia/260729/parameters-by-module.csv (grep spot-check of 6 keys)",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/scripts/config/defaults.ts",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/scripts/config/keys.ts",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/scripts/config/writers.ts (grep of *IfNeeded bodies)",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/scripts/configureGeneral.ts",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/scripts/configureMarket.ts",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/scripts/configureOracle.ts (lines 20-60,66-92,115-145 with 64-hex masked)",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/scripts/parameters/general.sample.json",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/ignition/modules/Fx100Role.ts (grep CollateralToken)",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/ignition/modules/Fx100Fee.ts (grep FEE_RECEIVER)",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/src/constants/FX100Keys.sol (grep: key constants, comments, getKey/_efficientHash, builders)",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/src/market/MarketStoreUtils.sol (grep)",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/src/config/Config.sol (grep allowedBaseKeys/allowedLimitedBaseKeys)",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/src/config/ConfigUtils.sol (grep validateRange/InitOracleConfigPriceFeedParams)",
+  "/Users/milakou/Documents/FX100/Github/fx100-contracts@release-v0.3.2/src/oracle/ChainlinkPriceFeedProvider.sol:40-75",
+  "git diff d9a7fd2..13880f2 -- src/constants/FX100Keys.sol src/data/Keys2.sol src/config/Config.sol src/config/ConfigUtils.sol (non-comment lines)"
+ ],
+ "method": "Actuals: all 124 chain rows taken from parameters-by-module.csv (cited by 序号 N = CSV line N+1) and cross-checked 124/124 against parameters.json entries by DataStore key (value equality) and against the xlsx 链上已设置 sheet (125 rows, 0 diffs). Unset/probe facts (counts per base) from parameters.json entries[].unset and skipped[] (meta.counts 1969/124/1845/0). Expected values: (i) 04 card fields quoted by line number (默认值/当前部署值/v0.3.1 参考值/精度/写入权限); (ii) deployment-input expectations recomputed by a node script (scratchpad recon3.mjs) that re-implements scripts/configureGeneral.ts:11-20,34-68 and scripts/configureMarket.ts:24-55,65-131 (parseDecimalToScaled: whole×scale + fraction truncated to scale digits; FLOAT=1e30, WEI=1e18; APR/31536000 with BigInt truncation; GraceBase×60; minCollateralFactor=1e30/MaxLev; bid←OrderbookDepthShort, ask←OrderbookDepthLong) over the archived configure-inputs (general.sample.json, market.sample.json, shared_market.sample.json, oracle.fork.tx-fork.json) plus ignition/fx100.fork.tx-fork.json and the deployment manifest; PRICE_FEED_MULTIPLIER via configureOracle.ts:29-40 formula 10^(60−oracleDecimals−tokenDecimals) with tokenDecimals=6 for USDC else 18. (iii) catalog CSV parsed with a quote-aware CSV parser; all 245 常量 Key/Hash recomputed with viem keccak256 (241 via abi.encode(string), 4 'raw' rows via keccak256(utf8) per FX100Keys.sol:10-17); all 124 chain DataStore keys recomputed (global = base hash; derived = keccak256(abi.encode(baseHash,args)) with arg types inferred from parameters.json args; market-prop = keccak256(bytes32(marketIndex)‖SUBKEY) per FX100Keys.sol:572-574/1605). (iv) 04 §5 'unchanged' checked at definition level via git diff d9a7fd2..13880f2 filtered to non-comment ± lines, and at value level by normalizing v0.3.1 tx-fork 260812 argLabels (market#N, token symbol) and comparing same-dimension values. (v) Uncatalogued = chain base not in catalog 基础键/参数/函数; not-in-04 = base name absent as a literal token in 04 (slash/wildcard-combined names counted as covered). (vi) Removed keys checked in chain CSV, parameters.json entries+skipped, catalog, v0.3.2 src/scripts/ignition grep, and the version diff. No RPC used; no .env/pk/mnemonic/Devconfig files opened; source-tree scripts/parameters/market.sample.json & oracle.sample.json were skipped after a pattern pre-check (archived copies used instead); configureOracle.ts read with 64-hex values masked; journal.jsonl only grepped for futureId/type/args fields.",
+ "checks": [
+  {
+   "item": "§2.1 MIN_DYNAMIC_SPREAD — value / type / precision / write entry",
+   "expected": "-20000000000000000 for market#1/#2 × isLong true/false (04:57); int256 (04:53); WEI_PRECISION 1e18 (04:54); Config.setInt CONFIG_KEEPER, in allowedBaseKeys, not in allowedLimitedBaseKeys (04:60)",
+   "actual": "chain 序号41-44 = -20000000000000000 (×4), type int; input market.sample.json:30,83 DynamicSpread_Clamp_Min=\"-0.02\"×1e18 (configureMarket.ts:114,353-360); Config.sol:391 allowedBaseKeys, absent from allowedLimitedBaseKeys (Config.sol:485-500); FX100Keys.sol:37 comment 'WEI_PRECISION where 1e18 represents 100%'; catalog row 11 int / market + bool / Config 可设 是 / Limited 否 / 'v0.3.2 新增'",
+   "status": "PASS",
+   "evidence": "04-参数目录.md:53,54,57,60 ↔ parameters-by-module.csv 序号41-44; configure-inputs/market.sample.json:30,83; Config.sol:391; FX100Keys.sol:37; FX100-合约参数定义目录.csv row 11"
+  },
+  {
+   "item": "§2.2 MAX_DYNAMIC_SPREAD — value / type / precision",
+   "expected": "1000000000000000000 ×4 (04:77); int256 (04:73); WEI 1e18 (04:74)",
+   "actual": "chain 序号45-48 = 1000000000000000000 (×4), type int; input market.sample.json:31,84 DynamicSpread_Clamp_Max=\"1.0\"×1e18 (configureMarket.ts:115,361-368); Config.sol:392; FX100Keys.sol:39; catalog row 12 int / market + bool / 'v0.3.2 新增'",
+   "status": "PASS",
+   "evidence": "04:73,74,77 ↔ csv 序号45-48; market.sample.json:31,84; Config.sol:392; FX100Keys.sol:39; catalog row 12"
+  },
+  {
+   "item": "§2.3 COLLATERAL_TOKEN (global) — value / scope / write entry",
+   "expected": "0xf300bbfb89106f54794aab6f7554ecfdaf32e154 (04:97); global key = keccak256(abi.encode(\"COLLATERAL_TOKEN\")) (04:92); DataStore direct write CONTROLLER, not in Config whitelist (04:100); no per-market slot (04:105,378)",
+   "actual": "chain 序号9 = 0xf300bbfb89106f54794aab6f7554ecfdaf32e154, key 0xd890cedaab800f07f6432ac38d67dd1adbee92bfb56f145ca33f99455f6398b4 = catalog row 21 hash = journal Fx100Role#SetCollateralToken args[0], args[1]=0xF300bBfB89106F54794aab6f7554ECfdAf32e154, type SUCCESS; configureGeneral.ts:70-75 setDataStoreAddressIfNeeded(KEY.COLLATERAL_TOKEN, contracts.usdc); Config.sol grep: COLLATERAL_TOKEN not in allowedBaseKeys; parameters.json market-prop bases = [MARKET_INDEX, VAULT, INDEX_TOKEN] only; MarketStoreUtils.sol:35 reads global key; manifest markets[*].collateralToken = 0xF300… (6 decimals)",
+   "status": "PASS",
+   "evidence": "04:92,97,100,105 ↔ csv 序号9; catalog row 21; ignition/journal.jsonl futureId Fx100Role#SetCollateralToken; configureGeneral.ts:70-75; MarketStoreUtils.sol:18-20,35; tx-fork-v0.3.2-260902.json markets"
+  },
+  {
+   "item": "§2.4–2.6 SUBACCOUNT_SLOT / SUBACCOUNT_SLOT_SUBACCOUNT / SUBACCOUNT_SLOT_ACTIVE",
+   "expected": "Runtime account/slot state, not a deployment value (04:117,137,157); default empty/address(0)/false",
+   "actual": "Not probed: parameters.json skipped[] lists subaccountSlotKey / subaccountSlotSubaccountKey / subaccountSlotActiveKey with reason '维度 account 无可枚举取值'; catalog rows present (基础键 SUBACCOUNT_SLOT*, scope account + index); read-checks-live-2026-09-02.md:11 shows Reader.getSubaccountSlots = 4 slots {slot:\"\", subaccount:0x0, isActive:false} for the SCN-009 trader; keys added in diff (FX100Keys.sol +SUBACCOUNT_SLOT/+_SUBACCOUNT/+_ACTIVE and builders)",
+   "status": "N/A",
+   "evidence": "04:117,137,157; parameters.json skipped[]; catalog rows for SUBACCOUNT_SLOT*; read-checks-live-2026-09-02.md:11; git diff d9a7fd2..13880f2 FX100Keys.sol"
+  },
+  {
+   "item": "§3.2 CONSTANT_PRICE_SPREAD — value / precision (card 当前部署值 = 待回填 → NOT_STATED)",
+   "expected": "默认值 100000000000000 (04:189); v0.3.1 参考值 100000000000000 (04:191); WEI 1e18 (04:187); 当前部署值 '待本文回填' (04:190)",
+   "actual": "chain 序号39 (market#1) = 100000000000000, 序号40 (market#2) = 100000000000000, type uint; input market.sample.json:29,82 ConstantSpread=\"0.0001\"×1e18 (configureMarket.ts:113); FX100Keys.sol:35 WEI comment; catalog row 10 uint/market",
+   "status": "PASS",
+   "evidence": "04:187,189,190,191 ↔ csv 序号39-40; market.sample.json:29,82; FX100Keys.sol:35; catalog row 10"
+  },
+  {
+   "item": "§3.2/§3.3/§3.4/§3.5 写入权限 field (CONSTANT_PRICE_SPREAD, MAX_PRICE_IMPACT_SPREAD, PRICE_IMPACT_PARAMETER, BID/ASK_ORDER_BOOK_DEPTH)",
+   "expected": "04:193,213,233,253 state `Config.sol::setUint`（CONFIG_KEEPER，白名单内）",
+   "actual": "Config.sol allowedBaseKeys contains none of these 5 keys (grep of Config.sol at 13880f2 returns only SKEW_IMPACT_FACTOR:388, MIN_SKEW_IMPACT:389, MAX_SKEW_IMPACT:390, MIN/MAX_DYNAMIC_SPREAD:391-392, TOKEN_TRANSFER_GAS_LIMIT:369, PRICE_FEED_HEARTBEAT_DURATION:437, CHAINLINK_PAYMENT_TOKEN:340; v0.3.1 d9a7fd2 Config.sol also has none); scripts write them by DataStore direct write: configureGeneral.ts:117-122 setDataStoreUintIfNeeded(KEY.MAX_PRICE_IMPACT_SPREAD), configureMarket.ts:306-329 setDataStoreUintIfNeeded(directKey.constantPriceSpread/bidOrderBookDepth/askOrderBookDepth/priceImpactParameter); catalog rows 10,13,14,15,16 = 'DataStore 直写(CONTROLLER)', Config 可设 否",
+   "status": "FAIL",
+   "evidence": "04:193,213,233,253 vs Config.sol allowedBaseKeys grep (13880f2 and d9a7fd2); configureGeneral.ts:117-122; configureMarket.ts:306-329; catalog rows 10,13,14,15,16"
+  },
+  {
+   "item": "§3.3 MAX_PRICE_IMPACT_SPREAD — value / precision / key",
+   "expected": "默认值 5000000000000000 (04:209); v0.3.1 参考值 5000000000000000 (04:211); WEI 1e18 (04:207); global key = base key (04:205); 当前部署值 待回填 (04:210)",
+   "actual": "chain 序号7 = 5000000000000000, DataStore key 0x9f71064f4d31ede08ea2e305fbbe1b3f4c903416fe7defe9f2b7ebdbb257c70f = catalog row 16 Key/Hash; input general.sample.json:8 maxPriceImpactSpread=\"0.005\"×1e18 (configureGeneral.ts:37-39); FX100Keys.sol:48 WEI comment",
+   "status": "PASS",
+   "evidence": "04:205,207,209,211 ↔ csv 序号7; catalog row 16; general.sample.json:8; FX100Keys.sol:48"
+  },
+  {
+   "item": "§3.4 PRICE_IMPACT_PARAMETER — value / precision",
+   "expected": "默认值 ETH 600000000000000000, WBTC 500000000000000000 (04:229); v0.3.1 参考值 market#1 500000000000000000, market#2 600000000000000000 (04:231); WEI 1e18 = 1 (04:227)",
+   "actual": "chain 序号53 (market#1 BTC) = 500000000000000000, 序号54 (market#2 WETH) = 600000000000000000; input market.sample.json:32 PriceImpactParameter_Normal \"0.5\", :85 \"0.6\" ×1e18 (configureMarket.ts:118); FX100Keys.sol:46 '1e18 represents 1'",
+   "status": "PASS",
+   "evidence": "04:227,229,231 ↔ csv 序号53-54; market.sample.json:32,85; FX100Keys.sol:46"
+  },
+  {
+   "item": "§3.5 BID_ORDER_BOOK_DEPTH / ASK_ORDER_BOOK_DEPTH — value / precision / script mapping",
+   "expected": "默认值 ETH bid 7767179170000000000000000000000000000 ask 7923961270000000000000000000000000000; WBTC bid 15217320430000000000000000000000000000 ask 15593281790000000000000000000000000000 (04:249); same as v0.3.1 参考值 (04:251); FLOAT 1e30 USD (04:247); bid←OrderbookDepthShort, ask←OrderbookDepthLong (04:253)",
+   "actual": "chain 序号49 market#1 bid = 15217320430000000000000000000000000000, 序号50 market#2 bid = 7767179170000000000000000000000000000, 序号51 market#1 ask = 15593281790000000000000000000000000000, 序号52 market#2 ask = 7923961270000000000000000000000000000; inputs market.sample.json:34-35 (WBTC Long 15593281.79 / Short 15217320.43), :87-88 (ETH 7923961.27 / 7767179.17) ×1e30 via configureMarket.ts:116-117 (bid=OrderbookDepthShort, ask=OrderbookDepthLong)",
+   "status": "PASS",
+   "evidence": "04:247,249,251,253 ↔ csv 序号49-52; market.sample.json:34,35,87,88; configureMarket.ts:116-117"
+  },
+  {
+   "item": "§3.6 SKEW_IMPACT_FACTOR — value / precision",
+   "expected": "默认值 ETH 2500000000000000, WBTC 10000000000000000 (04:269); WEI 1e18 = 1 (04:267); v0.3.1 参考值 market#1/2 2500000000000000 (04:271)",
+   "actual": "chain 序号55 (market#1 BTC) = 10000000000000000, 序号56 (market#2 WETH) = 2500000000000000, type int; input market.sample.json:42 Skew_k_normal \"0.01\", :95 \"0.0025\" ×1e18 (configureMarket.ts:122); FX100Keys.sol:51; v0.3.1 tx-fork 260812 market#1 = 2500000000000000 (04:271 reference correct; v0.3.2 tx-fork market#1 differs from v0.3.1 environment by input)",
+   "status": "PASS",
+   "evidence": "04:267,269,271 ↔ csv 序号55-56; market.sample.json:42,95; FX100Keys.sol:51; v0.3.1 tx-fork/260812 by-module SKEW_IMPACT_FACTOR market#1"
+  },
+  {
+   "item": "§3.6 MIN_SKEW_IMPACT — value vs card 默认值",
+   "expected": "默认值 ETH 0, WBTC 0 (04:269); v0.3.1 参考值 -5000000000000000 (04:271, with card note '实际部署 min 为负…以链上为准'); WEI 1e18",
+   "actual": "chain 序号57 (market#1) = -5000000000000000, 序号58 (market#2) = -5000000000000000, type int; source market.sample.json:44,97 Skew_Clamp_Min=\"-0.005\"×1e18 (configureMarket.ts:123) overriding defaults.ts:58,84 minSkewImpact 0n; matches v0.3.1 参考值; card 当前部署值 待回填 → must be filled with -5000000000000000",
+   "status": "FAIL",
+   "evidence": "04:269 (default 0) vs csv 序号57-58 (-5000000000000000); explained by configure-inputs/market.sample.json:44,97 + configureMarket.ts:123; defaults.ts:58,84; 04:271"
+  },
+  {
+   "item": "§3.6 MAX_SKEW_IMPACT — value vs card 默认值",
+   "expected": "默认值 ETH 5000000000000000, WBTC 10000000000000000 (04:269); v0.3.1 参考值 5000000000000000 (04:271)",
+   "actual": "chain 序号59 (market#1 BTC) = 5000000000000000 (≠ WBTC default 10000000000000000), 序号60 (market#2 WETH) = 5000000000000000 (= ETH default); source market.sample.json:45,98 Skew_Clamp_Max=\"0.005\"×1e18 (configureMarket.ts:124) overriding defaults.ts:85 (WEI/100); matches v0.3.1 参考值; market#2 PASS, market#1 FAIL vs default",
+   "status": "FAIL",
+   "evidence": "04:269 vs csv 序号59-60; market.sample.json:45,98; configureMarket.ts:124; defaults.ts:59,85; 04:271"
+  },
+  {
+   "item": "§3.7 MIN_AFFILIATE_REWARD_FACTOR (per referral tier)",
+   "expected": "No script default; unset reads 0 (04:289); v0.3.1 tier0-3 unset (04:291); 当前部署值 待回填 (04:290); FLOAT 1e30 (04:287)",
+   "actual": "parameters.json MIN_AFFILIATE_REWARD_FACTOR: 4 entries (referralTierLevel 0-3), set=0 unset=4 (value 0); no writer in configureGeneral/Market/Oracle (keys.ts KEY has no MIN_AFFILIATE_REWARD_FACTOR); FX100Keys.sol:190 comment FLOAT 1e30; catalog row present (scope referralTier, Config 可设 是)",
+   "status": "PASS",
+   "evidence": "04:287,289,290,291 ↔ parameters.json entries base=MIN_AFFILIATE_REWARD_FACTOR (set 0 / unset 4); scripts/config/keys.ts:30-111; FX100Keys.sol:190-191"
+  },
+  {
+   "item": "§3.8 PRO_DISCOUNT_FACTOR (per pro tier)",
+   "expected": "No script default; unset reads 0 (04:309); v0.3.1 proTier0-3 unset (04:311); ≤1e30 validateRange (04:313)",
+   "actual": "parameters.json PRO_DISCOUNT_FACTOR: 4 entries (proTier 0-3) unset (value 0); FX100Keys.sol:443-444 FLOAT 1e30 comment; no configure-script writer",
+   "status": "PASS",
+   "evidence": "04:309,311,313 ↔ parameters.json entries base=PRO_DISCOUNT_FACTOR (set 0 / unset 4); FX100Keys.sol:443-444"
+  },
+  {
+   "item": "§3.9 funding state keys + funding config constraint",
+   "expected": "FUNDING_SKEW_EMA / NEGATIVE_FUNDING_FEE_PER_SIZE / POSITIVE_FUNDING_FEE_PER_SIZE / FUNDING_UPDATED_AT / CLAIMABLE_FEE_AMOUNT are runtime state (04:326,331-332); config keys unchanged, MAX_FUNDING_FACTOR_PER_SECOND ≤ 100000000000000000000000 and MIN ≤ MAX (04:337; ConfigUtils.sol:51,133-152)",
+   "actual": "Runtime keys all unset on fresh deployment: FUNDING_SKEW_EMA unset 2, FUNDING_UPDATED_AT unset 2, NEGATIVE_FUNDING_FEE_PER_SIZE unset 4, POSITIVE_FUNDING_FEE_PER_SIZE unset 4, CLAIMABLE_FEE_AMOUNT unset 66 (parameters.json). Config values: FUNDING_FLOOR_FACTOR 序号75-76 = 3472222222222222222222 (=0.1095×1e30/31536000, market.sample.json:23,76); FUNDING_BASE_FACTOR 序号77 = 42672606957128361237950 (1.345723333, :24), 序号78 = 45278306284880771182141 (1.427896667, :77); MIN_FUNDING_FACTOR_PER_SECOND 序号79 = -4247209538305428716387 (-0.13394, :27), 序号80 = -8722571029934043632673 (-0.275075, :80); MAX_FUNDING_FACTOR_PER_SECOND 序号81 = 30606957128361237950279 (0.965221, :28), 序号82 = 35320839675291730086250 (1.113878, :81); both MAX ≤ 100000000000000000000000 and MIN ≤ MAX; all 8 equal v0.3.1 tx-fork 260812 values",
+   "status": "PASS",
+   "evidence": "04:326,331,332,337 ↔ parameters.json unset counts; csv 序号75-82; market.sample.json:23-28,76-81; configureMarket.ts:53-55,126-129; ConfigUtils.sol:51,133-152"
+  },
+  {
+   "item": "§3.10 SWAP_ORDER_GAS_LIMIT",
+   "expected": "Unset reads 0 (04:351); no runtime read point, whitelist retained (04:354-355); v0.3.1 unset (04:353)",
+   "actual": "parameters.json SWAP_ORDER_GAS_LIMIT: 5 probe entries, all unset; src grep: only Config.sol:366 (allowedBaseKeys) and FX100Keys.sol:406,1052-1053 (constant + builder), no consumer",
+   "status": "PASS",
+   "evidence": "04:351,353,354,355 ↔ parameters.json base=SWAP_ORDER_GAS_LIMIT unset 5; grep src: Config.sol:366, FX100Keys.sol:406,1052"
+  },
+  {
+   "item": "§4 removed keys still set on chain (CLAIMABLE_COLLATERAL_AMOUNT, CLAIMABLE_COLLATERAL_FACTOR, CLAIMABLE_COLLATERAL_REDUCTION_FACTOR, CLAIMABLE_COLLATERAL_TIME_DIVISOR, CLAIMABLE_COLLATERAL_DELAY, CLAIMED_COLLATERAL_AMOUNT, CLAIM_COLLATERAL_FEATURE_DISABLED, SUBACCOUNT_LIST)",
+   "expected": "0 rows set; keys absent from v0.3.2 code (04:364-378)",
+   "actual": "For all 8: chain CSV rows = 0, parameters.json entries = 0, skipped = 0, catalog rows = 0, grep of v0.3.2 src/ scripts/ ignition/modules = 0 hits; git diff d9a7fd2..13880f2 shows '-' lines for all 7 CLAIM* constants/builders and SUBACCOUNT_LIST/subaccountListKey in FX100Keys.sol, '-allowedBaseKeys[CLAIM_COLLATERAL_FEATURE_DISABLED]' and '-allowedBaseKeys[CLAIMABLE_COLLATERAL_DELAY]' in Config.sol, '-if (baseKey == CLAIMABLE_COLLATERAL_DELAY) { if (value < 24 hours)' and removed setClaimableCollateral* in ConfigUtils.sol",
+   "status": "PASS",
+   "evidence": "recon.mjs removed-key scan over parameters-by-module.csv / parameters.json / catalog CSV; grep -rn over src scripts ignition/modules; git diff d9a7fd2..13880f2 non-comment lines"
+  },
+  {
+   "item": "§4 per-market COLLATERAL_TOKEN old slot (v0.3.1 MarketStoreUtils constant)",
+   "expected": "No per-market collateral slot written/read in v0.3.2 (04:378); v0.3.1 value 0xbf4d9b318689ab928db9ee4cdc840c065575eb89 (04:98,378)",
+   "actual": "parameters.json market-prop bases = MARKET_INDEX, VAULT, INDEX_TOKEN only (MarketStoreUtils.sol:18-20); MarketStoreUtils.sol:35 market.collateralToken = getAddress(FX100Keys.COLLATERAL_TOKEN); v0.3.1 tx-fork 260812 COLLATERAL_TOKEN|market#1/#2 = 0xbf4d9b318689ab928db9ee4cdc840c065575eb89 (04 reference value confirmed)",
+   "status": "PASS",
+   "evidence": "parameters.json group=market-prop bases; MarketStoreUtils.sol:18-20,35; v0.3.1 tx-fork/260812 by-module COLLATERAL_TOKEN rows; 04:98,378"
+  },
+  {
+   "item": "§5 claim '除 §2/§3/§4 已列项外全部改动均为注释' (key definitions / whitelist / validateRange thresholds unchanged)",
+   "expected": "Non-comment diff of FX100Keys.sol, Keys2.sol, Config.sol, ConfigUtils.sol limited to §2/§4 items (04:386)",
+   "actual": "git diff d9a7fd2..13880f2 non-comment lines: FX100Keys.sol = +MIN_DYNAMIC_SPREAD, +MAX_DYNAMIC_SPREAD, +COLLATERAL_TOKEN, +SUBACCOUNT_SLOT/_SUBACCOUNT/_ACTIVE (+builders), −CLAIMABLE_COLLATERAL_*(4), −CLAIMED_COLLATERAL_AMOUNT, −SUBACCOUNT_LIST, −CLAIM_COLLATERAL_FEATURE_DISABLED (−builders); Keys2.sol = 0 lines; Config.sol = −setClaimableCollateral*(3 fns), −allowedBaseKeys[CLAIM_COLLATERAL_FEATURE_DISABLED], +allowedBaseKeys[MIN/MAX_DYNAMIC_SPREAD], −allowedBaseKeys[CLAIMABLE_COLLATERAL_DELAY]; ConfigUtils.sol = 82 lines, all removed setClaimableCollateral* / InvalidClaimable* reverts / 'value < 24 hours' branch / MarketUtils import; no other numeric threshold ± lines (MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND 100000000000000000000000, borrowing 50000000000000000000000/100000000000000000000000, exponent 2e30/3e30, 1%/5% caps unchanged)",
+   "status": "PASS",
+   "evidence": "git diff d9a7fd2..13880f2 -- src/constants/FX100Keys.sol src/data/Keys2.sol src/config/Config.sol src/config/ConfigUtils.sol (filtered to non-comment); ConfigUtils.sol:51-57,133-204 at 13880f2"
+  },
+  {
+   "item": "§5 底本行数 column (20 module rows)",
+   "expected": "部署初始化 24; 订单与请求 3; 定价与点差 23; 风控闸门 15; 交易费用与分账 6; 可领取余额 2; 清算与保护期 8+1; 市场与代币 9; 执行费与 Gas 15+16; 资金费 8+3; ADL 7; Oracle 21+8; Relay 2+6; 多链 8; 费用与分配 17; 功能开关 19; 借贷费 6; 全局与其他 5; 市场、仓位与定价 14; Swap 12 (04:390-409)",
+   "actual": "v0.3.1 底本 CSV group counts: 部署初始化 8+2+3+1+8+2=24; 当前链上参数 订单3/定价23/风控15/交易费6/可领取2/清算8/市场9/执行费15/资金费8/ADL7/Oracle21/Relay2; 允许配置未设置 多链8/费用分配17/功能开关19/借贷6/清算1/全局5/市场仓位14/执行费16/资金费3/Oracle8/Relay6/Swap12 — all 20 rows match",
+   "status": "PASS",
+   "evidence": "04:390-409 ↔ FX100-合约配置参数总表.csv (v0.3.1) counts by 参数层级/模块 (258 rows)"
+  },
+  {
+   "item": "§5 module values — v0.3.2 chain vs archived configure-inputs (all 124 rows)",
+   "expected": "Every set value derivable from configure-inputs/{general,market,shared_market}.sample.json, oracle.fork.tx-fork.json, ignition/fx100.fork.tx-fork.json, deployment manifest via the scripts' scaling rules",
+   "actual": "120/124 rows equal the recomputed expectation exactly (0 FAIL); remaining 4: PRICE_FEED_MULTIPLIER 序号110-111 (BTC, WETH) = 10000000000000000000000000000000000 = 10^(60−8−18) and 序号112 (USDC) = 1000000000000000000000000000000000000 = 10^(60−18−6) per configureOracle.ts:29-40 (getTokenDecimals: USDC→6 else 18; oracleDecimals from oracle.fork.tx-fork.json:9,23,37); ORACLE_PROVIDER_UPDATED_AT 序号89 = 1788334905 is a runtime timestamp written by Oracle on provider binding (≤ meta.blockTimestamp 1788335217). Also LIQUIDATION_GRACE_PERIOD_TIER_MULTIPLIER 序号118 = 1000000000000000000 from general.sample.json:24 \"1\"×1e18 (not defaults.ts:30 8e18); LIQUIDATION_GRACE_PERIOD_BASE 序号116-117 = 900 = GraceBase 15×60; EXECUTION_FEE_SUBSIDIZE 序号121-122 = 20000000000000000000000000000000 (shared:12 \"20\"×1e30); EXECUTION_FEE_SUBSIDIZE_SIZE 序号123 = 333333333333333 (\"0.000333333333333333\"×1e18 truncated), 序号124 = 10000000000000000; MAX_PNL_FACTOR(traders) 序号71-74 = 1000000000000000000000000000000; POSITION_IMPACT_EXPONENT_FACTOR 序号35-38 = 1000000000000000000000000000000; MAX_POSITION_IMPACT_FACTOR 序号97-100 = 1000000000000000000000000000000; FEE_RECEIVER 序号13 = 0x48473691c59750ee8d1fa45cbad29f08d38092ac = manifest revenuePool (Fx100Fee.ts:79-80 SetRevenuePoolFeeReceiver); CHAINLINK_PAYMENT_TOKEN 序号20 = 0xe4ab69c077896252fafbd49efd26b5d171a32410 = fx100.fork.tx-fork.json:19",
+   "status": "PASS",
+   "evidence": "recon3.mjs (scratchpad) reimplementing configureGeneral.ts:11-20,34-68 & configureMarket.ts:24-55,65-131 over configure-inputs/*; configureOracle.ts:29-40; Fx100Fee.ts:79-80; ignition/fx100.fork.tx-fork.json:19; parameters.json meta.blockTimestamp"
+  },
+  {
+   "item": "§5 module values — v0.3.2 tx-fork vs v0.3.1 tx-fork 260812 (same dimension) — informational for 'unchanged' modules",
+   "expected": "§5 claims key/definition unchanged (not value equality); differences must be explainable by deployment inputs",
+   "actual": "70 same-value pairs, 34 differ, 20 v0.3.2-only. Identical modules: 执行费与 Gas 15/15, 资金费 8/8, Relay 2/2, 订单与请求 2/3 (REQUEST_EXPIRATION_TIME 3600 vs 120), 定价与点差 22/23 (SKEW_IMPACT_FACTOR market#1 10000000000000000 vs 2500000000000000), 交易费用 5/6 (FEE_RECEIVER 0x48473691… vs 0x0b5141ef…), 清算 7/8 (MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION market#1 4000000000000000000000000000 vs 5000000000000000000000000000). Differing: 风控闸门 14/15 (MAX_OPEN_INTEREST 40000000000000000000000000000000000000/30000000000000000000000000000000000000 vs 100000000000000000000000000000000000000; MAX_OPEN_INTEREST_FACTOR 400000000000000000000000000000/300000000000000000000000000000 vs 1000000000000000000000000000000; RESERVE_FACTOR 400000000000000000000000000000/300000000000000000000000000000 vs 360000000000000000000000000000; MIN_COLLATERAL_FACTOR 10000000000000000000000000000 vs 5000000000000000000000000000; MAX_POSITION_SIZE_USD 8000000000000000000000000000000000000/6000000000000000000000000000000000000 vs 1800000000000000000000000000000000000); ADL 7/7 (MAX_PNL_FACTOR_FOR_ADL 750000000000000000000000000000 vs 550000000000000000000000000000; MIN_PNL_FACTOR_AFTER_ADL 500000000000000000000000000000 vs 450000000000000000000000000000; MAX_PNL_FACTOR_FOR_WITHDRAWALS 650000000000000000000000000000 vs 500000000000000000000000000000; MAX_PNL_FACTOR traders 1000000000000000000000000000000 vs 600000000000000000000000000000); 市场与代币 (VAULT 0x46fb4f1eebf811a59dcf6e6343ac5be36122dde8 vs 0xd584270bbc25e0948103da1e1865aa523a1bae6c; MARKET_LIST 2 vs 27); Oracle (ORACLE_PROVIDER_FOR_TOKEN 0x7ae5fdb923d25840fb4cee822c3d800a48ef6e90 PriceFeed vs 0x8a25a62ff0af9122dbd579dec181426ef8cb17b8 DataStream; PRICE_FEED USDC 0x2888982ba846222fc1466ac73179ab97ad001e10 vs 0xf9eac943122aec6df38ed018e7d28e1fbc72320f; PRICE_FEED_MULTIPLIER USDC 1000000000000000000000000000000000000 vs 10000000000000000000000000000000000000000000000). All 34 trace to configure-inputs values (see previous check), none to key-definition changes",
+   "status": "PASS",
+   "evidence": "recon2.mjs section 3: v0.3.1 tx-fork/260812/parameters-by-module.csv (status 已设置, normalized argLabel) vs parameters-by-module.csv (v0.3.2); configure-inputs/*"
+  },
+  {
+   "item": "§5 'unset' modules remain unset on v0.3.2 (多链/费用与分配/功能开关/借贷费/全局与其他/市场仓位定价/Swap + 执行费16/资金费3/Oracle8/Relay6/清算1)",
+   "expected": "No non-zero value in these groups (04:398-409)",
+   "actual": "parameters.json set=0 for every probed base in these groups, e.g. *_FEATURE_DISABLED unset 16 (module) or 112 (module+orderType) each; BORROWING_*/OPTIMAL_USAGE_FACTOR unset 20; MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS unset 2; THRESHOLD_FOR_STABLE/DECREASE_FUNDING unset 10; DATA_STREAM_ID/MULTIPLIER/SPREAD_REDUCTION unset 3; PYTH_PRICE_FEED(+_MULTIPLIER) unset 3; ORACLE_TYPE unset 15; IS_MULTICHAIN_*/IS_SRC_CHAIN_ID_ENABLED/EID_TO_SRC_CHAIN_ID unset; SWAP_FEE_FACTOR/DEPOSIT_FEE_FACTOR/WITHDRAWAL_FEE_FACTOR unset 20; RELAY_FEE_ADDRESS/RELAY_FEE_MULTIPLIER_FACTOR/MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT unset; SEQUENCER_GRACE_DURATION/MIN_ADDITIONAL_GAS_FOR_EXECUTION/MIN_HANDLE_EXECUTION_ERROR_GAS(_TO_FORWARD)/EXECUTION_GAS_FEE_* unset; catalog bases probed with zero set = 146, skipped (non-enumerable dims) = 38, not probed = 0",
+   "status": "PASS",
+   "evidence": "parameters.json per-base set/unset tally (recon.mjs / node tally); 04:398-409"
+  },
+  {
+   "item": "§5 部署初始化参数 (24 params + new SetCollateralToken step) and ignition-written keys",
+   "expected": "Same 24 ignition parameters; new step SetCollateralToken (04:390, §6 #11); CHAINLINK_PAYMENT_TOKEN, FEE_RECEIVER, IS_ORACLE_PROVIDER_ENABLED written by ignition",
+   "actual": "ignition/fx100.fork.tx-fork.json carries the same 24 keys (Fx100Usdc 2, Fx100Base 8, Fx100Oracle 3, Fx100Periphery 1, Fx100Fee 2, Fx100Role 8); journal futureIds include Fx100Role#SetCollateralToken (states INITIALIZE→…→SUCCESS/COMPLETE, args [0xd890ce…98b4, 0xF300…154]), Fx100Role#SetChainlinkPaymentToken, Fx100Fee#SetRevenuePoolFeeReceiver, Fx100Oracle#EnableChainlinkPriceFeedProvider, Fx100Oracle#EnableChainlinkDataStreamProvider (no Pyth enable step); chain 序号83-84 IS_ORACLE_PROVIDER_ENABLED = true for both Chainlink providers, Pyth provider unset (1 entry); 序号20 CHAINLINK_PAYMENT_TOKEN = 0xe4ab69c077896252fafbd49efd26b5d171a32410; 序号13 FEE_RECEIVER = revenuePool",
+   "status": "PASS",
+   "evidence": "ignition/fx100.fork.tx-fork.json; ignition/journal.jsonl futureId list; Fx100Role.ts:42-45; Fx100Fee.ts:79-80; csv 序号13,20,83,84; parameters.json IS_ORACLE_PROVIDER_ENABLED unset 1"
+  },
+  {
+   "item": "§6 change list rows 1-11 (chain-verifiable parts)",
+   "expected": "#1/#2 MIN/MAX_DYNAMIC_SPREAD set; #4 COLLATERAL_TOKEN global; #6 SUBACCOUNT_LIST removed; #7 CLAIMABLE_COLLATERAL_* six keys + CLAIM_COLLATERAL_FEATURE_DISABLED removed; #9 MIN_AFFILIATE_REWARD_FACTOR/PRO_DISCOUNT_FACTOR per tier; #10 SWAP_ORDER_GAS_LIMIT dead config; #11 SetCollateralToken deployment step (04:417-427)",
+   "actual": "#1/#2 序号41-48 set (see §2.1/2.2); #3 the 8 spread-chain keys' values match inputs (semantic change is code-level → not a value check); #4 序号9 global set, no per-market slot; #5 slot keys runtime (live read-check item 6 PASS); #6/#7 0 rows / 0 entries / 0 src hits; #8 runtime funding keys unset; #9 both bases unset (4+4 entries); #10 unset 5, whitelist Config.sol:366 retained; #11 journal Fx100Role#SetCollateralToken SUCCESS",
+   "status": "PASS",
+   "evidence": "04:417-427 ↔ csv 序号9,41-48; parameters.json unset counts; journal.jsonl; Config.sol:366; read-checks-live-2026-09-02.md:11"
+  },
+  {
+   "item": "(2) Chain-set keys absent from the ContractCodeSummary catalog (uncatalogued)",
+   "expected": "0 uncatalogued bases",
+   "actual": "3 bases / 6 rows uncatalogued: MARKET_INDEX (序号1 = 1, 序号4 = 2), VAULT (序号2,5 = 0x46fb4f1eebf811a59dcf6e6343ac5be36122dde8), INDEX_TOKEN (序号3 = 0x0555e30da8f98308edb960aa94c0db47230d2b9c, 序号6 = 0x4200000000000000000000000000000000000006) — defined in MarketStoreUtils.sol:18-20 (not FX100Keys.sol), written by MarketStoreUtils.set:48-54 via createMarket, key = keccak256(bytes32(marketIndex)‖SUBKEY) (FX100Keys.sol:572-574); catalog 来源 column is 'FX100Keys.sol / Config.sol / registry-v0.3.2.json' (245 基础键, 394 参数/函数 names — none of the three). All other 63 chain-set bases are catalogued with matching type (int/uint/address/bool), scope and write entry (e.g. MAX_OPEN_INTEREST/ESTIMATED_GAS_FEE_*/MIN+MAX_FUNDING_FACTOR_PER_SECOND 'Config(CONFIG_KEEPER) / Config(LIMITED_CONFIG_KEEPER)' = Config.sol:485-498)",
+   "status": "FAIL",
+   "evidence": "recon.mjs: chainBases (66) minus catalog 基础键∪参数/函数 → [MARKET_INDEX, VAULT, INDEX_TOKEN]; MarketStoreUtils.sol:18-20,48-54; FX100-合约参数定义目录.csv 来源 column"
+  },
+  {
+   "item": "(2) Chain-set bases not named in 04-参数目录.md (covered only by §5 module reference to the v0.3.1 底本)",
+   "expected": "Every chain-set base named in a 04 card or §5/§6 row",
+   "actual": "33 of 66 bases have no literal card/row in 04 (slash/wildcard-combined names counted as covered): MARKET_INDEX, VAULT, INDEX_TOKEN, MARKET_LIST, MIN_PNL_FACTOR_AFTER_ADL, MAX_PNL_FACTOR_FOR_WITHDRAWALS, FEE_RECEIVER, MAX_AUTO_CANCEL_ORDERS, MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS, MAX_ORACLE_PRICE_AGE, MAX_RECORDED_PRICE_AGE, MAX_ORACLE_TIMESTAMP_RANGE, MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR, CHAINLINK_PAYMENT_TOKEN, ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1, ESTIMATED_GAS_FEE_PER_ORACLE_PRICE, ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, NATIVE_TOKEN_TRANSFER_GAS_LIMIT, MAX_CALLBACK_GAS_LIMIT, MIN_POSITION_SIZE_USD, MAX_DATA_LENGTH, MAX_PNL_FACTOR, IS_ORACLE_PROVIDER_ENABLED, ORACLE_PROVIDER_FOR_TOKEN, ORACLE_PROVIDER_UPDATED_AT, TOKEN_TRANSFER_GAS_LIMIT, MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION, PRICE_FEED, PRICE_FEED_MULTIPLIER, PRICE_FEED_HEARTBEAT_DURATION, MAX_POSITION_SIZE_USD, EXECUTION_FEE_SUBSIDIZE, EXECUTION_FEE_SUBSIDIZE_SIZE. All are in the catalog (except the 3 market-prop keys) and all values are reconciled in this report; 04 §7.1 (04:433) already records the gap",
+   "status": "FAIL",
+   "evidence": "recon.mjs docTokens scan of 04-参数目录.md vs chainBases; 04:433"
+  },
+  {
+   "item": "(b) Catalog field consistency for chain-set bases (值类型 / 作用域 / 写入入口)",
+   "expected": "Catalog 值类型 populated and matching chain type for every chain-set base",
+   "actual": "63/66 fully consistent. Gaps: catalog row 6 POSITION_IMPACT_EXPONENT_FACTOR 值类型 blank (chain uint, 序号35-38 = 1000000000000000000000000000000, written by Config.setUint configureMarket.ts:214-221, validateRange ≤ 3e30 ConfigUtils.sol:179-185); catalog row 5 POSITION_IMPACT_FACTOR 值类型 blank (unset, expected 0); catalog row 20 MARKET_LIST 值类型 'uint' vs chain 'uintCount' (set length via MarketStoreUtils.getMarketCount, chain 序号8 = 2). Write-entry column agrees with Config.sol whitelist for all 66 (Config vs DataStore 直写, Limited flags)",
+   "status": "FAIL",
+   "evidence": "FX100-合约参数定义目录.csv rows 5,6,20 vs csv 序号8,35-38; configureMarket.ts:214-221; ConfigUtils.sol:179-185; Config.sol:485-500"
+  },
+  {
+   "item": "(b) Catalog / snapshot integrity (hashes, keys, xlsx mirror, counts)",
+   "expected": "Catalog Key/Hash = keccak256 of literal; chain DataStore keys reproducible from base + args; xlsx 链上已设置 = CSV; 说明 counts = parameters.json meta",
+   "actual": "245/245 常量 hashes verified (241 = keccak256(abi.encode(string)); 4 'raw' rows LIQUIDATION_GRACE_PERIOD_BASE / _TIER_MULTIPLIER / EXECUTION_FEE_SUBSIDIZE / _SIZE = keccak256(utf8) per FX100Keys.sol:10-17 — NOTE these 4 differ from abi.encode hashing, which is why v0.3.1 260812 probed EXECUTION_FEE_SUBSIDIZE* as unset); 124/124 chain DataStore keys recomputed (global base hash; derived keccak256(abi.encode(baseHash,args)) incl. pnlFactorType bytes32 0xab15365d3aa743e766355e2557c230d8f943e195dc84d9b2b05928a07b635ee1 = MAX_PNL_FACTOR_FOR_TRADERS; market-prop keccak256(bytes32(marketIndex)‖SUBKEY)); CSV vs parameters.json 124/124 values; xlsx 链上已设置 125 rows identical to CSV (0 diffs); xlsx 说明 245/152/138/12/1969/124/1845/0 = catalog (245 基础键, 397−245=152 派生) and parameters.json meta.counts (1969/124/1845/0); catalog global hashes equal chain keys (e.g. MAX_PRICE_IMPACT_SPREAD 0x9f71064f…, MARKET_LIST 0xcdac201a…, COLLATERAL_TOKEN 0xd890ceda…)",
+   "status": "PASS",
+   "evidence": "recon2.mjs/recon3.mjs with viem keccak256/encodeAbiParameters; FX100Keys.sol:10-17,572-574,1605; openpyxl identity check; parameters.json meta.counts"
+  },
+  {
+   "item": "(4a) Keys written by the configure scripts but unset on chain",
+   "expected": "Only keys whose input value is 0 may be unset (writers skip when current == next)",
+   "actual": "8 entries unset, all with input 0: SEQUENCER_GRACE_DURATION (general.sample.json:3 \"0\"), MIN_ADDITIONAL_GAS_FOR_EXECUTION (:13), MIN_HANDLE_EXECUTION_ERROR_GAS (:14), MIN_HANDLE_EXECUTION_ERROR_GAS_TO_FORWARD (:15), POSITION_IMPACT_FACTOR market#1/#2 × isPositive true/false (shared_market.sample.json:6-7 \"0\"); writers.ts:23-25/77-79 return early when currentValue === nextValue, so 0 is never written; unset ≡ 0 in DataStore. No non-zero input key is unset (0 FAIL)",
+   "status": "PASS",
+   "evidence": "recon3.mjs 'expectation entries NOT set on chain'; writers.ts:21-25,68-79; general.sample.json:3,13-15; shared_market.sample.json:6-7"
+  },
+  {
+   "item": "(4b) v0.3.1 底本 '当前链上参数' bases (66 distinct) unset on v0.3.2 chain",
+   "expected": "Only §4-removed bases unset",
+   "actual": "5 bases unset: CLAIMABLE_COLLATERAL_DELAY, CLAIMABLE_COLLATERAL_TIME_DIVISOR (removed, §4) and DATA_STREAM_ID, DATA_STREAM_MULTIPLIER, DATA_STREAM_SPREAD_REDUCTION_FACTOR (底本 rows 122-130, 3 tokens each) — on v0.3.2 tx-fork parameters.json all 3 tokens unset because oracle.fork.tx-fork.json:13,27,41 dataStream.feedId = 0x00…00 → configureOracle.ts:36 useDataStream=false, block :46-69 skipped, provider bound = chainlinkPriceFeedProvider (:72-74; chain 序号85-88 = 0x7ae5fdb923d25840fb4cee822c3d800a48ef6e90). Consequence: ChainlinkDataStreamProvider is enabled (序号84 true) but no token is bound to it on this fork",
+   "status": "PASS",
+   "evidence": "recon3.mjs 底本 bases vs set32; FX100-合约配置参数总表.csv rows 122-130; oracle.fork.tx-fork.json:13,27,41; configureOracle.ts:36,46-74; csv 序号84-88"
+  },
+  {
+   "item": "(4c) v0.3.1 tx-fork 260812-set bases unset on v0.3.2 (excluding removed and runtime-state keys): STABLE_PRICE(USDC)",
+   "expected": "Under v0.3.1-environment parity: STABLE_PRICE|token=USDC = 1001000000000000000000000 (v0.3.1 tx-fork/260812 by-module, 'Oracle 与价格源'); under v0.3.2 configure-inputs: no expectation (no script writes it)",
+   "actual": "parameters.json STABLE_PRICE: 3 entries (USDC/BTC/WETH) all unset; keys.ts:92,151-153 defines KEY.STABLE_PRICE/directKey.stablePrice but configureOracle.ts never calls it (only ConfigUtils.sol:84 initOracleConfig path writes it); consumer ChainlinkPriceFeedProvider.sol:49-58: stablePrice == 0 ⇒ min = max = feed price (no [feed,stable] band). Other 260812-set bases unset on v0.3.2 are runtime state (ORDER_LIST, POSITION_LIST, NONCE, OPEN_INTEREST_IN_TOKENS, CUMULATIVE_OPEN_COSTS, FUNDING_*, CLAIMABLE_FEE_AMOUNT) or IS_MARKET_DISABLED (unset = enabled)",
+   "status": "FAIL",
+   "evidence": "recon2.mjs 'bases set in v0.3.1 but NOT set in v0.3.2'; v0.3.1 tx-fork/260812/parameters-by-module.csv STABLE_PRICE row; parameters.json base=STABLE_PRICE unset 3; scripts/config/keys.ts:92,151-153; configureOracle.ts (no stablePrice write); ChainlinkPriceFeedProvider.sol:49-58"
+  },
+  {
+   "item": "PRICE_FEED_MULTIPLIER token-decimals assumption vs manifest/tokens.json",
+   "expected": "Per configureOracle.ts:29-31 tokenDecimals = 6 (USDC) else 18 → BTC/WETH 10^(60−8−18) = 10000000000000000000000000000000000, USDC 10^(60−18−6) = 1000000000000000000000000000000000000; 04:401 formula 10^(60−feed decimals−token decimals)",
+   "actual": "chain 序号110 (BTC) = 10000000000000000000000000000000000, 序号111 (WETH) = 10000000000000000000000000000000000, 序号112 (USDC) = 1000000000000000000000000000000000000 — matches the script; however manifest tx-fork-v0.3.2-260902.json markets[0].indexTokenDecimals = 8 and tokens.json WBTC decimals = 8 (parameters.json tokenMetadata BTC decimals = null, synthetic) imply 10^44 under the 04:401 formula; the chain value therefore encodes an 18-decimal convention for the synthetic BTC index",
+   "status": "PASS",
+   "evidence": "configureOracle.ts:29-40; oracle.fork.tx-fork.json:9,23,37; csv 序号110-112; tx-fork-v0.3.2-260902.json markets[0].indexTokenDecimals; tokens.json; 04:401"
+  },
+  {
+   "item": "04 'v0.3.1 部署参考值' cells used in §2.3/§3.4/§3.5/§3.6 vs v0.3.1 tx-fork 260812 snapshot",
+   "expected": "04:98 per-market COLLATERAL_TOKEN 0xbf4d9b318689ab928db9ee4cdc840c065575eb89; 04:231 PRICE_IMPACT_PARAMETER m1 500000000000000000 / m2 600000000000000000; 04:251 depths; 04:271 SKEW factor 2500000000000000, min -5000000000000000, max 5000000000000000",
+   "actual": "260812 by-module: COLLATERAL_TOKEN market#1/#2 = 0xbf4d9b318689ab928db9ee4cdc840c065575eb89; PRICE_IMPACT_PARAMETER, BID/ASK depths, SKEW_IMPACT_FACTOR m1 = 2500000000000000, MIN_SKEW_IMPACT = -5000000000000000, MAX_SKEW_IMPACT = 5000000000000000 — all equal the 04 reference cells",
+   "status": "PASS",
+   "evidence": "04:98,231,251,271 ↔ TestCase/config/v0.3.1/tx-fork/260812/parameters-by-module.csv (status 已设置, market#1/#2 rows)"
+  },
+  {
+   "item": "§4 removed-key storage slots on the v0.3.2 DataStore read at v0.3.1 hashes (direct RPC read)",
+   "expected": "0 for all v0.3.1-hash slots (e.g. keccak256(abi.encode(\"CLAIMABLE_COLLATERAL_DELAY\")))",
+   "actual": "Not read offline; the v0.3.2 probe only enumerates v0.3.2 FX100Keys.sol keys. Supporting offline facts: fresh DataStore 0x4741A9C9F0310625C0C68997ACdce43Ab55604b8 (v0.3.1 tx-fork used 0x606D72Ab0C0fDcce607d04B1645CE2D528B88014, 04:7) and no v0.3.2 code/script/ignition path writes these keys",
+   "status": "NOT_VERIFIABLE_OFFLINE",
+   "evidence": "parameters.json meta.dataStore & meta.contracts.files; 04:7; grep of v0.3.2 src/scripts/ignition"
+  }
+ ],
+ "summary": "PASS 26 / FAIL 7 / NOT_VERIFIABLE_OFFLINE 1 / N/A 1 (35 checks). Verdict: all 124 tx-fork v0.3.2 set values are reproducible from the archived deployment inputs (120 exact + 3 multiplier-formula + 1 runtime timestamp), all 124 DataStore keys and all 245 catalog hashes recompute correctly, no §4 removed key is present anywhere, and the §2 cards (MIN/MAX_DYNAMIC_SPREAD, COLLATERAL_TOKEN) match chain exactly. The FAILs are documentation/catalog gaps, not chain defects: 04 §3.2–3.5 wrongly state Config.setUint/whitelist for 5 DataStore-direct keys; 04 §3.6 default cells (MIN_SKEW_IMPACT 0, MAX_SKEW_IMPACT WBTC 10000000000000000) differ from deployed -5000000000000000 / 5000000000000000 (explained by market.sample.json Skew_Clamp_*); 3 market-prop bases (MARKET_INDEX/VAULT/INDEX_TOKEN, 6 rows) are uncatalogued; 33 chain-set bases have no literal 04 card (covered only via §5 底本 reference); 2 catalog 值类型 cells blank; and STABLE_PRICE(USDC) — set on the v0.3.1 tx-fork — is unset on v0.3.2 with no input or doc stating the intent. All §3.x '当前部署值 待回填' cells now have chain values in this report.",
+ "unexplained_mismatches": [
+  "STABLE_PRICE|token=USDC: set on v0.3.1 tx-fork 260812 (1001000000000000000000000) but unset on v0.3.2 tx-fork (parameters.json 3 entries unset); mechanism is clear (no v0.3.2 configure script writes it; ChainlinkPriceFeedProvider.sol:49-58 then uses min=max=feed price) but no input, 04 card, or catalog note documents whether the anchor is intentionally dropped for v0.3.2 — owner decision needed before SCN-070-type price reconciliation on this fork.",
+  "Synthetic BTC token decimals: chain PRICE_FEED_MULTIPLIER (序号110) = 10000000000000000000000000000000000 follows configureOracle.ts:29-31 (non-USDC → 18 decimals), while TestCode manifest tx-fork-v0.3.2-260902.json markets[0].indexTokenDecimals = 8 and tokens.json WBTC decimals = 8 (parameters.json tokenMetadata decimals = null). Which decimals TestCode price/size math must use for MOCK-BTC is not documented; under 04:401's formula with 8 decimals the multiplier would be 10^44.",
+  "04:7 states the v0.3.1 底本's 119 '当前链上参数' rows come from tx-fork/260812, but several 底本 values do not match 260812 (or the base-sepolia/260729 spot check): e.g. 底本 row 118 MAX_PNL_FACTOR_FOR_ADL 750000000000000000000000000000 vs 260812/260729 550000000000000000000000000000; row 49 SKEW_IMPACT_FACTOR market#1 10000000000000000 vs 2500000000000000; row 51 MAX_OPEN_INTEREST 40000000000000000000000000000000000000 vs 100000000000000000000000000000000000000; rows 95-98 EXECUTION_FEE_SUBSIDIZE(_SIZE) listed 已设置 while 260812 probed them unset. These 底本 values coincide with the v0.3.2 tx-fork inputs instead; provenance of that column is unexplained (v0.3.1 document, outside A-3 scope but it feeds 04 §5's '底本' references)."
+ ],
+ "caveats": [
+  "Offline only: no RPC calls; chain truth is the block-46282993 snapshot (parameters.json) and its CSV mirror; the live read-check file (read-checks-live-2026-09-02.md, block 46283222) was only used as corroboration for §2.4-2.6.",
+  "Files deliberately not opened: source-tree scripts/parameters/market.sample.json and oracle.sample.json (pre-check hit 2 https URLs / 3 64-hex strings) — the archived configure-inputs copies under TestCase/config/v0.3.2/tx-fork/260902/ were used instead (their only URL hits are https://data.chain.link documentation links, domain-only extraction); scripts/configureOracle.ts was read with 64-hex values masked (single hit = ZERO_BYTES32 comparison); ignition/journal.jsonl was only grepped for futureId/type/args fields (its 431 64-hex strings are tx/block hashes per the snapshot README). No .env, pk.txt, mnemonic, noise-traders.json or Devconfig/ content was read.",
+  "Status vocabulary: the requested NOT_STATED outcome is expressed as 'card 当前部署值 待回填 → NOT_STATED' inside the PASS/FAIL rows for §3.2-§3.10 (the comparison there is against the card's 默认值/v0.3.1 参考值/精度 fields, which are stated); §2.4-2.6 (runtime state keys) are N/A.",
+  "§3.6 FAILs and the §3.2-3.5 write-entry FAIL are defects in 04-参数目录.md, not in the deployment: every deployed value is reproduced from the archived configure-inputs, and the Config.sol whitelist/catalog/scripts agree with each other.",
+  "Value recomputation reproduces the scripts' BigInt semantics (fraction truncation to scale digits; APR/31536000 truncation toward zero for negatives) — e.g. EXECUTION_FEE_SUBSIDIZE_SIZE market#1 = 333333333333333 from \"0.000333333333333333\"×1e18.",
+  "The 4 'raw' FX100Keys (LIQUIDATION_GRACE_PERIOD_BASE/_TIER_MULTIPLIER, EXECUTION_FEE_SUBSIDIZE/_SIZE) hash with keccak256(utf8) not keccak256(abi.encode(string)); the v0.3.2 snapshot handles this correctly (124/124 keys recomputed) but the v0.3.1 260812 by-module file appears to have probed them with abi.encode (EXECUTION_FEE_SUBSIDIZE* shown unset there), so v0.3.1→v0.3.2 comparisons for those 4 keys rely on the 底本 CSV values rather than 260812.",
+  "ChainlinkDataStreamProvider is enabled on tx-fork (IS_ORACLE_PROVIDER_ENABLED true) but no token is bound to it (feedId = 0 in oracle.fork.tx-fork.json); all three tokens use ChainlinkPriceFeedProvider 0x7ae5fdb923d25840fb4cee822c3d800a48ef6e90 — differs from the v0.3.1 tx-fork (DataStream provider) and must be reflected in any Oracle-path test expectations.",
+  "§5 'no change' was verified at key-definition level (git diff non-comment lines) and at value level only for market#1/#2, the three tokens and global keys; 34 same-dimension value differences vs the v0.3.1 tx-fork are listed and all trace to deployment inputs, so 'v0.3.1 部署参考值' cells in 04 must not be read as v0.3.2 expectations.",
+  "Scratch scripts used for the computations (recon.mjs, recon2.mjs, recon3.mjs) live in the session scratchpad directory and were not written into the repository."
+ ]
+}

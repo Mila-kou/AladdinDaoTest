@@ -2,25 +2,36 @@ import { readFile } from 'node:fs/promises';
 import { relative, resolve } from 'node:path';
 
 import { normalizeForkDisplayName } from '../domain/fork-display.js';
+import { buildUiDisplayRows, buildUiOrderEntryRows } from './ui-display-evidence.js';
 import {
   calculateExecutionPrice,
   calculateFundingFactors,
   calculateGrace,
   calculatePositionFee,
+  calculatePriceImpactSpread,
   calculateSignedSkew,
   calculateSkewImpact,
   ceilDiv,
+  composeDynamicSpread,
+  decreaseSizeInTokens,
+  decreaseWaterfall,
+  increaseSizeInTokens,
+  preliminaryIncreaseTokens,
 } from '../reconciliation/formulas.js';
 import { isExecutionPriceAcceptable } from '../scenarios/scn-070-model.js';
-import type { ScenarioResult, TestRunArtifact } from './schema.js';
+import { isFunctionalResultId, type ScenarioResult, type TestRunArtifact } from './schema.js';
 
 type JsonRecord = Record<string, unknown>;
 type Reconciliation = NonNullable<ScenarioResult['executionEvidence']>['reconciliations'][number];
 type TransactionEvidence = NonNullable<ScenarioResult['executionEvidence']>['transactions'][number];
 
-const FORMULA_SOURCE = '../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md';
-const PAGE_FORMULA_SOURCE = '../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md';
-const ORDER_FLOW_SOURCE = '../Docs/Fx100/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md';
+const FORMULA_SOURCE = '../Docs/Gordon-Notion需求文档归档/汇总/FX100-十大功能领域需求文档.md';
+const PAGE_FORMULA_SOURCE = '../Docs/Gordon-Notion需求文档归档/汇总/FX100-页面字段计算公式.md';
+const ORDER_FLOW_SOURCE = '../Docs/Gordon-Notion需求文档归档/汇总/FX100-Order订单流程图与需求简介.md';
+// v0.3.2 合约公式详解层（章节号可作 formulaBasis.section）：动态点差 §4.1、settleFundingFees §10.7。
+const CONTRACT_FORMULA_SOURCE = '../TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-核心字段计算公式.md';
+// Order.OrderType.Liquidation（Github/fx100-contracts@release-v0.3.2/src/order/Order.sol:10-27，枚举序号 5）。
+const ORDER_TYPE_LIQUIDATION = 5n;
 const LEDGER_SOURCE = 'src/scenarios/scn-009-runner.ts';
 const SCN010_LEDGER_SOURCE = 'src/scenarios/scn-010-runner.ts';
 const SCN070_MODEL_SOURCE = 'src/scenarios/scn-070-model.ts';
@@ -62,7 +73,10 @@ const CONSERVATION_TERM_FIELDS = [
   ['orderVaultUsdc', 'ΔOrderVault'],
   ['posVaultUsdc', 'ΔPositionVault'],
   ['lpVaultAssets', 'ΔLPVaultAssets'],
-  ['feeReceiverUsdc', 'ΔFeeReceiver'],
+  // 槽位 key 保持 feeReceiverUsdc 以兼容存量证据 JSON；显示名改为 ΔFeeHandler——
+  // 该槽读取的是 FeeHandler 合约（claimFees 第一跳收款方）的 USDC 余额，
+  // 而 DataStore.FEE_RECEIVER 指向的 RevenuePool 不在本账本槽位中，叫 ΔFeeReceiver 会误导。
+  ['feeReceiverUsdc', 'ΔFeeHandler'],
 ] as const;
 
 function buildConservationRow(input: {
@@ -72,28 +86,48 @@ function buildConservationRow(input: {
   readonly observation: JsonRecord;
   readonly ledgerSource: string;
 }): Reconciliation {
-  const sum = optionalBigint(input.observation.sum);
+  const reportedSum = optionalBigint(input.observation.sum);
+  const reportedStatus = stringValue(input.observation.status);
+  const missingSlots = Array.isArray(input.observation.missing)
+    ? input.observation.missing.map((slot) => String(slot))
+    : [];
   const terms = record(input.observation.terms);
   const hasAllTerms = CONSERVATION_TERM_FIELDS.every(([key]) => optionalBigint(terms[key]) !== undefined);
+  // ΣΔ 由五方逐项 Δ 独立复算，不信证据里预存的 sum/status（自证纪律）。
+  const recomputedSum = hasAllTerms
+    ? CONSERVATION_TERM_FIELDS.reduce((acc, [key]) => acc + bigintValue(terms[key]), 0n)
+    : undefined;
+  const sumMismatch = recomputedSum !== undefined && reportedSum !== undefined && recomputedSum !== reportedSum;
   const expandedTerms = hasAllTerms
     ? CONSERVATION_TERM_FIELDS.map(([key, label]) => `${label}(${bigintValue(terms[key])})`).join(' + ')
     : '历史证据未保存五方逐项 Δ';
-  const expandedResult = sum === undefined
+  const expandedResult = recomputedSum === undefined
     ? `${expandedTerms} = 无法核对`
-    : `${expandedTerms} = ${rawAndUnit(sum, 6, 'USDC')}`;
+    : `${expandedTerms} = ${rawAndUnit(recomputedSum, 6, 'USDC')}`;
+  // UNVERIFIABLE（缺读数）语义是"不可核"，不是"资金不闭合"——如实 NOT_VERIFIED，禁止倒推 PASS 也不误标 FAIL。
+  const status: Reconciliation['status'] = reportedStatus === 'UNVERIFIABLE' || !hasAllTerms
+    ? 'NOT_VERIFIED'
+    : recomputedSum === 0n && reportedStatus === 'PASS' && !sumMismatch
+      ? 'PASS'
+      : 'FAIL';
+  const statusNote = reportedStatus === 'UNVERIFIABLE'
+    ? `守恒不可核（UNVERIFIABLE）：缺少读数槽位 ${missingSlots.join('、') || '（未记录）'}——缺读数不等于守恒成立。`
+    : !hasAllTerms
+      ? '历史证据未保存五方逐项 Δ，无法独立复算 ΣΔ。'
+      : sumMismatch
+        ? `⚠️ 证据预存 sum(${reportedSum}) 与独立复算 Σterms(${recomputedSum}) 不一致，按复算结果判定。`
+        : '';
 
   return {
     id: input.id,
-    group: '资金账本',
+    group: '守恒',
     label: input.label,
-    status: stringValue(input.observation.status) === 'PASS' && sum === 0n && hasAllTerms
-      ? 'PASS'
-      : 'FAIL',
+    status,
     before: '五方账户 / Vault 的阶段前链上余额',
     after: `ΣΔ = ${expandedResult}`,
     delta: `ΣΔ = ${expandedResult}`,
     expected: 'ΣΔ = 0 raw (0 USDC)',
-    formula: `ΣΔ = ΔTrader + ΔOrderVault + ΔPositionVault + ΔLPVaultAssets + ΔFeeReceiver；本次：${expandedResult}`,
+    formula: `ΣΔ = ΔTrader + ΔOrderVault + ΔPositionVault + ΔLPVaultAssets + ΔFeeHandler；本次：${expandedResult}`,
     basis: {
       title: 'USDC 五方封闭账本守恒',
       sourcePath: input.ledgerSource,
@@ -101,12 +135,51 @@ function buildConservationRow(input: {
     },
     unit: 'USDC raw / USDC 1e6',
     txStep: input.txStep,
-    note: 'Position Fee 与 Funding 已分别在 Fee/Funding 行复算；它们在资金守恒式中通过 PositionVault、LPVault、FeeReceiver 的实际余额变化体现，不再作为第六、第七项重复相加。Claimable Fee/Funding 属于 DataStore 应收账本，单独核对。',
+    note: `${statusNote ? `${statusNote} ` : ''}Position Fee 与 Funding 已分别在 Fee/Funding 行复算；它们在资金守恒式中通过 PositionVault、LPVault、FeeHandler 的实际余额变化体现，不再作为第六、第七项重复相加。Claimable Fee/Funding 属于 DataStore 应收账本，单独核对。第五方是 FeeHandler 合约（claimFees 第一跳收款方，交易执行窗口余额恒不变）；DataStore.FEE_RECEIVER 指向的 RevenuePool 只在 withdrawFees 后才有资金流，不在本守恒圈内。`,
   };
 }
 
 function boolValue(value: unknown): boolean {
   return value === true || value === 'true';
+}
+
+type VerificationKind = NonNullable<Reconciliation['verification']>;
+
+// 验证方式分级：说明每一行结论的证据强度。行内已显式标注（verification 字段或【标记】note）时以标注为准，
+// 否则按行的结构信号推断；默认视为独立计算复算。
+function classifyVerification(row: Reconciliation): VerificationKind {
+  if (row.verification) return row.verification;
+  const note = row.note ?? '';
+  if (row.group === '守恒' || note.includes('【守恒推论】')) return '守恒';
+  if (row.status === 'CALCULATED') return '派生展示';
+  if (row.status === 'NOT_VERIFIED') return '缺数据';
+  if (note.includes('【恒等式】')) return '恒等式';
+  // 标记按前缀匹配：`【事件对照】` 与带限定词的 `【事件对照·…】` 同属事件锚定，
+  // 不得因限定词落到默认的「计算复算」（曾把 claimable FUNDING 行误标成独立复算）。
+  if (note.includes('【事件对照') || row.formula.includes('事件的同名字段')) return '事件对照';
+  return '计算复算';
+}
+
+type DataSourceKind = NonNullable<Reconciliation['dataSource']>;
+
+// 数据来源分层：本行 Actual 值读的是哪一层。行内显式标注优先，否则按行结构信号推断；
+// 默认视为合约读数（账本快照、Reader、DataStore、OI 等）。
+function classifyDataSource(row: Reconciliation): DataSourceKind {
+  if (row.dataSource) return row.dataSource;
+  const note = row.note ?? '';
+  if (row.group === '守恒' || note.includes('【守恒推论】')) return '合约';
+  if (note.includes('事件同名字段') || row.formula.includes('事件的同名字段')) return '合约+事件';
+  // 链上参数与事件字段互证、DataStore 应收与事件金额互证的行
+  if (/fee-factor|funding-factor|claimable/.test(row.id) || row.label.includes('待领取')) return '合约+事件';
+  // Actual 直接取自事件字段的行：执行价、订单参数、Fee/Funding 金额、PnL、汇总恒等式
+  if (/execution-price|order-type|-pnl|total-cost|protocol-fee|fee-receiver$|pool-fee|position-fee$|negative-funding|positive-funding|net-funding|balance-improved|dynamic-spread/.test(row.id)) {
+    return '事件';
+  }
+  return '合约';
+}
+
+function withVerification(row: Reconciliation): Reconciliation {
+  return { ...row, verification: classifyVerification(row), dataSource: classifyDataSource(row) };
 }
 
 function pass(actual: unknown, expected: unknown): 'PASS' | 'FAIL' {
@@ -195,31 +268,118 @@ interface LedgerField {
   readonly decimals: number | 'token';
   readonly symbol: string | 'token';
   readonly unit: string | 'token';
+  /** 口径：这个读数是谁的账——账户级/合约级/池级/协议级/市场级。聚合口径下本单只体现在 Δ。 */
+  readonly scope: string;
 }
 
 const LEDGER_FIELDS: readonly LedgerField[] = [
-  { key: 'traderUsdc', label: 'ΔTrader', family: '资金账户', decimals: 6, symbol: 'USDC', unit: 'USDC 1e6' },
-  { key: 'orderVaultUsdc', label: 'ΔOrderVault', family: '资金账户', decimals: 6, symbol: 'USDC', unit: 'USDC 1e6' },
-  { key: 'posVaultUsdc', label: 'ΔPositionVault', family: '资金账户', decimals: 6, symbol: 'USDC', unit: 'USDC 1e6' },
-  { key: 'lpVaultAssets', label: 'ΔLPVaultAssets', family: '资金账户', decimals: 6, symbol: 'USDC', unit: 'USDC 1e6' },
-  { key: 'feeReceiverUsdc', label: 'ΔFeeReceiver', family: '资金账户', decimals: 6, symbol: 'USDC', unit: 'USDC 1e6' },
-  { key: 'claimableFeeAmountPosition', label: '待领取仓位费', family: '资金账户', decimals: 6, symbol: 'USDC', unit: 'USDC 1e6' },
-  { key: 'claimableFeeAmountFunding', label: '待领取 Funding', family: '资金账户', decimals: 6, symbol: 'USDC', unit: 'USDC 1e6' },
-  { key: 'claimableFeeAmountLiquidation', label: '待领取清算费', family: '资金账户', decimals: 6, symbol: 'USDC', unit: 'USDC 1e6' },
-  { key: 'cumulativeOpenCostsLong', label: 'Long 累计开仓成本', family: '市场 / OI', decimals: 30, symbol: 'USD', unit: 'USD 1e30' },
-  { key: 'cumulativeOpenCostsShort', label: 'Short 累计开仓成本', family: '市场 / OI', decimals: 30, symbol: 'USD', unit: 'USD 1e30' },
-  { key: 'openInterestInTokensLong', label: 'Long Open Interest', family: '市场 / OI', decimals: 'token', symbol: 'token', unit: 'token' },
-  { key: 'openInterestInTokensShort', label: 'Short Open Interest', family: '市场 / OI', decimals: 'token', symbol: 'token', unit: 'token' },
-  { key: 'positionImpactPoolAmount', label: 'Position Impact Pool', family: '市场 / OI', decimals: 'token', symbol: 'token', unit: 'token' },
+  { key: 'traderUsdc', label: 'ΔTrader', family: '资金账户', decimals: 6, symbol: 'USDC', unit: 'USDC 1e6', scope: '账户级——本交易账户的 USDC 钱包余额；Δ 核对隐含窗口内该账户无其他收支' },
+  { key: 'orderVaultUsdc', label: 'ΔOrderVault', family: '资金账户', decimals: 6, symbol: 'USDC', unit: 'USDC 1e6', scope: '合约级——OrderVault 合约 USDC 总余额（所有账户的在途订单资金都在此）；本单只体现在 Δ' },
+  { key: 'posVaultUsdc', label: 'ΔPositionVault', family: '资金账户', decimals: 6, symbol: 'USDC', unit: 'USDC 1e6', scope: '合约级——PositionVault 合约 USDC 总余额（全体仓位的抵押与未领费用都在此）；本单只体现在 Δ' },
+  { key: 'lpVaultAssets', label: 'ΔLPVaultAssets', family: '资金账户', decimals: 6, symbol: 'USDC', unit: 'USDC 1e6', scope: '池级——LP 金库 totalAssets（整池资产，全体 LP 共有）；本单只体现在 Δ' },
+  { key: 'feeReceiverUsdc', label: 'ΔFeeHandler', family: '资金账户', decimals: 6, symbol: 'USDC', unit: 'USDC 1e6', scope: '协议级——FeeHandler 合约 USDC 总余额（跨市场、跨账户累计）；本单只体现在 Δ' },
+  { key: 'claimableFeeAmountPosition', label: '待领取仓位费', family: '资金账户', decimals: 6, symbol: 'USDC', unit: 'USDC 1e6', scope: '市场级累计——claimableFeeAmount(market, USDC, POSITION)，该市场全体交易者产生的待领取仓位费；本单只体现在 Δ' },
+  { key: 'claimableFeeAmountFunding', label: '待领取 Funding', family: '资金账户', decimals: 6, symbol: 'USDC', unit: 'USDC 1e6', scope: '市场级累计——claimableFeeAmount(market, USDC, FUNDING)，该市场付给 LP 的待领取 Funding；本单只体现在 Δ' },
+  { key: 'claimableFeeAmountLiquidation', label: '待领取清算费', family: '资金账户', decimals: 6, symbol: 'USDC', unit: 'USDC 1e6', scope: '市场级累计——claimableFeeAmount(market, USDC, LIQUIDATION)，该市场清算费 receiver 份额；本单只体现在 Δ' },
+  // OI 三套口径统一命名（2026-08-13）：Token 口径 = 链上存储 openInterestInTokens；
+  // USD 成本口径 = 链上存储 cumulativeOpenCosts（开仓时点成本，不随价漂移）；
+  // USD 盯市口径 = 派生行（tokens × indexMid，随价漂移），见 OI / Skew / Spread 组。
+  { key: 'cumulativeOpenCostsLong', label: 'Long 累计开仓成本（USD 成本口径）', family: '市场 / OI', decimals: 30, symbol: 'USD', unit: 'USD 1e30', scope: '市场级总账——该市场全体交易者的多头开仓成本聚合；本单只体现在 Δ' },
+  { key: 'cumulativeOpenCostsShort', label: 'Short 累计开仓成本（USD 成本口径）', family: '市场 / OI', decimals: 30, symbol: 'USD', unit: 'USD 1e30', scope: '市场级总账——该市场全体交易者的空头开仓成本聚合；本单只体现在 Δ' },
+  { key: 'openInterestInTokensLong', label: 'Long OI（Token 口径）', family: '市场 / OI', decimals: 'token', symbol: 'token', unit: 'token', scope: '市场级总账——该市场全体交易者的多头 OI（Token）聚合；本单只体现在 Δ' },
+  { key: 'openInterestInTokensShort', label: 'Short OI（Token 口径）', family: '市场 / OI', decimals: 'token', symbol: 'token', unit: 'token', scope: '市场级总账——该市场全体交易者的空头 OI（Token）聚合；本单只体现在 Δ' },
+  // positionImpactPoolAmount 已删除（2026-08-13）：fx100 用动态点差替代 GMX price impact 记账，
+  // PositionImpactPoolUtils.sol 在 release-v0.3.1 已是空壳、该 key 无任何合约读写方——死字段不再展示。
 ];
 
 type TradePhaseKind = 'create-order' | 'create-decrease-order'
   | 'create-and-increase' | 'execute-increase' | 'create-and-decrease' | 'execute-decrease';
 
+type FormulaInput = NonNullable<Reconciliation['inputs']>[number];
+
 interface LedgerDeltaExpectation {
   readonly value?: bigint;
   readonly formula: string;
   readonly note?: string;
+  readonly inputs?: FormulaInput[];
+  /** 行的验证方式（期望值取自事件字段的行显式标「事件对照」，不落到默认的「计算复算」）。 */
+  readonly verification?: VerificationKind;
+}
+
+/**
+ * v0.3.2 逐仓 Funding 结算模型（MarketUtils.sol::settleFundingFees @ release-v0.3.2 L445-469）：
+ *   negAmt > posAmt → claimable FUNDING_FEE_TYPE += negAmt − posAmt（只记账，钱留在 PositionVault）
+ *   posAmt > negAmt → LPVault.transferOut(PositionVault, posAmt − negAmt)
+ * 传入 negAmt 位的实参按路径不同：
+ *   加仓 IncreasePositionUtils.sol:219 → fees.funding.negativeFundingFeeAmount（应付额；不足直接 revert，无部分支付）
+ *   减仓 DecreasePositionCollateralUtils.sol:141 → collateralCache.result.amountPaidInCollateralToken（实付额）
+ * 减仓实付额与事件的关系：payForCost 的 remainingCostInOutputToken = ⌈neg×min/min⌉ = neg（整除），付不清即
+ * remainingCostUsd>0 → handleEarlyReturn：非清算/ADL 单 revert（整笔回滚）；清算/ADL 全平才允许欠付，且此时
+ * 事件 fees 被 getEmptyFees 置零（negativeFundingFeeAmount=0，"may not be accurate"），实付额只在
+ * InsufficientFundingFeePayment 事件里（证据未采集）。因此：
+ *   - 非清算单出现 PositionFeesCollected ⇒ 已付清 ⇒ amountPaidInCollateralToken == negativeFundingFeeAmount（精确）
+ *   - 清算单（orderType=Liquidation）⇒ 实付额不可由本证据确定 ⇒ 相关行 NOT_VERIFIED
+ * positionPaysLp（Funding 事件）只是市场级累计口径，不进入任何 Vault / claimable 期望。
+ */
+interface FundingSettlementModel {
+  readonly available: boolean;
+  readonly reason?: string;
+  readonly pathLabel: string;
+  readonly negativePaid: bigint;
+  readonly positive: bigint;
+  /** max(negativePaid − positive, 0)：claimable FUNDING_FEE_TYPE 增量 */
+  readonly claimableIncrement: bigint;
+  /** max(positive − negativePaid, 0)：LPVault → PositionVault 转账额 */
+  readonly lpToPositionVault: bigint;
+  readonly inputs: FormulaInput[];
+}
+
+function buildFundingSettlementModel(input: {
+  readonly events: JsonRecord;
+  readonly positionEvent?: JsonRecord;
+}): FundingSettlementModel {
+  const feesEvent = record(input.events.feesCollected);
+  const fees = record(feesEvent.uint);
+  const eventSource = 'PositionFeesCollected 事件（执行回执解码）';
+  const unavailable = (reason: string): FundingSettlementModel => ({
+    available: false, reason, pathLabel: '—', negativePaid: 0n, positive: 0n, claimableIncrement: 0n, lpToPositionVault: 0n, inputs: [],
+  });
+  if (Object.keys(fees).length === 0) {
+    return unavailable('证据缺少 PositionFeesCollected 事件（events.feesCollected 为空），settleFundingFees 的两个实参无来源');
+  }
+  const negativeFunding = bigintValue(fees.negativeFundingFeeAmount);
+  const positiveFunding = bigintValue(fees.positiveFundingFeeAmount);
+  const isIncreaseFlag = record(feesEvent.bool).isIncrease;
+  const positionEvent = record(input.positionEvent);
+  const isIncrease = isIncreaseFlag !== undefined
+    ? boolValue(isIncreaseFlag)
+    : stringValue(positionEvent.eventName, '') === 'PositionIncrease';
+  const orderType = optionalBigint(record(positionEvent.uint).orderType)
+    ?? optionalBigint(record(record(input.events[isIncrease ? 'PositionIncrease' : 'PositionDecrease']).uint).orderType);
+  if (!isIncrease && orderType === undefined) {
+    return unavailable('减仓路径需要 PositionDecrease.uint.orderType 判断是否清算单（清算单允许欠付且事件 funding 字段被置零），证据缺该字段');
+  }
+  if (!isIncrease && orderType === ORDER_TYPE_LIQUIDATION) {
+    return unavailable('清算单允许欠付：settleFundingFees 传入的是 amountPaidInCollateralToken 实付额，且欠付时事件 negativeFundingFeeAmount 被 getEmptyFees 置零；实付额只在 InsufficientFundingFeePayment 事件（证据未采集）');
+  }
+  const negativePaid = negativeFunding;
+  const pathLabel = isIncrease
+    ? '加仓路径：negAmt = negativeFundingFeeAmount（应付额，IncreasePositionUtils.sol:219）'
+    : '减仓路径：negAmt = amountPaidInCollateralToken（实付额，DecreasePositionCollateralUtils.sol:146）；非清算单能发 PositionFeesCollected 即已付清 → 实付额 == negativeFundingFeeAmount';
+  return {
+    available: true,
+    pathLabel,
+    negativePaid,
+    positive: positiveFunding,
+    claimableIncrement: maxBigInt(negativePaid - positiveFunding),
+    lpToPositionVault: maxBigInt(positiveFunding - negativePaid),
+    inputs: [
+      { name: 'negativeFundingFeeAmount（应付）', value: negativeFunding.toString(), source: eventSource },
+      { name: 'negAmt（settleFundingFees 实参）', value: negativePaid.toString(), source: pathLabel },
+      { name: 'positiveFundingFeeAmount（应收）', value: positiveFunding.toString(), source: eventSource },
+      { name: `路径判据 isIncrease / orderType`, value: `${isIncrease} / ${orderType === undefined ? '—' : orderType.toString()}`, source: 'PositionFeesCollected.bool.isIncrease；PositionIncrease/Decrease.uint.orderType（Liquidation=5）' },
+    ],
+  };
 }
 
 function buildLedgerDeltaExpectations(input: {
@@ -230,13 +390,16 @@ function buildLedgerDeltaExpectations(input: {
   readonly events: JsonRecord;
   readonly collateralDecimals: number;
 }): Record<string, LedgerDeltaExpectation> {
-  const margin = decimalToRaw(input.testData.collateralUsdc, input.collateralDecimals);
+  // 阶段级覆盖：中段阶段/最终全平传入 raw 值（marginRaw/sizeUsdRaw/closeSizeUsdRaw），
+  // 缺省回落到 testData 十进制推导（历史证据兼容）。
+  const marginOverride = optionalBigint(input.testData.marginRaw);
+  const margin = marginOverride ?? decimalToRaw(input.testData.collateralUsdc, input.collateralDecimals);
   const sizeModel = expectedOrderSizeUsd(input.testData);
-  const sizeUsd = sizeModel.value;
+  const sizeUsdOverride = optionalBigint(input.testData.sizeUsdRaw);
+  const sizeUsd = sizeUsdOverride ?? sizeModel.value;
   const eventUint = record(input.positionEvent.uint);
   const eventInt = record(input.positionEvent.int);
   const fees = record(record(input.events.feesCollected).uint);
-  const funding = record(record((Array.isArray(input.events.fundingEvents) ? input.events.fundingEvents : [])[0]).int);
   const isLong = boolValue(record(input.positionEvent.bool).isLong ?? input.testData.isLong);
   const zero = (reason: string): LedgerDeltaExpectation => ({ value: 0n, formula: reason });
 
@@ -246,7 +409,7 @@ function buildLedgerDeltaExpectations(input: {
       orderVaultUsdc: { value: margin, formula: `Expected ΔOrderVault = +inputMargin = +${margin}` },
       posVaultUsdc: zero('订单尚未执行：Expected ΔPositionVault = 0'),
       lpVaultAssets: zero('订单尚未执行：Expected ΔLPVault = 0'),
-      feeReceiverUsdc: zero('费用尚未结算：Expected ΔFeeReceiver balance = 0'),
+      feeReceiverUsdc: zero('费用尚未结算：Expected ΔFeeHandler balance = 0'),
       claimableFeeAmountPosition: zero('费用尚未结算：Expected ΔClaimable Position Fee = 0'),
       claimableFeeAmountFunding: zero('Funding 尚未结算：Expected ΔClaimable Funding = 0'),
       claimableFeeAmountLiquidation: zero('非清算订单：Expected ΔClaimable Liquidation Fee = 0'),
@@ -254,7 +417,6 @@ function buildLedgerDeltaExpectations(input: {
       cumulativeOpenCostsShort: zero('订单尚未执行：Expected ΔShort Open Costs = 0'),
       openInterestInTokensLong: zero('订单尚未执行：Expected ΔLong OI = 0'),
       openInterestInTokensShort: zero('订单尚未执行：Expected ΔShort OI = 0'),
-      positionImpactPoolAmount: zero('订单尚未执行：Expected ΔPosition Impact Pool = 0'),
     };
   }
 
@@ -264,7 +426,7 @@ function buildLedgerDeltaExpectations(input: {
       orderVaultUsdc: zero('减仓订单没有 USDC 抵押品存入：Expected ΔOrderVault = 0'),
       posVaultUsdc: zero('订单尚未执行：Expected ΔPositionVault = 0'),
       lpVaultAssets: zero('订单尚未执行：Expected ΔLPVault = 0'),
-      feeReceiverUsdc: zero('费用尚未结算：Expected ΔFeeReceiver balance = 0'),
+      feeReceiverUsdc: zero('费用尚未结算：Expected ΔFeeHandler balance = 0'),
       claimableFeeAmountPosition: zero('费用尚未结算：Expected ΔClaimable Position Fee = 0'),
       claimableFeeAmountFunding: zero('Funding 尚未结算：Expected ΔClaimable Funding = 0'),
       claimableFeeAmountLiquidation: zero('非清算订单：Expected ΔClaimable Liquidation Fee = 0'),
@@ -272,27 +434,49 @@ function buildLedgerDeltaExpectations(input: {
       cumulativeOpenCostsShort: zero('减仓订单尚未执行：Expected ΔShort Open Costs = 0'),
       openInterestInTokensLong: zero('减仓订单尚未执行：Expected ΔLong OI = 0'),
       openInterestInTokensShort: zero('减仓订单尚未执行：Expected ΔShort OI = 0'),
-      positionImpactPoolAmount: zero('减仓订单尚未执行：Expected ΔPosition Impact Pool = 0'),
     };
   }
 
   const executionPrice = bigintValue(eventUint.executionPrice);
-  const sizeInTokens = executionPrice === 0n ? undefined : sizeUsd / executionPrice;
+  // 四格取整矩阵（开仓格）：多头 ⌊⌋ / 空头 ⌈⌉，对 trader 不利（PositionUtils :627/:640）。
+  const sizeTokensModel = executionPrice === 0n
+    ? undefined
+    : increaseSizeInTokens(sizeUsd, executionPrice, isLong);
+  const sizeInTokens = sizeTokensModel?.value;
   const feeForPool = bigintValue(fees.feeAmountForPool ?? fees.positionFeeAmountForPool);
   const feeReceiverAmount = bigintValue(fees.feeReceiverAmount);
   const negativeFunding = bigintValue(fees.negativeFundingFeeAmount);
   const positiveFunding = bigintValue(fees.positiveFundingFeeAmount);
-  const positionPaysLp = bigintValue(funding.positionPaysLp);
-  const lpToPositionVault = maxBigInt(-positionPaysLp);
-  const claimableFunding = maxBigInt(positionPaysLp);
+  // v0.3.2 唯一口径：逐仓 settleFundingFees（见 buildFundingSettlementModel 注释）。
+  // claimable FUNDING 增量 = max(negAmt − posAmt, 0)；LPVault→PositionVault = max(posAmt − negAmt, 0)。
+  // 输入不可确定（缺 PositionFeesCollected / 清算单欠付路径）→ 相关行不建立期望（NOT_VERIFIED），不退回任何旧锚。
+  const settlement = buildFundingSettlementModel({ events: input.events, positionEvent: input.positionEvent });
+  const lpToPositionVault = settlement.available ? settlement.lpToPositionVault : undefined;
+  const settlementBasisNote = '【事件对照】v0.3.2 该键由 MarketUtils.settleFundingFees 按本仓 PositionFeesCollected 的 negAmt−posAmt 净差入账（净负记 FUNDING_FEE_TYPE claimable，净正由 LPVault 转 PositionVault）；negAmt 加仓取应付额、减仓取实付额（非清算单发出 PositionFeesCollected 即已付清，两者精确相等）。positionPaysLp 仅为 Funding 事件的市场级累计对照，不进入本期望。';
+  const lpFundingSource = settlement.available
+    ? `派生：max(posAmt ${settlement.positive} − negAmt ${settlement.negativePaid}, 0)（${settlement.pathLabel}）`
+    : `缺输入：${settlement.reason ?? '—'}`;
+  const claimableFundingExpectation: LedgerDeltaExpectation = settlement.available
+    ? {
+      value: settlement.claimableIncrement,
+      formula: `Expected ΔClaimable Funding = max(negAmt − posAmt, 0)（v0.3.2 settleFundingFees 逐仓结算；${settlement.pathLabel}）= max(${settlement.negativePaid} − ${settlement.positive}, 0) = ${settlement.claimableIncrement}`,
+      note: settlementBasisNote,
+      verification: '事件对照',
+      inputs: settlement.inputs,
+    }
+    : {
+      formula: `Expected ΔClaimable Funding = max(negAmt − posAmt, 0)（v0.3.2 settleFundingFees）；输入不可确定：${settlement.reason ?? '—'}`,
+      note: `【缺数据】${settlement.reason ?? '—'}。不退回 v0.3.1 的 positionPaysLp 口径，如实标 NOT_VERIFIED。`,
+    };
   const isIncrease = input.phaseKind === 'create-and-increase' || input.phaseKind === 'execute-increase';
 
   if (isIncrease) {
     const traderDelta = input.phaseKind === 'create-and-increase' ? -margin : 0n;
     const orderVaultDelta = input.phaseKind === 'execute-increase' ? -margin : 0n;
-    const positionVaultDelta = margin - feeForPool + lpToPositionVault;
-    const lpVaultDelta = feeForPool - lpToPositionVault;
-    const increaseFormula = `${sizeModel.expanded}；${sizeUsd} / executionPrice ${executionPrice} = ${stringValue(sizeInTokens)}`;
+    const positionVaultDelta = lpToPositionVault === undefined ? undefined : margin - feeForPool + lpToPositionVault;
+    const lpVaultDelta = lpToPositionVault === undefined ? undefined : feeForPool - lpToPositionVault;
+    const lpFundingText = lpToPositionVault === undefined ? '（缺输入）' : lpToPositionVault.toString();
+    const increaseFormula = `${sizeUsdOverride !== undefined ? `sizeDeltaUsd（阶段指定 raw）= ${sizeUsd}` : sizeModel.expanded}；${sizeTokensModel?.expanded ?? 'executionPrice 为 0，无法换算'}`;
     return {
       traderUsdc: {
         value: traderDelta,
@@ -307,41 +491,57 @@ function buildLedgerDeltaExpectations(input: {
           : '创建与执行均包含在本阶段：OrderVault 存入后转出，Expected 净 Δ = 0',
       },
       posVaultUsdc: {
-        value: positionVaultDelta,
-        formula: `Expected ΔPositionVault = inputMargin − feeForPool + LP→Position Funding = ${margin} − ${feeForPool} + ${lpToPositionVault} = ${positionVaultDelta}`,
+        ...(positionVaultDelta === undefined ? {} : { value: positionVaultDelta }),
+        formula: `Expected ΔPositionVault = inputMargin − feeForPool + LP→Position Funding = ${margin} − ${feeForPool} + ${lpFundingText}${positionVaultDelta === undefined ? '（LP→Position Funding 缺输入，未建立期望）' : ` = ${positionVaultDelta}`}`,
+        note: '【事件对照】LP→Position Funding = max(posAmt − negAmt, 0)（v0.3.2 settleFundingFees，取自本仓 PositionFeesCollected）。',
+        verification: '事件对照',
+        inputs: [
+          { name: 'inputMargin', value: margin.toString(), source: '用例阶段配置（raw）' },
+          { name: 'feeAmountForPool', value: feeForPool.toString(), source: 'PositionFeesCollected 事件；独立复算见 Fee 组「LP Pool 分成」行' },
+          { name: 'LP→Position Funding', value: lpFundingText, source: lpFundingSource },
+        ],
       },
       lpVaultAssets: {
-        value: lpVaultDelta,
-        formula: `Expected ΔLPVault = feeForPool − LP→Position Funding = ${feeForPool} − ${lpToPositionVault} = ${lpVaultDelta}`,
+        ...(lpVaultDelta === undefined ? {} : { value: lpVaultDelta }),
+        formula: `Expected ΔLPVault = feeForPool − LP→Position Funding = ${feeForPool} − ${lpFundingText}${lpVaultDelta === undefined ? '（LP→Position Funding 缺输入，未建立期望）' : ` = ${lpVaultDelta}`}`,
+        note: '【事件对照】LP→Position Funding = max(posAmt − negAmt, 0)（v0.3.2 settleFundingFees，取自本仓 PositionFeesCollected）。',
+        verification: '事件对照',
+        inputs: [
+          { name: 'feeAmountForPool', value: feeForPool.toString(), source: 'PositionFeesCollected 事件；独立复算见 Fee 组「LP Pool 分成」行' },
+          { name: 'LP→Position Funding', value: lpFundingText, source: lpFundingSource },
+        ],
       },
-      feeReceiverUsdc: zero('Fee Receiver 使用 Claimable 记账，尚未领取：Expected ERC20 balance Δ = 0'),
+      feeReceiverUsdc: zero('协议费只记 Claimable（USDC 物理留在 PositionVault）；claimFees 之前 FeeHandler 余额不变：Expected ΔFeeHandler = 0'),
       claimableFeeAmountPosition: {
         value: feeReceiverAmount,
         formula: `Expected ΔClaimable Position Fee = feeReceiverAmount = ${feeReceiverAmount}`,
+        note: '【事件对照】期望值取自 PositionFeesCollected.feeReceiverAmount，与 DataStore 入账增量交叉核对；该金额的独立复算见 Fee 组「Fee Receiver 分成」行。',
       },
-      claimableFeeAmountFunding: {
-        value: claimableFunding,
-        formula: `Expected ΔClaimable Funding = max(positionPaysLp, 0) = max(${positionPaysLp}, 0) = ${claimableFunding}`,
-      },
+      claimableFeeAmountFunding: claimableFundingExpectation,
       claimableFeeAmountLiquidation: zero('非清算订单：Expected ΔClaimable Liquidation Fee = 0'),
       cumulativeOpenCostsLong: {
         value: isLong ? sizeUsd : 0n,
-        formula: `Expected ΔLong Open Costs = isLong ? inputSizeUsd : 0 = ${isLong ? sizeUsd : 0n}`,
+        formula: isLong
+          ? `Expected ΔLong Open Costs = isLong ? inputSizeUsd : 0；本次 isLong=true（多头开仓）→ +${sizeUsd}`
+          : 'Expected ΔLong Open Costs = isLong ? inputSizeUsd : 0；本次 isLong=false（空头开仓）→ Long 侧不动，Expected Δ = 0',
       },
       cumulativeOpenCostsShort: {
         value: isLong ? 0n : sizeUsd,
-        formula: `Expected ΔShort Open Costs = isLong ? 0 : inputSizeUsd = ${isLong ? 0n : sizeUsd}`,
+        formula: isLong
+          ? 'Expected ΔShort Open Costs = isLong ? 0 : inputSizeUsd；本次 isLong=true（多头开仓）→ Short 侧不动，Expected Δ = 0'
+          : `Expected ΔShort Open Costs = isLong ? 0 : inputSizeUsd；本次 isLong=false（空头开仓）→ +${sizeUsd}`,
       },
       openInterestInTokensLong: {
         ...(sizeInTokens === undefined ? {} : { value: isLong ? sizeInTokens : 0n }),
-        formula: `Expected ΔLong OI = isLong ? sizeUsd / executionPrice : 0；本次 ${increaseFormula}`,
+        formula: isLong
+          ? `Expected ΔLong OI = ⌊sizeUsd / executionPrice⌋（多头开仓向下取整）；本次 isLong=true → ${increaseFormula}`
+          : 'Expected ΔLong OI：本次 isLong=false（空头开仓）→ Long 侧不动，Expected Δ = 0',
       },
       openInterestInTokensShort: {
         ...(sizeInTokens === undefined ? {} : { value: isLong ? 0n : sizeInTokens }),
-        formula: `Expected ΔShort OI = isLong ? 0 : sizeUsd / executionPrice；本次 ${increaseFormula}`,
-      },
-      positionImpactPoolAmount: {
-        formula: '需要独立实现 Position Impact Pool 结算公式后才能生成 Expected Δ',
+        formula: isLong
+          ? 'Expected ΔShort OI：本次 isLong=true（多头开仓）→ Short 侧不动，Expected Δ = 0'
+          : `Expected ΔShort OI = ⌈sizeUsd / executionPrice⌉（空头开仓向上取整）；本次 isLong=false → ${increaseFormula}`,
       },
     };
   }
@@ -354,56 +554,104 @@ function buildLedgerDeltaExpectations(input: {
   const totalCost = bigintValue(fees.totalCostAmount);
   const costExcludingFunding = totalCost - negativeFunding;
   const oldMargin = bigintValue(input.positionBefore.collateralAmount);
-  const traderOutput = oldMargin + positiveFunding + positivePnl - negativeFunding - negativePnl - costExcludingFunding;
-  const lpVaultDelta = feeForPool + negativePnl - positivePnl - lpToPositionVault;
-  const positionVaultDelta = -traderOutput - lpVaultDelta;
   const oldSizeUsd = bigintValue(input.positionBefore.sizeInUsd);
   const oldSizeInTokens = bigintValue(input.positionBefore.sizeInTokens);
-  const decreaseTokens = oldSizeUsd === 0n ? undefined : oldSizeInTokens * sizeUsd / oldSizeUsd;
+  // 减仓有效规模：最终全平传 closeSizeUsdRaw（含中段变动后的总规模）；中段部分平传 sizeUsdRaw。
+  const decreaseSizeUsd = optionalBigint(input.testData.closeSizeUsdRaw) ?? sizeUsd;
+  // 全平守卫：只有 sizeDeltaUsd == oldSizeUsd 才退还全部剩余押金；部分平退 min(请求提取额, 剩余押金)。
+  const fullClose = decreaseSizeUsd === oldSizeUsd;
+  const requestedWithdrawal = decimalToRaw(input.testData.collateralWithdrawUsdc ?? '0', input.collateralDecimals);
+  const waterfall = decreaseWaterfall({
+    oldMargin,
+    positiveFunding,
+    negativeFunding,
+    positivePnlUsdc: positivePnl,
+    negativePnlUsdc: negativePnl,
+    costExcludingFunding,
+    fullClose,
+    requestedWithdrawal,
+  });
+  const traderOutput = waterfall.output;
+  const lpVaultDelta = lpToPositionVault === undefined ? undefined : feeForPool + negativePnl - positivePnl - lpToPositionVault;
+  const positionVaultDelta = lpVaultDelta === undefined ? undefined : -traderOutput - lpVaultDelta;
+  const lpFundingText = lpToPositionVault === undefined ? '（缺输入）' : lpToPositionVault.toString();
+  // 四格取整矩阵（平仓格）：全平恒等分支精确清零；部分平多头 ⌈⌉ / 空头 ⌊⌋。
+  const decreaseModel = decreaseSizeInTokens({ oldSizeUsd, oldSizeInTokens, sizeDeltaUsd: decreaseSizeUsd, isLong });
+  const decreaseTokens = decreaseModel.value;
   const pnlFormula = `positivePnl=${positivePnl}；negativePnl=ceil(abs(${basePnlUsd})/${collateralMin})=${negativePnl}`;
   return {
     traderUsdc: {
       value: traderOutput,
-      formula: `Expected ΔTrader = oldMargin + positiveFunding + positivePnl − negativeFunding − negativePnl − feeExFunding = ${oldMargin} + ${positiveFunding} + ${positivePnl} − ${negativeFunding} − ${negativePnl} − ${costExcludingFunding} = ${traderOutput}`,
-      note: pnlFormula,
+      formula: `Expected ΔTrader（processCollateral 瀑布重放，${fullClose ? '全平' : '部分平'}）= ${traderOutput}；${waterfall.expanded}`,
+      note: `${pnlFormula}。瀑布顺序敏感：盈利先进 output、正 funding 先入押金、成本先扣 output 再扣押金（盈利垫费）；${fullClose ? '全平退还全部剩余押金（偿付型下与线性式等值）' : `部分平退 min(请求提取额 ${requestedWithdrawal}, 剩余押金)，剩余押金 ${waterfall.remainingCollateral} 留仓`}。`,
+      inputs: [
+        { name: 'oldMargin（全平退还基数）', value: oldMargin.toString(), source: '仓位 Before 快照（Reader，钉块读数）' },
+        { name: 'positiveFundingFeeAmount', value: positiveFunding.toString(), source: 'PositionFeesCollected 事件（执行回执解码）' },
+        { name: 'negativeFundingFeeAmount', value: negativeFunding.toString(), source: 'PositionFeesCollected 事件（执行回执解码）' },
+        { name: 'basePnlUsd（Cap 后，1e30 USD）', value: basePnlUsd.toString(), source: 'PositionDecrease 事件 int 字段；uncapped 版已在 PnL 组独立复算' },
+        { name: 'positivePnl（盈利折 USDC，⌊÷colPrice.max⌋）', value: positivePnl.toString(), source: `派生：basePnl>0 时 ÷ ${collateralMax}（事件 max 价，向下取整）` },
+        { name: 'negativePnl（亏损折 USDC，⌈÷colPrice.min⌉）', value: negativePnl.toString(), source: `派生：basePnl<0 时 ceil(÷${collateralMin})（事件 min 价，向上取整）` },
+        { name: 'feeExFunding（费用 excl funding）', value: costExcludingFunding.toString(), source: '派生：事件 totalCostAmount − negativeFunding；分量在 Fee 组独立复算' },
+        { name: 'Expected ΔTrader（瀑布结果）', value: traderOutput.toString(), source: '派生：processCollateral 瀑布重放，与链上 Trader 余额 Δ 逐位对照' },
+      ],
     },
     orderVaultUsdc: zero('减仓订单没有抵押品存入：Expected ΔOrderVault = 0'),
     posVaultUsdc: {
-      value: positionVaultDelta,
-      formula: `Expected ΔPositionVault = −TraderOutput − ΔLPVault = −${traderOutput} − ${lpVaultDelta} = ${positionVaultDelta}`,
+      ...(positionVaultDelta === undefined ? {} : { value: positionVaultDelta }),
+      formula: positionVaultDelta === undefined
+        ? `Expected ΔPositionVault = −TraderOutput − ΔLPVault = −${traderOutput} − （ΔLPVault 缺 LP→Position Funding 输入，未建立期望）`
+        : `Expected ΔPositionVault = −TraderOutput − ΔLPVault = −${traderOutput} − ${lpVaultDelta} = ${positionVaultDelta}`,
+      note: '【事件对照】ΔLPVault 中的 LP→Position Funding = max(posAmt − negAmt, 0)（v0.3.2 settleFundingFees，取自本仓 PositionFeesCollected）。',
+      verification: '事件对照',
+      inputs: [
+        { name: 'TraderOutput', value: traderOutput.toString(), source: '派生：ΔTrader 行的瀑布重放结果' },
+        { name: 'ΔLPVault', value: lpVaultDelta === undefined ? '（缺输入）' : lpVaultDelta.toString(), source: '派生：ΔLPVaultAssets 行的期望值' },
+        { name: 'Expected ΔPositionVault', value: positionVaultDelta === undefined ? '（缺输入）' : positionVaultDelta.toString(), source: '派生：三方内部闭合（PositionVault 是瀑布的出纳方）' },
+      ],
     },
     lpVaultAssets: {
-      value: lpVaultDelta,
-      formula: `Expected ΔLPVault = feeForPool + negativePnl − positivePnl − LP→Position Funding = ${feeForPool} + ${negativePnl} − ${positivePnl} − ${lpToPositionVault} = ${lpVaultDelta}`,
+      ...(lpVaultDelta === undefined ? {} : { value: lpVaultDelta }),
+      formula: `Expected ΔLPVault = feeForPool + negativePnl − positivePnl − LP→Position Funding = ${feeForPool} + ${negativePnl} − ${positivePnl} − ${lpFundingText}${lpVaultDelta === undefined ? '（LP→Position Funding 缺输入，未建立期望）' : ` = ${lpVaultDelta}`}`,
+      note: '【事件对照】LP→Position Funding = max(posAmt − negAmt, 0)（v0.3.2 settleFundingFees，取自本仓 PositionFeesCollected）。',
+      verification: '事件对照',
+      inputs: [
+        { name: 'feeAmountForPool（LP 费份额）', value: feeForPool.toString(), source: 'PositionFeesCollected 事件；独立复算见 Fee 组「LP Pool 分成」行' },
+        { name: 'negativePnl（trader 亏损进池）', value: negativePnl.toString(), source: '派生：ceil(|basePnl|÷colPrice.min)' },
+        { name: 'positivePnl（池付 trader 盈利）', value: positivePnl.toString(), source: '派生：⌊basePnl÷colPrice.max⌋' },
+        { name: 'LP→Position Funding', value: lpFundingText, source: lpFundingSource },
+      ],
     },
-    feeReceiverUsdc: zero('Fee Receiver 使用 Claimable 记账，尚未领取：Expected ERC20 balance Δ = 0'),
+    feeReceiverUsdc: zero('协议费只记 Claimable（USDC 物理留在 PositionVault）；claimFees 之前 FeeHandler 余额不变：Expected ΔFeeHandler = 0'),
     claimableFeeAmountPosition: {
       value: feeReceiverAmount,
       formula: `Expected ΔClaimable Position Fee = feeReceiverAmount = ${feeReceiverAmount}`,
+      note: '【事件对照】期望值取自 PositionFeesCollected.feeReceiverAmount，与 DataStore 入账增量交叉核对；该金额的独立复算见 Fee 组「Fee Receiver 分成」行。',
     },
-    claimableFeeAmountFunding: {
-      value: claimableFunding,
-      formula: `Expected ΔClaimable Funding = max(positionPaysLp, 0) = max(${positionPaysLp}, 0) = ${claimableFunding}`,
-    },
+    claimableFeeAmountFunding: claimableFundingExpectation,
     claimableFeeAmountLiquidation: zero('非清算订单：Expected ΔClaimable Liquidation Fee = 0'),
     cumulativeOpenCostsLong: {
-      value: isLong ? -sizeUsd : 0n,
-      formula: `Expected ΔLong Open Costs = isLong ? −inputSizeUsd : 0 = ${isLong ? -sizeUsd : 0n}`,
+      value: isLong ? -decreaseSizeUsd : 0n,
+      formula: isLong
+        ? `Expected ΔLong Open Costs = −sizeDeltaUsd；本次 isLong=true（平多）→ −${decreaseSizeUsd}`
+        : 'Expected ΔLong Open Costs：本次 isLong=false（平空）→ Long 侧不动，Expected Δ = 0',
     },
     cumulativeOpenCostsShort: {
-      value: isLong ? 0n : -sizeUsd,
-      formula: `Expected ΔShort Open Costs = isLong ? 0 : −inputSizeUsd = ${isLong ? 0n : -sizeUsd}`,
+      value: isLong ? 0n : -decreaseSizeUsd,
+      formula: isLong
+        ? 'Expected ΔShort Open Costs：本次 isLong=true（平多）→ Short 侧不动，Expected Δ = 0'
+        : `Expected ΔShort Open Costs = −sizeDeltaUsd；本次 isLong=false（平空）→ −${decreaseSizeUsd}`,
     },
     openInterestInTokensLong: {
       ...(decreaseTokens === undefined ? {} : { value: isLong ? -decreaseTokens : 0n }),
-      formula: `Expected sizeDeltaInTokens = oldSizeInTokens ${oldSizeInTokens} × sizeDeltaUsd ${sizeUsd} / oldSizeUsd ${oldSizeUsd} = ${stringValue(decreaseTokens)}；Expected ΔLong OI = ${isLong && decreaseTokens !== undefined ? -decreaseTokens : 0n}`,
+      formula: isLong
+        ? `Expected ΔLong OI = −sizeDeltaInTokens（平多按仓位等比销账，与执行价无关）；${decreaseModel.expanded} → Δ = ${decreaseTokens === undefined ? '—' : -decreaseTokens}`
+        : 'Expected ΔLong OI；本次 isLong=false（平空）→ Long 侧不动，Expected Δ = 0',
     },
     openInterestInTokensShort: {
       ...(decreaseTokens === undefined ? {} : { value: isLong ? 0n : -decreaseTokens }),
-      formula: `Expected sizeDeltaInTokens = oldSizeInTokens ${oldSizeInTokens} × sizeDeltaUsd ${sizeUsd} / oldSizeUsd ${oldSizeUsd} = ${stringValue(decreaseTokens)}；Expected ΔShort OI = ${!isLong && decreaseTokens !== undefined ? -decreaseTokens : 0n}`,
-    },
-    positionImpactPoolAmount: {
-      formula: '需要独立实现 Position Impact Pool 结算公式后才能生成 Expected Δ',
+      formula: isLong
+        ? 'Expected ΔShort OI；本次 isLong=true（平多）→ Short 侧不动，Expected Δ = 0'
+        : `Expected ΔShort OI = −sizeDeltaInTokens（平空按仓位等比销账，与执行价无关）；${decreaseModel.expanded} → Δ = ${decreaseTokens === undefined ? '—' : -decreaseTokens}`,
     },
   };
 }
@@ -425,8 +673,12 @@ function buildSnapshotRows(input: {
     const after = bigintValue(input.after[field.key]);
     const actualDelta = after - before;
     const expectation = input.expectedDeltas[field.key];
+    // 单锚点：期望只有一个口径（v0.3.2 合约源码），Actual 精确命中才 PASS；缺输入即 NOT_VERIFIED，不再切换旧锚。
     const expectedDelta = expectation?.value;
+    const expectationFormula = expectation?.formula;
     const expected = expectedDelta === undefined ? undefined : before + expectedDelta;
+    // 显式验证方式只在建立了期望时生效；NOT_VERIFIED 行交给 classifyVerification 归为「缺数据」。
+    const explicitVerification = expectedDelta === undefined ? undefined : expectation?.verification;
     const decimals = field.decimals === 'token' ? input.tokenDecimals : field.decimals;
     const symbol = field.symbol === 'token' ? input.tokenSymbol : field.symbol;
     const unit = field.unit === 'token' ? `${input.tokenSymbol} 1e${input.tokenDecimals}` : field.unit;
@@ -439,14 +691,18 @@ function buildSnapshotRows(input: {
       after: rawAndUnit(after, decimals, symbol),
       delta: expectedDelta === undefined ? '尚未建立独立 Expected Δ' : deltaAndUnit(expectedDelta, decimals, symbol),
       expected: expected === undefined ? '尚未建立独立 Expected After' : rawAndUnit(expected, decimals, symbol),
-      formula: `${expectation?.formula ?? '缺少 Expected Δ 公式'}；Expected After = Before + Expected Δ`,
+      formula: expectedDelta === undefined
+        ? `${expectationFormula ?? '缺少 Expected Δ 公式'}；Expected After = Before + Expected Δ（缺 Expected Δ，无法代入）`
+        : `${expectationFormula ?? '缺少 Expected Δ 公式'}；Expected After = Before + Expected Δ = ${before} + (${expectedDelta}) = ${expected}`,
       basis: {
         title: '链上阶段快照与账户增量账本',
         sourcePath: input.ledgerSource,
         section: `${input.beforeLabel} → ${input.afterLabel}`,
       },
       unit,
-      note: `Before/After 均为指定区块 Reader 或 ERC20 实际读数；链上 Actual Δ=${actualDelta} raw。${expectation?.note ?? ''}`,
+      note: `口径：${field.scope}。Before/After 均为指定区块 Reader 或 ERC20 实际读数（独享 fork 窗口内无他人活动，聚合层 Δ 才等于本单效果）；链上 Actual Δ=${actualDelta} raw。${expectation?.note ?? ''}`,
+      ...(expectation?.inputs ? { inputs: expectation.inputs } : {}),
+      ...(explicitVerification ? { verification: explicitVerification } : {}),
     };
   });
 }
@@ -482,7 +738,7 @@ function buildPositionRows(input: {
       after: rawAndUnit(after, field.decimals, field.symbol),
       delta: deltaAndUnit(after - before, field.decimals, field.symbol),
       expected: rawAndUnit(expected, field.decimals, field.symbol),
-      formula: input.expectedReason,
+      formula: `${input.expectedReason}；本次：Expected ${field.key} = ${expected}（Before ${before} → After ${after}）`,
       basis: {
         title: 'PositionIncrease / PositionDecrease 事件与 Reader 仓位快照交叉核对',
         sourcePath: input.ledgerSource,
@@ -508,11 +764,40 @@ function buildGraceRows(input: {
   const afterEnd = bigintValue(input.after.graceEnd);
   if (!boolValue(input.after.exists)) return [];
   const parameterSnapshotAvailable = input.parameters.source === 'chain-at-block';
-  // 历史证据没有保存执行区块参数时不生成 Grace 公式行，避免用 0 或本地默认值伪造复算。
-  if (!parameterSnapshotAvailable) return [];
+  // 历史证据没有保存执行区块参数时，如实输出 NOT_VERIFIED 行（不整行省略、也不用 0 或本地默认值伪造复算）。
+  if (!parameterSnapshotAvailable) {
+    return [{
+      id: `${input.phaseId}-grace-formula`, group: `${input.phaseLabel} · Grace`, label: 'Grace 公式核对',
+      status: 'NOT_VERIFIED',
+      before: `graceStart=${timestampAndIso(beforeStart)}；graceEnd=${timestampAndIso(beforeEnd)}`,
+      after: `graceStart=${timestampAndIso(afterStart)}；graceEnd=${timestampAndIso(afterEnd)}`,
+      expected: '缺少执行区块参数快照（graceBase / tierMultiplier），无法独立复算',
+      formula: [
+        '计算规则：',
+        'graceDuration = floor(gracePeriodBase × tierMultiplier / W)',
+        'W = 1e18',
+        'graceEnd = graceStart + graceDuration',
+        '允许清算：block.timestamp >= graceEnd',
+        '- graceEnd - 1：拒绝',
+        '- graceEnd：允许',
+        '- graceEnd + 1：允许',
+        '清算前置：minOracleTimestamp >= max(position.increasedAtTime, position.decreasedAtTime)',
+      ].join('\n'),
+      basis: {
+        title: 'Grace 终点按执行区块实际参数精确复算',
+        sourcePath: PAGE_FORMULA_SOURCE,
+        section: '四、清算保护卡片 / 4.1 保护期推导',
+      },
+      unit: 'Unix timestamp / seconds',
+      note: `历史证据未保存执行区块参数，不能倒推 PASS，如实标 NOT_VERIFIED。链上阶段快照：${input.ledgerSource}`,
+    }];
+  }
   const graceBaseSeconds = bigintValue(input.parameters.graceBaseSeconds);
   const referralTier = bigintValue(input.parameters.referralTier);
   const tierMultiplier = bigintValue(input.parameters.tierMultiplier);
+  const increasedAtTime = bigintValue(input.after.increasedAtTime);
+  const decreasedAtTime = bigintValue(input.after.decreasedAtTime);
+  const oracleAnchor = increasedAtTime > decreasedAtTime ? increasedAtTime : decreasedAtTime;
   const grace = calculateGrace({
     graceStart: afterStart,
     graceBase: graceBaseSeconds,
@@ -527,7 +812,7 @@ function buildGraceRows(input: {
   const zeroGraceNote = expectedDuration === 0n
     ? ' 当前有效 Grace=0 秒，graceEnd===graceStart 是合法结果。'
     : '';
-
+  const oracleAnchorText = oracleAnchor === 0n ? '0（未设置）' : `${oracleAnchor}（可核对 max(position...)）`;
   return [
     {
       id: `${input.phaseId}-grace-formula`, group, label: 'Grace 公式核对',
@@ -536,7 +821,22 @@ function buildGraceRows(input: {
       after: `graceStart=${timestampAndIso(afterStart)}；graceEnd=${timestampAndIso(afterEnd)}`,
       delta: `effectiveGrace = ${effectiveGraceExpression}；实际 graceEnd − graceStart = ${afterEnd - afterStart} seconds`,
       expected: `graceEnd = ${graceEndExpression}`,
-      formula: `graceEnd = graceStart + graceBase × tierMultiplier / 1e18；本次：${graceEndExpression}`,
+      formula: [
+        '计算规则：',
+        'graceDuration = floor(gracePeriodBase × tierMultiplier / W)',
+        `W = 1e18`,
+        `graceEnd = graceStart + graceDuration`,
+        `清算前置条件：minOracleTimestamp >= max(position.increasedAtTime, position.decreasedAtTime)`,
+        `本次：`,
+        `graceDuration = floor(${graceBaseSeconds} × ${tierMultiplier} / 1e18) = ${expectedDuration} seconds`,
+        `graceEnd = ${afterStart} + ${expectedDuration} = ${expectedEnd}`,
+        `position.increasedAtTime = ${increasedAtTime}；position.decreasedAtTime = ${decreasedAtTime}；max = ${oracleAnchorText}`,
+        `minOracleTimestamp 目前未在执行证据内直接采集（如需核验请补齐 minOracleTimestamp 数据）。`,
+        `允许清算：block.timestamp >= graceEnd`,
+        `- graceEnd - 1: 拒绝`,
+        `- graceEnd: 允许`,
+        `- graceEnd + 1: 允许`,
+      ].join('\n'),
       basis: {
         title: 'Grace 终点按执行区块实际参数精确复算',
         sourcePath: PAGE_FORMULA_SOURCE,
@@ -564,27 +864,50 @@ function buildPricingRows(input: {
   readonly positionEvent: JsonRecord;
   readonly balanceWasImproved: unknown;
   readonly parameters: JsonRecord;
+  /** 减仓执行前的仓位原始字段（Uncapped PnL 按 token 比例复算需要 sizeInUsd/sizeInTokens） */
+  readonly positionBefore?: JsonRecord;
 }): Reconciliation[] {
   const uint = record(input.positionEvent.uint);
   if (Object.keys(uint).length === 0) return [];
   const priceMin = bigintValue(uint['indexTokenPrice.min']);
   const priceMax = bigintValue(uint['indexTokenPrice.max']);
   const mid = (priceMin + priceMax) / 2n;
-  const longBeforeUsd = oiUsd(input.before.openInterestInTokensLong, mid);
-  const shortBeforeUsd = oiUsd(input.before.openInterestInTokensShort, mid);
-  const longAfterUsd = oiUsd(input.after.openInterestInTokensLong, mid);
-  const shortAfterUsd = oiUsd(input.after.openInterestInTokensShort, mid);
-  const skewBefore = calculateSignedSkew(longBeforeUsd, shortBeforeUsd);
-  const skewAfter = calculateSignedSkew(longAfterUsd, shortAfterUsd);
-  const skewRef = (absolute(skewBefore) + absolute(skewAfter)) / 2n;
-  const imbalanceBefore = absolute(longBeforeUsd - shortBeforeUsd);
-  const imbalanceAfter = absolute(longAfterUsd - shortAfterUsd);
-  const expectedImproved = imbalanceAfter < imbalanceBefore;
-  const actualImproved = boolValue(input.balanceWasImproved);
-  const spread = bigintValue(uint.dynamicSpread);
+  // v0.3.2 起 dynamicSpread 是 int256（02 手册 §14.2），事件里从 uint 段挪到了 int 段；
+  // 只读 uint 段会把非零点差静默读成 0（2026-09-01 SCN-009 假 FAIL 实例）。
+  const positionEventInt = record(input.positionEvent.int);
+  const spread = bigintValue(uint.dynamicSpread ?? positionEventInt.dynamicSpread);
   const eventName = stringValue(input.positionEvent.eventName, '');
   const isIncrease = eventName === 'PositionIncrease';
   const isLong = boolValue(record(input.positionEvent.bool).isLong);
+  const beforeLongTokens = bigintValue(input.before.openInterestInTokensLong);
+  const beforeShortTokens = bigintValue(input.before.openInterestInTokensShort);
+  const longBeforeUsd = oiUsd(beforeLongTokens, mid);
+  const shortBeforeUsd = oiUsd(beforeShortTokens, mid);
+  const longAfterUsd = oiUsd(input.after.openInterestInTokensLong, mid);
+  const shortAfterUsd = oiUsd(input.after.openInterestInTokensShort, mid);
+  // balanceWasImproved / skewRef 的 next OI 用合约同款预备 tokenDelta（开仓裸 index 价换算：
+  // 多 ⌊/index.max⌋ / 空 ⌈/index.min⌉；平仓无预备/最终分裂），不用 after 快照最终值——
+  // 两者可差 1 wei 级 token，isBalanceWasImproved 是严格 <，边界数据下判向会不同。
+  const preliminaryTokens = isIncrease
+    ? preliminaryIncreaseTokens({
+      sizeUsd: bigintValue(uint.sizeDeltaUsd),
+      indexPriceMin: priceMin,
+      indexPriceMax: priceMax,
+      isLong,
+    })
+    : { value: bigintValue(uint.sizeDeltaInTokens), expanded: `平仓无预备/最终分裂：sizeDeltaInTokens ${bigintValue(uint.sizeDeltaInTokens)}` };
+  const tokenDelta = isIncrease ? preliminaryTokens.value : -preliminaryTokens.value;
+  const nextLongUsd = oiUsd(beforeLongTokens + (isLong ? tokenDelta : 0n), mid);
+  const nextShortUsd = oiUsd(beforeShortTokens + (isLong ? 0n : tokenDelta), mid);
+  const skewBefore = calculateSignedSkew(longBeforeUsd, shortBeforeUsd);
+  const skewAfter = calculateSignedSkew(longAfterUsd, shortAfterUsd);
+  const skewNext = calculateSignedSkew(nextLongUsd, nextShortUsd);
+  const skewRef = (absolute(skewBefore) + absolute(skewNext)) / 2n;
+  const imbalanceBefore = absolute(longBeforeUsd - shortBeforeUsd);
+  const imbalanceNext = absolute(nextLongUsd - nextShortUsd);
+  const imbalanceAfter = absolute(longAfterUsd - shortAfterUsd);
+  const expectedImproved = imbalanceNext < imbalanceBefore;
+  const actualImproved = boolValue(input.balanceWasImproved);
   const executionPrice = bigintValue(uint.executionPrice);
   const adverseUp = (isLong && isIncrease) || (!isLong && !isIncrease);
   const selectedOracle = adverseUp ? priceMax : priceMin;
@@ -596,6 +919,21 @@ function buildPricingRows(input: {
   const minimumSkewImpact = marketParameter(input.parameters, 'MIN_SKEW_IMPACT');
   const maximumSkewImpact = marketParameter(input.parameters, 'MAX_SKEW_IMPACT');
   const maximumPriceImpactSpread = globalParameter(input.parameters, 'maxPriceImpactSpread');
+  // v0.3.2 clamp 上下界：MIN/MAX_DYNAMIC_SPREAD[marketIndex][order.isLong]（getInt；未配置即 0 → clamp(x,0,0)=0 是真实行为）。
+  // 快照标签沿用 default-mock 参数表口径 `MIN_DYNAMIC_SPREAD(true|false)`；读不到 → 本行 NOT_VERIFIED，不假设 0。
+  const dynamicSpreadBoundLabel = (bound: 'MIN' | 'MAX') => `${bound}_DYNAMIC_SPREAD(${isLong})`;
+  const minimumDynamicSpread = marketParameter(input.parameters, dynamicSpreadBoundLabel('MIN'));
+  const maximumDynamicSpread = marketParameter(input.parameters, dynamicSpreadBoundLabel('MAX'));
+  // allowNegativeSpread 由调用点决定（PositionUtils.sol:625 加仓恒 true；:698-704 减仓：清算单或 ADL 为 false）。
+  // 事件只携带 orderType（Liquidation=5），secondaryOrderType(ADL) 未 emit；本阶段为交易者订单执行（OrderExecuted 锚定），
+  // ADL 由 AdlHandler 发起、不会出现在交易者阶段，故减仓按 orderType 判定；orderType 缺失 → 不可判定 → NOT_VERIFIED。
+  const eventOrderType = optionalBigint(uint.orderType);
+  const allowNegativeSpread: boolean | undefined = isIncrease
+    ? true
+    : (eventOrderType === undefined ? undefined : eventOrderType !== ORDER_TYPE_LIQUIDATION);
+  const allowNegativeSpreadText = allowNegativeSpread === undefined
+    ? '不可判定（事件缺 orderType）'
+    : `${allowNegativeSpread}（${isIncrease ? '加仓恒 true' : `减仓 orderType=${stringValue(eventOrderType)}${allowNegativeSpread ? '，非清算单' : '，清算单'}`}）`;
   const skewImpact = skewImpactFactor !== undefined && minimumSkewImpact !== undefined && maximumSkewImpact !== undefined
     ? calculateSkewImpact({
       skewImpactFactor,
@@ -608,76 +946,182 @@ function buildPricingRows(input: {
   const spreadParameterSummary = constantSpread === undefined
     ? '缺少执行区块参数快照。'
     : `constant=${constantSpread}；priceImpactParameter=${stringValue(priceImpactParameter)}；${adverseUp ? 'ask' : 'bid'}Depth=${stringValue(orderBookDepth)}；skewImpact=${skewImpact?.skewImpact ?? '—'}；maxPriceImpactSpread=${stringValue(maximumPriceImpactSpread)}。`;
+  // Dynamic Spread 独立复算（LogExpMath 已逐句移植）：orderSize 用事件 sizeDeltaUsd——
+  // USD 模式下即合约喂给 getPriceImpactSpread 的预备值；平仓预备值==最终值。
+  const orderSizeUsdPreliminary = bigintValue(uint.sizeDeltaUsd);
+  const priceImpactCalc = priceImpactParameter !== undefined && orderBookDepth !== undefined && maximumPriceImpactSpread !== undefined
+    ? calculatePriceImpactSpread({
+      orderSizeUsd: orderSizeUsdPreliminary,
+      priceImpactParameter,
+      depth: orderBookDepth,
+      maxPriceImpactSpread: maximumPriceImpactSpread,
+    })
+    : undefined;
+  const dynamicSpreadMissingInputs = [
+    ...(constantSpread === undefined ? ['CONSTANT_PRICE_SPREAD'] : []),
+    ...(priceImpactCalc === undefined ? ['priceImpactParameter / depth / MAX_PRICE_IMPACT_SPREAD'] : []),
+    ...(skewImpact === undefined ? ['skewImpactFactor / MIN_SKEW_IMPACT / MAX_SKEW_IMPACT'] : []),
+    ...(minimumDynamicSpread === undefined ? [dynamicSpreadBoundLabel('MIN')] : []),
+    ...(maximumDynamicSpread === undefined ? [dynamicSpreadBoundLabel('MAX')] : []),
+    ...(allowNegativeSpread === undefined ? ['allowNegativeSpread（事件缺 orderType）'] : []),
+  ];
+  const dynamicSpreadCalc = priceImpactCalc !== undefined && constantSpread !== undefined && skewImpact !== undefined
+    && minimumDynamicSpread !== undefined && maximumDynamicSpread !== undefined && allowNegativeSpread !== undefined
+    ? composeDynamicSpread({
+      constantPriceSpread: constantSpread,
+      priceImpactSpread: priceImpactCalc.spread,
+      skewImpact: skewImpact.skewImpact,
+      minDynamicSpread: minimumDynamicSpread,
+      maxDynamicSpread: maximumDynamicSpread,
+      allowNegativeSpread,
+    })
+    : undefined;
+  const pricingParameterSource = input.parameters.source === 'chain-at-block'
+    ? `DataStore @ 执行区块 #${stringValue(input.parameters.blockNumber)}`
+    : '（缺少执行区块参数快照）';
   const rows: Reconciliation[] = [
     {
-      id: `${input.phaseId}-pricing-long-oi-usd`, group: `${input.phaseLabel} · OI / Skew / Spread`, label: 'Long OI（USD 口径）',
-      status: 'CALCULATED', before: rawAndUnit(longBeforeUsd, 30, 'USD'), after: rawAndUnit(longAfterUsd, 30, 'USD'),
-      delta: deltaAndUnit(longAfterUsd - longBeforeUsd, 30, 'USD'), expected: rawAndUnit(longAfterUsd, 30, 'USD'),
-      formula: 'longOIUsd = longOpenInterestInTokens × indexMidPrice',
-      basis: { title: '市场 Open Interest USD', sourcePath: PAGE_FORMULA_SOURCE, section: '五、Funding / OI 与 Skew' }, unit: 'USD 1e30',
-      note: `indexMidPrice=(${priceMin}+${priceMax})/2=${mid}。本行是链上 OI Token 与 Oracle 价格的派生展示。`,
+      id: `${input.phaseId}-pricing-oracle-mid`, group: `${input.phaseLabel} · OI / Skew / Spread`, label: 'Oracle 价格（min / mid / max）',
+      status: 'CALCULATED',
+      before: `min = ${priceMin}`, after: `max = ${priceMax}`,
+      delta: `mid = (${priceMin} + ${priceMax}) / 2 = ${mid}`,
+      expected: '—（本次执行采用的 Oracle 价格展示行）',
+      formula: `indexMid = (indexTokenPrice.min + indexTokenPrice.max) / 2；本次：(${priceMin} + ${priceMax}) / 2 = ${mid}`,
+      basis: { title: '本次执行的 Oracle 价格三元组', sourcePath: PAGE_FORMULA_SOURCE, section: '一、下单面板 / Oracle 价格' }, unit: 'price raw（USD×1e12 / token）',
+      note: 'min/max 为执行事件携带的 Oracle 双边价（stablePrice 锚参与 min/max 合并）；mid 是 OI 盯市（USD 口径）与多空失衡判定的统一输入。执行价按方向取不利侧：多开/空平用 max、空开/多平用 min。',
+      inputs: [
+        { name: 'indexTokenPrice.min', value: priceMin.toString(), source: 'PositionIncrease/Decrease 事件（执行回执解码）' },
+        { name: 'indexTokenPrice.max', value: priceMax.toString(), source: 'PositionIncrease/Decrease 事件（执行回执解码）' },
+        { name: 'indexMid（派生）', value: mid.toString(), source: '派生：(min + max) / 2，向下取整' },
+      ],
     },
     {
-      id: `${input.phaseId}-pricing-short-oi-usd`, group: `${input.phaseLabel} · OI / Skew / Spread`, label: 'Short OI（USD 口径）',
-      status: 'CALCULATED', before: rawAndUnit(shortBeforeUsd, 30, 'USD'), after: rawAndUnit(shortAfterUsd, 30, 'USD'),
-      delta: deltaAndUnit(shortAfterUsd - shortBeforeUsd, 30, 'USD'), expected: rawAndUnit(shortAfterUsd, 30, 'USD'),
-      formula: 'shortOIUsd = shortOpenInterestInTokens × indexMidPrice',
+      id: `${input.phaseId}-pricing-long-oi-usd`, group: `${input.phaseLabel} · OI / Skew / Spread`, label: 'Long OI（USD 盯市口径，派生）',
+      status: 'CALCULATED', before: rawAndUnit(longBeforeUsd, 30, 'USD'), after: rawAndUnit(longAfterUsd, 30, 'USD'),
+      delta: deltaAndUnit(longAfterUsd - longBeforeUsd, 30, 'USD'), expected: '—（派生展示行，无独立期望值）',
+      formula: `longOIUsd = longOpenInterestInTokens × indexMidPrice；本次 After：${stringValue(input.after.openInterestInTokensLong, '0')} × ${mid} = ${longAfterUsd}（Before：${stringValue(input.before.openInterestInTokensLong, '0')} × ${mid} = ${longBeforeUsd}）`,
       basis: { title: '市场 Open Interest USD', sourcePath: PAGE_FORMULA_SOURCE, section: '五、Funding / OI 与 Skew' }, unit: 'USD 1e30',
+      note: `indexMidPrice=(${priceMin}+${priceMax})/2=${mid}。openInterestInTokensLong 取自 DataStore 市场级总账（该市场全体交易者聚合），不是本单的量——本环境只有本账户一笔仓位，总量才恰好等于本单仓位。`,
+    },
+    {
+      id: `${input.phaseId}-pricing-short-oi-usd`, group: `${input.phaseLabel} · OI / Skew / Spread`, label: 'Short OI（USD 盯市口径，派生）',
+      status: 'CALCULATED', before: rawAndUnit(shortBeforeUsd, 30, 'USD'), after: rawAndUnit(shortAfterUsd, 30, 'USD'),
+      delta: deltaAndUnit(shortAfterUsd - shortBeforeUsd, 30, 'USD'), expected: '—（派生展示行，无独立期望值）',
+      formula: `shortOIUsd = shortOpenInterestInTokens × indexMidPrice；本次 After：${stringValue(input.after.openInterestInTokensShort, '0')} × ${mid} = ${shortAfterUsd}（Before：${stringValue(input.before.openInterestInTokensShort, '0')} × ${mid} = ${shortBeforeUsd}）`,
+      basis: { title: '市场 Open Interest USD', sourcePath: PAGE_FORMULA_SOURCE, section: '五、Funding / OI 与 Skew' }, unit: 'USD 1e30',
+      note: 'openInterestInTokensShort 同为 DataStore 市场级总账（该市场全体交易者聚合），不是本单的量。',
     },
     {
       id: `${input.phaseId}-pricing-raw-skew`, group: `${input.phaseLabel} · OI / Skew / Spread`, label: '实时 Raw Skew（进入 EMA 前）',
       status: 'CALCULATED', before: rawAndUnit(skewBefore, 18, 'ratio'), after: rawAndUnit(skewAfter, 18, 'ratio'),
-      delta: deltaAndUnit(skewAfter - skewBefore, 18, 'ratio'), expected: rawAndUnit(skewAfter, 18, 'ratio'),
-      formula: 'skew = (longOIUsd − shortOIUsd) × 1e18 / (longOIUsd + shortOIUsd)',
+      delta: deltaAndUnit(skewAfter - skewBefore, 18, 'ratio'), expected: '—（派生展示行，无独立期望值）',
+      formula: `skew = (longOIUsd − shortOIUsd) × 1e18 / (longOIUsd + shortOIUsd)；本次 After：(${longAfterUsd} − ${shortAfterUsd}) × 1e18 / (${longAfterUsd + shortAfterUsd}) = ${skewAfter}`,
       basis: { title: 'Funding 原始 Skew；实际费率使用 EMA Skew', sourcePath: PAGE_FORMULA_SOURCE, section: '五、Funding / 5.1 Raw Skew' }, unit: 'ratio 1e18',
+      note: 'longOIUsd / shortOIUsd 是市场级总量（该市场全体交易者的 OI 聚合后盯市），不是本单的量。本环境仅本账户一笔多仓，市场总量恰好等于本单仓位，数值才与本次交易一致；多账户市场此处会包含他人仓位。',
+      inputs: [
+        { name: 'longOIUsd（全市场 After）', value: longAfterUsd.toString(), source: 'DataStore openInterestInTokensLong（市场级总账，全体交易者聚合）× indexMid' },
+        { name: 'shortOIUsd（全市场 After）', value: shortAfterUsd.toString(), source: 'DataStore openInterestInTokensShort（市场级总账，全体交易者聚合）× indexMid' },
+      ],
     },
-    {
-      id: `${input.phaseId}-pricing-skew-ref`, group: `${input.phaseLabel} · OI / Skew / Spread`, label: 'Spread Skew Reference',
-      status: 'CALCULATED', before: rawAndUnit(absolute(skewBefore), 18, 'ratio'), after: rawAndUnit(absolute(skewAfter), 18, 'ratio'),
-      delta: deltaAndUnit(absolute(skewAfter) - absolute(skewBefore), 18, 'ratio'), expected: rawAndUnit(skewRef, 18, 'ratio'),
-      formula: 'skewRef = (abs(skewBefore) + abs(skewAfter)) / 2',
-      basis: { title: '动态点差的 Skew Reference', sourcePath: PAGE_FORMULA_SOURCE, section: '一、下单面板 / Dynamic Spread' }, unit: 'ratio 1e18',
-      note: 'Expected 列为本次成交用于 Skew Impact 的前后平均值，不是 After 单点值。',
-    },
+    // Spread Skew Reference 不再单独占行（2026-08-13 用户要求）：skewRef 是 Skew Impact 的输入，
+    // 其推导（|skewBefore|+|skewAfter|)/2 连同代入值并入「Skew Impact（参数复算）」行的 inputs。
     {
       id: `${input.phaseId}-pricing-balance-improved`, group: `${input.phaseLabel} · OI / Skew / Spread`, label: '是否改善多空平衡',
-      status: pass(actualImproved, expectedImproved), before: rawAndUnit(imbalanceBefore, 30, 'USD'), after: rawAndUnit(imbalanceAfter, 30, 'USD'),
-      delta: deltaAndUnit(imbalanceAfter - imbalanceBefore, 30, 'USD'), expected: String(expectedImproved),
-      formula: 'balanceWasImproved = abs(nextLongOI − nextShortOI) < abs(currentLongOI − currentShortOI)',
+      status: pass(actualImproved, expectedImproved), before: rawAndUnit(imbalanceBefore, 30, 'USD'), after: rawAndUnit(imbalanceNext, 30, 'USD'),
+      delta: deltaAndUnit(imbalanceNext - imbalanceBefore, 30, 'USD'), expected: String(expectedImproved),
+      formula: `balanceWasImproved = abs(nextLongOI − nextShortOI) < abs(currentLongOI − currentShortOI)（next 用预备 tokenDelta：${preliminaryTokens.expanded}）；本次：|${imbalanceNext}| < |${imbalanceBefore}| = ${expectedImproved}（事件实际值 ${actualImproved}；快照终值失衡 ${imbalanceAfter} 仅作对照）`,
       basis: { title: 'Skew Impact 正负方向', sourcePath: PAGE_FORMULA_SOURCE, section: '一、下单面板 / Dynamic Spread' }, unit: 'boolean / USD 1e30',
+      note: '独立推算用前后快照的实测失衡近似合约"当前失衡 + 本单预备 Δ"的判定（单账户受控场景等价）；合约口径为盯市 OI（tokens×midPrice）+ 预备 tokenDelta，严格 <，相等算未改善。该布尔决定 Position Fee 用哪一档费率。',
+      inputs: [
+        { name: 'openInterestInTokensLong（before/after）', value: `${stringValue(input.before.openInterestInTokensLong)} → ${stringValue(input.after.openInterestInTokensLong)}`, source: '链上阶段快照（钉块读数）' },
+        { name: 'openInterestInTokensShort（before/after）', value: `${stringValue(input.before.openInterestInTokensShort)} → ${stringValue(input.after.openInterestInTokensShort)}`, source: '链上阶段快照（钉块读数）' },
+        { name: 'indexMidPrice = (min+max)/2', value: mid.toString(), source: 'PositionIncrease/Decrease 事件 indexTokenPrice' },
+        { name: 'event.balanceWasImproved（对照对象）', value: String(actualImproved), source: 'PositionFeesCollected 事件 bool 字段' },
+      ],
     },
     ...(skewImpact ? [{
       id: `${input.phaseId}-pricing-skew-impact`, group: `${input.phaseLabel} · OI / Skew / Spread`, label: 'Skew Impact（参数复算）',
       status: 'CALCULATED' as const,
-      before: rawAndUnit(skewRef, 18, 'ratio'), after: rawAndUnit(skewImpact.skewImpact, 18, 'ratio'),
-      delta: deltaAndUnit(skewImpact.skewImpact, 18, 'ratio'), expected: rawAndUnit(skewImpact.skewImpact, 18, 'ratio'),
-      formula: `skewImpact = ${skewImpact.expanded}`,
+      before: `skewRef（输入）= ${rawAndUnit(skewRef, 18, 'ratio')}`,
+      after: `skewImpact（分量结果）= ${rawAndUnit(skewImpact.skewImpact, 18, 'ratio')}`,
+      delta: deltaAndUnit(skewImpact.skewImpact, 18, 'ratio'), expected: '—（参数复算展示行，事件未单独给出 Skew 分量，无对照值；总值对照见「Dynamic Spread 总值」行）',
+      formula: `skewImpact = clamp(${actualImproved ? '−' : ''}skewImpactFactor × skewRef / 1e18, minSkewImpact, maxSkewImpact)（改善失衡取负后 clamp）；本次：${skewImpact.expanded}`,
       basis: { title: 'Skew Impact 参数公式', sourcePath: PAGE_FORMULA_SOURCE, section: '一、下单面板 / Dynamic Spread' }, unit: 'ratio 1e18',
       note: `${parameterBlockNote(input.parameters)} 本行独立展示 Skew Impact 分量；Dynamic Spread 还包含 Price Impact。`,
+      inputs: [
+        { name: 'skewImpactFactor', value: stringValue(skewImpactFactor, '缺'), source: pricingParameterSource },
+        { name: 'skewRef（前后失衡均值，市场级）', value: skewRef.toString(), source: `派生：(|skewBefore ${skewBefore}| + |skewNext ${skewNext}|) / 2（next 用预备 tokenDelta 口径，快照终值 skew ${skewAfter} 仅作对照）；skew 为全市场多空失衡比，非本单量` },
+        { name: 'balanceWasImproved（决定正负）', value: String(actualImproved), source: 'PositionFeesCollected 事件 bool；独立复算见「是否改善多空平衡」行' },
+        { name: 'min / maxSkewImpact（clamp 边界）', value: `${stringValue(minimumSkewImpact, '缺')} / ${stringValue(maximumSkewImpact, '缺')}`, source: pricingParameterSource },
+        { name: 'skewImpact（结果）', value: skewImpact.skewImpact.toString(), source: '派生：进入「Dynamic Spread 总值」行的三分量之一' },
+      ],
     }] : []),
     {
       id: `${input.phaseId}-pricing-dynamic-spread`, group: `${input.phaseLabel} · OI / Skew / Spread`, label: 'Dynamic Spread 总值',
-      status: 'NOT_VERIFIED', before: rawAndUnit(0n, 18, 'ratio'), after: rawAndUnit(spread, 18, 'ratio'),
-      delta: deltaAndUnit(spread, 18, 'ratio'), expected: '需用合约 LogExpMath 独立复算 priceImpact 后才能得到精确 Expected',
-      formula: 'dynamicSpread = max(0, constantPriceSpread + priceImpactSpread + skewImpact)',
-      basis: { title: '动态点差总公式', sourcePath: PAGE_FORMULA_SOURCE, section: '一、下单面板 / Dynamic Spread' }, unit: 'ratio 1e18',
-      note: `${parameterBlockNote(input.parameters)} ${spreadParameterSummary}事件保存合约最终 Spread；当前未复制 LogExpMath，因此不伪记 PASS。`,
+      status: dynamicSpreadCalc === undefined ? 'NOT_VERIFIED' : pass(spread, dynamicSpreadCalc.spread),
+      before: rawAndUnit(0n, 18, 'ratio'), after: rawAndUnit(spread, 18, 'ratio'),
+      delta: deltaAndUnit(spread, 18, 'ratio'),
+      expected: dynamicSpreadCalc === undefined
+        ? `缺输入（${dynamicSpreadMissingInputs.join('；')}），无法独立复算`
+        : rawAndUnit(dynamicSpreadCalc.spread, 18, 'ratio'),
+      formula: dynamicSpreadCalc === undefined
+        ? `dynamicSpread = clamp(skewImpact + constantPriceSpread + priceImpactSpread, min', max')；min' = (!allowNegativeSpread && min<0) ? 0 : min；max' = max<min' ? min' : max（v0.3.2 getDynamicSpread；缺输入未复算）；事件最终值=${spread}`
+        : `dynamicSpread = clamp(skewImpact + constantPriceSpread + priceImpactSpread, min', max')；min' = (!allowNegativeSpread && min<0) ? 0 : min；max' = max<min' ? min' : max；本次：${dynamicSpreadCalc.expanded}。priceImpact 分量：${priceImpactCalc!.expanded}`,
+      basis: { title: '动态点差总公式（v0.3.2 clamp 口径）', sourcePath: CONTRACT_FORMULA_SOURCE, section: '4.1 动态点差' }, unit: 'ratio 1e18',
+      note: `${parameterBlockNote(input.parameters)} 蓝本 PositionPricingUtils.sol:154-186（release-v0.3.2）：三分量求和后按 MIN/MAX_DYNAMIC_SPREAD[marketIndex][isLong] 钳制，两键未配置时 clamp(raw,0,0)=0 是链上真实行为（常数点差一并被吞），不是"不限制"。LogExpMath.exp 已逐句 BigInt 移植（蓝本 src/common/math/LogExpMath.sol，同序截断故可 bit 级）；skew 分量沿用快照失衡近似（skewImpactFactor=0 时精确，非零时预备值口径差异可能假 FAIL——P1 已知）；orderSize 用事件 sizeDeltaUsd（USD 模式=合约预备值；token 模式开仓需按 index 价重算，当前场景均为 USD 模式）。`,
+      inputs: [
+        { name: 'orderSizeUsd（预备值，本单量）', value: orderSizeUsdPreliminary.toString(), source: 'PositionIncrease/Decrease 事件 sizeDeltaUsd；Spread 输入中唯一的本单量，其余为市场级参数/状态' },
+        { name: 'priceImpactParameter', value: stringValue(priceImpactParameter, '缺'), source: pricingParameterSource },
+        { name: adverseUp ? 'askOrderBookDepth' : 'bidOrderBookDepth', value: stringValue(orderBookDepth, '缺'), source: `${pricingParameterSource}；depth 按不利侧选 ${adverseUp ? 'ask' : 'bid'}` },
+        { name: 'MAX_PRICE_IMPACT_SPREAD（全局封顶）', value: stringValue(maximumPriceImpactSpread, '缺'), source: pricingParameterSource },
+        { name: 'constantPriceSpread', value: stringValue(constantSpread, '缺'), source: pricingParameterSource },
+        { name: 'skewImpact（快照近似）', value: String(skewImpact?.skewImpact ?? '—'), source: '本组「Skew Impact（参数复算）」行' },
+        { name: `${dynamicSpreadBoundLabel('MIN')}（clamp 下界，getInt）`, value: stringValue(minimumDynamicSpread, '缺'), source: `${pricingParameterSource}；维度 (marketIndex, order.isLong)；未配置即 0` },
+        { name: `${dynamicSpreadBoundLabel('MAX')}（clamp 上界，getInt）`, value: stringValue(maximumDynamicSpread, '缺'), source: `${pricingParameterSource}；维度 (marketIndex, order.isLong)；未配置即 0；max<min 时坍缩为 min` },
+        { name: 'allowNegativeSpread（调用点决定）', value: allowNegativeSpreadText, source: 'PositionUtils.sol:625 加仓恒 true；:698-704 减仓：清算单/ADL 为 false（ADL 二级类型事件未携带，交易者阶段不会是 ADL）' },
+        { name: 'dynamicSpread（对照对象）', value: spread.toString(), source: 'PositionIncrease/Decrease 事件（v0.3.2 为 int256，按 key 名从 int 段读取）' },
+      ],
     },
     {
       id: `${input.phaseId}-pricing-execution-price`, group: `${input.phaseLabel} · OI / Skew / Spread`, label: 'Spread 调整后执行价',
       status: pass(executionPrice, execution.executionPrice), before: stringValue(selectedOracle), after: stringValue(executionPrice),
       delta: deltaAndUnit(executionPrice - selectedOracle, 0, 'price raw'), expected: execution.executionPrice.toString(),
-      formula: `executionPrice = ${execution.expanded}`,
+      formula: `方向规则：useMax = (开仓且多头) 或 (平仓且空头) → index.max × (1e18 + spread) 向上取整；否则 index.min × (1e18 − spread) 向下截断——始终取对交易者不利的一侧。本次 isLong=${isLong}、${isIncrease ? '开仓' : '平仓'} → ${adverseUp ? 'max 侧 ⌈⌉' : 'min 侧 ⌊⌋'}：executionPrice = ${execution.expanded}`,
       basis: { title: '方向与开/平仓共同决定价格不利侧', sourcePath: PAGE_FORMULA_SOURCE, section: '一、下单面板 / 1.5 执行价' }, unit: 'price raw',
+      note: '【恒等式】oracle 价与 dynamicSpread 均取自被核对的同一事件——本行验证合约价格公式（方向/不利侧/取整）自洽，不构成独立重算；dynamicSpread 的独立复算未实现（见 Dynamic Spread 行 NOT_VERIFIED）。',
+      inputs: [
+        { name: `oracle（${adverseUp ? 'index.max，不利=买贵' : 'index.min，不利=卖贱'}）`, value: selectedOracle.toString(), source: 'PositionIncrease/Decrease 事件 indexTokenPrice' },
+        { name: 'dynamicSpread', value: spread.toString(), source: '同一事件；独立复算未实现（见 Dynamic Spread 行）' },
+        { name: `isLong / ${isIncrease ? '开仓' : '平仓'}（方向判据）`, value: String(isLong), source: '事件 bool + 事件类型 → adverseUp=' + String(adverseUp) },
+        { name: 'executionPrice（对照对象）', value: executionPrice.toString(), source: '同一事件' },
+      ],
     },
   ];
   if (!isIncrease) {
     const eventInt = record(input.positionEvent.int);
     const sizeTokens = bigintValue(uint.sizeDeltaInTokens);
     const sizeUsd = bigintValue(uint.sizeDeltaUsd);
-    const expectedUncappedPnl = isLong
-      ? sizeTokens * executionPrice - sizeUsd
-      : sizeUsd - sizeTokens * executionPrice;
+    // 合约口径（PositionUtils._getPositionPnlUsd）：整仓 totalPnl 按 token 比例分摊——
+    //   totalPnl = 多 ? posTokens×execPrice − posSizeUsd : posSizeUsd − posTokens×execPrice
+    //   uncapped = mulDiv(totalPnl, sizeDeltaInTokens, posTokens, roundUpMagnitude = totalPnl<0)
+    // 全平（sizeDeltaInTokens==posTokens）退化为恒等式 sizeDeltaInTokens×execPrice−sizeDeltaUsd；
+    // 部分平在除不尽时两式相差 <1 token-wei×price（2026-08-24 SCN-023 中段实证），必须按合约式复算。
+    const positionBefore = record(input.positionBefore);
+    const posTokens = bigintValue(positionBefore.sizeInTokens);
+    const posSizeUsd = bigintValue(positionBefore.sizeInUsd);
+    const mulDivSigned = (value: bigint, numerator: bigint, denominator: bigint, roundUpMagnitude: boolean): bigint => {
+      const negative = value < 0n;
+      const magnitude = negative ? -value : value;
+      let result = (magnitude * numerator) / denominator;
+      if (roundUpMagnitude && (magnitude * numerator) % denominator !== 0n) result += 1n;
+      return negative ? -result : result;
+    };
+    const totalPnl = posTokens > 0n
+      ? (isLong ? posTokens * executionPrice - posSizeUsd : posSizeUsd - posTokens * executionPrice)
+      : undefined;
+    const expectedUncappedPnl = totalPnl !== undefined && posTokens > 0n
+      ? mulDivSigned(totalPnl, sizeTokens, posTokens, totalPnl < 0n)
+      : (isLong ? sizeTokens * executionPrice - sizeUsd : sizeUsd - sizeTokens * executionPrice);
     const uncappedPnl = bigintValue(eventInt.uncappedBasePnlUsd);
     const basePnl = bigintValue(eventInt.basePnlUsd);
     const capDirectionValid = (basePnl === 0n || uncappedPnl === 0n || (basePnl > 0n) === (uncappedPnl > 0n))
@@ -687,16 +1131,35 @@ function buildPricingRows(input: {
         id: `${input.phaseId}-uncapped-pnl`, group: `${input.phaseLabel} · PnL`, label: 'Uncapped Base PnL',
         status: pass(uncappedPnl, expectedUncappedPnl), before: rawAndUnit(0n, 30, 'USD'), after: rawAndUnit(uncappedPnl, 30, 'USD'),
         delta: deltaAndUnit(uncappedPnl, 30, 'USD'), expected: rawAndUnit(expectedUncappedPnl, 30, 'USD'),
-        formula: isLong ? 'sizeDeltaInTokens × executionPrice − sizeDeltaUsd' : 'sizeDeltaUsd − sizeDeltaInTokens × executionPrice',
+        formula: totalPnl !== undefined
+          ? `uncapped = mulDiv(totalPnl, sizeDeltaInTokens, posTokens, totalPnl<0)；totalPnl = ${isLong ? 'posTokens × execPrice − posSizeUsd' : 'posSizeUsd − posTokens × execPrice'} = ${totalPnl}；本次：mulDiv(${totalPnl}, ${sizeTokens}, ${posTokens}) = ${expectedUncappedPnl}`
+          : (isLong
+            ? `（缺执行前仓位快照，退回恒等式）sizeDeltaInTokens × executionPrice − sizeDeltaUsd；本次：${sizeTokens} × ${executionPrice} − ${sizeUsd} = ${expectedUncappedPnl}`
+            : `（缺执行前仓位快照，退回恒等式）sizeDeltaUsd − sizeDeltaInTokens × executionPrice；本次：${sizeUsd} − ${sizeTokens} × ${executionPrice} = ${expectedUncappedPnl}`),
         basis: { title: '未裁剪的价格盈亏', sourcePath: FORMULA_SOURCE, section: '§6 仓位 PnL 与池子 PnL 裁剪' }, unit: 'USD 1e30',
+        note: 'PnL 必须用事件执行价（含点差）；部分平按 token 比例 mulDiv 截断（负值幅度向上取整），恒等式只在全平成立（PositionUtils._getPositionPnlUsd）。',
+        inputs: [
+          ...(totalPnl !== undefined ? [
+            { name: 'posTokens / posSizeUsd（执行前仓位）', value: `${posTokens} / ${posSizeUsd}`, source: '执行前仓位快照（afterCreate/上一阶段）' },
+          ] : []),
+          { name: 'sizeDeltaInTokens', value: sizeTokens.toString(), source: 'PositionDecrease 事件（执行回执解码）' },
+          { name: 'executionPrice（含 spread）', value: executionPrice.toString(), source: 'PositionDecrease 事件；价格公式自洽性由「Spread 调整后执行价」行核对' },
+          { name: 'sizeDeltaUsd', value: sizeUsd.toString(), source: 'PositionDecrease 事件（执行回执解码）' },
+          { name: 'uncappedBasePnlUsd（对照对象）', value: uncappedPnl.toString(), source: 'PositionDecrease 事件 int 字段' },
+        ],
       },
       {
         id: `${input.phaseId}-base-pnl`, group: `${input.phaseLabel} · PnL`, label: 'Base PnL（PnL Cap 后）',
         status: 'NOT_VERIFIED', before: rawAndUnit(uncappedPnl, 30, 'USD'), after: rawAndUnit(basePnl, 30, 'USD'),
         delta: deltaAndUnit(basePnl - uncappedPnl, 30, 'USD'), expected: '与 uncappedPnl 同方向，且绝对值不超过 uncappedPnl',
-        formula: 'basePnlUsd = applyPnlCap(uncappedBasePnlUsd, poolPnl, maxPnlFactor)',
+        formula: `basePnlUsd = applyPnlCap(uncappedBasePnlUsd, poolPnl, maxPnlFactor)；本次：applyPnlCap(${uncappedPnl}, poolPnl=未采集, maxPnlFactor=未采集)；事件 basePnlUsd=${basePnl}`,
         basis: { title: '池子 PnL Cap 后的仓位基础盈亏', sourcePath: PAGE_FORMULA_SOURCE, section: '仓位 PnL 与池子 PnL 裁剪' }, unit: 'USD 1e30',
         note: `方向/上限基础检查=${capDirectionValid}；尚未采集执行区块 poolPnl 与 maxPnlFactor，不能独立复算 Cap。`,
+        inputs: [
+          { name: 'uncappedBasePnlUsd', value: uncappedPnl.toString(), source: 'PositionDecrease 事件；上一行已独立复算' },
+          { name: 'basePnlUsd（对照对象）', value: basePnl.toString(), source: 'PositionDecrease 事件 int 字段' },
+          { name: 'poolPnl / maxPnlFactor', value: '（未采集）', source: '缺执行区块池状态与 MAX_PNL_FACTOR——补齐后本行可升级为计算复算' },
+        ],
       },
     );
   }
@@ -713,11 +1176,39 @@ function buildFeeAndFundingRows(input: {
   readonly parameters: JsonRecord;
 }): Reconciliation[] {
   const fees = record(record(input.events.feesCollected).uint);
-  if (Object.keys(fees).length === 0) return [];
-  const funding = record(record((Array.isArray(input.events.fundingEvents) ? input.events.fundingEvents : [])[0]).int);
+  if (Object.keys(fees).length === 0) {
+    // 本阶段声明了 fee-funding 核对但证据缺少 PositionFeesCollected 事件：
+    // 输出 NOT_VERIFIED 兜底行而非整组静默消失（覆盖静默收缩零容忍）。
+    return [{
+      id: `${input.phaseId}-fee-funding-missing-event`,
+      group: `${input.phaseLabel} · Fee`,
+      label: 'Fee / Funding 全组核对',
+      status: 'NOT_VERIFIED',
+      before: '—',
+      after: '—',
+      expected: '执行阶段应恰有一条 PositionFeesCollected 事件作为本组全部核对行的输入',
+      formula: 'positionFee 复算 / 分账 / claimable 入账 / funding 结算各行均以 PositionFeesCollected 事件字段为输入',
+      basis: { title: '费用与资金费核对输入缺失', sourcePath: FORMULA_SOURCE, section: '§7 仓位费用 / §9 费用总额' },
+      note: '证据中 events.feesCollected 为空。可能原因：事件抓取窗口错位、订单被静默取消、或证据采集中断。本组核对无法进行，如实标注而非静默省略；请先核查同阶段 OrderExecuted/交易回执证据。',
+    }];
+  }
+  // Funding 事件只用于 factor 行（锚定本单执行交易，txHash 匹配；找不到时退回第一条，单事件窗口两者等价）。
+  // 其 positionPaysLp 是市场级累计口径，不进入任何 claimable / Vault 期望（v0.3.2 结算按本仓 settleFundingFees）。
+  const fundingEventList = Array.isArray(input.events.fundingEvents) ? input.events.fundingEvents : [];
+  const executionTxHash = stringValue(record(input.events.feesCollected).txHash, '').toLowerCase();
+  const anchoredFundingEvent = fundingEventList.find(
+    (event) => stringValue(record(event).txHash, '').toLowerCase() === executionTxHash,
+  ) ?? fundingEventList[0];
+  const funding = record(record(anchoredFundingEvent).int);
   const scale30 = 10n ** 30n;
   const tradeSizeUsd = bigintValue(fees.tradeSizeUsd);
   const balanceWasImproved = boolValue(record(record(input.events.feesCollected).bool).balanceWasImproved);
+  // 输入来源标签（供 inputs 清单使用）：让每个公式输入的出处逐项可追踪。
+  const eventSource = 'PositionFeesCollected 事件（执行回执解码）';
+  const parameterSource = input.parameters.source === 'chain-at-block'
+    ? `DataStore @ 执行区块 #${stringValue(input.parameters.blockNumber)}`
+    : '（缺少执行区块参数快照）';
+  const snapshotSource = '链上阶段快照（DataStore 钉块读数）';
   const feeFactorLabel = `POSITION_FEE_FACTOR(${balanceWasImproved})`;
   const chainPositionFeeFactor = marketParameter(input.parameters, feeFactorLabel);
   const eventPositionFeeFactor = optionalBigint(fees.positionFeeFactor);
@@ -749,21 +1240,13 @@ function buildFeeAndFundingRows(input: {
   const positionFee = bigintValue(fees.positionFeeAmount);
   const uiFee = bigintValue(fees.uiFeeAmount);
   const expectedTotalCost = positionFee + uiFee + negativeFunding;
-  const positionPaysLp = bigintValue(funding.positionPaysLp);
   const claimablePositionBefore = bigintValue(input.before.claimableFeeAmountPosition);
   const claimablePositionAfter = bigintValue(input.after.claimableFeeAmountPosition);
   const claimableFundingBefore = bigintValue(input.before.claimableFeeAmountFunding);
   const claimableFundingAfter = bigintValue(input.after.claimableFeeAmountFunding);
   const rows: Reconciliation[] = [
-    {
-      id: `${input.phaseId}-position-fee-factor`, group: `${input.phaseLabel} · Fee`, label: `Position Fee Factor（${balanceWasImproved ? '改善平衡' : '未改善平衡'}）`,
-      status: chainPositionFeeFactor === undefined || eventPositionFeeFactor === undefined
-        ? 'NOT_VERIFIED' : pass(eventPositionFeeFactor, chainPositionFeeFactor),
-      before: feeFactorLabel, after: stringValue(eventPositionFeeFactor), expected: stringValue(chainPositionFeeFactor),
-      formula: `event.positionFeeFactor = DataStore.${feeFactorLabel}`,
-      basis: { title: '仓位费率按是否改善平衡选择', sourcePath: PAGE_FORMULA_SOURCE, section: '费用 / Position Fee' }, unit: 'factor 1e30',
-      note: parameterBlockNote(input.parameters),
-    },
+    // Position Fee Factor 不再单独占行（2026-08-13 用户要求）：费率档是 Position Fee 复算的输入，
+    // 事件档 vs 链上档的对照并入「Position Fee」行的 inputs；档位选择见「是否改善多空平衡」行。
     {
       id: `${input.phaseId}-position-fee`, group: `${input.phaseLabel} · Fee`, label: 'Position Fee（链上实际；前端 Fee 对照）',
       status: positionFeeCalculation?.positionFee === undefined ? 'NOT_VERIFIED' : pass(positionFee, positionFeeCalculation.positionFee),
@@ -773,17 +1256,28 @@ function buildFeeAndFundingRows(input: {
       formula: `positionFeeAmount = ${positionFeeCalculation?.expanded ?? `${tradeSizeUsd} × ? / 1e30 / ${collateralMin}`}`,
       basis: { title: '基础仓位费', sourcePath: PAGE_FORMULA_SOURCE, section: '费用 / Position Fee' }, unit: 'USDC 1e6',
       note: `${parameterBlockNote(input.parameters)} event.factor=${stringValue(eventPositionFeeFactor)}；chain.factor=${stringValue(chainPositionFeeFactor)}。`,
+      inputs: [
+        { name: 'tradeSizeUsd', value: tradeSizeUsd.toString(), source: eventSource },
+        { name: `positionFeeFactor（${feeFactorLabel}）`, value: stringValue(chainPositionFeeFactor, '缺'), source: `${parameterSource}；复算采用链上档。选档依据 balanceWasImproved=${balanceWasImproved}（独立复算见「是否改善多空平衡」行）；事件采用值 ${stringValue(eventPositionFeeFactor, '缺')}，应与链上档一致${eventPositionFeeFactor !== undefined && chainPositionFeeFactor !== undefined ? (eventPositionFeeFactor === chainPositionFeeFactor ? '（✓ 一致）' : '（⚠️ 不一致！）') : ''}` },
+        { name: 'collateralPrice.min', value: collateralMin.toString(), source: `${eventSource}；Oracle 抵押价随事件 emit` },
+        { name: 'positionFeeAmount（对照对象）', value: positionFee.toString(), source: eventSource },
+      ],
     },
     {
       id: `${input.phaseId}-protocol-fee`, group: `${input.phaseLabel} · Fee`, label: 'Protocol Fee 及分账守恒',
       status: pass(protocolFee, bigintValue(fees.feeReceiverAmount) + bigintValue(fees.positionFeeAmountForPool)),
       before: `Position Fee=${rawAndUnit(positionFee, 6, 'USDC')}；折扣后 Protocol Fee=${rawAndUnit(protocolFee, 6, 'USDC')}`,
-      after: `Protocol Fee ${protocolFee} = FeeReceiver ${bigintValue(fees.feeReceiverAmount)} + LP Pool ${bigintValue(fees.positionFeeAmountForPool)}`,
+      after: `Protocol Fee ${protocolFee} = feeReceiverAmount ${bigintValue(fees.feeReceiverAmount)} + LP Pool ${bigintValue(fees.positionFeeAmountForPool)}`,
       delta: `${protocolFee} = ${bigintValue(fees.feeReceiverAmount)} + ${bigintValue(fees.positionFeeAmountForPool)}`,
       expected: `Protocol Fee ${protocolFee} = ${bigintValue(fees.feeReceiverAmount) + bigintValue(fees.positionFeeAmountForPool)} raw`,
       formula: `protocolFeeAmount = feeReceiverAmount + positionFeeAmountForPool；本次：${protocolFee} = ${bigintValue(fees.feeReceiverAmount)} + ${bigintValue(fees.positionFeeAmountForPool)}`,
       basis: { title: '协议与 LP 分成', sourcePath: FORMULA_SOURCE, section: '§7.5 协议与 LP 分成' }, unit: 'USDC 1e6',
-      note: 'Position Fee 是用户仓位费总额；扣除 Referral / Pro 等折扣后得到 Protocol Fee，再按 positionFeeReceiverFactor 拆分为协议应收与 LP Pool 分成。',
+      note: '【恒等式】三个数取自同一 PositionFeesCollected 事件，本行只验证事件内部分账自洽，不构成独立重算；feeReceiverAmount 与 LP 分成的独立复算（用执行区块 positionFeeReceiverFactor）见相邻两行。Position Fee 是用户仓位费总额；扣除 Referral / Pro 等折扣后得到 Protocol Fee，再按 positionFeeReceiverFactor 拆分为协议应收与 LP Pool 分成。',
+      inputs: [
+        { name: 'protocolFeeAmount', value: protocolFee.toString(), source: eventSource },
+        { name: 'feeReceiverAmount', value: stringValue(fees.feeReceiverAmount), source: eventSource },
+        { name: 'positionFeeAmountForPool', value: stringValue(fees.positionFeeAmountForPool), source: `${eventSource}；三者同源 → 本行为恒等式` },
+      ],
     },
     {
       id: `${input.phaseId}-fee-receiver`, group: `${input.phaseLabel} · Fee`, label: 'Fee Receiver 分成',
@@ -793,29 +1287,53 @@ function buildFeeAndFundingRows(input: {
       formula: `feeReceiverAmount = ${protocolFee} × ${stringValue(chainReceiverFactor)} / 1e30${expectedReceiver === undefined ? '' : ` = ${expectedReceiver}`}`,
       basis: { title: '协议与 LP 分成', sourcePath: FORMULA_SOURCE, section: '§7.5 协议与 LP 分成' }, unit: 'USDC 1e6',
       note: `${parameterBlockNote(input.parameters)} event.receiverFactor=${stringValue(eventReceiverFactor)}。`,
+      inputs: [
+        { name: 'protocolFeeAmount', value: protocolFee.toString(), source: eventSource },
+        { name: 'positionFeeReceiverFactor', value: stringValue(chainReceiverFactor), source: `${parameterSource}；全局键，复算不用事件自带 factor` },
+        { name: 'feeReceiverAmount（对照对象）', value: stringValue(fees.feeReceiverAmount), source: eventSource },
+      ],
     },
     {
       id: `${input.phaseId}-pool-fee`, group: `${input.phaseLabel} · Fee`, label: 'LP Pool 分成',
       status: expectedPool === undefined ? 'NOT_VERIFIED' : pass(fees.positionFeeAmountForPool, expectedPool), before: rawAndUnit(0n, 6, 'USDC'), after: rawAndUnit(fees.positionFeeAmountForPool, 6, 'USDC'),
       delta: deltaAndUnit(fees.positionFeeAmountForPool, 6, 'USDC'), expected: expectedPool === undefined ? '缺少链上 positionFeeReceiverFactor' : rawAndUnit(expectedPool, 6, 'USDC'),
-      formula: 'positionFeeAmountForPool = protocolFeeAmount − feeReceiverAmount',
+      formula: `positionFeeAmountForPool = protocolFeeAmount − feeReceiverAmount${expectedPool === undefined ? '（缺链上 receiverFactor，无法代入）' : `；本次：${protocolFee} − ${expectedReceiver} = ${expectedPool}`}`,
       basis: { title: '协议与 LP 分成', sourcePath: FORMULA_SOURCE, section: '§7.5 协议与 LP 分成' }, unit: 'USDC 1e6',
+      inputs: [
+        { name: 'protocolFeeAmount', value: protocolFee.toString(), source: eventSource },
+        { name: 'expectedReceiver', value: stringValue(expectedReceiver), source: '派生值：protocolFee × 链上 positionFeeReceiverFactor / 1e30（见上一行）' },
+        { name: 'positionFeeAmountForPool（对照对象）', value: stringValue(fees.positionFeeAmountForPool), source: eventSource },
+      ],
     },
     {
       id: `${input.phaseId}-negative-funding`, group: `${input.phaseLabel} · Funding`, label: '本仓位应付 Funding',
       status: pass(negativeFunding, expectedNegative), before: rawAndUnit(positionNegative, 0, 'per-size'), after: rawAndUnit(latestNegative, 0, 'per-size'),
       delta: deltaAndUnit(latestNegative - positionNegative, 0, 'per-size'), expected: rawAndUnit(expectedNegative, 6, 'USDC'),
-      formula: 'ceil((latestNegativePerSize − positionNegativePerSize) × sizeInTokens / (1e30 × collateralPrice.min))',
+      formula: `ceil((latestNegativePerSize − positionNegativePerSize) × sizeInTokens / (1e30 × collateralPrice.min))；本次：ceil((${latestNegative} − ${positionNegative}) × ${positionSizeTokens} / (1e30 × ${collateralMin})) = ${expectedNegative}`,
       basis: { title: '单仓负 Funding（支付端向上取整）', sourcePath: FORMULA_SOURCE, section: '§10.5 单仓 Funding' }, unit: 'per-size raw → USDC 1e6',
-      note: `PositionFeesCollected.negativeFundingFeeAmount=${negativeFunding} raw`,
+      note: `PositionFeesCollected.negativeFundingFeeAmount=${negativeFunding} raw。Before/After 即"仓位结算基线 → 市场累计负 per-size 最新值"的推进（基线=上次结算时的市场累计值，累计值单调不减），市场级累计不再单独成行。`,
+      inputs: [
+        { name: 'positionNegativeFundingFeePerSize（entry 基线）', value: positionNegative.toString(), source: '仓位 Before 快照（Reader，钉块读数）' },
+        { name: 'latestNegativeFundingFeePerSize（市场级累计）', value: latestNegative.toString(), source: `${eventSource}；对该市场全体同向仓位统一累计，非本仓专属` },
+        { name: 'sizeInTokens（结算用全仓规模）', value: positionSizeTokens.toString(), source: '仓位 Before 快照（Reader，钉块读数）' },
+        { name: 'collateralPrice.min', value: collateralMin.toString(), source: `${eventSource}；支付端用 min 价+向上取整` },
+        { name: 'negativeFundingFeeAmount（对照对象）', value: negativeFunding.toString(), source: eventSource },
+      ],
     },
     {
       id: `${input.phaseId}-positive-funding`, group: `${input.phaseLabel} · Funding`, label: '本仓位应收 Funding',
       status: pass(positiveFunding, expectedPositive), before: rawAndUnit(positionPositive, 0, 'per-size'), after: rawAndUnit(latestPositive, 0, 'per-size'),
       delta: deltaAndUnit(latestPositive - positionPositive, 0, 'per-size'), expected: rawAndUnit(expectedPositive, 6, 'USDC'),
-      formula: '(latestPositivePerSize − positionPositivePerSize) × sizeInTokens / (1e30 × collateralPrice.max)',
+      formula: `(latestPositivePerSize − positionPositivePerSize) × sizeInTokens / (1e30 × collateralPrice.max)；本次：(${latestPositive} − ${positionPositive}) × ${positionSizeTokens} / (1e30 × ${collateralMax}) = ${expectedPositive}（向下取整）`,
       basis: { title: '单仓正 Funding（收取端向下取整）', sourcePath: FORMULA_SOURCE, section: '§10.5 单仓 Funding' }, unit: 'per-size raw → USDC 1e6',
-      note: `PositionFeesCollected.positiveFundingFeeAmount=${positiveFunding} raw`,
+      note: `PositionFeesCollected.positiveFundingFeeAmount=${positiveFunding} raw。Before/After 即"仓位结算基线 → 市场累计正 per-size 最新值"的推进（基线=上次结算时的市场累计值，累计值单调不减），市场级累计不再单独成行。`,
+      inputs: [
+        { name: 'positionPositiveFundingFeePerSize（entry 基线）', value: positionPositive.toString(), source: '仓位 Before 快照（Reader，钉块读数）' },
+        { name: 'latestPositiveFundingFeePerSize（市场级累计）', value: latestPositive.toString(), source: `${eventSource}；对该市场全体同向仓位统一累计，非本仓专属` },
+        { name: 'sizeInTokens（结算用全仓规模）', value: positionSizeTokens.toString(), source: '仓位 Before 快照（Reader，钉块读数）' },
+        { name: 'collateralPrice.max', value: collateralMax.toString(), source: `${eventSource}；收取端用 max 价+向下取整` },
+        { name: 'positiveFundingFeeAmount（对照对象）', value: positiveFunding.toString(), source: eventSource },
+      ],
     },
     {
       id: `${input.phaseId}-net-funding`, group: `${input.phaseLabel} · Funding`, label: 'Funding 净额（应收 − 应付）',
@@ -828,13 +1346,19 @@ function buildFeeAndFundingRows(input: {
       basis: { title: '单仓 Funding 净额', sourcePath: FORMULA_SOURCE, section: '§10.5 单仓 Funding' },
       unit: 'USDC 1e6',
       note: '正数表示仓位应收 Funding，负数表示仓位应付 Funding；应付和应收原始值保留在相邻两行。',
+      inputs: [
+        { name: 'positiveFundingFeeAmount', value: positiveFunding.toString(), source: eventSource },
+        { name: 'negativeFundingFeeAmount', value: negativeFunding.toString(), source: eventSource },
+        { name: 'expected 净额', value: (expectedPositive - expectedNegative).toString(), source: '派生：相邻两行独立复算值之差（expectedPositive − expectedNegative）' },
+      ],
     },
     {
       id: `${input.phaseId}-total-cost`, group: `${input.phaseLabel} · Fee`, label: 'Total Cost',
       status: pass(fees.totalCostAmount, expectedTotalCost), before: rawAndUnit(0n, 6, 'USDC'), after: rawAndUnit(fees.totalCostAmount, 6, 'USDC'),
       delta: deltaAndUnit(fees.totalCostAmount, 6, 'USDC'), expected: rawAndUnit(expectedTotalCost, 6, 'USDC'),
-      formula: 'totalCostAmount = positionFeeAmount + uiFeeAmount + negativeFundingFeeAmount（本用例无清算费/折扣）',
+      formula: `totalCostAmount = positionFeeAmount + uiFeeAmount + negativeFundingFeeAmount（本用例无清算费/折扣）；本次：${positionFee} + ${uiFee} + ${negativeFunding} = ${expectedTotalCost}`,
       basis: { title: '费用总额；正 Funding 单独增加抵押品', sourcePath: FORMULA_SOURCE, section: '§9 费用总额' }, unit: 'USDC 1e6',
+      note: '【恒等式】各分量取自同一 PositionFeesCollected 事件，本行只验证费用汇总自洽；positionFee 与应付/应收 Funding 已在相邻行用执行区块参数独立复算。',
     },
     {
       id: `${input.phaseId}-claimable-position-fee`, group: `${input.phaseLabel} · Fee`, label: 'Claimable Position Fee 入账',
@@ -842,20 +1366,56 @@ function buildFeeAndFundingRows(input: {
       before: rawAndUnit(claimablePositionBefore, 6, 'USDC'), after: rawAndUnit(claimablePositionAfter, 6, 'USDC'),
       delta: deltaAndUnit(claimablePositionAfter - claimablePositionBefore, 6, 'USDC'),
       expected: rawAndUnit(claimablePositionBefore + bigintValue(fees.feeReceiverAmount), 6, 'USDC'),
-      formula: 'claimablePositionFeeAfter = before + feeReceiverAmount',
+      formula: `claimablePositionFeeAfter = before + feeReceiverAmount；本次：${claimablePositionBefore} + ${bigintValue(fees.feeReceiverAmount)} = ${claimablePositionBefore + bigintValue(fees.feeReceiverAmount)}`,
       basis: { title: '协议费用入账与快照交叉核对', sourcePath: FORMULA_SOURCE, section: '§7.5 协议与 LP 分成' }, unit: 'USDC 1e6',
+      note: '【事件对照】期望增量取自 PositionFeesCollected.feeReceiverAmount，与 DataStore claimable 状态交叉核对；该金额的独立复算见「Fee Receiver 分成」行。',
+      inputs: [
+        { name: 'claimable before', value: claimablePositionBefore.toString(), source: snapshotSource },
+        { name: 'feeReceiverAmount（期望增量）', value: stringValue(fees.feeReceiverAmount), source: eventSource },
+        { name: 'claimable after（对照对象）', value: claimablePositionAfter.toString(), source: snapshotSource },
+      ],
     },
-    {
-      id: `${input.phaseId}-claimable-funding`, group: `${input.phaseLabel} · Funding`, label: 'LP Claimable Funding 入账',
-      status: pass(claimableFundingAfter, claimableFundingBefore + maxBigInt(positionPaysLp)),
-      before: rawAndUnit(claimableFundingBefore, 6, 'USDC'), after: rawAndUnit(claimableFundingAfter, 6, 'USDC'),
-      delta: deltaAndUnit(claimableFundingAfter - claimableFundingBefore, 6, 'USDC'),
-      expected: rawAndUnit(claimableFundingBefore + maxBigInt(positionPaysLp), 6, 'USDC'),
-      formula: 'positionPaysLp > 0：claimableFundingAfter = before + positionPaysLp；< 0 时由 LPVault 支付 PositionVault',
-      basis: { title: 'LP Funding 净额', sourcePath: FORMULA_SOURCE, section: '§10.6 LP Funding 净额' }, unit: 'USDC 1e6',
-    },
+    (() => {
+      // v0.3.2 唯一口径：MarketUtils.settleFundingFees 逐仓净差（见 buildFundingSettlementModel 注释）。
+      // 期望增量 = max(negAmt − posAmt, 0)；negAmt 加仓取应付额、减仓取实付额。缺输入 → NOT_VERIFIED，不退回旧锚。
+      const settlement = buildFundingSettlementModel({ events: input.events });
+      if (!settlement.available) {
+        return {
+          id: `${input.phaseId}-claimable-funding`, group: `${input.phaseLabel} · Funding`, label: 'LP Claimable Funding 入账',
+          status: 'NOT_VERIFIED',
+          before: rawAndUnit(claimableFundingBefore, 6, 'USDC'), after: rawAndUnit(claimableFundingAfter, 6, 'USDC'),
+          delta: deltaAndUnit(claimableFundingAfter - claimableFundingBefore, 6, 'USDC'),
+          expected: `缺输入（${settlement.reason ?? '—'}），未建立期望`,
+          formula: 'claimableFundingAfter = before + max(negAmt − posAmt, 0)（v0.3.2 settleFundingFees 逐仓结算；缺输入未代入）',
+          basis: { title: '仓位结算：settleFundingFees', sourcePath: CONTRACT_FORMULA_SOURCE, section: '10.7 仓位结算：settleFundingFees（v0.3.2 新增）' }, unit: 'USDC 1e6',
+          note: `【缺数据】${settlement.reason ?? '—'}。不退回 v0.3.1 的 positionPaysLp 口径。`,
+          inputs: [
+            { name: 'claimable funding before', value: claimableFundingBefore.toString(), source: snapshotSource },
+            { name: 'claimable funding after（对照对象）', value: claimableFundingAfter.toString(), source: snapshotSource },
+          ],
+        } satisfies Reconciliation;
+      }
+      const expectedIncrement = settlement.claimableIncrement;
+      return {
+        id: `${input.phaseId}-claimable-funding`, group: `${input.phaseLabel} · Funding`, label: 'LP Claimable Funding 入账',
+        status: pass(claimableFundingAfter, claimableFundingBefore + expectedIncrement),
+        before: rawAndUnit(claimableFundingBefore, 6, 'USDC'), after: rawAndUnit(claimableFundingAfter, 6, 'USDC'),
+        delta: deltaAndUnit(claimableFundingAfter - claimableFundingBefore, 6, 'USDC'),
+        expected: rawAndUnit(claimableFundingBefore + expectedIncrement, 6, 'USDC'),
+        formula: `claimableFundingAfter = before + max(negAmt − posAmt, 0)（v0.3.2 settleFundingFees；${settlement.pathLabel}）；posAmt > negAmt 时改由 LPVault 转 PositionVault、本键不动；本次：${claimableFundingBefore} + max(${settlement.negativePaid} − ${settlement.positive}, 0) = ${claimableFundingBefore + expectedIncrement}`,
+        basis: { title: '仓位结算：settleFundingFees', sourcePath: CONTRACT_FORMULA_SOURCE, section: '10.7 仓位结算：settleFundingFees（v0.3.2 新增）' }, unit: 'USDC 1e6',
+        note: '【事件对照】期望增量取自本仓 PositionFeesCollected 的 negAmt−posAmt 净差（MarketUtils.sol::settleFundingFees @ release-v0.3.2 L445-469），与 DataStore claimable(FUNDING_FEE_TYPE) 状态交叉核对；negAmt/posAmt 的独立复算见相邻「应付 / 应收 Funding」两行。positionPaysLp（Funding 事件）仅为市场级累计对照，不进入本期望。',
+        verification: '事件对照',
+        inputs: [
+          { name: 'claimable funding before', value: claimableFundingBefore.toString(), source: snapshotSource },
+          ...settlement.inputs,
+          { name: 'max(negAmt−posAmt,0)（期望增量）', value: expectedIncrement.toString(), source: '派生：settleFundingFees 净负分支' },
+          { name: 'claimable funding after（对照对象）', value: claimableFundingAfter.toString(), source: snapshotSource },
+        ],
+      } satisfies Reconciliation;
+    })(),
   ];
-  const fundingEvent = record((Array.isArray(input.events.fundingEvents) ? input.events.fundingEvents : [])[0]);
+  const fundingEvent = record(anchoredFundingEvent);
   const fundingEventFactors = record(fundingEvent.int);
   const fundingEma = record(input.parameters.fundingEma);
   const fundingFloor = marketParameter(input.parameters, 'FUNDING_FLOOR_FACTOR');
@@ -882,7 +1442,7 @@ function buildFeeAndFundingRows(input: {
           before: rawAndUnit(emaSkew, 18, 'EMA skew'), after: rawAndUnit(fundingEventFactors.longFundingFactorPerSecond, 30, 'factor/s'),
           expected: rawAndUnit(factors.long, 30, 'factor/s'), formula: `longFactor = ${factors.longExpanded}`,
           basis: { title: 'Long Funding Factor', sourcePath: PAGE_FORMULA_SOURCE, section: '五、Funding / 5.2 Funding Factor' }, unit: 'factor 1e30 / second',
-          note: parameterBlockNote(input.parameters),
+          note: `${parameterBlockNote(input.parameters)}口径：市场级费率——emaSkew 是全市场失衡的 EMA（由该市场全部交易活动驱动，非本单专属），得到的费率对该市场所有多头仓位统一生效。`,
         },
         {
           id: `${input.phaseId}-short-funding-factor`, group: `${input.phaseLabel} · Funding`, label: 'Short Funding Factor / second',
@@ -890,7 +1450,7 @@ function buildFeeAndFundingRows(input: {
           before: rawAndUnit(emaSkew, 18, 'EMA skew'), after: rawAndUnit(fundingEventFactors.shortFundingFactorPerSecond, 30, 'factor/s'),
           expected: rawAndUnit(factors.short, 30, 'factor/s'), formula: `shortFactor = ${factors.shortExpanded}`,
           basis: { title: 'Short Funding Factor', sourcePath: PAGE_FORMULA_SOURCE, section: '五、Funding / 5.2 Funding Factor' }, unit: 'factor 1e30 / second',
-          note: parameterBlockNote(input.parameters),
+          note: `${parameterBlockNote(input.parameters)}口径：市场级费率——emaSkew 是全市场失衡的 EMA（由该市场全部交易活动驱动，非本单专属），得到的费率对该市场所有空头仓位统一生效。`,
         },
       );
     } else {
@@ -903,40 +1463,6 @@ function buildFeeAndFundingRows(input: {
       });
     }
   }
-  return rows;
-}
-
-function buildFundingLifecycleRows(input: {
-  readonly openEvents: JsonRecord;
-  readonly closeEvents: JsonRecord;
-}): Reconciliation[] {
-  const openFunding = record(record((Array.isArray(input.openEvents.fundingEvents) ? input.openEvents.fundingEvents : [])[0]).int);
-  const closeFunding = record(record((Array.isArray(input.closeEvents.fundingEvents) ? input.closeEvents.fundingEvents : [])[0]).int);
-  const openFees = record(record(input.openEvents.feesCollected).uint);
-  const closeFees = record(record(input.closeEvents.feesCollected).uint);
-  if (Object.keys(openFunding).length === 0 || Object.keys(closeFunding).length === 0) return [];
-  const rows: Reconciliation[] = [];
-  const perSizeRows = [
-    { key: 'latestNegativeFundingFeePerSize', label: '市场累计负 Funding / size', direction: '应付侧累计值' },
-    { key: 'latestPositiveFundingFeePerSize', label: '市场累计正 Funding / size', direction: '应收侧累计值' },
-  ] as const;
-  rows.push(...perSizeRows.map((field) => {
-    const before = bigintValue(openFees[field.key]);
-    const after = bigintValue(closeFees[field.key]);
-    return {
-      id: `lifecycle-${field.key}`,
-      group: '全流程 · Funding 市场状态',
-      label: field.label,
-      status: after >= before ? 'PASS' as const : 'FAIL' as const,
-      before: rawAndUnit(before, 0, 'per-size'),
-      after: rawAndUnit(after, 0, 'per-size'),
-      delta: deltaAndUnit(after - before, 0, 'per-size'),
-      expected: 'After ≥ Before（累计值只增不减）',
-      formula: 'fundingFeePerSizeDelta = sideFundingUsd × 1e30 / sideOpenInterestInTokens',
-      basis: { title: field.direction, sourcePath: FORMULA_SOURCE, section: '§10.4 市场累计 Funding' },
-      unit: 'funding per-size raw',
-    };
-  }));
   return rows;
 }
 
@@ -1029,6 +1555,7 @@ function buildTradePhaseRows(input: TradePhaseEvidenceInput): Reconciliation[] {
       positionEvent: input.positionEvent,
       balanceWasImproved: record(record(input.events.feesCollected).bool).balanceWasImproved,
       parameters: input.parameters,
+      positionBefore: input.positionBefore,
     }));
   }
   if (input.checks.includes('fee-funding')) {
@@ -1084,7 +1611,7 @@ function buildTransaction(
   };
 }
 
-function deriveScn009Evidence(
+function deriveMarketFlowSingle(
   raw: JsonRecord,
   sourcePath: string,
 ): NonNullable<ScenarioResult['executionEvidence']> {
@@ -1126,6 +1653,16 @@ function deriveScn009Evidence(
   const closeGraceParameters = Object.keys(record(closeParameters.grace)).length > 0
     ? record(closeParameters.grace) : legacyGraceParameters;
 
+  // 中段阶段（加仓/部分平）：close 的 TX 编号顺延、创建窗口基准移到最后一个中段快照
+  const middlePhaseList = Array.isArray(raw.middlePhases) ? raw.middlePhases.map((item) => record(item)) : [];
+  const middleCount = middlePhaseList.length;
+  const closeCreateTx = `TX${3 + middleCount * 2}`;
+  const closeExecTx = `TX${4 + middleCount * 2}`;
+  const lastMiddleValues = middleCount > 0
+    ? record(record(record(middlePhaseList[middleCount - 1]!.snapshots).afterExec).values)
+    : undefined;
+  const closeBaseValues = lastMiddleValues ?? openValues;
+  const closeBasePosition = record(closeBaseValues.position);
   const sizeBefore = bigintValue(beforePosition.sizeInUsd);
   const orderSize = expectedOrderSizeUsd(testData);
   const inputSizeUsd = orderSize.value;
@@ -1136,14 +1673,32 @@ function deriveScn009Evidence(
     - bigintValue(openFees.totalCostAmount)
     + bigintValue(openFees.positiveFundingFeeAmount);
   const spreadScale = 10n ** 18n;
-  const expectedOpenExecution = ceilDiv(
-    bigintValue(openIncreaseUint['indexTokenPrice.max'])
-      * (spreadScale + bigintValue(openIncreaseUint.dynamicSpread)),
-    spreadScale,
-  );
-  const expectedCloseExecution = bigintValue(closeDecreaseUint['indexTokenPrice.min'])
-    * (spreadScale - bigintValue(closeDecreaseUint.dynamicSpread)) / spreadScale;
-  const expectedCumulativeLongOpenCosts = bigintValue(beforeValues.cumulativeOpenCostsLong) + inputSizeUsd;
+  // 方向感知（SCN-009 long / SCN-065 short 共用）：开仓不利侧 = 多 ⌈max×(1+s)⌉ / 空 ⌊min×(1−s)⌋，
+  // 平仓镜像；开仓成本累计走方向侧账本。
+  const isLong = boolValue(record(openIncrease.bool).isLong ?? testData.isLong);
+  const directionLabel = isLong ? '多' : '空';
+  // v0.3.2 起 dynamicSpread 为 int256（02 手册 §14.2），事件字段从 uint 段挪到 int 段——两段兼容读取，
+  // 否则 v0.3.2 证据会把非零点差静默读成 0（2026-09-01 假 FAIL 实例）。
+  const openIncreaseInt = record(openIncrease.int);
+  const closeDecreaseInt = record(closeDecrease.int);
+  const openSpread = bigintValue(openIncreaseUint.dynamicSpread ?? openIncreaseInt.dynamicSpread);
+  const closeSpread = bigintValue(closeDecreaseUint.dynamicSpread ?? closeDecreaseInt.dynamicSpread);
+  const expectedOpenExecution = isLong
+    ? ceilDiv(
+      bigintValue(openIncreaseUint['indexTokenPrice.max']) * (spreadScale + openSpread),
+      spreadScale,
+    )
+    : bigintValue(openIncreaseUint['indexTokenPrice.min'])
+      * (spreadScale - openSpread) / spreadScale;
+  const expectedCloseExecution = isLong
+    ? bigintValue(closeDecreaseUint['indexTokenPrice.min'])
+      * (spreadScale - closeSpread) / spreadScale
+    : ceilDiv(
+      bigintValue(closeDecreaseUint['indexTokenPrice.max']) * (spreadScale + closeSpread),
+      spreadScale,
+    );
+  const openCostsSlot = isLong ? 'cumulativeOpenCostsLong' : 'cumulativeOpenCostsShort';
+  const expectedCumulativeLongOpenCosts = bigintValue(beforeValues[openCostsSlot]) + inputSizeUsd;
   const expectedFinalUsdc = bigintValue(beforeValues.traderUsdc)
     - bigintValue(wholeFlow.orderVaultUsdc)
     - bigintValue(wholeFlow.posVaultUsdc)
@@ -1164,17 +1719,81 @@ function deriveScn009Evidence(
   });
   const closeExecutionRows = buildTradePhaseRows({
     phaseKind: hasPerTransactionSnapshots ? 'execute-decrease' : 'create-and-decrease',
-    phaseId: 'tx4-execute-close', phaseLabel: 'TX4 · Keeper 执行全平',
+    phaseId: `${closeExecTx.toLowerCase()}-execute-close`, phaseLabel: `${closeExecTx} · Keeper 执行全平`,
     beforeLabel: hasPerTransactionSnapshots ? 'afterCreateClose' : 'afterOpen', afterLabel: 'afterClose',
-    before: hasPerTransactionSnapshots ? createCloseValues : openValues, after: closeValues, testData,
-    positionBefore: hasPerTransactionSnapshots ? createClosePosition : openPosition,
+    before: hasPerTransactionSnapshots ? createCloseValues : closeBaseValues, after: closeValues, testData,
+    positionBefore: hasPerTransactionSnapshots ? createClosePosition : closeBasePosition,
     positionAfter: closePosition, positionExpected: beforePosition,
     positionExpectedReason: '全平后 sizeInUsd = 0，仓位删除并将原始字段清零',
     positionEvent: closeDecrease, events: closeEvents, parameters: closeParameters,
     graceParameters: closeGraceParameters, marketIndex: environment.marketIndex,
     tokenDecimals: 18, tokenSymbol: 'ETH', collateralDecimals: 6, ledgerSource: LEDGER_SOURCE,
-    checks: ['ledger', 'position', 'grace', 'pricing', 'fee-funding'], txStep: 'TX4',
+    checks: ['ledger', 'position', 'grace', 'pricing', 'fee-funding'], txStep: closeExecTx,
   });
+  // 中段阶段行（加仓/部分平）：每阶段 创建+执行 两组 TX 行 + 两条守恒行；
+  // 阶段级 raw 覆盖（marginRaw/sizeUsdRaw）走 buildLedgerDeltaExpectations 的覆盖入口。
+  const middleRows: Reconciliation[] = middlePhaseList.flatMap((phase, index) => {
+    const kind = stringValue(phase.kind);
+    const isIncreasePhase = kind === 'increase';
+    const middleLabel = stringValue(phase.label, `中段${index + 1}`);
+    const snaps = record(phase.snapshots);
+    const createValues = record(record(snaps.afterCreate).values);
+    const execBeforeValues = record(record(snaps.execBefore).values);
+    const afterExecValues = record(record(snaps.afterExec).values);
+    const prevValues = index === 0
+      ? openValues
+      : record(record(record(middlePhaseList[index - 1]!.snapshots).afterExec).values);
+    const prevPosition = record(prevValues.position);
+    const phaseEvents = record(phase.events);
+    const phaseEvent = record(phaseEvents[isIncreasePhase ? 'PositionIncrease' : 'PositionDecrease']);
+    const phaseTestData: JsonRecord = {
+      ...testData,
+      marginRaw: stringValue(phase.marginRaw, '0'),
+      sizeUsdRaw: stringValue(phase.sizeUsdRaw, '0'),
+      closeSizeUsdRaw: stringValue(phase.sizeUsdRaw, '0'),
+    };
+    const createTx = `TX${3 + index * 2}`;
+    const execTx = `TX${4 + index * 2}`;
+    return [
+      ...buildTradePhaseRows({
+        phaseKind: isIncreasePhase ? 'create-order' : 'create-decrease-order',
+        phaseId: `${createTx.toLowerCase()}-create-middle-${index + 1}`,
+        phaseLabel: `${createTx} · 创建订单（${middleLabel}）`,
+        beforeLabel: index === 0 ? 'afterOpen' : '上一中段 afterExec', afterLabel: 'afterCreate',
+        before: prevValues, after: createValues, testData: phaseTestData,
+        positionBefore: prevPosition, positionAfter: record(createValues.position), positionExpected: prevPosition,
+        positionExpectedReason: '仅创建订单，Keeper 尚未执行，仓位原始字段保持不变',
+        positionEvent: {}, events: {}, parameters: {}, marketIndex: environment.marketIndex,
+        tokenDecimals: 18, tokenSymbol: 'ETH', collateralDecimals: 6, ledgerSource: LEDGER_SOURCE,
+        checks: ['ledger', 'position'], txStep: createTx,
+      }),
+      ...buildTradePhaseRows({
+        phaseKind: isIncreasePhase ? 'execute-increase' : 'execute-decrease',
+        phaseId: `${execTx.toLowerCase()}-execute-middle-${index + 1}`,
+        phaseLabel: `${execTx} · Keeper 执行（${middleLabel}）`,
+        beforeLabel: 'execBefore', afterLabel: 'afterExec',
+        before: execBeforeValues, after: afterExecValues, testData: phaseTestData,
+        positionBefore: record(execBeforeValues.position), positionAfter: record(afterExecValues.position),
+        positionExpected: record(phaseEvent.uint),
+        positionExpectedReason: 'After Position 原始字段 = 执行事件的同名字段',
+        positionEvent: phaseEvent, events: phaseEvents, parameters: record(phase.parameters),
+        marketIndex: environment.marketIndex,
+        tokenDecimals: 18, tokenSymbol: 'ETH', collateralDecimals: 6, ledgerSource: LEDGER_SOURCE,
+        checks: ['ledger', 'position', 'pricing', 'fee-funding'], txStep: execTx,
+      }),
+      buildConservationRow({
+        id: `middle-${index + 1}-create-conservation`, txStep: createTx,
+        label: `${middleLabel}·创建资金守恒`,
+        observation: record(record(phase.conservation).create), ledgerSource: LEDGER_SOURCE,
+      }),
+      buildConservationRow({
+        id: `middle-${index + 1}-execute-conservation`, txStep: execTx,
+        label: `${middleLabel}·执行资金守恒`,
+        observation: record(record(phase.conservation).execute), ledgerSource: LEDGER_SOURCE,
+      }),
+    ];
+  });
+
   const detailedRows: Reconciliation[] = [
     ...(hasPerTransactionSnapshots ? buildTradePhaseRows({
       phaseKind: 'create-order', phaseId: 'tx1-create-open', phaseLabel: 'TX1 · 创建开仓订单',
@@ -1186,17 +1805,18 @@ function deriveScn009Evidence(
       checks: ['ledger', 'position'], txStep: 'TX1',
     }) : []),
     ...openExecutionRows,
+    ...middleRows,
     ...(hasPerTransactionSnapshots ? buildTradePhaseRows({
-      phaseKind: 'create-decrease-order', phaseId: 'tx3-create-close', phaseLabel: 'TX3 · 创建全平订单',
-      beforeLabel: 'afterOpen', afterLabel: 'afterCreateClose', before: openValues, after: createCloseValues, testData,
-      positionBefore: openPosition, positionAfter: createClosePosition, positionExpected: openPosition,
+      phaseKind: 'create-decrease-order', phaseId: `${closeCreateTx.toLowerCase()}-create-close`, phaseLabel: `${closeCreateTx} · 创建全平订单`,
+      beforeLabel: middleCount > 0 ? '最后中段 afterExec' : 'afterOpen', afterLabel: 'afterCreateClose',
+      before: closeBaseValues, after: createCloseValues, testData,
+      positionBefore: closeBasePosition, positionAfter: createClosePosition, positionExpected: closeBasePosition,
       positionExpectedReason: '仅创建全平订单，Keeper 尚未执行，仓位原始字段保持不变',
       positionEvent: {}, events: {}, parameters: {}, marketIndex: environment.marketIndex,
       tokenDecimals: 18, tokenSymbol: 'ETH', collateralDecimals: 6, ledgerSource: LEDGER_SOURCE,
-      checks: ['ledger', 'position'], txStep: 'TX3',
+      checks: ['ledger', 'position'], txStep: closeCreateTx,
     }) : []),
     ...closeExecutionRows,
-    ...buildFundingLifecycleRows({ openEvents, closeEvents }).map((row) => ({ ...row, txStep: 'TX4' })),
   ];
 
   const formulaBasis = (section: string, title: string) => ({
@@ -1213,22 +1833,22 @@ function deriveScn009Evidence(
     ? [
       ['createOpenConservation', 'TX1', '创建开仓订单资金守恒'],
       ['executeOpenConservation', 'TX2', '执行开仓资金守恒'],
-      ['createCloseConservation', 'TX3', '创建全平订单资金守恒'],
-      ['executeCloseConservation', 'TX4', '执行全平资金守恒'],
-      ['wholeFlowConservation', 'TX4', '全流程资金守恒'],
+      ['createCloseConservation', closeCreateTx, '创建全平订单资金守恒'],
+      ['executeCloseConservation', closeExecTx, '执行全平资金守恒'],
+      ['wholeFlowConservation', closeExecTx, '全流程资金守恒'],
     ] as const
     : [
       ['openConservation', 'TX2', '开仓资金守恒（历史证据包含创建与执行）'],
-      ['closeConservation', 'TX4', '平仓资金守恒（历史证据包含创建与执行）'],
-      ['wholeFlowConservation', 'TX4', '全流程资金守恒'],
+      ['closeConservation', closeExecTx, '平仓资金守恒（历史证据包含创建与执行）'],
+      ['wholeFlowConservation', closeExecTx, '全流程资金守恒'],
     ] as const;
   const baseReconciliations: NonNullable<ScenarioResult['executionEvidence']>['reconciliations'] = [
     {
-      id: 'position-open-exists', group: '开仓状态', label: '多头仓位建立',
-      status: pass(boolValue(openPosition.exists), true),
+      id: 'position-open-exists', group: '开仓状态', label: `${directionLabel}头仓位建立`,
+      status: boolValue(openPosition.exists) && boolValue(openPosition.isLong) === isLong ? 'PASS' : 'FAIL',
       before: stringValue(boolValue(beforePosition.exists)),
-      after: stringValue(boolValue(openPosition.exists)), expected: 'true',
-      formula: 'afterOpen.position.exists = true 且 isLong = true',
+      after: `exists=${boolValue(openPosition.exists)}；isLong=${boolValue(openPosition.isLong)}`, expected: `exists=true 且 isLong=${isLong}`,
+      formula: `afterOpen.position.exists = true 且 isLong = ${isLong}（${directionLabel}头）`,
       basis: formulaBasis('§5 仓位字段更新', '仓位建立后的结构状态'),
     },
     {
@@ -1253,33 +1873,37 @@ function deriveScn009Evidence(
       note: '这是仓位当前 Margin，不是用户最初输入值。totalCostAmount 来自 PositionFeesCollected，并在 Fee 分组使用执行区块费率独立复算。',
     },
     {
-      id: 'open-execution-price', group: '成交价格', label: '开多执行价',
+      id: 'open-execution-price', group: '成交价格', label: `开${directionLabel}执行价`,
       status: pass(openIncreaseUint.executionPrice, expectedOpenExecution),
-      before: stringValue(openIncreaseUint['indexTokenPrice.max']),
+      before: stringValue(openIncreaseUint[isLong ? 'indexTokenPrice.max' : 'indexTokenPrice.min']),
       after: stringValue(openIncreaseUint.executionPrice), expected: expectedOpenExecution.toString(),
-      formula: 'ceil(indexPrice.max × (1e18 + dynamicSpread) / 1e18)',
-      basis: formulaBasis('§4.5 加仓成交价', 'Long executionPrice'), unit: 'price raw',
-      note: `dynamicSpread=${stringValue(openIncreaseUint.dynamicSpread)}`,
+      formula: isLong
+        ? `ceil(indexPrice.max × (1e18 + dynamicSpread) / 1e18)；本次：ceil(${stringValue(openIncreaseUint['indexTokenPrice.max'])} × (1e18 + ${openSpread}) / 1e18) = ${expectedOpenExecution}`
+        : `⌊indexPrice.min × (1e18 − dynamicSpread) / 1e18⌋；本次：⌊${stringValue(openIncreaseUint['indexTokenPrice.min'])} × (1e18 − ${openSpread}) / 1e18⌋ = ${expectedOpenExecution}`,
+      basis: formulaBasis('§4.5 加仓成交价', isLong ? 'Long executionPrice' : 'Short executionPrice'), unit: 'price raw',
+      note: `dynamicSpread=${openSpread}（v0.3.2 起为 int256、位于事件 int 段）。【恒等式】oracle 价与 dynamicSpread 均取自被核对的 PositionIncrease 事件，验证价格公式自洽，不构成独立重算（dynamicSpread 独立复算见 TX2 的 Dynamic Spread 行）。`,
     },
     {
       id: 'cumulative-long-open-costs-after-open', group: '市场账本',
-      label: '累计多头开仓成本 cumulativeOpenCostsLong',
-      status: pass(openValues.cumulativeOpenCostsLong, expectedCumulativeLongOpenCosts),
-      before: rawAndUnit(beforeValues.cumulativeOpenCostsLong, 30, 'USD'),
-      after: rawAndUnit(openValues.cumulativeOpenCostsLong, 30, 'USD'),
+      label: `累计${directionLabel}头开仓成本 ${openCostsSlot}`,
+      status: pass(openValues[openCostsSlot], expectedCumulativeLongOpenCosts),
+      before: rawAndUnit(beforeValues[openCostsSlot], 30, 'USD'),
+      after: rawAndUnit(openValues[openCostsSlot], 30, 'USD'),
       delta: deltaAndUnit(inputSizeUsd, 30, 'USD'),
       expected: rawAndUnit(expectedCumulativeLongOpenCosts, 30, 'USD'),
-      formula: 'nextCumulativeOpenCostsLong = previousCumulativeOpenCostsLong + sizeDeltaUsd',
-      basis: formulaBasis('§12.2 市场多空 PnL', '累计多头开仓成本增量'), unit: 'USD 1e30',
+      formula: `next ${openCostsSlot} = previous + sizeDeltaUsd；本次：${bigintValue(beforeValues[openCostsSlot])} + ${inputSizeUsd} = ${expectedCumulativeLongOpenCosts}`,
+      basis: formulaBasis('§12.2 市场多空 PnL', `累计${directionLabel}头开仓成本增量`), unit: 'USD 1e30',
     },
     {
-      id: 'close-execution-price', group: '成交价格', label: '平多执行价',
+      id: 'close-execution-price', group: '成交价格', label: `平${directionLabel}执行价`,
       status: pass(closeDecreaseUint.executionPrice, expectedCloseExecution),
-      before: stringValue(closeDecreaseUint['indexTokenPrice.min']),
+      before: stringValue(closeDecreaseUint[isLong ? 'indexTokenPrice.min' : 'indexTokenPrice.max']),
       after: stringValue(closeDecreaseUint.executionPrice), expected: expectedCloseExecution.toString(),
-      formula: 'indexPrice.min × (1e18 − dynamicSpread) / 1e18',
-      basis: formulaBasis('§4.6 减仓成交价', 'Long executionPrice'), unit: 'price raw',
-      note: `dynamicSpread=${stringValue(closeDecreaseUint.dynamicSpread)}`,
+      formula: isLong
+        ? `⌊indexPrice.min × (1e18 − dynamicSpread) / 1e18⌋；本次：⌊${stringValue(closeDecreaseUint['indexTokenPrice.min'])} × (1e18 − ${closeSpread}) / 1e18⌋ = ${expectedCloseExecution}`
+        : `ceil(indexPrice.max × (1e18 + dynamicSpread) / 1e18)；本次：ceil(${stringValue(closeDecreaseUint['indexTokenPrice.max'])} × (1e18 + ${closeSpread}) / 1e18) = ${expectedCloseExecution}`,
+      basis: formulaBasis('§4.6 减仓成交价', isLong ? 'Long executionPrice' : 'Short executionPrice'), unit: 'price raw',
+      note: `dynamicSpread=${closeSpread}（v0.3.2 起为 int256、位于事件 int 段）。【恒等式】oracle 价与 dynamicSpread 均取自被核对的 PositionDecrease 事件，验证价格公式自洽，不构成独立重算（dynamicSpread 独立复算见 TX4 的 Dynamic Spread 行）。`,
     },
     {
       id: 'position-closed', group: '平仓状态', label: '全平后仓位移除',
@@ -1291,22 +1915,25 @@ function deriveScn009Evidence(
     },
     {
       id: 'cumulative-long-open-costs-restored', group: '平仓状态',
-      label: '累计多头开仓成本恢复初始值',
-      status: pass(closeValues.cumulativeOpenCostsLong, beforeValues.cumulativeOpenCostsLong),
-      before: rawAndUnit(openValues.cumulativeOpenCostsLong, 30, 'USD'),
-      after: rawAndUnit(closeValues.cumulativeOpenCostsLong, 30, 'USD'),
-      expected: rawAndUnit(beforeValues.cumulativeOpenCostsLong, 30, 'USD'),
-      formula: 'finalCumulativeOpenCostsLong = openedCumulativeOpenCostsLong − fullCloseSizeUsd = initialCumulativeOpenCostsLong',
-      basis: formulaBasis('§12.2 市场多空 PnL', '累计多头开仓成本全平回退'), unit: 'USD 1e30',
+      label: `累计${directionLabel}头开仓成本恢复初始值`,
+      status: pass(closeValues[openCostsSlot], beforeValues[openCostsSlot]),
+      before: rawAndUnit(openValues[openCostsSlot], 30, 'USD'),
+      after: rawAndUnit(closeValues[openCostsSlot], 30, 'USD'),
+      expected: rawAndUnit(beforeValues[openCostsSlot], 30, 'USD'),
+      formula: middleCount > 0
+        ? `全流程各阶段 ±sizeDeltaUsd 相抵：final ${openCostsSlot} 恢复 initial ${bigintValue(beforeValues[openCostsSlot])}（含 ${middleCount} 个中段阶段）`
+        : `final ${openCostsSlot} = opened − fullCloseSizeUsd = initial；本次：${bigintValue(openValues[openCostsSlot])} − ${inputSizeUsd} = ${bigintValue(beforeValues[openCostsSlot])}`,
+      basis: formulaBasis('§12.2 市场多空 PnL', `累计${directionLabel}头开仓成本全平回退`), unit: 'USD 1e30',
     },
     {
-      id: 'trader-usdc-final', group: '资金账本', label: '交易员最终 USDC',
+      id: 'trader-usdc-final', group: '守恒', label: '交易员最终 USDC（全流程守恒推论）',
       status: pass(closeValues.traderUsdc, expectedFinalUsdc),
       before: rawAndUnit(beforeValues.traderUsdc, 6, 'USDC'),
       after: rawAndUnit(closeValues.traderUsdc, 6, 'USDC'),
       expected: rawAndUnit(expectedFinalUsdc, 6, 'USDC'),
-      formula: 'expectedAfter = before − (ΔOrderVault + ΔPositionVault + ΔLPVaultAssets + ΔFeeReceiver)',
+      formula: `expectedAfter = before − (ΔOrderVault + ΔPositionVault + ΔLPVaultAssets + ΔFeeHandler)；本次：${bigintValue(beforeValues.traderUsdc)} − (${bigintValue(wholeFlow.orderVaultUsdc)} + ${bigintValue(wholeFlow.posVaultUsdc)} + ${bigintValue(wholeFlow.lpVaultAssets)} + ${bigintValue(wholeFlow.feeReceiverUsdc)}) = ${expectedFinalUsdc}`,
       basis: ledgerBasis('checkConservation(wholeFlowDelta)', '全流程 USDC 守恒'), unit: 'USDC 1e6',
+      note: '【守恒推论】Expected 由其他四方的实测 wholeFlow Δ 反推（五方守恒式的变形），不是独立公式——本行验证的是全流程资金闭合，交易员的独立 Expected（订单输入+事件分量建模）见 TX2/TX4 资金账户组的 ΔTrader 行。',
     },
     ...detailedRows,
     ...conservationSpecs.map(([key, txStep, label]) => buildConservationRow({
@@ -1321,9 +1948,29 @@ function deriveScn009Evidence(
     'position-open-exists', 'position-open-size', 'position-open-collateral',
     'open-execution-price', 'cumulative-long-open-costs-after-open',
   ]);
-  const reconciliations = baseReconciliations.map((row) => row.txStep
+  // 前端显示（平仓弹窗）三方核对（docs/07 Phase 1-D）：仅当 runner 停点采到 uiDisplay 时出现；
+  // 行只产 PASS/CALCULATED/NOT_VERIFIED，UI 偏差不拉低协议 executionStatus（docs/06 §8 分层）。
+  const uiDisplayRows = buildUiDisplayRows({
+    uiDisplay: raw.uiDisplay && typeof raw.uiDisplay === 'object' ? record(raw.uiDisplay) : undefined,
+    closeCreateTx,
+    actualReceiveUsdcRaw: optionalBigint(record(deltas.executeClose).traderUsdc),
+    closeFeeAmountRaw: optionalBigint(closeFees.positionFeeAmount),
+    collateralMinPriceRaw: optionalBigint(closeFees['collateralTokenPrice.min']),
+    basePnlUsdRaw: optionalBigint(closeDecreaseInt.basePnlUsd),
+    executionPriceRaw: optionalBigint(closeDecreaseUint.executionPrice),
+    indexDecimals: 18,
+  });
+  // 前端下单（页面点击 + 注入钱包签名）：仅当 runner orderEntry 钩子接管了市价腿时出现
+  const uiOrderEntryRows = buildUiOrderEntryRows({
+    uiOrderEntry: raw.uiOrderEntry && typeof raw.uiOrderEntry === 'object' ? record(raw.uiOrderEntry) : undefined,
+    testData,
+    openCreateTx: 'TX1',
+    closeCreateTx,
+    closeSizeUsdRaw: optionalBigint(testData.closeSizeUsdRaw),
+  });
+  const reconciliations = [...baseReconciliations, ...uiDisplayRows, ...uiOrderEntryRows].map((row) => row.txStep
     ? row
-    : { ...row, txStep: openOverviewIds.has(row.id) ? 'TX2' : 'TX4' });
+    : { ...row, txStep: openOverviewIds.has(row.id) ? 'TX2' : closeExecTx }).map(withVerification);
 
   const transactionsRecord = record(raw.transactions);
   const transactions = [
@@ -1452,7 +2099,6 @@ function deriveScn010Evidence(
       tokenDecimals, tokenSymbol: 'MockBTC', collateralDecimals: 6, ledgerSource: SCN010_LEDGER_SOURCE,
       checks: ['ledger', 'position', 'grace', 'pricing', 'fee-funding'], txStep: 'TX4',
     }),
-    ...buildFundingLifecycleRows({ openEvents: limitEvents, closeEvents }).map((row) => ({ ...row, txStep: 'TX4' })),
   ];
   const formulaBasis = (section: string, title: string) => ({
     title,
@@ -1591,7 +2237,7 @@ function deriveScn010Evidence(
   ]);
   const reconciliations = baseReconciliations.map((row) => row.txStep
     ? row
-    : { ...row, txStep: tx1OverviewIds.has(row.id) ? 'TX1' : tx2OverviewIds.has(row.id) ? 'TX2' : 'TX4' });
+    : { ...row, txStep: tx1OverviewIds.has(row.id) ? 'TX1' : tx2OverviewIds.has(row.id) ? 'TX2' : 'TX4' }).map(withVerification);
 
   const transactionRecord = record(raw.transactions);
   const transactions = [
@@ -2098,7 +2744,7 @@ function deriveScn070Evidence(
     index,
     oracleDecimals,
   ));
-  const reconciliations = [...overview, ...derived.flatMap((item) => item.rows)];
+  const reconciliations = [...overview, ...derived.flatMap((item) => item.rows)].map(withVerification);
   const transactions = derived.flatMap((item) => item.transactions);
   const executed = arrayValue(coverage.executed).map((item) => stringValue(item));
   const pending = arrayValue(coverage.pending).map((item) => stringValue(item));
@@ -2123,19 +2769,131 @@ function deriveScn070Evidence(
   };
 }
 
+// runMarketFlow 证据分发：单流形状直接派生；数据集数组形状（runMarketFlowMatrix）
+// 逐数据集派生后合并——row id 加数据集前缀、txStep 跨数据集顺延编号（TX1..TX4、TX5..TX8……，
+// 与 transactions 数组的全局序号一致），分组前缀 DSn 便于执行详情页按数据集筛选。
+function deriveScn009Evidence(
+  raw: JsonRecord,
+  sourcePath: string,
+): NonNullable<ScenarioResult['executionEvidence']> {
+  const datasets = Array.isArray(raw.datasets) ? raw.datasets : undefined;
+  if (!datasets || datasets.length === 0) return deriveMarketFlowSingle(raw, sourcePath);
+
+  const merged: NonNullable<ScenarioResult['executionEvidence']>['reconciliations'] = [];
+  const transactions: NonNullable<ScenarioResult['executionEvidence']>['transactions'] = [];
+  let allPass = true;
+  let txOffset = 0;
+  let mode = '';
+  let persistent = false;
+  let forkDisplayName: string | undefined;
+  const coverageNotes: string[] = [];
+  datasets.forEach((entry, index) => {
+    const item = record(entry);
+    const datasetId = stringValue(item.datasetId, `dataset-${index + 1}`);
+    const label = stringValue(item.label, datasetId);
+    const derived = deriveMarketFlowSingle(record(item.evidence), sourcePath);
+    if (derived.executionStatus !== 'PASS') allPass = false;
+    if (index === 0) {
+      mode = derived.mode;
+      persistent = derived.persistent;
+      forkDisplayName = derived.forkDisplayName;
+    }
+    const prefix = `DS${index + 1}`;
+    const stepMap = new Map<string, string>();
+    derived.transactions.forEach((tx, txIndex) => {
+      stepMap.set(`TX${txIndex + 1}`, `TX${txOffset + txIndex + 1}`);
+      transactions.push({ ...tx, action: `【${datasetId}】${tx.action}` });
+    });
+    derived.reconciliations.forEach((row) => {
+      // 分组文本里的 TXn 一并重映射，与 txStep 顺延编号保持一致
+      const remappedGroup = row.group.replace(/TX(\d+)/g, (matched) => stepMap.get(matched) ?? matched);
+      merged.push({
+        ...row,
+        id: `${datasetId}-${row.id}`,
+        group: `${prefix} ${label} · ${remappedGroup}`,
+        ...(row.txStep ? { txStep: stepMap.get(row.txStep) ?? row.txStep } : {}),
+      });
+    });
+    txOffset += derived.transactions.length;
+    coverageNotes.push(`${prefix} ${datasetId}：${derived.executionStatus}`);
+  });
+  // 矩阵级对照行（runMarketFlowMatrix crossDatasetChecks）：跨数据集的序关系断言（如 SCN-009 涨 > 平 > 跌）。
+  // Actual = 各数据集 traderUsdcDelta（合约读数 afterClose − before），Expected = 序列关系；FAIL 直接拉低 executionStatus。
+  const matrixRows: Reconciliation[] = arrayValue(raw.matrixAssertions).map(record).map((item, index) => withVerification({
+    id: `matrix-assertion-${index + 1}`,
+    group: 'MATRIX 跨数据集对照',
+    label: stringValue(item.name, `跨数据集断言 ${index + 1}`),
+    status: boolValue(item.passed) ? 'PASS' : 'FAIL',
+    before: '—',
+    after: stringValue(item.actual),
+    expected: stringValue(item.expected),
+    formula: 'traderUsdcDelta(数据集) = traderUsdc(afterClose) − traderUsdc(before)；沿数据集序列逐对比较：前一项 > 后一项',
+    basis: { title: '矩阵级跨数据集对照', sourcePath: LEDGER_SOURCE, section: 'runMarketFlowMatrix() crossDatasetChecks' },
+    unit: 'USDC 1e6',
+    note: '口径：账户级（各数据集独立 evm_snapshot 起点相同，Δ 可直接比较；持久模式下 Δ 仍为各数据集自身 afterClose − before）',
+    dataSource: '合约',
+  }));
+  if (matrixRows.some((row) => row.status === 'FAIL')) allPass = false;
+  const coverage = record(raw.coverage);
+  const pending = Array.isArray(coverage.pending) ? coverage.pending.map((item) => stringValue(item)) : [];
+  return {
+    mode,
+    persistent,
+    executionStatus: allPass ? 'PASS' : 'FAIL',
+    coverageStatus: 'PARTIAL',
+    coverageNote: `数据集矩阵（${datasets.length} 组）：${coverageNotes.join('；')}${matrixRows.length ? `；跨数据集对照 ${matrixRows.length} 项` : ''}${pending.length ? `。尚未自动化：${pending.join('；')}` : ''}`,
+    ...(forkDisplayName ? { forkDisplayName } : {}),
+    sourcePath,
+    formulaSourcePath: ORDER_FLOW_SOURCE,
+    reconciliations: [...merged, ...matrixRows],
+    transactions,
+  };
+}
+
 interface EvidenceSource {
   readonly attachmentName: string;
-  readonly derive: (raw: JsonRecord, sourcePath: string) => NonNullable<ScenarioResult['executionEvidence']>;
+  /**
+   * 缺省 = 透明兜底（版本功能用例）：不派生 executionEvidence，Playwright 注解与附件保持原样
+   * （preserveAttachments 照常归档、可下载），绝不抛错。A 节 spec 的证据结构由 spec 侧定义，
+   * 等结构定稿后再补专属派生器。
+   */
+  readonly derive?: (raw: JsonRecord, sourcePath: string) => NonNullable<ScenarioResult['executionEvidence']>;
 }
 
 const EVIDENCE_SOURCES: Record<string, EvidenceSource> = {
   'SCN-009': { attachmentName: 'scn-009-evidence.json', derive: deriveScn009Evidence },
+  // SCN-065 与 SCN-009 共用 runMarketFlow 证据形状；derive 已方向感知（isLong 取自事件/testData）。
+  'SCN-065': { attachmentName: 'scn-065-evidence.json', derive: deriveScn009Evidence },
+  // SCN-022/024 是 runMarketFlow 的盈亏数据集（推价 ±10% 后全平），证据形状同源。
+  'SCN-022': { attachmentName: 'scn-022-evidence.json', derive: deriveScn009Evidence },
+  'SCN-024': { attachmentName: 'scn-024-evidence.json', derive: deriveScn009Evidence },
+  'SCN-025': { attachmentName: 'scn-025-evidence.json', derive: deriveScn009Evidence },
+  'SCN-023': { attachmentName: 'scn-023-evidence.json', derive: deriveScn009Evidence },
+  // 矩阵 B 触发单组（openTrigger/closeTrigger 流，证据形状同源）
+  'SCN-011': { attachmentName: 'scn-011-evidence.json', derive: deriveScn009Evidence },
+  'SCN-012': { attachmentName: 'scn-012-evidence.json', derive: deriveScn009Evidence },
+  'SCN-013': { attachmentName: 'scn-013-evidence.json', derive: deriveScn009Evidence },
+  'SCN-015': { attachmentName: 'scn-015-evidence.json', derive: deriveScn009Evidence },
+  'SCN-016': { attachmentName: 'scn-016-evidence.json', derive: deriveScn009Evidence },
+  'SCN-066': { attachmentName: 'scn-066-evidence.json', derive: deriveScn009Evidence },
+  'SCN-067': { attachmentName: 'scn-067-evidence.json', derive: deriveScn009Evidence },
   'SCN-010': { attachmentName: 'scn-010-evidence.json', derive: deriveScn010Evidence },
   'SCN-070': { attachmentName: 'scn-070-evidence.json', derive: deriveScn070Evidence },
 };
 
+/**
+ * 结果 id → 证据来源：SCN 走静态映射表；版本功能用例（CT/XT/FT）走通用规则——
+ * 附件名 = id 小写 + '-evidence.json'（每条一份），派生器缺省（透明兜底）。
+ */
+function evidenceSourceFor(id: string): EvidenceSource | undefined {
+  const staticSource = EVIDENCE_SOURCES[id];
+  if (staticSource) return staticSource;
+  if (isFunctionalResultId(id)) return { attachmentName: `${id.toLowerCase()}-evidence.json` };
+  return undefined;
+}
+
 async function evidenceForResult(result: ScenarioResult): Promise<ScenarioResult['executionEvidence']> {
-  const source = EVIDENCE_SOURCES[result.id];
+  const source = evidenceSourceFor(result.id);
   const attachment = source
     ? result.attempts.at(-1)?.attachments.find((item) => item.name === source.attachmentName)
     : undefined;
@@ -2143,6 +2901,8 @@ async function evidenceForResult(result: ScenarioResult): Promise<ScenarioResult
   const evidencePath = resolve(process.cwd(), attachment.path);
   const relativePath = relative(process.cwd(), evidencePath);
   if (relativePath.startsWith('..')) return undefined;
+  // 透明兜底：路径检查通过但没有专属派生器——附件登记在案、原样归档，executionEvidence 缺省。
+  if (!source.derive) return result.executionEvidence;
   try {
     const parsed = JSON.parse(await readFile(evidencePath, 'utf8')) as unknown;
     return source.derive(record(parsed), relativePath);

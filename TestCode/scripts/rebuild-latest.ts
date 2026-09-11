@@ -1,7 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
-import { mergeLatestSnapshot } from '../src/reporting/latest-snapshot.js';
+import { applyDeletedRecords, mergeLatestSnapshot, readDeletedRecords } from '../src/reporting/latest-snapshot.js';
 import { readLatestSnapshot } from '../src/reporting/latest-snapshot.js';
 import { validateTestRunArtifact, type TestRunArtifact } from '../src/reporting/schema.js';
 import { writeRunOutputs } from '../src/reporting/write-outputs.js';
@@ -44,6 +44,8 @@ if (existingLatest) {
 }
 
 if (!snapshot) throw new Error('artifacts/runs 中没有可用的历史运行结果');
+// 应用执行记录删除墓碑：已删除的 (id, project) 旧记录不得随历史重建复活。
+snapshot = applyDeletedRecords(snapshot, await readDeletedRecords(process.cwd()));
 const receipt = await writeRunOutputs(snapshot, latestDirectory);
 console.log(`已从 ${acceptedRuns} 次历史运行恢复最近结果：${snapshot.results.length} 条`);
 console.log(`主看板：${receipt.dashboardHtml}`);

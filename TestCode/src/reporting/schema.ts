@@ -1,6 +1,22 @@
 import { z } from 'zod';
 
 import { executionModeValues } from './test-environments.js';
+import { VERSION_CASE_ID } from './version-cases.js';
+
+/**
+ * 版本功能用例（CT/XT/FT，Trade 测试用例矩阵）结果 id：与 SCN 场景 id 并列的联合分支，
+ * 正则复用 version-cases 的任务书定义（`^(?:CT|XT|FT)-[A-Z0-9]+(?:-[A-Z0-9]+)*-\d{3}$`）。
+ * SCN 原正则不放宽；功能用例不进 SCENARIO-CHECKLIST 目录，目录一致性校验对其豁免
+ * （矩阵缺行由 reporter 记 WARNING）。
+ */
+export function isFunctionalResultId(id: string): boolean {
+  return VERSION_CASE_ID.test(id);
+}
+
+const scenarioResultIdSchema = z.string().regex(/^SCN-\d{3}$/);
+const functionalResultIdSchema = z.string().regex(VERSION_CASE_ID);
+/** 功能用例结果的 suite 取 ID 前缀（CT/XT/FT）；SCN 结果仍必须是 S\d{2}。 */
+const functionalSuiteSchema = z.enum(['CT', 'XT', 'FT']);
 
 export const resultStatusSchema = z.enum([
   'PASS',
@@ -38,6 +54,15 @@ const executionLinkSchema = z.object({
   }),
 });
 
+// 公式输入来源清单（深度核对方案 §5 FormulaInput/SourceRef 的首期落地）：每个公式输入登记
+// 名称 / 值 / 来源（订单输入、DataStore@区块、事件字段、账本快照…），让"这个 Expected 从哪来、
+// 用了什么参数、哪个事件证明"逐项可追踪。历史报告没有该字段时不展示、不参与判定。
+const formulaInputSchema = z.object({
+  name: z.string().min(1),
+  value: z.string(),
+  source: z.string().min(1),
+});
+
 const reconciliationSchema = z.object({
   id: z.string().min(1),
   group: z.string().min(1),
@@ -57,6 +82,16 @@ const reconciliationSchema = z.object({
   note: z.string().optional(),
   // 一笔交易确认后产生的一组核对数据。历史报告没有该字段时仍可展示在“全流程”。
   txStep: z.string().regex(/^TX\d+$/).optional(),
+  // 验证方式（证据强度分级）：计算复算=期望值由订单输入/链上参数独立算出；事件对照=期望值取自事件字段、
+  // 与链上状态交叉核对；恒等式=同源字段自洽（不构成独立重算）；守恒=ΣΔ 守恒式及其推论；
+  // 派生展示=无独立期望的展示行；缺数据=输入缺失无法核对。历史报告没有该字段时不参与筛选。
+  verification: z.enum(['计算复算', '事件对照', '恒等式', '守恒', '派生展示', '缺数据']).optional(),
+  // 数据来源分层：本行 Actual（Before/After）读的是哪一层——合约=链上状态/Reader/DataStore 读数；
+  // 事件=EventEmitter 字段；合约+事件=行内两层对照（如仓位字段==事件同名字段、链上参数 vs 事件 factor）；
+  // 前端=页面显示值（核对尚未自动化，作为覆盖缺口显式呈现）。与"验证方式"正交：
+  // 验证方式说明期望值怎么来，数据来源说明实测值读哪层。历史报告没有该字段时不参与筛选。
+  dataSource: z.enum(['合约', '事件', '合约+事件', '前端']).optional(),
+  inputs: z.array(formulaInputSchema).optional(),
 });
 
 const transactionEvidenceSchema = z.object({
@@ -99,9 +134,9 @@ const attemptSchema = z.object({
 });
 
 export const scenarioResultSchema = z.object({
-  id: z.string().regex(/^SCN-\d{3}$/),
+  id: z.union([scenarioResultIdSchema, functionalResultIdSchema]),
   testId: z.string().min(1),
-  suite: z.string().regex(/^S\d{2}$/),
+  suite: z.union([z.string().regex(/^S\d{2}$/), functionalSuiteSchema]),
   scenarioTitle: z.string().min(1),
   testTitle: z.string().min(1),
   priority: z.enum(['P0', 'P1', 'P2']),
@@ -109,6 +144,10 @@ export const scenarioResultSchema = z.object({
   environment: z.string().min(1),
   status: resultStatusSchema,
   checkResult: z.string().min(1),
+  /** 创建本次执行的看板批次；历史/命令行直跑结果可以没有。 */
+  batchId: z.string().min(1).optional(),
+  /** 保存本条结果的 artifacts/runs/<id> 目录名。 */
+  resultRunId: z.string().min(1).optional(),
   executionLinks: z.array(executionLinkSchema),
   executionEvidence: executionEvidenceSchema.optional(),
   executedAt: z.string().datetime(),
@@ -152,7 +191,14 @@ export const testRunArtifactSchema = z.object({
     environments: z.array(z.string()),
     projectNames: z.array(z.string()),
     discoveredTests: z.number().int().nonnegative(),
+    /** 环境实际部署版本（CURRENT.json environments→deployments 解析；无映射时回退 E2E_RELEASE）。 */
     release: z.string().optional(),
+    /** release 的来源：CURRENT.json | E2E_RELEASE。历史产物无此字段。 */
+    releaseSource: z.string().optional(),
+    /** 目标测试版本（CURRENT.json primary，形如 release-v0.3.2）。历史产物无此字段。 */
+    targetRelease: z.string().optional(),
+    /** 环境基线 ≠ 目标基线 时为 true；任一方缺失时不写。历史产物无此字段。 */
+    releaseMismatch: z.boolean().optional(),
     forkBlockNumber: z.string().optional(),
   }),
   catalog: z.array(scenarioCatalogItemSchema),
@@ -173,6 +219,10 @@ export function validateTestRunArtifact(input: unknown): TestRunArtifact {
   }
 
   for (const result of artifact.results) {
+    // 功能用例（CT/XT/FT）不在 SCN 场景目录；其目录归属由版本矩阵判定（缺行 = reporter WARNING，不是结构错误）。
+    if (isFunctionalResultId(result.id)) {
+      continue;
+    }
     if (!catalogIds.has(result.id)) {
       throw new Error(`运行结果引用了目录之外的编号：${result.id}`);
     }

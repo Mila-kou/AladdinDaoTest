@@ -1,6 +1,3 @@
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
-
 import {
   createPublicClient,
   encodeAbiParameters,
@@ -8,7 +5,6 @@ import {
   http,
   keccak256,
   parseAbiParameters,
-  type Abi,
   type Address,
   type Hex,
 } from 'viem';
@@ -18,7 +14,8 @@ import {
   defaultMockParameterKey,
   defaultMockParameterLabel,
 } from '../src/config/default-mock-market.js';
-import { loadDeploymentManifest } from '../src/config/deployment.js';
+import { loadDeploymentAbi, loadDeploymentManifest } from '../src/config/deployment.js';
+import { assertRuntimeEnvironmentBinding } from '../src/config/environment-binding.js';
 import {
   isMockResourceEnvironment,
   resolveMockMarketBundle,
@@ -29,19 +26,11 @@ import {
   shouldConfigureParameter,
 } from '../src/server/environment-initialization-profile.js';
 
-interface FoundryArtifact {
-  readonly abi: Abi;
-}
-
 interface MarketProps {
   readonly marketIndex: bigint;
   readonly vault: Address;
   readonly indexToken: Address;
   readonly collateralToken: Address;
-}
-
-async function artifact(path: string): Promise<FoundryArtifact> {
-  return JSON.parse(await readFile(resolve(process.cwd(), path), 'utf8')) as FoundryArtifact;
 }
 
 function baseKey(name: string): Hex {
@@ -59,6 +48,7 @@ function argument(name: string): string | undefined {
 }
 
 const runtime = loadRuntimeConfig();
+await assertRuntimeEnvironmentBinding(runtime);
 const bundleAlias = argument('--bundle') ?? 'default-mock';
 if (!/^[a-z0-9][a-z0-9-]{0,47}$/.test(bundleAlias)) {
   throw new Error('--bundle 只允许小写字母、数字和连字符，长度 1–48。');
@@ -69,16 +59,16 @@ if (!isMockResourceEnvironment(runtime.environment)) {
 const [
   manifest,
   resource,
-  dataStoreArtifact,
-  readerArtifact,
-  chainlinkProviderArtifact,
+  dataStoreAbi,
+  readerAbi,
+  chainlinkProviderAbi,
   initializationProfile,
 ] = await Promise.all([
   loadDeploymentManifest(runtime.deploymentManifestPath),
   resolveMockMarketBundle(runtime.environment, bundleAlias),
-  artifact('../Github/fx100-contracts@release-v0.3.1/out/DataStore.sol/DataStore.json'),
-  artifact('../Github/fx100-contracts@release-v0.3.1/out/Reader.sol/Reader.json'),
-  artifact('../Github/fx100-contracts@release-v0.3.1/out/ChainlinkPriceFeedProvider.sol/ChainlinkPriceFeedProvider.json'),
+  loadDeploymentManifest(runtime.deploymentManifestPath).then((value) => loadDeploymentAbi(value, 'DataStore')),
+  loadDeploymentManifest(runtime.deploymentManifestPath).then((value) => loadDeploymentAbi(value, 'Reader')),
+  loadDeploymentManifest(runtime.deploymentManifestPath).then((value) => loadDeploymentAbi(value, 'ChainlinkPriceFeedProvider')),
   loadEnvironmentInitializationProfile(process.cwd(), runtime.environment),
 ]);
 const configuredParameters = defaultMockMarketProfile.parameters.filter((parameter) =>
@@ -142,67 +132,67 @@ const [
   client.getBytecode({ address: collateralOracle }),
   client.readContract({
     address: getAddress(manifest.contracts.reader),
-    abi: readerArtifact.abi,
+    abi: readerAbi,
     functionName: 'getMarket',
     args: [dataStore, marketIndex],
   }) as Promise<MarketProps>,
   client.readContract({
     address: dataStore,
-    abi: dataStoreArtifact.abi,
+    abi: dataStoreAbi,
     functionName: 'getAddress',
     args: [dataStoreKey('PRICE_FEED', 'address', [token])],
   }) as Promise<Address>,
   client.readContract({
     address: dataStore,
-    abi: dataStoreArtifact.abi,
+    abi: dataStoreAbi,
     functionName: 'getUint',
     args: [dataStoreKey('PRICE_FEED_MULTIPLIER', 'address', [token])],
   }) as Promise<bigint>,
   client.readContract({
     address: dataStore,
-    abi: dataStoreArtifact.abi,
+    abi: dataStoreAbi,
     functionName: 'getUint',
     args: [dataStoreKey('PRICE_FEED_HEARTBEAT_DURATION', 'address', [token])],
   }) as Promise<bigint>,
   client.readContract({
     address: dataStore,
-    abi: dataStoreArtifact.abi,
+    abi: dataStoreAbi,
     functionName: 'getAddress',
     args: [dataStoreKey('ORACLE_PROVIDER_FOR_TOKEN', 'address,address', [protocolOracle, token])],
   }) as Promise<Address>,
   client.readContract({
     address: dataStore,
-    abi: dataStoreArtifact.abi,
+    abi: dataStoreAbi,
     functionName: 'getAddress',
     args: [dataStoreKey('PRICE_FEED', 'address', [collateralToken])],
   }) as Promise<Address>,
   client.readContract({
     address: dataStore,
-    abi: dataStoreArtifact.abi,
+    abi: dataStoreAbi,
     functionName: 'getUint',
     args: [dataStoreKey('PRICE_FEED_MULTIPLIER', 'address', [collateralToken])],
   }) as Promise<bigint>,
   client.readContract({
     address: dataStore,
-    abi: dataStoreArtifact.abi,
+    abi: dataStoreAbi,
     functionName: 'getUint',
     args: [dataStoreKey('PRICE_FEED_HEARTBEAT_DURATION', 'address', [collateralToken])],
   }) as Promise<bigint>,
   client.readContract({
     address: dataStore,
-    abi: dataStoreArtifact.abi,
+    abi: dataStoreAbi,
     functionName: 'getAddress',
     args: [dataStoreKey('ORACLE_PROVIDER_FOR_TOKEN', 'address,address', [protocolOracle, collateralToken])],
   }) as Promise<Address>,
   client.readContract({
     address: chainlinkProvider,
-    abi: chainlinkProviderArtifact.abi,
+    abi: chainlinkProviderAbi,
     functionName: 'getOraclePrice',
     args: [token, '0x'],
   }) as Promise<{ min: bigint; max: bigint }>,
   client.readContract({
     address: chainlinkProvider,
-    abi: chainlinkProviderArtifact.abi,
+    abi: chainlinkProviderAbi,
     functionName: 'getOraclePrice',
     args: [collateralToken, '0x'],
   }) as Promise<{ min: bigint; max: bigint }>,
@@ -225,7 +215,15 @@ if (resource.oracle.minPrice === undefined || resource.oracle.maxPrice === undef
   || indexPrice.min !== BigInt(resource.oracle.minPrice)
   || indexPrice.max !== BigInt(resource.oracle.maxPrice)
   || indexPrice.min >= indexPrice.max) {
-  throw new Error(`Mock Token Oracle min/max 不一致：min=${indexPrice.min}，max=${indexPrice.max}。`);
+  // tx-fork 是交易账本线：运行推价（±3%/±10%）、持久模式与前端联调都会让 index 价格
+  // 偏离初始化登记快照（2000/2030），漂移是常态且核对逻辑相对当前价推导、不受影响，
+  // 故降级为告警不拦路；oracle-fork / time-fork 是受控价格线，锚不一致会劈开 min/max
+  // 直接破坏边界数学（SCN-070 2026-08-13 FAIL 教训），保持硬校验。
+  if (runtime.environment === 'tx-fork') {
+    console.warn(`⚠ [verify] tx-fork Mock Token Oracle 价格已偏离初始化登记（链上 min=${indexPrice.min} max=${indexPrice.max}，登记 min=${resource.oracle.minPrice} max=${resource.oracle.maxPrice}）——交易线价格漂移属常态，降级为告警；如需回到 2000/2030 基线请重建 fork 或经参数页价格面板重锚。`);
+  } else {
+    throw new Error(`Mock Token Oracle min/max 不一致：min=${indexPrice.min}，max=${indexPrice.max}。`);
+  }
 }
 if (getAddress(collateralFeedAddress) !== collateralOracle) throw new Error('USDC PriceFeed 地址不一致。');
 if (collateralMultiplier !== expectedCollateralMultiplier) throw new Error('USDC PriceFeed multiplier 不一致。');
@@ -249,10 +247,10 @@ for (const parameter of configuredParameters) {
   const sourceKey = defaultMockParameterKey(parameter, BigInt(initializationProfile.referenceMarketIndex));
   const targetKey = defaultMockParameterKey(parameter, marketIndex);
   const functionName = parameter.valueType === 'int' ? 'getInt' : 'getUint';
-  const targetValue = await client.readContract({ address: dataStore, abi: dataStoreArtifact.abi, functionName, args: [targetKey] }) as bigint;
+  const targetValue = await client.readContract({ address: dataStore, abi: dataStoreAbi, functionName, args: [targetKey] }) as bigint;
   const override = initializationProfile.parameterOverrides[label];
   const expectedValue = override === undefined
-    ? await client.readContract({ address: dataStore, abi: dataStoreArtifact.abi, functionName, args: [sourceKey] }) as bigint
+    ? await client.readContract({ address: dataStore, abi: dataStoreAbi, functionName, args: [sourceKey] }) as bigint
     : BigInt(override);
   if (expectedValue !== targetValue) {
     throw new Error(`Market 参数不一致：${label}`);

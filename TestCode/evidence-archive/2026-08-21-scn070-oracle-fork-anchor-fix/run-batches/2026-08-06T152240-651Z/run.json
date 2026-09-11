@@ -1,0 +1,36 @@
+{
+  "id": "2026-08-06T152240-651Z",
+  "release": "release-v0.3.1",
+  "description": "由直接 Playwright 执行自动登记。",
+  "scope": "single",
+  "environmentMode": "default",
+  "marketSelection": "default",
+  "keeperMode": "inline",
+  "createdAt": "2026-08-06T15:22:40.651Z",
+  "startedAt": "2026-08-06T15:22:40.651Z",
+  "endedAt": "2026-08-06T15:23:14.311Z",
+  "status": "PASS",
+  "rpcUpdatedEnvironments": [],
+  "cases": [
+    {
+      "id": "SCN-009",
+      "title": "市价开多快速退出",
+      "plannedEnvironment": "tx-fork",
+      "resolvedEnvironment": "tx-fork",
+      "plannedMarketMode": "mock-market",
+      "resolvedMarketMode": "mock-market",
+      "resolvedOracleMode": "mock-oracle",
+      "resolvedMockResourceAlias": "default-mock",
+      "marketCompatibility": "mock-only",
+      "automated": true,
+      "specPath": "tests/S02/scn-009.spec.ts",
+      "status": "PASS",
+      "resultRunId": "2026-08-06T152240-651Z",
+      "message": "链上 19 项核对通过；已记录用户签名开仓/平仓、Keeper 签名执行及完整回执；执行详情已展开 93 项 Before / After / Δ / Expected 对账。"
+    }
+  ],
+  "logTail": [
+    "检测到看板外直接执行的 Playwright 结果，已自动登记到最近运行。",
+    "运行结束：PASS。"
+  ]
+}

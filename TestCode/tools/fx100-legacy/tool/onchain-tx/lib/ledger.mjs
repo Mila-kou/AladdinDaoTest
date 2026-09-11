@@ -7,7 +7,7 @@ import { dirname } from "node:path";
 
 import { encodeCall, decodeUint } from "../../config-dump/lib/abi.mjs";
 import { splitWords, wordToBigInt, wordToAddress, wordToBool } from "./decode.mjs";
-import { BASE, cumulativeOpenCostsKey, openInterestInTokensKey, claimableFeeAmountKey, positionImpactPoolAmountKey, positionKey } from "./keys.mjs";
+import { BASE, cumulativeOpenCostsKey, openInterestInTokensKey, claimableFeeAmountKey, positionKey } from "./keys.mjs";
 
 /** 守恒五方：谁的 USDC 余额进 L1 守恒式 */
 export const CONSERVATION_SLOTS = ["traderUsdc", "orderVaultUsdc", "posVaultUsdc", "lpVaultAssets", "feeReceiverUsdc"];
@@ -67,7 +67,8 @@ export async function snapshot(rpc, deployment, ctx, blockNumber) {
     // 于是 IT-LIQ-* 里「claimable(LIQUIDATION) Delta = 0」这类断言全部**空过**
     // （读到 undefined，被调用方的 `?? 0n` 兜成 0）。
     ["claimableFeeAmountLiquidation", getUint(claimableFeeAmountKey(mi, a.usdc, BASE.LIQUIDATION_FEE_TYPE)), "uint"],
-    ["positionImpactPoolAmount", getUint(positionImpactPoolAmountKey(mi)), "uint"],
+    // positionImpactPoolAmount 槽位已删（2026-08-13）：fx100 用动态点差替代 GMX price impact 记账，
+    // 该 key 在 release-v0.3.1 无任何合约读写方（PositionImpactPoolUtils.sol 为空壳）——死字段不采集。
 
     [
       "position",
@@ -170,7 +171,6 @@ const UNIT = {
   cumulativeOpenCostsShort: "USD 1e30",
   openInterestInTokensLong: "Token 1e18",
   openInterestInTokensShort: "Token 1e18",
-  positionImpactPoolAmount: "Token 1e18",
 };
 
 /**

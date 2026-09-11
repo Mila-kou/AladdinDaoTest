@@ -1,0 +1,193 @@
+{
+  "$comment": "FX100 测试基线唯一登记（单一事实源）。切换测试版本只改本文件（并执行 TestCode: npm run baseline:lint 校验全工作区引用）。文档不得复述版本号，只能引用本文件；必须写死版本的快照须标注「@vX.Y.Z 快照」。",
+  "updatedAt": "2026-09-09",
+  "primary": {
+    "version": "v0.3.2",
+    "branch": "release/v0.3.2",
+    "repoPath": "Github/fx100-contracts@release-v0.3.2",
+    "head": "13880f2416918f4fed3fea86d7f1023084a3ce0d",
+    "deliverables": "Docs/contract-releases/v0.3.2/",
+    "admission": "NOT_READY",
+    "admissionSource": "Docs/contract-releases/v0.3.2/06-测试影响与准入结论.md",
+    "admissionScope": {
+      "tx-fork:contract": "READY_FOR_SYSTEM_TEST",
+      "tx-fork:frontend": "NOT_READY",
+      "oracle-fork": "NOT_READY",
+      "time-fork": "NOT_READY"
+    },
+    "admissionScopeNote": "2026-09-02 起准入按环境/层分开判（06 §0 分环境表、§5）：admission 是全环境全层的总开关。tx-fork:contract 曾于 2026-09-02 依据 tx-fork@v0.3.2（vnet 64aa3163，block 46282993）的 A-1～A-3 证据判 READY_FOR_SYSTEM_TEST；同日 22:30 tx-fork 被重建为 base-sepolia@v0.3.1 fork（vnet 7bef3d7d），该证据不再对应当前环境，故回退 NOT_READY。恢复条件：在当前 tx-fork 重新部署 v0.3.2 并按 02 §18.1 重做七项读检（A-2），A-3 参数对账在输入文件不变时复核后可沿用。tx-fork:frontend = FT/XT 与 Relay/Flash，等 C-2；oracle-fork/time-fork 仍为 base-sepolia@v0.3.1。"
+  },
+  "comparison": {
+    "version": "v0.3.1",
+    "branch": "release/v0.3.1",
+    "repoPath": "Github/fx100-contracts@release-v0.3.1",
+    "head": "d9a7fd2f23705c0bcfe44eaa2f40d9d5c170aaa0"
+  },
+  "frontend": {
+    "repoPath": "Github/fx100-apps@develop",
+    "branch": "develop",
+    "head": "3bc428147642ab6e3b02e563f23550f09e6d607b",
+    "headAt": "2026-09-09",
+    "subpaths": {
+      "sdk": "packages/sdk",
+      "app": "apps/fx-base-app",
+      "keeper": "apps/keeper"
+    },
+    "subpathsNote": "Keeper 与前端 SDK/App 同仓同分支，共用本条 head，不单列 keeper 条目；引用前端或 Keeper 代码公式时必须带 head（develop 是移动分支，行号会随 rebase 失效）。若将来 Keeper 需要独立 pin，再拆出同级 keeper 条目。",
+    "role": "默认前端基线。某个环境若配对不同的前端版本，在 environments.<env>.frontend 写同结构的覆盖条目；解析规则 = environments.<env>.frontend ?? 本条。",
+    "perEnvironmentNote": "2026-09-05 起支持「一个合约版本配一个前端版本」并行：同仓库其他分支用 git worktree 派生为 Github/fx100-apps@<分支名>（CLAUDE.md 命名规范），在对应环境下写 frontend 覆盖条目即可。当前三个环境均未覆盖，都用本条默认值。注意 frontend 段无代码读取，是登记/引用用的文档字段——改它不影响运行时，但公式文档的行号锚点以它为准。"
+  },
+  "deployments": [
+    {
+      "id": "base-sepolia@v0.3.1",
+      "network": "base-sepolia",
+      "chainId": 84532,
+      "version": "v0.3.1",
+      "releaseLabel": "release-v0.3.1",
+      "paramsExport": "TestCase/config/v0.3.1/base-sepolia/260729/parameters.json",
+      "manifest": "TestCode/config/deployments/base-sepolia-v0.3.1-260729.json",
+      "note": "Base Sepolia 已知 v0.3.1 部署；与 tx-fork@v0.3.2 私有测试部署并存"
+    },
+    {
+      "id": "tx-fork@v0.3.2",
+      "network": "tenderly-vnet(tx-fork)",
+      "chainId": 99911,
+      "version": "v0.3.2",
+      "releaseLabel": "release-v0.3.2",
+      "paramsExport": "TestCase/config/v0.3.2/tx-fork/260902-2305/parameters.json",
+      "manifest": "TestCode/config/deployments/tx-fork-v0.3.2-260902-2305.json",
+      "note": "2026-09-02 由 deploy:contracts 在 tx-fork（chain 99911）全新部署 release/v0.3.2@13880f2（Ignition Fx100Core + configure 三脚本 + 双市场 + 角色授权 + 读回校验通过）"
+    }
+  ],
+  "environments": {
+    "tx-fork": {
+      "chainId": 99911,
+      "forkOf": "tx-fork@v0.3.2",
+      "status": "ready",
+      "forkBlockNumber": 46296406,
+      "tenderlyEnvironmentId": "5bd030ca-bd2b-4a8a-908c-60ab8f7d4f44",
+      "note": "2026-09-02 由 TestCode 通过 Tenderly Virtual TestNet API 自动创建（chain 99911，fork Base Sepolia @46296406）"
+    },
+    "oracle-fork": {
+      "chainId": 99912,
+      "forkOf": "base-sepolia@v0.3.1",
+      "status": "ready"
+    },
+    "time-fork": {
+      "chainId": 99913,
+      "forkOf": "base-sepolia@v0.3.1",
+      "status": "ready",
+      "note": "2026-08-26 由 TestCode 通过 Tenderly Virtual TestNet API 自动创建（chain 99913，fork Base Sepolia @45983870）",
+      "forkBlockNumber": 45983870,
+      "tenderlyEnvironmentId": "f52ec017-3b60-42ad-bbb0-50a495de565a"
+    }
+  },
+  "excluded": [
+    {
+      "path": "Github/fx100-contracts@soso-test",
+      "reason": "Sosogao fork docs/testing-standards 分支（1,944 条账本宿主）——2026-08-21 裁决暂不纳入、不引用、不迁移"
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-08-20",
+      "change": "主测基线 v0.3.1 → v0.3.2（提交 74e9f6a）"
+    },
+    {
+      "date": "2026-08-21",
+      "change": "建立本登记文件；v0.3.2 七件套补齐，准入 NOT_READY"
+    },
+    {
+      "date": "2026-08-24",
+      "change": "time-fork：2026-08-24 由 TestCode 通过 Tenderly Virtual TestNet API 自动创建（chain 99913，fork Base Sepolia @45893847）"
+    },
+    {
+      "date": "2026-08-26",
+      "change": "time-fork：2026-08-26 Virtual TestNet 1fbbfdcd-e2ea-4edb-a55d-75cc08b77268 已删除；需重新创建后再初始化"
+    },
+    {
+      "date": "2026-08-26",
+      "change": "time-fork：2026-08-26 由 TestCode 通过 Tenderly Virtual TestNet API 自动创建（chain 99913，fork Base Sepolia @45983870）"
+    },
+    {
+      "date": "2026-09-01",
+      "change": "tx-fork：2026-09-01 由 TestCode 通过 Tenderly Virtual TestNet API 自动创建（chain 99911，fork Base Sepolia @46244328）"
+    },
+    {
+      "date": "2026-09-01",
+      "change": "tx-fork：2026-09-01 由 deploy:contracts 在 tx-fork（chain 99911）全新部署 release/v0.3.2@13880f2（Ignition Fx100Core + configure 三脚本 + 双市场 + 角色授权 + 读回校验通过）"
+    },
+    {
+      "date": "2026-09-02",
+      "change": "tx-fork：2026-09-02 由 TestCode 通过 Tenderly Virtual TestNet API 自动创建（chain 99911，fork Base Sepolia @46282187）"
+    },
+    {
+      "date": "2026-09-02",
+      "change": "tx-fork：2026-09-02 由 TestCode 通过 Tenderly Virtual TestNet API 自动创建（chain 99911，fork Base Sepolia @46282748）"
+    },
+    {
+      "date": "2026-09-02",
+      "change": "tx-fork：2026-09-02 由 deploy:contracts 在 tx-fork（chain 99911）全新部署 release/v0.3.2@13880f2（Ignition Fx100Core + configure 三脚本 + 双市场 + 角色授权 + 读回校验通过）"
+    },
+    {
+      "date": "2026-09-02",
+      "change": "同步发布事实文档：tx-fork 已切换为 v0.3.2 私有测试部署；oracle-fork/time-fork 仍为 base-sepolia@v0.3.1；v0.3.1/v0.3.2 参数快照入口迁移到版本化目录"
+    },
+    {
+      "date": "2026-09-02",
+      "change": "准入按环境/层分开判：新增 primary.admissionScope，tx-fork:contract = READY_FOR_SYSTEM_TEST（06 §5 A-1～A-3 勾销；读检与对账证据归档 TestCase/config/v0.3.2/tx-fork/260902/read-checks-*.md 与 verification/）；其余 NOT_READY；总开关 admission 不变"
+    },
+    {
+      "date": "2026-09-02",
+      "change": "tx-fork：2026-09-02 由 TestCode 通过 Tenderly Virtual TestNet API 自动创建（chain 99911，fork Base Sepolia @46295582）"
+    },
+    {
+      "date": "2026-09-02",
+      "change": "tx-fork 重建为 base-sepolia@v0.3.1 fork 后，admissionScope.tx-fork:contract 由 READY_FOR_SYSTEM_TEST 回退 NOT_READY；tx-fork@v0.3.2 的读检/对账证据（TestCase/config/v0.3.2/tx-fork/260902/）绑定旧 vnet 64aa3163 与 block 46282993，重部署后须重做 A-2"
+    },
+    {
+      "date": "2026-09-02",
+      "change": "tx-fork：2026-09-02 由 TestCode 通过 Tenderly Virtual TestNet API 自动创建（chain 99911，fork Base Sepolia @46296406）"
+    },
+    {
+      "date": "2026-09-02",
+      "change": "admissionScope.tx-fork:contract 恢复 READY_FOR_SYSTEM_TEST：15:05 页面部署（内置 02 §18.1 读回校验全过，exit 0）+ init:mock（--force --force-shared-collateral，Market #3）+ verify:mock 全 verified"
+    },
+    {
+      "date": "2026-09-02",
+      "change": "admissionScope.tx-fork:contract 回退 NOT_READY：团队裁定以 tests/A CT-BASE-001~008 正式批次全 PASS 作为 02 §18.1 读检的准入证据（当前 004/005/007 FAIL：004=WBTC decimals 登记缺陷已修、005=共享 USDC 已重初始化对齐、007=断言口径由用例侧修）"
+    },
+    {
+      "date": "2026-09-03",
+      "change": "admissionScope.tx-fork:contract 恢复 READY_FOR_SYSTEM_TEST：tests/A CT-BASE-001~008 正式批次全 PASS（run 2026-09-02T161000-175Z，release-v0.3.2，部署 tx-fork-v0.3.2-260902-2305）——02 §18.1 读检自动化版通过；用户 2026-09-03 确认恢复"
+    },
+    {
+      "date": "2026-09-04",
+      "change": "frontend 补 head/headAt 与 subpaths（sdk/app/keeper）：三层（合约/前端/Keeper）公式集成工作要求前端与 Keeper 代码锚点可 pin；Keeper 与前端同仓 fx100-apps@develop，共用同一 head dfa36d0，不单列条目"
+    },
+    {
+      "date": "2026-09-05",
+      "change": "补齐 base-sepolia@v0.3.1 的 manifest 登记与 base_sepolia_v0.3.1_260729 完整部署地址快照（67 项）"
+    },
+    {
+      "date": "2026-09-05",
+      "change": "frontend.head 由 dfa36d0b 更新到 1912f460（fx100-apps@develop 于 2026-09-05 09:38 被 pull --ff-only 前进，57 文件 +7027/-1251，绝大部分在 apps/keeper，其中 providers/manualProvider.ts 与 strategies/adl/{scheduled,riskBased}.ts 为整文件删除）。⚠️ 在此之前按 dfa36d0b 写的前端/Keeper 公式文档行号锚点可能已失效，需按新 head 复核——已知受影响：TestCase/E2E/ContractCodeSummary/v0.3.2/FX100-Keeper代码公式.md（2026-09-05 01:36 写，早于该次 pull）"
+    },
+    {
+      "date": "2026-09-05",
+      "change": "frontend 增加 role/perEnvironmentNote：支持按环境配对不同前端版本（environments.<env>.frontend 覆盖顶层默认），为「两个合约版本各配一个前端版本」并行测试铺路。配套并行会话作业规程见 Docs/并行会话作业规程.md"
+    },
+    {
+      "date": "2026-09-06",
+      "change": "frontend.head 更新到 0716cb2b（拉取 19 个提交，含 fix: prevent silent protection roll reopen failures = BUG-FE-CLOSEREOPEN-023 的修复，以及 fix: preserve liquidation headroom for max position adjustments）。引用前端/Keeper 行号的公式文档需按新 head 复核。"
+    },
+    {
+      "date": "2026-09-06",
+      "change": "frontend.head 0716cb2b → 25853155（fix: prevent dialog content overflow，改 ui/dialog.tsx 与 ui/alert-dialog.tsx 各 1 行 + OrdersHarness/e2e；纯 UI 溢出修复，不涉及本轮复测的 Close&Reopen 与 Withdraw Max 逻辑）"
+    },
+    {
+      "date": "2026-09-09",
+      "change": "frontend.head 25853155 → b4331c15 → 3bc42814（fx100-apps@develop 当日两次 pull --ff-only：上午前进 97 个提交，320 文件 +25567/−4675；晚间再进 3 个（reports 缺口扫描改走 1m K 线、钱包 chain-resync guard 不再对 wagmi reconnecting stub 抛错、Sentry 字符串副本脱敏），5 文件 +588/−20；补丁三文件未被触及、保持 CLEAN，yarn.lock 未变无需重装）。测试相关：keeper 被动清算链路（passive liquidation 影子检查→hold/enqueue→按 role 全分片启用，#122～#134）、liqWorker 改用 age-safety 选价、legacy-scan-off 路径修复（#119）；前端 Flash relay 费用上限预检与独立 approval 边界（MAX_RELAY_SWAP_WNT_CAP，relayFeeCapGuard/Policy）、紧急平仓页签与链上读 1CT key、保护性 roll 只预填一次、OrderTrackingModal 修复；SDK 共享 EventLog2/Order.Props 指纹/取消原因解码（#118）、sdk 包移除 vitest 测试脚本；keeper 脚本 keeper:unpause-v2 改名 keeper:unpause、新增 keeper:replay-passive-check（TestCode keeper 启动器只用五个 worker 入口，不受影响）。引用前端/Keeper 行号的公式文档需按新 head 复核。同日另派生 Github/fx100-apps@staging（非登记基线）。"
+    }
+  ]
+}

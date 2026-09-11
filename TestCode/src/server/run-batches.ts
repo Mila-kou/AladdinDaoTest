@@ -26,12 +26,19 @@ import {
   validateRpcUrl,
 } from './environment-settings.js';
 import { EnvironmentInitializationManager } from './environment-initializations.js';
+import { isReleaseMismatch, targetRelease } from '../config/baseline.js';
+import { isFunctionalCaseId } from '../reporting/version-cases.js';
+
+const runCaseIdSchema = z.string().refine(
+  (id) => /^SCN-\d{3}$/.test(id) || isFunctionalCaseId(id),
+  { message: '用例 ID 格式无效。' },
+);
 
 const createRunBatchSchema = z.object({
   release: z.string().trim().min(1).max(120),
   description: z.string().trim().max(1_000).default(''),
   scope: z.enum(['single', 'selected', 'all']),
-  scenarioIds: z.array(z.string().regex(/^SCN-\d{3}$/)).min(1).max(200),
+  scenarioIds: z.array(runCaseIdSchema).min(1).max(300),
   environmentMode: z.enum(['default', 'override']),
   marketSelection: z.enum(['default', 'deployed']).default('default'),
   keeperMode: z.enum(['inline', 'service']).default('inline'),
@@ -58,11 +65,11 @@ const createRunBatchSchema = z.object({
 });
 
 const manualStartSchema = z.object({
-  caseId: z.string().regex(/^SCN-\d{3}$/),
+  caseId: runCaseIdSchema,
 });
 
 const manualVerdictSchema = z.object({
-  caseId: z.string().regex(/^SCN-\d{3}$/),
+  caseId: runCaseIdSchema,
   // 'MANUAL' 表示撤销回填，把用例退回“待人工执行”。
   status: z.enum(['PASS', 'FAIL', 'BLOCKED', 'SKIP', 'MANUAL']),
   operator: z.string().trim().max(60).default(''),
@@ -115,7 +122,12 @@ export interface RunBatchCase {
 
 export interface RunBatch {
   readonly id: string;
+  /** 批次 release = 环境实际部署版本（看板默认值来自 CURRENT.json 环境映射；用户可改）。 */
   readonly release: string;
+  /** 创建批次时 CURRENT.json primary 的标签（release-vX.Y.Z）；历史批次没有这个字段。 */
+  readonly targetRelease?: string;
+  /** release 与 targetRelease 的 vN.N.N 不同时为 true；任一方缺失时不写。 */
+  readonly releaseMismatch?: boolean;
   readonly description: string;
   readonly scope: 'single' | 'selected' | 'all';
   readonly environmentMode: 'default' | 'override';
@@ -364,6 +376,8 @@ export class RunBatchManager {
       const batch: RunBatch = {
         id: artifact.run.id,
         release: artifact.run.release ?? `Playwright-${artifact.run.id}`,
+        ...(artifact.run.targetRelease ? { targetRelease: artifact.run.targetRelease } : {}),
+        ...(artifact.run.releaseMismatch !== undefined ? { releaseMismatch: artifact.run.releaseMismatch } : {}),
         description: '由直接 Playwright 执行自动登记。',
         scope: cases.length === 1 ? 'single' : 'selected',
         environmentMode: 'default',
@@ -452,9 +466,13 @@ export class RunBatchManager {
       rpcUpdatedEnvironments.push(override);
     }
 
+    const target = targetRelease(this.projectRoot);
+    const releaseMismatch = isReleaseMismatch(input.release, target?.version);
     const batch: RunBatch = {
       id: batchId(input.release),
       release: input.release,
+      ...(target ? { targetRelease: target.label } : {}),
+      ...(releaseMismatch !== undefined ? { releaseMismatch } : {}),
       description: input.description,
       scope: input.scope,
       environmentMode: input.environmentMode,
@@ -610,11 +628,20 @@ export class RunBatchManager {
     const mockResourceAlias = items[0]?.resolvedMockResourceAlias ?? 'none';
     const executionRunId = `${safeIdPart(batch.id, 32)}-${environment}-${marketMode}-${safeIdPart(mockResourceAlias, 24)}`;
     const specPaths = Array.from(new Set(items.flatMap((item) => item.specPath ? [item.specPath] : [])));
-    const args = ['test', ...specPaths, `--project=${environment}`];
+    const selectedIdPattern = items
+      .map((item) => item.id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+      .join('|');
+    const args = ['test', ...specPaths, `--project=${environment}`, `--grep=\\b(?:${selectedIdPattern})\\b`];
+    const injectedKeys = [
+      'E2E_ENV', 'E2E_RELEASE', 'E2E_BATCH_ID', 'E2E_RUN_ID', 'E2E_MARKET_MODE', 'E2E_MARKET_RESOURCE_ALIAS', 'E2E_KEEPER_MODE',
+      definition.rpcEnvironmentVariable,
+      ...(definition.adminRpcEnvironmentVariable && settings.adminRpcUrl ? [definition.adminRpcEnvironmentVariable] : []),
+    ];
     const childEnvironment: NodeJS.ProcessEnv = {
       ...process.env,
       E2E_ENV: environment,
       E2E_RELEASE: batch.release,
+      E2E_BATCH_ID: batch.id,
       E2E_RUN_ID: executionRunId,
       E2E_MARKET_MODE: marketMode,
       E2E_MARKET_RESOURCE_ALIAS: mockResourceAlias,
@@ -623,6 +650,8 @@ export class RunBatchManager {
       ...(definition.adminRpcEnvironmentVariable && settings.adminRpcUrl
         ? { [definition.adminRpcEnvironmentVariable]: settings.adminRpcUrl }
         : {}),
+      // 按批次注入的键必须压过 .env.local（见 src/config/runtime.ts 加载注释）
+      E2E_ENV_PRIORITY_KEYS: injectedKeys.join(','),
     };
     const secrets = [settings.rpcUrl, settings.adminRpcUrl ?? ''];
     const executable = join(this.projectRoot, 'node_modules', '.bin', 'playwright');

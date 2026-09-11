@@ -1,0 +1,14 @@
+{
+  "marketIndexes": [1, 2],
+  "params": {
+    "maxPnlFactorTraderLong": "1",
+    "maxPnlFactorTraderShort": "1",
+    "positionImpactFactorLong": "0",
+    "positionImpactFactorShort": "0",
+    "positionImpactExponentFactorLong": "1",
+    "positionImpactExponentFactorShort": "1",
+    "maxPositionImpactFactorLong": "1",
+    "maxPositionImpactFactorShort": "1",
+    "executionFeeSubsidize": "20"
+  }
+}

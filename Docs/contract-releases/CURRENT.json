@@ -26,7 +26,7 @@
   "frontend": {
     "repoPath": "Github/fx100-apps@develop",
     "branch": "develop",
-    "head": "b4331c15db24dfffd70c5db7a09b651af995cf59",
+    "head": "3bc428147642ab6e3b02e563f23550f09e6d607b",
     "headAt": "2026-09-09",
     "subpaths": {
       "sdk": "packages/sdk",
@@ -187,7 +187,7 @@
     },
     {
       "date": "2026-09-09",
-      "change": "frontend.head 25853155 → b4331c15（fx100-apps@develop pull --ff-only 前进 97 个提交，320 文件 +25567/−4675；补丁三文件未被触及、保持 CLEAN，yarn.lock 未变无需重装）。测试相关：keeper 被动清算链路（passive liquidation 影子检查→hold/enqueue→按 role 全分片启用，#122～#134）、liqWorker 改用 age-safety 选价、legacy-scan-off 路径修复（#119）；前端 Flash relay 费用上限预检与独立 approval 边界（MAX_RELAY_SWAP_WNT_CAP，relayFeeCapGuard/Policy）、紧急平仓页签与链上读 1CT key、保护性 roll 只预填一次、OrderTrackingModal 修复；SDK 共享 EventLog2/Order.Props 指纹/取消原因解码（#118）、sdk 包移除 vitest 测试脚本；keeper 脚本 keeper:unpause-v2 改名 keeper:unpause、新增 keeper:replay-passive-check（TestCode keeper 启动器只用五个 worker 入口，不受影响）。引用前端/Keeper 行号的公式文档需按新 head 复核。同日另派生 Github/fx100-apps@staging（非登记基线）。"
+      "change": "frontend.head 25853155 → b4331c15 → 3bc42814（fx100-apps@develop 当日两次 pull --ff-only：上午前进 97 个提交，320 文件 +25567/−4675；晚间再进 3 个（reports 缺口扫描改走 1m K 线、钱包 chain-resync guard 不再对 wagmi reconnecting stub 抛错、Sentry 字符串副本脱敏），5 文件 +588/−20；补丁三文件未被触及、保持 CLEAN，yarn.lock 未变无需重装）。测试相关：keeper 被动清算链路（passive liquidation 影子检查→hold/enqueue→按 role 全分片启用，#122～#134）、liqWorker 改用 age-safety 选价、legacy-scan-off 路径修复（#119）；前端 Flash relay 费用上限预检与独立 approval 边界（MAX_RELAY_SWAP_WNT_CAP，relayFeeCapGuard/Policy）、紧急平仓页签与链上读 1CT key、保护性 roll 只预填一次、OrderTrackingModal 修复；SDK 共享 EventLog2/Order.Props 指纹/取消原因解码（#118）、sdk 包移除 vitest 测试脚本；keeper 脚本 keeper:unpause-v2 改名 keeper:unpause、新增 keeper:replay-passive-check（TestCode keeper 启动器只用五个 worker 入口，不受影响）。引用前端/Keeper 行号的公式文档需按新 head 复核。同日另派生 Github/fx100-apps@staging（非登记基线）。"
     }
   ]
 }
